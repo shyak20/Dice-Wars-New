@@ -4,16 +4,16 @@ using TMPro;
 
 public class EnemyController : MonoBehaviour
 {
-    [Header("Data Connection")]
     public EnemyTypeSO enemyData;
 
     [Header("UI References")]
     public TMP_Text nameText;
     public Slider healthSlider;
-    public TMP_Text healthText;
-    public TMP_Text intentText; // Shows what the enemy will do next
+    public TMP_Text healthText; // <--- The new text field
+    public TMP_Text intentText;
 
     private int currentHealth;
+    private int currentCycleIndex = 0;
     private EnemyActionSO currentIntent;
 
     private void Start()
@@ -25,49 +25,76 @@ public class EnemyController : MonoBehaviour
     {
         enemyData = data;
         currentHealth = data.maxHealth;
+        currentCycleIndex = 0;
 
         if (nameText != null) nameText.text = data.enemyName;
         UpdateUI();
         PrepareNextAction();
     }
 
-    /// <summary>
-    /// Picks a random action from the list so the player can see it coming.
-    /// </summary>
     public void PrepareNextAction()
     {
-        if (enemyData.availableActions.Count > 0)
-        {
-            int index = UnityEngine.Random.Range(0, enemyData.availableActions.Count);
-            currentIntent = enemyData.availableActions[index];
+        if (enemyData.actionCycle.Count == 0) return;
 
-            if (intentText != null)
-                intentText.text = $"Intent: {currentIntent.actionName} ({currentIntent.damage} DMG)";
+        if (enemyData.isSequential)
+        {
+            currentIntent = enemyData.actionCycle[currentCycleIndex];
+            currentCycleIndex = (currentCycleIndex + 1) % enemyData.actionCycle.Count;
         }
+        else
+        {
+            int randomIndex = UnityEngine.Random.Range(0, enemyData.actionCycle.Count);
+            currentIntent = enemyData.actionCycle[randomIndex];
+        }
+
+        UpdateIntentUI();
     }
 
-    public EnemyActionSO GetCurrentAction() => currentIntent;
+    private void UpdateIntentUI()
+    {
+        if (intentText == null) return;
+
+        string description = "";
+        if (currentIntent.damage > 0)
+        {
+            description += (currentIntent.numberOfAttacks > 1)
+                ? $"{currentIntent.damage}x{currentIntent.numberOfAttacks} ATK"
+                : $"{currentIntent.damage} ATK";
+        }
+
+        if (currentIntent.armor > 0)
+        {
+            if (description != "") description += " & ";
+            description += $"{currentIntent.armor} ARM";
+        }
+
+        intentText.text = $"Next: {currentIntent.actionName}\n({description})";
+    }
 
     public void TakeDamage(int amount)
     {
         currentHealth -= amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0, enemyData.maxHealth);
+        currentHealth = Mathf.Max(0, currentHealth);
         UpdateUI();
 
-        if (currentHealth <= 0)
-        {
-            UnityEngine.Debug.Log($"{enemyData.enemyName} defeated!");
-            // Logic for death (animations, etc.)
-        }
+        // Optional: Trigger a "Hit" animation here
     }
 
     private void UpdateUI()
     {
+        // Update the bar
         if (healthSlider != null)
         {
             healthSlider.maxValue = enemyData.maxHealth;
             healthSlider.value = currentHealth;
         }
-        if (healthText != null) healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
+
+        // Update the numbers (e.g., "50 / 50")
+        if (healthText != null)
+        {
+            healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
+        }
     }
+
+    public EnemyActionSO GetCurrentAction() => currentIntent;
 }
