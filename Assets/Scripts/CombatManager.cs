@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 public class CombatManager : MonoBehaviour
 {
+    [Header("Participants")]
+    public PlayerStatus player;
+    public EnemyController activeEnemy;
+
     [Header("Data & Physics")]
     public PlayerDataSO playerData;
     public DiceSpawner spawner;
-
-    [Header("Participants")]
-    public EnemyController activeEnemy;
-    // Note: You can add public PlayerStatus player; here once that script is created
 
     [Header("Balancing")]
     public int baseMaxPower = 12;
@@ -31,8 +31,8 @@ public class CombatManager : MonoBehaviour
 
     private void Awake()
     {
-        if (playerData == null || spawner == null)
-            UnityEngine.Debug.LogError("CombatManager: Essential references (PlayerData or Spawner) are missing!");
+        if (playerData == null || spawner == null || player == null || activeEnemy == null)
+            UnityEngine.Debug.LogError("CombatManager: Missing essential references in the Inspector!");
     }
 
     private void Start()
@@ -45,6 +45,9 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnDieToggled += HandleDieToggle;
         CombatEvents.OnRollCommand += ExecuteBatchRoll;
         CombatEvents.OnBustResolved += ResolveBust;
+
+        // New Event: Manual End Turn
+        CombatEvents.OnEndTurnPressed += ManualEndTurn;
     }
 
     private void OnDisable()
@@ -52,6 +55,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnDieToggled -= HandleDieToggle;
         CombatEvents.OnRollCommand -= ExecuteBatchRoll;
         CombatEvents.OnBustResolved -= ResolveBust;
+        CombatEvents.OnEndTurnPressed -= ManualEndTurn;
     }
 
     private void InitializeCombat()
@@ -69,7 +73,6 @@ public class CombatManager : MonoBehaviour
 
     private void CalculateMaxPower()
     {
-        // Formula: X = 12 + (6 for every die owned beyond the first two)
         int extraDice = Mathf.Max(0, playerData.currentDeck.Count - 2);
         maxPower = baseMaxPower + (extraDice * 6);
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
@@ -79,10 +82,8 @@ public class CombatManager : MonoBehaviour
     {
         if (currentState != CombatState.WaitingForRoll) return;
 
-        if (selectedDice.Contains(die))
-            selectedDice.Remove(die);
-        else
-            selectedDice.Add(die);
+        if (selectedDice.Contains(die)) selectedDice.Remove(die);
+        else selectedDice.Add(die);
     }
 
     private void ExecuteBatchRoll()
@@ -93,16 +94,12 @@ public class CombatManager : MonoBehaviour
         diceSettledCount = 0;
 
         ChangeState(CombatState.Rolling);
-
-        // Launch the physical dice
         spawner.SpawnAndRollBatch(selectedDice);
-
-        // Clear selection for the next window
         selectedDice.Clear();
     }
 
     /// <summary>
-    /// Triggered by individual DiceRoller scripts when they stop moving.
+    /// Called by individual DiceRoller scripts.
     /// </summary>
     public void ResolveRollResult(DieFaceSO face)
     {
@@ -112,13 +109,11 @@ public class CombatManager : MonoBehaviour
         currentPower += face.value;
         ApplyFaceEffect(face.effect, face.value);
 
-        // Update UI immediately for each die
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
 
         diceSettledCount++;
 
-        // Only move to logic check when the WHOLE batch is still
         if (diceSettledCount >= expectedDiceCount)
         {
             CheckBustStatus();
@@ -127,27 +122,35 @@ public class CombatManager : MonoBehaviour
 
     private void CheckBustStatus()
     {
-        // PERFECT HIT: Double the pools
+        // Condition: Reached X (Perfect Hit)
         if (currentPower == maxPower)
         {
-            UnityEngine.Debug.Log("<color=cyan>PERFECT HIT! Doubling Pending Values.</color>");
+            UnityEngine.Debug.Log("<color=cyan>PERFECT HIT! Doubling Values.</color>");
             pendingAttack *= 2;
             pendingDefense *= 2;
             CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
 
             SubmitTurn();
         }
-        // BUST: Trigger the UI choice
+        // Condition: Passed X (Bust)
         else if (currentPower > maxPower)
         {
             ChangeState(CombatState.BustCheck);
             CombatEvents.OnBustOccurred?.Invoke();
         }
-        // UNDER: Let the player roll more
+        // Condition: Below X (Continue)
         else
         {
             ChangeState(CombatState.WaitingForRoll);
         }
+    }
+
+    private void ManualEndTurn()
+    {
+        if (currentState != CombatState.WaitingForRoll) return;
+
+        UnityEngine.Debug.Log("Player manually ended turn.");
+        SubmitTurn();
     }
 
     private void ResolveBust(bool nullifyAttack)
@@ -163,36 +166,46 @@ public class CombatManager : MonoBehaviour
     {
         ChangeState(CombatState.TurnEnd);
 
-        // 1. Apply Player's Offense to Enemy
-        if (pendingAttack > 0 && activeEnemy != null)
-        {
-            activeEnemy.TakeDamage(pendingAttack);
-        }
+        // 1. Resolve Player Actions
+        if (pendingAttack > 0) activeEnemy.TakeDamage(pendingAttack);
+        if (pendingDefense > 0) player.AddArmor(pendingDefense);
 
-        // 2. Start the automated Enemy sequence
+        // 2. Transition to Enemy
         StartCoroutine(EnemyTurnRoutine());
     }
 
     private IEnumerator EnemyTurnRoutine()
     {
-        yield return new WaitForSeconds(1.2f); // "Thinking" pause
+        yield return new WaitForSeconds(1.2f);
 
-        if (activeEnemy != null)
+        if (activeEnemy != null && player != null)
         {
             EnemyActionSO action = activeEnemy.GetCurrentAction();
-            UnityEngine.Debug.Log($"Enemy uses: {action.actionName}");
+            UnityEngine.Debug.Log($"Enemy Turn: {action.actionName}");
 
+            // Enemy Attack Logic (Multi-hit)
             if (action.damage > 0)
             {
-                // TODO: player.TakeDamage(action.damage);
-                UnityEngine.Debug.Log($"<color=red>Enemy deals {action.damage} damage!</color>");
+                for (int i = 0; i < action.numberOfAttacks; i++)
+                {
+                    player.TakeDamage(action.damage);
+                    if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
+                }
             }
 
-            // Move to next move for the next round
+            // Enemy Armor Logic
+            if (action.armor > 0)
+            {
+                // Note: If you want Enemy Armor, add an AddArmor method to EnemyController
+                UnityEngine.Debug.Log($"{activeEnemy.enemyData.enemyName} gains {action.armor} armor.");
+            }
+
             activeEnemy.PrepareNextAction();
         }
 
-        yield return new WaitForSeconds(1.0f); // Recovery pause
+        yield return new WaitForSeconds(1.0f);
+
+        // Start Next Turn Cycle
         ResetTurn();
     }
 
@@ -201,6 +214,9 @@ public class CombatManager : MonoBehaviour
         pendingAttack = 0;
         pendingDefense = 0;
         currentPower = 0;
+
+        // Decide if Armor persists:
+        player.ResetArmor();
 
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);

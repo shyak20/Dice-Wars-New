@@ -15,6 +15,7 @@ public class CombatUIController : MonoBehaviour
 
     [Header("Controls")]
     public Button rollButton;
+    public Button endTurnButton;
 
     [Header("Status Displays")]
     public Slider powerSlider;
@@ -26,7 +27,7 @@ public class CombatUIController : MonoBehaviour
     public Button nullifyAttackButton;
     public Button nullifyDefenseButton;
 
-    // We use the full name UnityEngine.UI.Image here to avoid the ambiguity error
+    // Internal tracking
     private Dictionary<DieAssetSO, UnityEngine.UI.Image> buttonImages = new Dictionary<DieAssetSO, UnityEngine.UI.Image>();
     private List<DieAssetSO> currentlySelected = new List<DieAssetSO>();
 
@@ -50,13 +51,21 @@ public class CombatUIController : MonoBehaviour
     {
         if (bustPanel != null) bustPanel.SetActive(false);
 
+        // Setup Roll Button
         if (rollButton != null)
         {
             rollButton.onClick.AddListener(() => CombatEvents.OnRollCommand?.Invoke());
             rollButton.interactable = false;
         }
 
-        Invoke(nameof(InitializeDiceButtons), 0.1f);
+        // Setup End Turn Button
+        if (endTurnButton != null)
+        {
+            endTurnButton.onClick.AddListener(() => CombatEvents.OnEndTurnPressed?.Invoke());
+        }
+
+        // Delay to ensure CombatManager is initialized
+        Invoke(nameof(InitializeDiceButtons), 0.15f);
     }
 
     public void InitializeDiceButtons()
@@ -64,21 +73,26 @@ public class CombatUIController : MonoBehaviour
         CombatManager manager = FindObjectOfType<CombatManager>();
         if (manager == null || manager.playerData == null) return;
 
+        // Clear existing test buttons
         foreach (Transform child in diceButtonContainer) Destroy(child.gameObject);
         buttonImages.Clear();
+        currentlySelected.Clear();
 
         foreach (DieAssetSO die in manager.playerData.currentDeck)
         {
+            // Pick prefab based on data type
             GameObject prefab = (die.dieType == DieType.Attack) ? attackButtonPrefab : defenseButtonPrefab;
             GameObject btnObj = Instantiate(prefab, diceButtonContainer);
 
+            // Set text label
             TMP_Text txt = btnObj.GetComponentInChildren<TMP_Text>();
             if (txt != null) txt.text = die.dieName;
 
-            // Explicitly getting the UI Image
+            // Cache Image for highlighting (Explicit namespace to avoid CS0104)
             UnityEngine.UI.Image btnImg = btnObj.GetComponent<UnityEngine.UI.Image>();
             if (btnImg != null) buttonImages.Add(die, btnImg);
 
+            // Toggle logic
             Button btn = btnObj.GetComponent<Button>();
             btn.onClick.AddListener(() => ToggleSelection(die));
         }
@@ -96,10 +110,11 @@ public class CombatUIController : MonoBehaviour
         else
         {
             currentlySelected.Add(die);
-            // Highlight selected (Soft Green)
-            if (buttonImages.ContainsKey(die)) buttonImages[die].color = new Color(0.7f, 1f, 0.7f);
+            // Highlight selected (Soft Greenish-Cyan)
+            if (buttonImages.ContainsKey(die)) buttonImages[die].color = new Color(0.6f, 1f, 0.9f);
         }
 
+        // Roll button only works if dice are selected
         rollButton.interactable = currentlySelected.Count > 0;
     }
 
@@ -141,22 +156,31 @@ public class CombatUIController : MonoBehaviour
     {
         bool isWaiting = (state == CombatState.WaitingForRoll);
 
+        // Control the Dice Tray
         if (trayCanvasGroup != null)
         {
             trayCanvasGroup.interactable = isWaiting;
             trayCanvasGroup.alpha = isWaiting ? 1f : 0.5f;
         }
 
+        // Control Control Buttons
         if (rollButton != null)
         {
             rollButton.gameObject.SetActive(isWaiting);
 
+            // Clear visual selection after a roll is confirmed
             if (state == CombatState.Rolling)
             {
                 foreach (var img in buttonImages.Values) img.color = Color.white;
                 currentlySelected.Clear();
                 rollButton.interactable = false;
             }
+        }
+
+        if (endTurnButton != null)
+        {
+            endTurnButton.interactable = isWaiting;
+            endTurnButton.gameObject.SetActive(isWaiting);
         }
     }
 }
