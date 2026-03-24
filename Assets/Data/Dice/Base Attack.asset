@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54206f09e3fdc344fb4859b6091f99bf, type: 3}
+  m_Name: Base Attack
+  m_EditorClassIdentifier: 
+  dieName: Starting Attack
+  dieType: 0
+  faces:
+  - {fileID: 11400000, guid: 1c3b340afa77e7c4395c8913616755f7, type: 2}
+  - {fileID: 11400000, guid: 4daef11f28f142840af10a9b80b29a8f, type: 2}
+  - {fileID: 11400000, guid: fea284ff0e66a4e409cfbf722b8ce75a, type: 2}
+  - {fileID: 11400000, guid: 48e5b9d1e65e0df44b7e87ca8368976e, type: 2}
+  - {fileID: 11400000, guid: e2de6fe3ab3c79d4bacfc33247a39755, type: 2}
+  - {fileID: 11400000, guid: 0311322b6fde9954ab0768670c476557, type: 2}

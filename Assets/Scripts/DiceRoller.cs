@@ -1,31 +1,12 @@
 using System;
 using System.Collections;
-using TMPro;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(DieVisualizer))] // Ensures we have the data bridge
 public class DiceRoller : MonoBehaviour
 {
-    [Header("Face values by local direction")]
-    [Tooltip("Value on the face pointing to local +Y")]
-    public int upFace = 1;
-
-    [Tooltip("Value on the face pointing to local -Y")]
-    public int downFace = 6;
-
-    [Tooltip("Value on the face pointing to local +X")]
-    public int rightFace = 3;
-
-    [Tooltip("Value on the face pointing to local -X")]
-    public int leftFace = 4;
-
-    [Tooltip("Value on the face pointing to local +Z")]
-    public int forwardFace = 2;
-
-    [Tooltip("Value on the face pointing to local -Z")]
-    public int backFace = 5;
-
-    [Header("Settle detection")]
+    [Header("Settle Detection")]
     [Tooltip("Linear velocity under this is considered almost stopped")]
     public float velocityThreshold = 0.05f;
 
@@ -35,18 +16,15 @@ public class DiceRoller : MonoBehaviour
     [Tooltip("How long the die must stay under thresholds before result is accepted")]
     public float settleTime = 0.5f;
 
-    [Header("Optional UI")]
-    public TMP_Text resultText;
-
-    public Action<int> OnDiceResult;
-
     private Rigidbody rb;
+    private DieVisualizer visualizer;
     private bool isCheckingResult;
     private bool hasResult;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        visualizer = GetComponent<DieVisualizer>();
     }
 
     public void StartCheckingResult()
@@ -63,10 +41,11 @@ public class DiceRoller : MonoBehaviour
         float stillTimer = 0f;
 
         // Small delay so the die has time to start moving after spawn/force
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.2f);
 
         while (!hasResult)
         {
+            // Check if the physics body has come to a rest
             bool isSlowEnough =
                 rb.velocity.magnitude <= velocityThreshold &&
                 rb.angularVelocity.magnitude <= angularVelocityThreshold;
@@ -77,14 +56,28 @@ public class DiceRoller : MonoBehaviour
 
                 if (stillTimer >= settleTime)
                 {
-                    int result = GetTopFaceValue();
+                    // 1. Get the physical orientation index (0-5)
+                    int faceIndex = GetTopFaceIndex();
+
+                    // 2. Retrieve the SO Data from the visualizer bridge
+                    if (visualizer.currentData != null)
+                    {
+                        DieFaceSO resultFace = visualizer.currentData.faces[faceIndex];
+
+                        // 3. Report the specific Face Data to the Combat Manager
+                        CombatManager manager = FindObjectOfType<CombatManager>();
+                        if (manager != null)
+                        {
+                            manager.ResolveRollResult(resultFace);
+                        }
+                        else
+                        {
+                            Debug.LogError("DiceRoller: No CombatManager found in scene!");
+                        }
+                    }
+
                     hasResult = true;
                     isCheckingResult = false;
-
-                    if (resultText != null)
-                        resultText.text = "Rolled: " + result;
-
-                    OnDiceResult?.Invoke(result);
                     yield break;
                 }
             }
@@ -97,29 +90,35 @@ public class DiceRoller : MonoBehaviour
         }
     }
 
-    public int GetTopFaceValue()
+    /// <summary>
+    /// Returns the index of the face pointing Up (+Y in World Space).
+    /// Index mapping matches DieAssetSO: 0:Up, 1:Down, 2:Right, 3:Left, 4:Forward, 5:Back
+    /// </summary>
+    public int GetTopFaceIndex()
     {
         float bestDot = -Mathf.Infinity;
-        int bestValue = -1;
+        int bestIndex = -1;
 
-        CheckFace(transform.up, upFace, ref bestDot, ref bestValue);
-        CheckFace(-transform.up, downFace, ref bestDot, ref bestValue);
-        CheckFace(transform.right, rightFace, ref bestDot, ref bestValue);
-        CheckFace(-transform.right, leftFace, ref bestDot, ref bestValue);
-        CheckFace(transform.forward, forwardFace, ref bestDot, ref bestValue);
-        CheckFace(-transform.forward, backFace, ref bestDot, ref bestValue);
+        // Check local directions against World Up
+        CheckFace(transform.up, 0, ref bestDot, ref bestIndex);      // Local +Y
+        CheckFace(-transform.up, 1, ref bestDot, ref bestIndex);     // Local -Y
+        CheckFace(transform.right, 2, ref bestDot, ref bestIndex);    // Local +X
+        CheckFace(-transform.right, 3, ref bestDot, ref bestIndex);   // Local -X
+        CheckFace(transform.forward, 4, ref bestDot, ref bestIndex);  // Local +Z
+        CheckFace(-transform.forward, 5, ref bestDot, ref bestIndex); // Local -Z
 
-        return bestValue;
+        return bestIndex;
     }
 
-    private void CheckFace(Vector3 faceDirection, int faceValue, ref float bestDot, ref int bestValue)
+    private void CheckFace(Vector3 faceDirection, int index, ref float bestDot, ref int bestIndex)
     {
+        // Dot product of 1 means directions are perfectly aligned
         float dot = Vector3.Dot(faceDirection.normalized, Vector3.up);
 
         if (dot > bestDot)
         {
             bestDot = dot;
-            bestValue = faceValue;
+            bestIndex = index;
         }
     }
 }
