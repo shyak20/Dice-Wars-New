@@ -7,23 +7,21 @@ public class DiceSpawner : MonoBehaviour
     public GameObject dicePrefab;
     public Transform spawnPoint;
 
+    [Header("Visual Effects")]
+    public GameObject attackDestroyEffect;   // Prefab for Attack dice
+    public GameObject defenseDestroyEffect;  // Prefab for Defense dice
+    public float effectLifetime = 2.0f;      // How long the effect stays alive (X seconds)
+
     [Header("Throw Force")]
-    public float minForwardForce = 5f;
-    public float maxForwardForce = 10f;
-    public float minUpwardForce = 2f;
-    public float maxUpwardForce = 5f;
+    public float minForwardForce = 15f;
+    public float maxForwardForce = 25f;
+    public float minUpwardForce = 5f;
+    public float maxUpwardForce = 10f;
 
-    [Header("Torque Settings")]
-    public float minTorque = 5f;
-    public float maxTorque = 20f;
-
-    // Track active dice models to destroy them later
     private List<GameObject> activeDiceModels = new List<GameObject>();
 
-    public int LastBatchCount { get; private set; }
-
     /// <summary>
-    /// Destroys all current dice on the table.
+    /// Destroys all current dice and spawns the appropriate "Death" VFX.
     /// </summary>
     public void ClearOldDice()
     {
@@ -31,47 +29,51 @@ public class DiceSpawner : MonoBehaviour
         {
             if (die != null)
             {
+                // 1. Get the die's data through its visualizer
+                DieVisualizer visualizer = die.GetComponent<DieVisualizer>();
+                if (visualizer != null && visualizer.dieData != null)
+                {
+                    // 2. Pick the correct effect
+                    GameObject effectPrefab = (visualizer.dieData.dieType == DieType.Attack)
+                        ? attackDestroyEffect
+                        : defenseDestroyEffect;
+
+                    // 3. Spawn the effect at the die's current position/rotation
+                    if (effectPrefab != null)
+                    {
+                        GameObject effectInstance = Instantiate(effectPrefab, die.transform.position, die.transform.rotation);
+
+                        // 4. Destroy the effect after X seconds
+                        Destroy(effectInstance, effectLifetime);
+                    }
+                }
+
+                // 5. Finally, destroy the die model
                 Destroy(die);
             }
         }
         activeDiceModels.Clear();
     }
 
-    /// <summary>
-    /// Clears the table and spawns a new batch.
-    /// </summary>
     public void SpawnAndRollBatch(List<DieAssetSO> diceList)
     {
-        // 1. Clean up before spawning new ones
+        // Cleanup happens here at the start of a new roll
         ClearOldDice();
 
-        if (dicePrefab == null || spawnPoint == null)
-        {
-            UnityEngine.Debug.LogWarning("DiceSpawner: Missing dicePrefab or spawnPoint.");
-            return;
-        }
-
-        LastBatchCount = diceList.Count;
+        if (dicePrefab == null || spawnPoint == null) return;
 
         for (int i = 0; i < diceList.Count; i++)
         {
             Vector3 offset = new Vector3(i * 0.4f, 0, 0);
-
-            // 2. Spawn the new die
-            GameObject die = Instantiate(dicePrefab, spawnPoint.position + offset, UnityEngine.Random.rotation);
-
-            // 3. Add to our tracking list
+            GameObject die = Instantiate(dicePrefab, spawnPoint.position + offset, Random.rotation);
             activeDiceModels.Add(die);
 
-            // Initialize visuals
             DieVisualizer visualizer = die.GetComponent<DieVisualizer>();
             if (visualizer != null) visualizer.Initialize(diceList[i]);
 
-            // Apply physics
             Rigidbody rb = die.GetComponent<Rigidbody>();
             if (rb != null) ApplyForces(rb);
 
-            // Start settling logic
             DiceRoller roller = die.GetComponent<DiceRoller>();
             if (roller != null) roller.StartCheckingResult();
         }
@@ -82,13 +84,12 @@ public class DiceSpawner : MonoBehaviour
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
-        float forwardForce = UnityEngine.Random.Range(minForwardForce, maxForwardForce);
-        float upwardForce = UnityEngine.Random.Range(minUpwardForce, maxUpwardForce);
+        float forwardForce = Random.Range(minForwardForce, maxForwardForce);
+        float upwardForce = Random.Range(minUpwardForce, maxUpwardForce);
 
         Vector3 throwDirection = (spawnPoint.forward * forwardForce) + (spawnPoint.up * upwardForce);
         rb.AddForce(throwDirection, ForceMode.Impulse);
 
-        Vector3 randomTorque = UnityEngine.Random.insideUnitSphere * UnityEngine.Random.Range(minTorque, maxTorque);
-        rb.AddTorque(randomTorque, ForceMode.Impulse);
+        rb.AddTorque(Random.insideUnitSphere * Random.Range(10f, 30f), ForceMode.Impulse);
     }
 }

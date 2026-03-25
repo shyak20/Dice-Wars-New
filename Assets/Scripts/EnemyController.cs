@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class EnemyController : MonoBehaviour
 {
@@ -9,16 +10,45 @@ public class EnemyController : MonoBehaviour
     [Header("UI References")]
     public TMP_Text nameText;
     public Slider healthSlider;
-    public TMP_Text healthText; // <--- The new text field
+    public TMP_Text healthText;
     public TMP_Text intentText;
+
+    [Header("Visual Effects (Sprite Overlay)")]
+    public SpriteRenderer enemySprite;
+    public GameObject hitEffectObject;
+    public float hitEffectDuration = 0.5f;
+    public float flashDuration = 0.15f;
+    public Color flashColor = Color.white; // We still need color reference for initialization
+
+    [Header("Juice (Camera Shake)")]
+    [Range(0.01f, 0.5f)] public float damageShakeDuration = 0.1f;
+    [Range(0.01f, 1f)] public float damageShakeMagnitude = 0.2f;
+
+    // Shader property ID for performance
+    private static readonly int FlashAmountID = Shader.PropertyToID("_FlashAmount");
+    private static readonly int FlashColorID = Shader.PropertyToID("_FlashColor");
 
     private int currentHealth;
     private int currentCycleIndex = 0;
     private EnemyActionSO currentIntent;
 
+    private Coroutine flashRoutine;
+    private Coroutine effectRoutine;
+    private Material enemyMaterial;
+
     private void Start()
     {
         if (enemyData != null) Initialize(enemyData);
+        if (hitEffectObject != null) hitEffectObject.SetActive(false);
+
+        // Access the unique instance of the material for this sprite
+        if (enemySprite != null)
+        {
+            enemyMaterial = enemySprite.material;
+            // Initialize the material properties
+            enemyMaterial.SetColor(FlashColorID, flashColor);
+            enemyMaterial.SetFloat(FlashAmountID, 0f);
+        }
     }
 
     public void Initialize(EnemyTypeSO data)
@@ -31,6 +61,65 @@ public class EnemyController : MonoBehaviour
         UpdateUI();
         PrepareNextAction();
     }
+
+    public void TakeDamage(int amount)
+    {
+        currentHealth -= amount;
+        currentHealth = Mathf.Max(0, currentHealth);
+        UpdateUI();
+
+        // 1. Shake Camera (Global)
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.Shake(damageShakeDuration, damageShakeMagnitude);
+        }
+
+        // 2. Local Hit Visuals
+        TriggerHitVisuals();
+
+        if (currentHealth <= 0)
+        {
+            UnityEngine.Debug.Log($"{enemyData.enemyName} defeated!");
+            // Death Logic
+        }
+    }
+
+    private void TriggerHitVisuals()
+    {
+        if (hitEffectObject != null)
+        {
+            if (effectRoutine != null) StopCoroutine(effectRoutine);
+            effectRoutine = StartCoroutine(HitEffectSequence());
+        }
+
+        if (enemyMaterial != null)
+        {
+            if (flashRoutine != null) StopCoroutine(flashRoutine);
+            flashRoutine = StartCoroutine(SolidFlashSequence());
+        }
+    }
+
+    private IEnumerator HitEffectSequence()
+    {
+        hitEffectObject.SetActive(true);
+        yield return new WaitForSeconds(hitEffectDuration);
+        hitEffectObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Uses the new Shader property instead of SpriteRenderer.color
+    /// </summary>
+    private IEnumerator SolidFlashSequence()
+    {
+        // Set Flash to 100% (Solid Color)
+        enemyMaterial.SetFloat(FlashAmountID, 1f);
+        yield return new WaitForSeconds(flashDuration);
+        // Set Flash to 0% (Normal Texture)
+        enemyMaterial.SetFloat(FlashAmountID, 0f);
+        flashRoutine = null;
+    }
+
+    // --- Rest of sequential logic below ---
 
     public void PrepareNextAction()
     {
@@ -53,7 +142,6 @@ public class EnemyController : MonoBehaviour
     private void UpdateIntentUI()
     {
         if (intentText == null) return;
-
         string description = "";
         if (currentIntent.damage > 0)
         {
@@ -61,39 +149,22 @@ public class EnemyController : MonoBehaviour
                 ? $"{currentIntent.damage}x{currentIntent.numberOfAttacks} ATK"
                 : $"{currentIntent.damage} ATK";
         }
-
         if (currentIntent.armor > 0)
         {
             if (description != "") description += " & ";
             description += $"{currentIntent.armor} ARM";
         }
-
         intentText.text = $"Next: {currentIntent.actionName}\n({description})";
-    }
-
-    public void TakeDamage(int amount)
-    {
-        currentHealth -= amount;
-        currentHealth = Mathf.Max(0, currentHealth);
-        UpdateUI();
-
-        // Optional: Trigger a "Hit" animation here
     }
 
     private void UpdateUI()
     {
-        // Update the bar
         if (healthSlider != null)
         {
             healthSlider.maxValue = enemyData.maxHealth;
             healthSlider.value = currentHealth;
         }
-
-        // Update the numbers (e.g., "50 / 50")
-        if (healthText != null)
-        {
-            healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
-        }
+        if (healthText != null) healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
     }
 
     public EnemyActionSO GetCurrentAction() => currentIntent;

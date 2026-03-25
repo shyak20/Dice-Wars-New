@@ -1,124 +1,80 @@
-using System;
-using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(DieVisualizer))] // Ensures we have the data bridge
 public class DiceRoller : MonoBehaviour
 {
-    [Header("Settle Detection")]
-    [Tooltip("Linear velocity under this is considered almost stopped")]
-    public float velocityThreshold = 0.05f;
-
-    [Tooltip("Angular velocity under this is considered almost stopped")]
-    public float angularVelocityThreshold = 0.05f;
-
-    [Tooltip("How long the die must stay under thresholds before result is accepted")]
-    public float settleTime = 0.5f;
+    [Header("Detection Settings")]
+    public float velocityThreshold = 0.2f;
+    public float settleTime = 0.3f;
 
     private Rigidbody rb;
     private DieVisualizer visualizer;
-    private bool isCheckingResult;
-    private bool hasResult;
+    private CombatManager manager;
+    private bool isChecking = false;
+    private float settleTimer = 0f;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         visualizer = GetComponent<DieVisualizer>();
+        manager = FindObjectOfType<CombatManager>();
     }
 
     public void StartCheckingResult()
     {
-        if (isCheckingResult) return;
-
-        hasResult = false;
-        isCheckingResult = true;
-        StartCoroutine(CheckWhenSettled());
+        settleTimer = 0f;
+        isChecking = true;
     }
 
-    private IEnumerator CheckWhenSettled()
+    private void Update()
     {
-        float stillTimer = 0f;
+        if (!isChecking) return;
 
-        // Small delay so the die has time to start moving after spawn/force
-        yield return new WaitForSeconds(0.2f);
-
-        while (!hasResult)
+        if (rb.velocity.magnitude < velocityThreshold && rb.angularVelocity.magnitude < velocityThreshold)
         {
-            // Check if the physics body has come to a rest
-            bool isSlowEnough =
-                rb.velocity.magnitude <= velocityThreshold &&
-                rb.angularVelocity.magnitude <= angularVelocityThreshold;
-
-            if (isSlowEnough)
+            settleTimer += Time.deltaTime;
+            if (settleTimer >= settleTime)
             {
-                stillTimer += Time.deltaTime;
-
-                if (stillTimer >= settleTime)
-                {
-                    // 1. Get the physical orientation index (0-5)
-                    int faceIndex = GetTopFaceIndex();
-
-                    // 2. Retrieve the SO Data from the visualizer bridge
-                    if (visualizer.currentData != null)
-                    {
-                        DieFaceSO resultFace = visualizer.currentData.faces[faceIndex];
-
-                        // 3. Report the specific Face Data to the Combat Manager
-                        CombatManager manager = FindObjectOfType<CombatManager>();
-                        if (manager != null)
-                        {
-                            manager.ResolveRollResult(resultFace);
-                        }
-                        else
-                        {
-                            Debug.LogError("DiceRoller: No CombatManager found in scene!");
-                        }
-                    }
-
-                    hasResult = true;
-                    isCheckingResult = false;
-                    yield break;
-                }
+                isChecking = false;
+                DetermineFinalFace();
             }
-            else
-            {
-                stillTimer = 0f;
-            }
-
-            yield return null;
         }
+        else { settleTimer = 0f; }
     }
 
-    /// <summary>
-    /// Returns the index of the face pointing Up (+Y in World Space).
-    /// Index mapping matches DieAssetSO: 0:Up, 1:Down, 2:Right, 3:Left, 4:Forward, 5:Back
-    /// </summary>
-    public int GetTopFaceIndex()
+    private void DetermineFinalFace()
     {
-        float bestDot = -Mathf.Infinity;
-        int bestIndex = -1;
+        // RESTORED & CORRECTED MAPPING:
+        // This array matches the submesh order from your Blender export.
+        Vector3[] localFaceDirections = {
+            Vector3.up,      // Element 0: +Y (Face 1)
+            Vector3.down,    // Element 1: -Y (Face 6)
+            Vector3.right,   // Element 2: +X (Face 2) -> Swapped to fix "2 getting 5"
+            Vector3.left,    // Element 3: -X (Face 5) -> Swapped to fix "2 getting 5"
+            Vector3.forward,    // Element 4: -Z (Face 3) -> Swapped to fix "4 getting 3"
+            Vector3.back  // Element 5: +Z (Face 4) -> Swapped to fix "4 getting 3"
+        };
 
-        // Check local directions against World Up
-        CheckFace(transform.up, 0, ref bestDot, ref bestIndex);      // Local +Y
-        CheckFace(-transform.up, 1, ref bestDot, ref bestIndex);     // Local -Y
-        CheckFace(transform.right, 2, ref bestDot, ref bestIndex);    // Local +X
-        CheckFace(-transform.right, 3, ref bestDot, ref bestIndex);   // Local -X
-        CheckFace(transform.forward, 4, ref bestDot, ref bestIndex);  // Local +Z
-        CheckFace(-transform.forward, 5, ref bestDot, ref bestIndex); // Local -Z
+        float bestDot = -1f;
+        int closestIndex = 0;
 
-        return bestIndex;
-    }
-
-    private void CheckFace(Vector3 faceDirection, int index, ref float bestDot, ref int bestIndex)
-    {
-        // Dot product of 1 means directions are perfectly aligned
-        float dot = Vector3.Dot(faceDirection.normalized, Vector3.up);
-
-        if (dot > bestDot)
+        for (int i = 0; i < localFaceDirections.Length; i++)
         {
-            bestDot = dot;
-            bestIndex = index;
+            // We transform the local vector into world space to see which one is "Up"
+            Vector3 worldFaceDir = transform.TransformDirection(localFaceDirections[i]);
+            float dot = Vector3.Dot(worldFaceDir, Vector3.up);
+
+            if (dot > bestDot)
+            {
+                bestDot = dot;
+                closestIndex = i;
+            }
+        }
+
+        if (visualizer != null && visualizer.dieData != null)
+        {
+            // Pick the SO from the matching index in our faces array
+            DieFaceSO resultFace = visualizer.dieData.faces[closestIndex];
+            manager.ResolveRollResult(resultFace);
         }
     }
 }

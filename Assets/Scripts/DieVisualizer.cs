@@ -2,45 +2,35 @@ using UnityEngine;
 
 public class DieVisualizer : MonoBehaviour
 {
-    [Header("References")]
-    [Tooltip("Drag the child object containing the MeshRenderer here.")]
-    public MeshRenderer targetRenderer;
+    public MeshRenderer meshRenderer;
+    public DieAssetSO dieData;
 
-    // This is the missing variable the DiceRoller is looking for!
-    [HideInInspector]
-    public DieAssetSO currentData;
+    private void Awake()
+    {
+        if (meshRenderer == null) meshRenderer = GetComponentInChildren<MeshRenderer>();
+    }
 
     public void Initialize(DieAssetSO data)
     {
-        currentData = data; // Store the data reference
-
-        // Fallback: If you forgot to drag it in, try to find it in children
-        if (targetRenderer == null)
+        if (data == null || data.faces == null || data.faces.Length != 6)
         {
-            targetRenderer = GetComponentInChildren<MeshRenderer>();
-        }
-
-        if (targetRenderer == null || data == null)
-        {
-            UnityEngine.Debug.LogError($"DieVisualizer on {gameObject.name}: Missing Renderer or Data!");
+            Debug.LogError("DieVisualizer: DieAssetSO must have exactly 6 faces assigned!");
             return;
         }
 
-        // Apply materials to the sub-meshes
-        Material[] newMaterials = new Material[6];
+        dieData = data;
+
+        // Build the material array based on the Face SOs
+        Material[] materialsToApply = new Material[6];
 
         for (int i = 0; i < 6; i++)
         {
             if (data.faces[i] != null)
             {
-                newMaterials[i] = data.faces[i].faceMaterial;
-            }
-            else
-            {
-                UnityEngine.Debug.LogWarning($"DieAsset {data.dieName} is missing a face at index {i}!");
+                materialsToApply[i] = data.faces[i].faceMaterial;
             }
         }
 
-        targetRenderer.materials = newMaterials;
+        meshRenderer.materials = materialsToApply;
     }
 }
