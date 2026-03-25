@@ -163,17 +163,22 @@ public class CombatUIController : MonoBehaviour
         {
             rollButton.gameObject.SetActive(isWaiting);
 
-            if (state == CombatState.Rolling)
+            if (isWaiting)
             {
-                foreach (var img in buttonImages.Values) img.color = Color.white;
-                currentlySelected.Clear();
+                // When we return to waiting, ensure the button 
+                // reflects the persistent selection count.
+                rollButton.interactable = currentlySelected.Count > 0;
+            }
+            else if (state == CombatState.Rolling)
+            {
+                // REMOVED the color reset and currentlySelected.Clear()
+                // Just disable the button so they can't double-click while rolling.
                 rollButton.interactable = false;
             }
         }
 
         if (endTurnButton != null)
         {
-            // Only show End Turn if we aren't in the middle of a roll or a bust check
             endTurnButton.gameObject.SetActive(isWaiting);
             endTurnButton.interactable = isWaiting;
         }

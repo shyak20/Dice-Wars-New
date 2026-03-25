@@ -78,11 +78,17 @@ public class CombatManager : MonoBehaviour
     private void ExecuteBatchRoll()
     {
         if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
+
         expectedDiceCount = selectedDice.Count;
         diceSettledCount = 0;
+
         ChangeState(CombatState.Rolling);
+
+        // Launch dice
         spawner.SpawnAndRollBatch(selectedDice);
-        selectedDice.Clear();
+
+        // REMOVED: selectedDice.Clear(); 
+        // By removing this, the Manager "remembers" what you picked for the next roll.
     }
 
     public void ResolveRollResult(DieFaceSO face)
