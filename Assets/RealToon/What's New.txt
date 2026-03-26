@@ -1,0 +1,51 @@
+What's New to RealToon V5.0.14 (October 2025)
+=====================================
+
+[New]
+(New Options for RimLight feature) 
+- RimLight In Shadow (URP & HDRP)
+- Position (Adjust RimLight Position.) (ALL)
+- Intensity (Adjust The Intensity of The Option "Light Affect Rim Light Color".) (HDRP)
+
+(New Options for ShadowT SDF Mode - Helper) (All)
+- SDF Texture (SDF Shadow Texture Slot.)
+- Hardness (Adjust the hardness of the SDF Shadow.)
+- Self Shadow (Enable/Disable RealToon's Self Shadow feature.)
+
+(New Options for Outline) (All)
+- Outline Resize (Adjust the XYZ axis outline width/size.)
+
+(New Options for Welcome Screen) (All)
+- Check Updates
+
+- Object Position Z (CS) (All) - (Adjust object z position in clip space.)
+- Decal Support for RealToon HDRP.
+
+[Improvements]
+- Improved Welcome Screen UI.
+- Dynamic Lightmap recode. (URP Unity 6.0 to later)
+- Does not create any additional shader keywords when you enable options. (URP Unity 6.0 to later)
+- Enable/Disable Transparent Mode has been rewrite because of the added Decals. (HDRP Unity 6.0 to later)
+
+[Changes]
+- RayTracing Punctual Lights are changed to newer variables and functions. (HDRP Unity 6.0 to later)
+- Enable Arealight option default to enabled.  (HDRP Unity 6.0 to later)
+- Swap Shader To RealToon Tool, Emission Map will now use it as SelfLit Emission Map not Mask.
+- Now follows the new VRC Light Volumes folder name. (BiRP/Built-In) (VRC)
+- URP 12 & 13 and HDRP 12 & 13 are not supported anymore.
+
+
+[Fixed]
+- WRITE_NORMAL_BUFFER keyword redefinition. (HDRP Unity 6.0 to later)
+- Decal does not follow Render Layer selections. (URP Unity 6.1 to later)
+- Depth Normals Pass does not have _WRITE_RENDERING_LAYERS keyword. (URP 16 to below - Deferred Rendering)
+- unity_ObjectToWorld error. (URP)
+- Sample Directional Lightmap error. (URP)
+- Enable/Disable VRC Light Volumes not working. (BiRP/Built-In) (VRC)
+====================================
+
+#Read the "Change - Fix Log.txt." file for previous updates.
+#This update supports Unity 5, 2017, 2018, 2019, 2020, 2022, 2023, Unity 6 and future unity versions.
+
+[Other Notes]
+* If you encounter some problems or need help just contact by email.
