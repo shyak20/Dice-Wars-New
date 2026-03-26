@@ -1,125 +1,80 @@
-using System;
-using System.Collections;
-using TMPro;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
 public class DiceRoller : MonoBehaviour
 {
-    [Header("Face values by local direction")]
-    [Tooltip("Value on the face pointing to local +Y")]
-    public int upFace = 1;
-
-    [Tooltip("Value on the face pointing to local -Y")]
-    public int downFace = 6;
-
-    [Tooltip("Value on the face pointing to local +X")]
-    public int rightFace = 3;
-
-    [Tooltip("Value on the face pointing to local -X")]
-    public int leftFace = 4;
-
-    [Tooltip("Value on the face pointing to local +Z")]
-    public int forwardFace = 2;
-
-    [Tooltip("Value on the face pointing to local -Z")]
-    public int backFace = 5;
-
-    [Header("Settle detection")]
-    [Tooltip("Linear velocity under this is considered almost stopped")]
-    public float velocityThreshold = 0.05f;
-
-    [Tooltip("Angular velocity under this is considered almost stopped")]
-    public float angularVelocityThreshold = 0.05f;
-
-    [Tooltip("How long the die must stay under thresholds before result is accepted")]
-    public float settleTime = 0.5f;
-
-    [Header("Optional UI")]
-    public TMP_Text resultText;
-
-    public Action<int> OnDiceResult;
+    [Header("Detection Settings")]
+    public float velocityThreshold = 0.2f;
+    public float settleTime = 0.3f;
 
     private Rigidbody rb;
-    private bool isCheckingResult;
-    private bool hasResult;
+    private DieVisualizer visualizer;
+    private CombatManager manager;
+    private bool isChecking = false;
+    private float settleTimer = 0f;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        visualizer = GetComponent<DieVisualizer>();
+        manager = FindObjectOfType<CombatManager>();
     }
 
     public void StartCheckingResult()
     {
-        if (isCheckingResult) return;
-
-        hasResult = false;
-        isCheckingResult = true;
-        StartCoroutine(CheckWhenSettled());
+        settleTimer = 0f;
+        isChecking = true;
     }
 
-    private IEnumerator CheckWhenSettled()
+    private void Update()
     {
-        float stillTimer = 0f;
+        if (!isChecking) return;
 
-        // Small delay so the die has time to start moving after spawn/force
-        yield return new WaitForSeconds(0.1f);
-
-        while (!hasResult)
+        if (rb.velocity.magnitude < velocityThreshold && rb.angularVelocity.magnitude < velocityThreshold)
         {
-            bool isSlowEnough =
-                rb.velocity.magnitude <= velocityThreshold &&
-                rb.angularVelocity.magnitude <= angularVelocityThreshold;
-
-            if (isSlowEnough)
+            settleTimer += Time.deltaTime;
+            if (settleTimer >= settleTime)
             {
-                stillTimer += Time.deltaTime;
-
-                if (stillTimer >= settleTime)
-                {
-                    int result = GetTopFaceValue();
-                    hasResult = true;
-                    isCheckingResult = false;
-
-                    if (resultText != null)
-                        resultText.text = "Rolled: " + result;
-
-                    OnDiceResult?.Invoke(result);
-                    yield break;
-                }
+                isChecking = false;
+                DetermineFinalFace();
             }
-            else
-            {
-                stillTimer = 0f;
-            }
-
-            yield return null;
         }
+        else { settleTimer = 0f; }
     }
 
-    public int GetTopFaceValue()
+    private void DetermineFinalFace()
     {
-        float bestDot = -Mathf.Infinity;
-        int bestValue = -1;
+        // RESTORED & CORRECTED MAPPING:
+        // This array matches the submesh order from your Blender export.
+        Vector3[] localFaceDirections = {
+            Vector3.up,      // Element 0: +Y (Face 1)
+            Vector3.down,    // Element 1: -Y (Face 6)
+            Vector3.right,   // Element 2: +X (Face 2) -> Swapped to fix "2 getting 5"
+            Vector3.left,    // Element 3: -X (Face 5) -> Swapped to fix "2 getting 5"
+            Vector3.forward,    // Element 4: -Z (Face 3) -> Swapped to fix "4 getting 3"
+            Vector3.back  // Element 5: +Z (Face 4) -> Swapped to fix "4 getting 3"
+        };
 
-        CheckFace(transform.up, upFace, ref bestDot, ref bestValue);
-        CheckFace(-transform.up, downFace, ref bestDot, ref bestValue);
-        CheckFace(transform.right, rightFace, ref bestDot, ref bestValue);
-        CheckFace(-transform.right, leftFace, ref bestDot, ref bestValue);
-        CheckFace(transform.forward, forwardFace, ref bestDot, ref bestValue);
-        CheckFace(-transform.forward, backFace, ref bestDot, ref bestValue);
+        float bestDot = -1f;
+        int closestIndex = 0;
 
-        return bestValue;
-    }
-
-    private void CheckFace(Vector3 faceDirection, int faceValue, ref float bestDot, ref int bestValue)
-    {
-        float dot = Vector3.Dot(faceDirection.normalized, Vector3.up);
-
-        if (dot > bestDot)
+        for (int i = 0; i < localFaceDirections.Length; i++)
         {
-            bestDot = dot;
-            bestValue = faceValue;
+            // We transform the local vector into world space to see which one is "Up"
+            Vector3 worldFaceDir = transform.TransformDirection(localFaceDirections[i]);
+            float dot = Vector3.Dot(worldFaceDir, Vector3.up);
+
+            if (dot > bestDot)
+            {
+                bestDot = dot;
+                closestIndex = i;
+            }
+        }
+
+        if (visualizer != null && visualizer.dieData != null)
+        {
+            // Pick the SO from the matching index in our faces array
+            DieFaceSO resultFace = visualizer.dieData.faces[closestIndex];
+            manager.ResolveRollResult(resultFace);
         }
     }
 }

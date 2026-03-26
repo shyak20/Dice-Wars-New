@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54206f09e3fdc344fb4859b6091f99bf, type: 3}
+  m_Name: Base Defense
+  m_EditorClassIdentifier: 
+  dieName: Starting Defense
+  dieType: 1
+  faceMaterials:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  faces:
+  - {fileID: 11400000, guid: a0c0a3e6f34f23140a8c9e80248096fc, type: 2}
+  - {fileID: 11400000, guid: 3ee09781684cb9143a71441594752bb0, type: 2}
+  - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
+  - {fileID: 11400000, guid: 2a0aefda4759b5f48aa8c2460d2157ff, type: 2}
+  - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
+  - {fileID: 11400000, guid: 30fb8bc8d2a415240a163f4392fdb552, type: 2}
