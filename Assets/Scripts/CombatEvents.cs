@@ -11,6 +11,10 @@ public static class CombatEvents
     public static Action OnRollCommand;
     public static Action OnEndTurnPressed;
 
+    // Check Battle Outcome
+    public static Action OnPlayerVictory;
+    public static Action OnPlayerDefeat;
+
     // Bust Logic
     public static Action<int, int> OnBustOccurred;
     public static Action<bool> OnBustResolved;

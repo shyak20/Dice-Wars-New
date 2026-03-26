@@ -15,6 +15,8 @@ public class PlayerStatus : MonoBehaviour
     public TMP_Text armorText;
     public GameObject armorIcon; // Optional: A shield icon that shows when armor > 0
 
+    public int GetCurrentHealth() => currentHealth;
+
     private void Awake()
     {
         currentHealth = maxHealth;

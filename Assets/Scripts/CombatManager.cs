@@ -83,12 +83,9 @@ public class CombatManager : MonoBehaviour
         diceSettledCount = 0;
 
         ChangeState(CombatState.Rolling);
-
-        // Launch dice
         spawner.SpawnAndRollBatch(selectedDice);
 
-        // REMOVED: selectedDice.Clear(); 
-        // By removing this, the Manager "remembers" what you picked for the next roll.
+        // Note: selectedDice.Clear() remains removed to keep your selection persistent.
     }
 
     public void ResolveRollResult(DieFaceSO face)
@@ -140,8 +137,17 @@ public class CombatManager : MonoBehaviour
     private void SubmitTurn()
     {
         ChangeState(CombatState.TurnEnd);
-        if (pendingAttack > 0) activeEnemy.TakeDamage(pendingAttack);
+
+        // Player deals damage
+        if (pendingAttack > 0)
+        {
+            activeEnemy.TakeDamage(pendingAttack);
+            // Check if enemy died after the player hit them
+            if (CheckVictory()) return;
+        }
+
         if (pendingDefense > 0) player.AddArmor(pendingDefense);
+
         StartCoroutine(EnemyTurnRoutine());
     }
 
@@ -158,6 +164,10 @@ public class CombatManager : MonoBehaviour
                 for (int i = 0; i < action.numberOfAttacks; i++)
                 {
                     player.TakeDamage(action.damage);
+
+                    // Check if player died during the multi-attack
+                    if (CheckDefeat()) yield break;
+
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
                 }
             }
@@ -166,6 +176,28 @@ public class CombatManager : MonoBehaviour
 
         yield return new WaitForSeconds(1.0f);
         ResetTurn();
+    }
+
+    private bool CheckVictory()
+    {
+        if (activeEnemy.GetCurrentHealth() <= 0)
+        {
+            ChangeState(CombatState.Victory);
+            CombatEvents.OnPlayerVictory?.Invoke();
+            return true;
+        }
+        return false;
+    }
+
+    private bool CheckDefeat()
+    {
+        if (player.GetCurrentHealth() <= 0)
+        {
+            ChangeState(CombatState.Defeat);
+            CombatEvents.OnPlayerDefeat?.Invoke();
+            return true;
+        }
+        return false;
     }
 
     private void ResetTurn()
