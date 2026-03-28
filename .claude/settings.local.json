@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find D:WorkTheAnosmicDice-Wars-NewAssetsScripts -type f -name *.cs)",
+      "Bash(find D:WorkTheAnosmicDice-Wars-NewProjectSettings -type f -name *.asset)"
+    ]
+  }
+}
