@@ -11,7 +11,6 @@ public class CombatManager : MonoBehaviour
     public EnemyController activeEnemy;
 
     [Header("Data & Physics")]
-    public PlayerDataSO playerData;
     public DiceSpawner spawner;
 
     [Header("Balancing")]
@@ -52,9 +51,11 @@ public class CombatManager : MonoBehaviour
     public void RefundPower(int amount) => currentPower -= amount;
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
 
+    private PlayerDataSO playerData;
+
     private void Awake()
     {
-        if (playerData == null || spawner == null || player == null || activeEnemy == null)
+        if (spawner == null || player == null || activeEnemy == null)
             Debug.LogError("CombatManager: Missing references!");
     }
 
@@ -78,6 +79,13 @@ public class CombatManager : MonoBehaviour
 
     private void InitializeCombat()
     {
+        if (PlayerDataContainer.Instance == null)
+        {
+            Debug.LogError("CombatManager: PlayerDataContainer not found in scene!");
+            return;
+        }
+
+        playerData = PlayerDataContainer.Instance.RuntimeData;
         ApplyTestStartingFaces();
         selectedDice.Clear();
         channeledFaces.Clear();
@@ -103,37 +111,29 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
-        var runtimeDeck = Instantiate(playerData);
-    
-        for (int d = 0; d < runtimeDeck.currentDeck.Count; d++)
+        for (var d = 0; d < playerData.currentDeck.Count; d++)
         {
-            var clonedDie = Instantiate(runtimeDeck.currentDeck[d]);
-            clonedDie.name = runtimeDeck.currentDeck[d].name + " (Test)";
+            var die = playerData.currentDeck[d];
 
             if (testStartingFaces.perCube)
             {
                 var face = validFaces[d % validFaces.Count];
-                for (int i = 0; i < clonedDie.faces.Length; i++)
-                {
-                    clonedDie.faces[i] = face;
-                }
+                for (var i = 0; i < die.faces.Length; i++)
+                    die.faces[i] = face;
             }
             else if (testStartingFaces.changeAll)
             {
-                for (int i = 0; i < clonedDie.faces.Length; i++)
-                    clonedDie.faces[i] = validFaces[i % validFaces.Count];
+                for (var i = 0; i < die.faces.Length; i++)
+                    die.faces[i] = validFaces[i % validFaces.Count];
             }
             else
             {
-                for (int i = 0; i < validFaces.Count && i < clonedDie.faces.Length; i++)
-                    clonedDie.faces[i] = validFaces[i];
+                for (var i = 0; i < validFaces.Count && i < die.faces.Length; i++)
+                    die.faces[i] = validFaces[i];
             }
-
-            runtimeDeck.currentDeck[d] = clonedDie;
         }
 
-        playerData = runtimeDeck;
-        Debug.Log($"<color=red>[TestStartingFaces] Applied {validFaces.Count} test face(s) </color> to {runtimeDeck.currentDeck.Count} dice (ChangeAll: {testStartingFaces.changeAll})");
+        Debug.Log($"<color=red>[TestStartingFaces] Applied {validFaces.Count} test face(s) </color> to {playerData.currentDeck.Count} dice (ChangeAll: {testStartingFaces.changeAll})");
 #endif
     }
 

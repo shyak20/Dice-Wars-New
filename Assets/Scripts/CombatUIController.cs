@@ -66,14 +66,17 @@ public class CombatUIController : MonoBehaviour
 
     public void InitializeDiceButtons()
     {
-        CombatManager manager = FindObjectOfType<CombatManager>();
-        if (manager == null || manager.playerData == null) return;
+        if (PlayerDataContainer.Instance == null || PlayerDataContainer.Instance.RuntimeData == null)
+        {
+            Debug.LogError("CombatUIController: PlayerDataContainer not found!");
+            return;
+        }
 
         foreach (Transform child in diceButtonContainer) Destroy(child.gameObject);
         buttonImages.Clear();
         currentlySelected.Clear();
 
-        foreach (DieAssetSO die in manager.playerData.currentDeck)
+        foreach (DieAssetSO die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
         {
             GameObject prefab = (die.dieType == DieType.Attack) ? attackButtonPrefab : defenseButtonPrefab;
             GameObject btnObj = Instantiate(prefab, diceButtonContainer);

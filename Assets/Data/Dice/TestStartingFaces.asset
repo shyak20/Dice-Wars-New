@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3526afc89a55e9946ac6865ecef2a57d, type: 3}
   m_Name: TestStartingFaces
   m_EditorClassIdentifier: 
-  isActive: 1
+  isActive: 0
   changeAll: 1
   perCube: 1
   testFaces:
-  - {fileID: 11400000, guid: 518bc06937ec198448db29ec66b4e861, type: 2}
+  - {fileID: 11400000, guid: 9cc0b18c711298849b1a78565ce49a9f, type: 2}
   - {fileID: 11400000, guid: 59d079196eab76c409847e894e0f787e, type: 2}
