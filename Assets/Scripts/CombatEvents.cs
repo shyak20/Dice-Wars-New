@@ -19,6 +19,9 @@ public static class CombatEvents
     public static Action<int, int> OnBustOccurred;
     public static Action<bool> OnBustResolved;
 
+    // Rolls
+    public static Action<int, int> OnRollsRemainingChanged; // (remaining, max)
+
     // Game State
     public static Action<CombatState> OnStateChanged;
 }

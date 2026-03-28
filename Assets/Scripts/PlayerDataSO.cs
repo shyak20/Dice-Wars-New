@@ -6,5 +6,6 @@ public class PlayerDataSO : ScriptableObject
 {
     public List<DieAssetSO> currentDeck = new List<DieAssetSO>();
 
-    // You can add Gold, Health, etc., here later.
+    [Header("Combat Settings")]
+    public int maxRollsPerTurn = 3;
 }
