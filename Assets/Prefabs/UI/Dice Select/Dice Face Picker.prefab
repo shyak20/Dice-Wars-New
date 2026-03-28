@@ -386,8 +386,7 @@ MonoBehaviour:
   faceSelectionView: {fileID: 1052140347714881870}
   diceSelectionView: {fileID: 3586888306418070807}
   faceSlotSelectionView: {fileID: 5606642747584493253}
-  playerData: {fileID: 11400000, guid: 01b9fee3f17e48344b7ea89592d93dd0, type: 2}
-  faceOptions: []
+  lootTable: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
 --- !u!1 &5579793587313562038
 GameObject:
   m_ObjectHideFlags: 0
