@@ -1,17 +1,17 @@
 using System.Collections.Generic;
-using System.Linq; // Needed for the weighted reward math
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class WinLoseUIController : MonoBehaviour
 {
+    [Header("Data Source")]
+    public FaceLootTableSO lootTable;
+
     [Header("Victory/Reward UI")]
     public GameObject rewardPanel;
     public Transform rewardContainer;
-    public GameObject rewardButtonPrefab;
-    [Tooltip("Drag every DieFaceSO in the game here so the system can pick from them")]
-    public List<DieFaceSO> allPossibleFaces;
+    public GameObject rewardButtonPrefab; // This prefab needs the RewardButtonUI script!
 
     [Header("Defeat UI")]
     public GameObject gameOverPanel;
@@ -42,57 +42,32 @@ public class WinLoseUIController : MonoBehaviour
 
     private void ShowRewardScreen()
     {
-        if (rewardPanel == null) return;
+        if (rewardPanel == null || lootTable == null) return;
         rewardPanel.SetActive(true);
-
-        // Generate 3 unique rewards based on rarity weights
-        List<DieFaceSO> rewards = GenerateRarityRewards(3);
 
         foreach (Transform child in rewardContainer) Destroy(child.gameObject);
 
-        foreach (var face in rewards)
+        // Get 3 random unique rewards from our new Loot Table
+        List<DieFaceSO> rewards = lootTable.GetRandomRewards(3);
+
+        foreach (DieFaceSO face in rewards)
         {
             GameObject btnObj = Instantiate(rewardButtonPrefab, rewardContainer);
+            RewardButtonUI script = btnObj.GetComponent<RewardButtonUI>();
 
-            // Set the text to show Value, Type, and Rarity
-            TMPro.TMP_Text txt = btnObj.GetComponentInChildren<TMPro.TMP_Text>();
-            if (txt != null) txt.text = $"{face.value} {face.type}\n<size=80%>{face.rarity}</size>";
-
-            btnObj.GetComponent<Button>().onClick.AddListener(() => SelectReward(face));
-        }
-    }
-
-    private List<DieFaceSO> GenerateRarityRewards(int count)
-    {
-        List<DieFaceSO> selected = new List<DieFaceSO>();
-        if (allPossibleFaces == null || allPossibleFaces.Count == 0) return selected;
-
-        for (int i = 0; i < count; i++)
-        {
-            // Calculate total weight of all possible faces
-            int totalWeight = allPossibleFaces.Sum(f => f.spawnWeight);
-
-            // FIXED: Explicitly use UnityEngine.Random to solve the ambiguity error
-            int roll = UnityEngine.Random.Range(0, totalWeight);
-            int currentWeight = 0;
-
-            foreach (var face in allPossibleFaces)
+            if (script != null)
             {
-                currentWeight += face.spawnWeight;
-                if (roll < currentWeight)
-                {
-                    selected.Add(face);
-                    break;
-                }
+                script.Setup(face, SelectReward);
             }
         }
-        return selected;
     }
 
     private void SelectReward(DieFaceSO face)
     {
-        // Add the face to the player's permanent collection logic here
-        Debug.Log($"Collected new face: {face.name}");
+        // Explicitly use UnityEngine.Debug to avoid ambiguity with System.Diagnostics
+        UnityEngine.Debug.Log($"Player picked: {face.name} ({face.rarity})");
+
+        // Add logic here later to save 'face' to player inventory
         GoToMainMenu();
     }
 

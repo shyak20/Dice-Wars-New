@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: NewFace
+  m_Name: 2 Attack Rare
   m_EditorClassIdentifier: 
-  value: 0
+  value: 2
   type: 0
-  faceMaterial: {fileID: 0}
-  rarity: 0
-  spawnWeight: 100
+  faceMaterial: {fileID: 2100000, guid: 40d31c149737b4245b6f8c704ff1225b, type: 2}
+  rarity: 1
+  faceIcon: {fileID: 21300000, guid: 6f3bfc9c88b99214e8f255e4856230fb, type: 3}
