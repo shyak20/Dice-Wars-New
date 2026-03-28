@@ -1,6 +1,8 @@
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class CombatManager : MonoBehaviour
 {
@@ -15,21 +17,45 @@ public class CombatManager : MonoBehaviour
     [Header("Balancing")]
     public int baseMaxPower = 12;
 
+    [SerializeField] private int StartStrikeMultiplier = 2;
+    
+
+    [Header("Testing")]
+    [SerializeField] private TestStartingFacesSO testStartingFaces;
+
     private CombatState currentState;
     private List<DieAssetSO> selectedDice = new List<DieAssetSO>();
 
     private int currentPower;
     private int maxPower;
-    private int pendingAttack;
-    private int pendingDefense;
+    private int overchargeBonus;
+    private int appliedMultiplier;
+    private bool bustProtected;
+
+    private List<FaceResult> channeledFaces = new List<FaceResult>();
+    private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
 
     private int diceSettledCount = 0;
     private int expectedDiceCount = 0;
 
+    public int GetPendingAttack() =>
+        channeledFaces.Where(f => f.Type == DieType.Attack).Sum(f => f.Value);
+
+    public int GetPendingDefense() =>
+        channeledFaces.Where(f => f.Type == DieType.Defense).Sum(f => f.Value);
+
+    public List<FaceResult> GetChanneledFaces() => channeledFaces;
+
+    public void AddOvercharge(int amount) => overchargeBonus += amount;
+    public int GetAppliedMultiplier() => appliedMultiplier;
+    public void SetBustProtected() => bustProtected = true;
+    public void RefundPower(int amount) => currentPower -= amount;
+    public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
+
     private void Awake()
     {
         if (playerData == null || spawner == null || player == null || activeEnemy == null)
-            UnityEngine.Debug.LogError("CombatManager: Missing references!");
+            Debug.LogError("CombatManager: Missing references!");
     }
 
     private void Start() => InitializeCombat();
@@ -52,13 +78,63 @@ public class CombatManager : MonoBehaviour
 
     private void InitializeCombat()
     {
+        ApplyTestStartingFaces();
         selectedDice.Clear();
-        pendingAttack = 0;
-        pendingDefense = 0;
+        channeledFaces.Clear();
+        overchargeBonus = 0;
+        appliedMultiplier = StartStrikeMultiplier;
+        bustProtected = false;
         currentPower = 0;
         CalculateMaxPower();
-        CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
+        CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
         ChangeState(CombatState.WaitingForRoll);
+    }
+
+    private void ApplyTestStartingFaces()
+    {
+#if UNITY_EDITOR
+        if (testStartingFaces == null || !testStartingFaces.isActive)
+            return;
+
+        var validFaces = testStartingFaces.testFaces.FindAll(f => f != null);
+        if (validFaces.Count == 0)
+        {
+            Debug.LogWarning("TestStartingFaces is active but has no valid faces assigned.");
+            return;
+        }
+
+        var runtimeDeck = Instantiate(playerData);
+    
+        for (int d = 0; d < runtimeDeck.currentDeck.Count; d++)
+        {
+            var clonedDie = Instantiate(runtimeDeck.currentDeck[d]);
+            clonedDie.name = runtimeDeck.currentDeck[d].name + " (Test)";
+
+            if (testStartingFaces.perCube)
+            {
+                var face = validFaces[d % validFaces.Count];
+                for (int i = 0; i < clonedDie.faces.Length; i++)
+                {
+                    clonedDie.faces[i] = face;
+                }
+            }
+            else if (testStartingFaces.changeAll)
+            {
+                for (int i = 0; i < clonedDie.faces.Length; i++)
+                    clonedDie.faces[i] = validFaces[i % validFaces.Count];
+            }
+            else
+            {
+                for (int i = 0; i < validFaces.Count && i < clonedDie.faces.Length; i++)
+                    clonedDie.faces[i] = validFaces[i];
+            }
+
+            runtimeDeck.currentDeck[d] = clonedDie;
+        }
+
+        playerData = runtimeDeck;
+        Debug.Log($"<color=red>[TestStartingFaces] Applied {validFaces.Count} test face(s) </color> to {runtimeDeck.currentDeck.Count} dice (ChangeAll: {testStartingFaces.changeAll})");
+#endif
     }
 
     private void CalculateMaxPower()
@@ -84,36 +160,72 @@ public class CombatManager : MonoBehaviour
 
         ChangeState(CombatState.Rolling);
         spawner.SpawnAndRollBatch(selectedDice);
-
-        // Note: selectedDice.Clear() remains removed to keep your selection persistent.
     }
 
     public void ResolveRollResult(DieFaceSO face)
     {
-        if (face.type == DieType.Attack) pendingAttack += face.value;
-        else pendingDefense += face.value;
+        var result = new FaceResult
+        {
+            Face = face,
+            Value = face.value,
+            Type = face.type,
+            Action = face.action
+        };
 
+        channeledFaces.Add(result);
         currentPower += face.value;
+
+        if (result.Action != null)
+        {
+            var context = BuildContext(result);
+            result.Action.Execute(context);
+        }
+
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
-        CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
+        CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
 
         diceSettledCount++;
         if (diceSettledCount >= expectedDiceCount) CheckBustStatus();
     }
 
+    private GameActionContext BuildContext(FaceResult triggeringFace = null)
+    {
+        return new GameActionContext
+        {
+            CombatManager = this,
+            Player = player,
+            Enemy = activeEnemy,
+            ChanneledFaces = channeledFaces,
+            TriggeringFace = triggeringFace
+        };
+    }
+
     private void CheckBustStatus()
     {
+        int pendingAttack = GetPendingAttack();
+        int pendingDefense = GetPendingDefense();
+
         if (currentPower == maxPower)
         {
-            pendingAttack *= 2;
-            pendingDefense *= 2;
-            CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
+            appliedMultiplier += overchargeBonus;
+
+            foreach (var face in channeledFaces)
+                face.Value *= appliedMultiplier;
+
+            CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
             SubmitTurn();
         }
         else if (currentPower > maxPower)
         {
-            ChangeState(CombatState.BustCheck);
-            CombatEvents.OnBustOccurred?.Invoke(pendingAttack, pendingDefense);
+            if (bustProtected)
+            {
+                SubmitTurn();
+            }
+            else
+            {
+                ChangeState(CombatState.BustCheck);
+                CombatEvents.OnBustOccurred?.Invoke(pendingAttack, pendingDefense);
+            }
         }
         else
         {
@@ -128,9 +240,16 @@ public class CombatManager : MonoBehaviour
 
     private void ResolveBust(bool nullifyAttack)
     {
-        if (nullifyAttack) pendingAttack = 0;
-        else pendingDefense = 0;
-        CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
+        if (nullifyAttack)
+        {
+            channeledFaces.RemoveAll(f => f.Type == DieType.Attack);
+        }
+        else
+        {
+            channeledFaces.RemoveAll(f => f.Type == DieType.Defense);
+        }
+
+        CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
         SubmitTurn();
     }
 
@@ -138,11 +257,17 @@ public class CombatManager : MonoBehaviour
     {
         ChangeState(CombatState.TurnEnd);
 
-        // Player deals damage
+        var turnEndContext = BuildContext();
+        foreach (var action in turnEndActions)
+            action.Invoke(turnEndContext);
+        turnEndActions.Clear();
+
+        int pendingAttack = GetPendingAttack();
+        int pendingDefense = GetPendingDefense();
+
         if (pendingAttack > 0)
         {
             activeEnemy.TakeDamage(pendingAttack);
-            // Check if enemy died after the player hit them
             if (CheckVictory()) return;
         }
 
@@ -165,7 +290,6 @@ public class CombatManager : MonoBehaviour
                 {
                     player.TakeDamage(action.damage);
 
-                    // Check if player died during the multi-attack
                     if (CheckDefeat()) yield break;
 
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
@@ -202,8 +326,11 @@ public class CombatManager : MonoBehaviour
 
     private void ResetTurn()
     {
-        pendingAttack = 0;
-        pendingDefense = 0;
+        channeledFaces.Clear();
+        turnEndActions.Clear();
+        overchargeBonus = 0;
+        appliedMultiplier = StartStrikeMultiplier;
+        bustProtected = false;
         currentPower = 0;
         player.ResetArmor();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
