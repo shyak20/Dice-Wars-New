@@ -10,7 +10,7 @@ public class FaceRewardManager : MonoBehaviour
     [SerializeField] private FaceSlotSelectionView faceSlotSelectionView;
 
     [Header("Data")]
-    [SerializeField] private List<DieFaceSO> faceOptions;
+    [SerializeField] private FaceLootTableSO lootTable;
 
     private DieFaceSO chosenFace;
     private DieAssetSO chosenDie;
@@ -20,7 +20,7 @@ public class FaceRewardManager : MonoBehaviour
         if (faceSelectionView == null) Debug.LogError("FaceRewardManager: faceSelectionView is not assigned!");
         if (diceSelectionView == null) Debug.LogError("FaceRewardManager: diceSelectionView is not assigned!");
         if (faceSlotSelectionView == null) Debug.LogError("FaceRewardManager: faceSlotSelectionView is not assigned!");
-        if (faceOptions == null || faceOptions.Count < 3) Debug.LogError("FaceRewardManager: faceOptions must have at least 3 entries!");
+        if (lootTable == null) Debug.LogError("FaceRewardManager: lootTable is not assigned!");
     }
 
     public void StartFaceReward()
@@ -28,24 +28,9 @@ public class FaceRewardManager : MonoBehaviour
         chosenFace = null;
         chosenDie = null;
 
-        var options = PickRandomFaces(3);
+        var options = lootTable.GetRandomRewards(3);
         faceSelectionView.Show(options, OnFaceChosen);
         gameObject.SetActive(true);
-    }
-
-    private List<DieFaceSO> PickRandomFaces(int count)
-    {
-        var pool = new List<DieFaceSO>(faceOptions);
-        var selected = new List<DieFaceSO>();
-
-        for (var i = 0; i < count && pool.Count > 0; i++)
-        {
-            var index = Random.Range(0, pool.Count);
-            selected.Add(pool[index]);
-            pool.RemoveAt(index);
-        }
-
-        return selected;
     }
 
     private void OnFaceChosen(DieFaceSO face)

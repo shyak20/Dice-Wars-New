@@ -37,6 +37,9 @@ public class CombatManager : MonoBehaviour
     private int diceSettledCount = 0;
     private int expectedDiceCount = 0;
 
+    private int rollsRemaining;
+    private int maxRolls;
+
     public int GetPendingAttack() =>
         channeledFaces.Where(f => f.Type == DieType.Attack).Sum(f => f.Value);
 
@@ -93,8 +96,11 @@ public class CombatManager : MonoBehaviour
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
         currentPower = 0;
+        maxRolls = playerData.maxRollsPerTurn;
+        rollsRemaining = maxRolls;
         CalculateMaxPower();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
+        CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.WaitingForRoll);
     }
 
@@ -157,6 +163,9 @@ public class CombatManager : MonoBehaviour
 
         expectedDiceCount = selectedDice.Count;
         diceSettledCount = 0;
+
+        rollsRemaining--;
+        CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
         ChangeState(CombatState.Rolling);
         spawner.SpawnAndRollBatch(selectedDice);
@@ -229,7 +238,10 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            ChangeState(CombatState.WaitingForRoll);
+            if (rollsRemaining <= 0)
+                SubmitTurn();
+            else
+                ChangeState(CombatState.WaitingForRoll);
         }
     }
 
@@ -332,9 +344,11 @@ public class CombatManager : MonoBehaviour
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
         currentPower = 0;
+        rollsRemaining = maxRolls;
         player.ResetArmor();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
+        CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.WaitingForRoll);
     }
 

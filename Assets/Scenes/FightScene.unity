@@ -5127,6 +5127,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7748427779888463015, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
+      propertyPath: lootTable
+      value: 
+      objectReference: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
+    - target: {fileID: 7748427779888463015, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: faceOptions.Array.size
       value: 6
       objectReference: {fileID: 0}

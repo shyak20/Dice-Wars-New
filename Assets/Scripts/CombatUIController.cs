@@ -30,12 +30,20 @@ public class CombatUIController : MonoBehaviour
     private Dictionary<DieAssetSO, UnityEngine.UI.Image> buttonImages = new Dictionary<DieAssetSO, UnityEngine.UI.Image>();
     private List<DieAssetSO> currentlySelected = new List<DieAssetSO>();
 
+    private TMP_Text rollButtonText;
+    private int rollsRemaining;
+    private int maxRolls;
+
     private void OnEnable()
     {
+        if (rollButton != null && rollButtonText == null)
+            rollButtonText = rollButton.GetComponentInChildren<TMP_Text>();
+
         CombatEvents.OnPowerChanged += UpdatePowerUI;
         CombatEvents.OnPoolsUpdated += UpdatePoolsUI;
-        CombatEvents.OnBustOccurred += ShowBustPanel; // This now receives (int, int)
+        CombatEvents.OnBustOccurred += ShowBustPanel;
         CombatEvents.OnStateChanged += HandleStateChange;
+        CombatEvents.OnRollsRemainingChanged += UpdateRollsUI;
     }
 
     private void OnDisable()
@@ -44,6 +52,7 @@ public class CombatUIController : MonoBehaviour
         CombatEvents.OnPoolsUpdated -= UpdatePoolsUI;
         CombatEvents.OnBustOccurred -= ShowBustPanel;
         CombatEvents.OnStateChanged -= HandleStateChange;
+        CombatEvents.OnRollsRemainingChanged -= UpdateRollsUI;
     }
 
     private void Start()
@@ -52,6 +61,8 @@ public class CombatUIController : MonoBehaviour
 
         if (rollButton != null)
         {
+            if (rollButtonText == null)
+                Debug.LogError("CombatUIController: Roll button has no TMP_Text child!");
             rollButton.onClick.AddListener(() => CombatEvents.OnRollCommand?.Invoke());
             rollButton.interactable = false;
         }
@@ -152,6 +163,15 @@ public class CombatUIController : MonoBehaviour
         });
     }
 
+    private void UpdateRollsUI(int remaining, int max)
+    {
+        rollsRemaining = remaining;
+        maxRolls = max;
+
+        if (rollButtonText != null)
+            rollButtonText.text = $"{remaining}/{max} Roll!";
+    }
+
     private void HandleStateChange(CombatState state)
     {
         bool isWaiting = (state == CombatState.WaitingForRoll);
@@ -182,8 +202,9 @@ public class CombatUIController : MonoBehaviour
 
         if (endTurnButton != null)
         {
-            endTurnButton.gameObject.SetActive(isWaiting);
-            endTurnButton.interactable = isWaiting;
+            bool showEndTurn = isWaiting && rollsRemaining > 0;
+            endTurnButton.gameObject.SetActive(showEndTurn);
+            endTurnButton.interactable = showEndTurn;
         }
     }
 }
