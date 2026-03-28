@@ -8,8 +8,8 @@ public class HealAction : IGameAction
 
     public void Execute(GameActionContext context)
     {
-        var player = context.Player;
         var healAmount = amount;
-        context.CombatManager.QueueTurnEndAction(() => player.Heal(healAmount));
+        context.CombatManager.QueueTurnEndAction(ctx =>
+            ctx.Player.Heal(healAmount * ctx.CombatManager.GetAppliedMultiplier()));
     }
 }

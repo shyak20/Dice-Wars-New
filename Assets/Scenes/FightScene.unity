@@ -1394,6 +1394,7 @@ MonoBehaviour:
   playerData: {fileID: 11400000, guid: 01b9fee3f17e48344b7ea89592d93dd0, type: 2}
   spawner: {fileID: 1048341406}
   baseMaxPower: 10
+  StartStrikeMultiplier: 2
   testStartingFaces: {fileID: 11400000, guid: d56d5b91c5b92ed4aafaa3ef613c5a40, type: 2}
 --- !u!4 &430063144
 Transform:
@@ -3708,7 +3709,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 461ca65c497a93942909da97704a0a0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 5
+  maxHealth: 100
   healthSlider: {fileID: 1470476143}
   healthText: {fileID: 105025141}
   armorText: {fileID: 136222026}

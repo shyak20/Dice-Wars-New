@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Ariel Heal Face
+  m_Name: Ariel Overcharge Face
   m_EditorClassIdentifier: 
   value: 5
   type: 1
@@ -18,11 +18,11 @@ MonoBehaviour:
   rarity: 0
   faceIcon: {fileID: 0}
   action:
-    rid: 6710286027573166083
+    rid: 6710286027573166084
   references:
     version: 2
     RefIds:
-    - rid: 6710286027573166083
-      type: {class: HealAction, ns: , asm: Assembly-CSharp}
+    - rid: 6710286027573166084
+      type: {class: OverchargeAction, ns: , asm: Assembly-CSharp}
       data:
-        amount: 1
+        amount: 2

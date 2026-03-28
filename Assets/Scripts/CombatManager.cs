@@ -17,6 +17,9 @@ public class CombatManager : MonoBehaviour
     [Header("Balancing")]
     public int baseMaxPower = 12;
 
+    [SerializeField] private int StartStrikeMultiplier = 2;
+    
+
     [Header("Testing")]
     [SerializeField] private TestStartingFacesSO testStartingFaces;
 
@@ -27,9 +30,11 @@ public class CombatManager : MonoBehaviour
     private int maxPower;
     private int bonusAttack;
     private int bonusDefense;
+    private int overchargeBonus;
+    private int appliedMultiplier;
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
-    private List<Action> turnEndActions = new List<Action>();
+    private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
 
     private int diceSettledCount = 0;
     private int expectedDiceCount = 0;
@@ -44,7 +49,9 @@ public class CombatManager : MonoBehaviour
 
     public void AddBonusAttack(int amount) => bonusAttack += amount;
     public void AddBonusDefense(int amount) => bonusDefense += amount;
-    public void QueueTurnEndAction(Action action) => turnEndActions.Add(action);
+    public void AddOvercharge(int amount) => overchargeBonus += amount;
+    public int GetAppliedMultiplier() => appliedMultiplier;
+    public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
 
     private void Awake()
     {
@@ -77,6 +84,8 @@ public class CombatManager : MonoBehaviour
         channeledFaces.Clear();
         bonusAttack = 0;
         bonusDefense = 0;
+        overchargeBonus = 0;
+        appliedMultiplier = StartStrikeMultiplier;
         currentPower = 0;
         CalculateMaxPower();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
@@ -97,12 +106,21 @@ public class CombatManager : MonoBehaviour
         }
 
         var runtimeDeck = Instantiate(playerData);
+    
         for (int d = 0; d < runtimeDeck.currentDeck.Count; d++)
         {
             var clonedDie = Instantiate(runtimeDeck.currentDeck[d]);
             clonedDie.name = runtimeDeck.currentDeck[d].name + " (Test)";
 
-            if (testStartingFaces.changeAll)
+            if (testStartingFaces.perCube)
+            {
+                var face = validFaces[d % validFaces.Count];
+                for (int i = 0; i < clonedDie.faces.Length; i++)
+                {
+                    clonedDie.faces[i] = face;
+                }
+            }
+            else if (testStartingFaces.changeAll)
             {
                 for (int i = 0; i < clonedDie.faces.Length; i++)
                     clonedDie.faces[i] = validFaces[i % validFaces.Count];
@@ -191,10 +209,12 @@ public class CombatManager : MonoBehaviour
 
         if (currentPower == maxPower)
         {
+            appliedMultiplier += overchargeBonus;
+
             foreach (var face in channeledFaces)
-                face.Value *= 2;
-            bonusAttack *= 2;
-            bonusDefense *= 2;
+                face.Value *= appliedMultiplier;
+            bonusAttack *= appliedMultiplier;
+            bonusDefense *= appliedMultiplier;
 
             CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
             SubmitTurn();
@@ -236,8 +256,9 @@ public class CombatManager : MonoBehaviour
     {
         ChangeState(CombatState.TurnEnd);
 
+        var turnEndContext = BuildContext();
         foreach (var action in turnEndActions)
-            action.Invoke();
+            action.Invoke(turnEndContext);
         turnEndActions.Clear();
 
         int pendingAttack = GetPendingAttack();
@@ -308,6 +329,8 @@ public class CombatManager : MonoBehaviour
         turnEndActions.Clear();
         bonusAttack = 0;
         bonusDefense = 0;
+        overchargeBonus = 0;
+        appliedMultiplier = StartStrikeMultiplier;
         currentPower = 0;
         player.ResetArmor();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);

@@ -14,5 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isActive: 1
   changeAll: 1
+  perCube: 1
   testFaces:
   - {fileID: 11400000, guid: c82913ee240d38b4dbebf5867deb0d6a, type: 2}
+  - {fileID: 11400000, guid: f2148d40c93f8fd44b25afda3b0b5804, type: 2}
