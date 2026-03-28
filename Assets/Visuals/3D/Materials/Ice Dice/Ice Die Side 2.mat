@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Die Side 6
+  m_Name: Ice Die Side 2
   m_Shader: {fileID: 4800000, guid: d12428961551799408aa97256fd770c3, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -68,7 +68,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 64d43b2c1f8889c47a38646cb86e442b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 125afa6ceefa29a49838fa5189e12b96, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskFReflection:
@@ -84,7 +84,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskSelfLit:
-        m_Texture: {fileID: 2800000, guid: 64d43b2c1f8889c47a38646cb86e442b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 125afa6ceefa29a49838fa5189e12b96, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -185,7 +185,7 @@ Material:
     - _MCapIntensity: 1
     - _MVCOL: 0
     - _Metallic: 0
-    - _MixMainTexToOutline: 1
+    - _MixMainTexToOutline: 0
     - _Mode: 0
     - _N_F_CA: 0
     - _N_F_CLD: 0
@@ -213,7 +213,7 @@ Material:
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_STSDFM: 0
-    - _NoisyOutlineIntensity: 1
+    - _NoisyOutlineIntensity: 0
     - _NormalMapIntensity: 1
     - _ObjePosiZCS: 0
     - _OcclusionStrength: 1

@@ -7,15 +7,20 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Die Side 1
-  m_Shader: {fileID: 4800000, guid: d92832bd0edea6c4d87948601146ec0c, type: 3}
+  m_Name: Fire Die Side 1
+  m_Shader: {fileID: 4800000, guid: d12428961551799408aa97256fd770c3, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - N_F_GLOT_ON
+  - N_F_O_ON
+  - N_F_RELGI_ON
+  - N_F_SL_ON
+  - N_F_SS_ON
+  m_InvalidKeywords:
   - L_F_O_ON
   - L_F_RELGI_ON
   - L_F_SS_ON
-  m_InvalidKeywords: []
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -63,7 +68,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 57f92b68dc4056f40a840be596543838, type: 3}
+        m_Texture: {fileID: 2800000, guid: 54dbe9fe3d5a1814a9677b9979c78378, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskFReflection:
@@ -79,7 +84,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskSelfLit:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 54dbe9fe3d5a1814a9677b9979c78378, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -106,6 +111,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SecondaryCutout:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _ShadowColorTexture:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -116,20 +125,23 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AlphaBaseCutout: 1
     - _BumpScale: 1
     - _ClipAdju: 0
     - _Compa: 4
     - _CustomLightDirectionFollowObjectRotation: 0
     - _CustomLightDirectionIntensity: 0
     - _Cutoff: 0.5
+    - _Cutout: 0
     - _Depth: 0.2
     - _DepthColorPower: 1.8
     - _DepthEdgeHardness: 0.1
     - _DetailNormalMapScale: 1
     - _DirectionalLightIntensity: 0
-    - _DoubleSided: 2
+    - _DoubleSided: 0
     - _DoubleSidedOutline: 1
     - _DstBlend: 0
+    - _DynamicNoisyOutline: 0
     - _EnableTextureTransparent: 0
     - _EnvironmentalLightingIntensity: 1
     - _FReflectionIntensity: 0
@@ -181,27 +193,32 @@ Material:
     - _Mode: 0
     - _N_F_CA: 0
     - _N_F_CLD: 0
+    - _N_F_CO: 0
     - _N_F_D: 0
     - _N_F_FR: 0
-    - _N_F_GLO: 1
-    - _N_F_GLOT: 0
+    - _N_F_GLO: 0
+    - _N_F_GLOT: 1
+    - _N_F_HDLS: 0
+    - _N_F_HPSS: 0
     - _N_F_LLI: 0
     - _N_F_MC: 0
     - _N_F_NLASOBF: 0
     - _N_F_NM: 0
+    - _N_F_O: 1
     - _N_F_PA: 0
     - _N_F_PT: 0
     - _N_F_R: 0
     - _N_F_RL: 0
     - _N_F_SCT: 0
-    - _N_F_SL: 0
+    - _N_F_SL: 1
     - _N_F_SLMM: 0
     - _N_F_SON: 0
-    - _N_F_SS: 0
+    - _N_F_SS: 1
     - _N_F_ST: 0
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_STSDFM: 0
+    - _NoisyOutlineIntensity: 0
     - _NormalMapIntensity: 1
     - _ObjePosiZCS: 0
     - _OcclusionStrength: 1
@@ -217,9 +234,12 @@ Material:
     - _PSGLOTEX: 0
     - _PTexturePower: 0
     - _Parallax: 0.02
+    - _PointLightSVD: 0
     - _PointSpotlightIntensity: 0.1
     - _PresAdju: 1
     - _RELG: 1
+    - _ReduceShadowPointLight: 0
+    - _ReduceShadowSpotDirectionalLight: 10
     - _RefMetallic: 0
     - _RefVal: 0
     - _ReflectionIntensity: 0
@@ -234,16 +254,18 @@ Material:
     - _STIL: 0
     - _Saturation: 1
     - _SelfLitHighContrast: 1
-    - _SelfLitIntensity: 0
-    - _SelfLitPower: 2
+    - _SelfLitIntensity: 1
+    - _SelfLitPower: 0
     - _SelfShadowAffectedByLightShadowStrength: 0
     - _SelfShadowColorPower: 1
     - _SelfShadowHardness: 1
     - _SelfShadowIntensity: 1
     - _SelfShadowRealTimeShadowColorPower: 1
+    - _SelfShadowRealtimeShadowIntensity: 1
     - _SelfShadowShadowTAtViewDirection: 0
     - _SelfShadowThreshold: 0.85
     - _ShadowColorTexturePower: 0
+    - _ShadowHardness: 0
     - _ShadowTColorPower: 1
     - _ShadowTHardness: 1
     - _ShadowTIntensity: 1
@@ -256,10 +278,11 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _TEXMCOLINT: 1
+    - _TEXMCOLINT: 1.77
     - _TextureIntesnity: 0.782
     - _TexturePatternStyle: 0
     - _UVSec: 0
+    - _UseSecondaryCutout: 0
     - _VertexColorBlueAffectOutlineWitdh: 0
     - _VertexColorGreenControlSelfShadowThreshold: 0
     - _VertexColorRedControlSmoothObjectNormal: 0
