@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: Ariel No Cost This Turn Face
   m_EditorClassIdentifier: 
+  Title: Echo
+  Description: No cost for this turn
   value: 15
   type: 1
   faceMaterial: {fileID: 2100000, guid: b24c54533aab7fd4faef57bdc6c1d149, type: 2}
