@@ -4,5 +4,7 @@ public enum CombatState
     Rolling,
     BustCheck,
     TurnEnd,
-    EnemyTurn
+    EnemyTurn,
+    Victory, 
+    Defeat
 }

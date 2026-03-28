@@ -1,10 +1,13 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NewDieFace", menuName = "DiceGame/DieFace")]
+[CreateAssetMenu(fileName = "NewFace", menuName = "DiceGame/DieFace")]
 public class DieFaceSO : ScriptableObject
 {
-    public int value = 1;
+    public int value;
     public DieType type;
-    public FaceEffect effect;
     public Material faceMaterial;
+    public FaceRarity rarity;
+
+    [Header("UI Visuals")]
+    public Sprite faceIcon; // The image that will represent this face in the UI
 }

@@ -36,6 +36,8 @@ public class EnemyController : MonoBehaviour
     private Coroutine effectRoutine;
     private Material enemyMaterial;
 
+    public int GetCurrentHealth() => currentHealth;
+
     private void Start()
     {
         if (enemyData != null) Initialize(enemyData);
