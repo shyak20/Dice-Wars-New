@@ -9,5 +9,8 @@ public class DieFaceSO : ScriptableObject
     public FaceRarity rarity;
 
     [Header("UI Visuals")]
-    public Sprite faceIcon; // The image that will represent this face in the UI
+    public Sprite faceIcon;
+
+    [Header("Game Action")]
+    [SerializeReference] public IGameAction action;
 }
