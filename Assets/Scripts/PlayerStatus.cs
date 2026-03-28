@@ -23,6 +23,13 @@ public class PlayerStatus : MonoBehaviour
         Debug.Log($"<color=green>Player healed {amount} HP. Current: {currentHealth}</color>");
         UpdateUI();
     }
+    
+    public void AddMaxHP(int amount)
+    {
+        maxHealth += amount;
+        Debug.Log($"<color=green>Player ADD MAX HP {amount} . Current: {maxHealth}</color>");
+        UpdateUI();
+    }
 
     private void Awake()
     {

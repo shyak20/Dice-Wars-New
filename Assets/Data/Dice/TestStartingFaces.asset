@@ -16,5 +16,5 @@ MonoBehaviour:
   changeAll: 1
   perCube: 1
   testFaces:
-  - {fileID: 11400000, guid: c82913ee240d38b4dbebf5867deb0d6a, type: 2}
-  - {fileID: 11400000, guid: f2148d40c93f8fd44b25afda3b0b5804, type: 2}
+  - {fileID: 11400000, guid: 518bc06937ec198448db29ec66b4e861, type: 2}
+  - {fileID: 11400000, guid: 59d079196eab76c409847e894e0f787e, type: 2}

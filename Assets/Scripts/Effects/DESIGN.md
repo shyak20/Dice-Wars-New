@@ -91,7 +91,9 @@ Assets/Scripts/Effects/
 ├── FaceResult.cs                — individual face result
 ├── GameActions/                 — concrete action implementations
 │   ├── HealAction.cs            — turn-end: heals player HP (scaled by appliedMultiplier)
-│   └── OverchargeAction.cs      — immediate: adds to Perfect Strike multiplier
+│   ├── OverchargeAction.cs      — immediate: adds to Perfect Strike multiplier
+│   ├── SafetyNetAction.cs       — immediate: bust this turn has no consequences
+│   └── EchoAction.cs            — immediate: refunds this face's power cost
 └── DESIGN.md                    — this file
 ```
 

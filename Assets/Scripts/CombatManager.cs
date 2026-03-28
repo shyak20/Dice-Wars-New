@@ -32,6 +32,7 @@ public class CombatManager : MonoBehaviour
     private int bonusDefense;
     private int overchargeBonus;
     private int appliedMultiplier;
+    private bool bustProtected;
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
@@ -51,6 +52,8 @@ public class CombatManager : MonoBehaviour
     public void AddBonusDefense(int amount) => bonusDefense += amount;
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
+    public void SetBustProtected() => bustProtected = true;
+    public void RefundPower(int amount) => currentPower -= amount;
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
 
     private void Awake()
@@ -86,6 +89,7 @@ public class CombatManager : MonoBehaviour
         bonusDefense = 0;
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
+        bustProtected = false;
         currentPower = 0;
         CalculateMaxPower();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
@@ -221,8 +225,15 @@ public class CombatManager : MonoBehaviour
         }
         else if (currentPower > maxPower)
         {
-            ChangeState(CombatState.BustCheck);
-            CombatEvents.OnBustOccurred?.Invoke(pendingAttack, pendingDefense);
+            if (bustProtected)
+            {
+                SubmitTurn();
+            }
+            else
+            {
+                ChangeState(CombatState.BustCheck);
+                CombatEvents.OnBustOccurred?.Invoke(pendingAttack, pendingDefense);
+            }
         }
         else
         {
@@ -331,6 +342,7 @@ public class CombatManager : MonoBehaviour
         bonusDefense = 0;
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
+        bustProtected = false;
         currentPower = 0;
         player.ResetArmor();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);

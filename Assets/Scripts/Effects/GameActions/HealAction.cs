@@ -10,6 +10,11 @@ public class HealAction : IGameAction
     {
         var healAmount = amount;
         context.CombatManager.QueueTurnEndAction(ctx =>
-            ctx.Player.Heal(healAmount * ctx.CombatManager.GetAppliedMultiplier()));
+        {
+            var finalHeal = healAmount * ctx.CombatManager.GetAppliedMultiplier();
+            if (GameActionDebug.Enabled)
+                Debug.Log($"[HealAction] Healing {finalHeal} HP (base: {healAmount}, multiplier: {ctx.CombatManager.GetAppliedMultiplier()})");
+            ctx.Player.Heal(finalHeal);
+        });
     }
 }
