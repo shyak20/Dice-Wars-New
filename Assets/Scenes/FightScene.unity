@@ -1394,6 +1394,7 @@ MonoBehaviour:
   playerData: {fileID: 11400000, guid: 01b9fee3f17e48344b7ea89592d93dd0, type: 2}
   spawner: {fileID: 1048341406}
   baseMaxPower: 10
+  testStartingFaces: {fileID: 11400000, guid: d56d5b91c5b92ed4aafaa3ef613c5a40, type: 2}
 --- !u!4 &430063144
 Transform:
   m_ObjectHideFlags: 0
@@ -4307,7 +4308,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
 --- !u!1 &1906291827
 GameObject:
   m_ObjectHideFlags: 0

@@ -73,3 +73,6 @@ Every C# script is in `Assets/Scripts/` (flat structure, 17 files). There are no
 - Never fix real issues with patching or workarounds — find and fix the actual root cause
 - Avoid `GetComponent`/`GetComponentInChildren` — prefer explicit references
 - Avoid static variables — Unity's "Enter Play Mode Options" (no domain reload) means static state persists between play sessions, causing subtle bugs
+
+
+- When needed (you may ask), use Odin for better inspector in complicated serialized classes.
