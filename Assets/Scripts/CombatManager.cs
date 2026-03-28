@@ -28,8 +28,6 @@ public class CombatManager : MonoBehaviour
 
     private int currentPower;
     private int maxPower;
-    private int bonusAttack;
-    private int bonusDefense;
     private int overchargeBonus;
     private int appliedMultiplier;
     private bool bustProtected;
@@ -41,15 +39,13 @@ public class CombatManager : MonoBehaviour
     private int expectedDiceCount = 0;
 
     public int GetPendingAttack() =>
-        channeledFaces.Where(f => f.Type == DieType.Attack).Sum(f => f.Value) + bonusAttack;
+        channeledFaces.Where(f => f.Type == DieType.Attack).Sum(f => f.Value);
 
     public int GetPendingDefense() =>
-        channeledFaces.Where(f => f.Type == DieType.Defense).Sum(f => f.Value) + bonusDefense;
+        channeledFaces.Where(f => f.Type == DieType.Defense).Sum(f => f.Value);
 
     public List<FaceResult> GetChanneledFaces() => channeledFaces;
 
-    public void AddBonusAttack(int amount) => bonusAttack += amount;
-    public void AddBonusDefense(int amount) => bonusDefense += amount;
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
@@ -85,8 +81,6 @@ public class CombatManager : MonoBehaviour
         ApplyTestStartingFaces();
         selectedDice.Clear();
         channeledFaces.Clear();
-        bonusAttack = 0;
-        bonusDefense = 0;
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
@@ -139,7 +133,7 @@ public class CombatManager : MonoBehaviour
         }
 
         playerData = runtimeDeck;
-        Debug.Log($"[TestStartingFaces] Applied {validFaces.Count} test face(s) to {runtimeDeck.currentDeck.Count} dice (ChangeAll: {testStartingFaces.changeAll})");
+        Debug.Log($"<color=red>[TestStartingFaces] Applied {validFaces.Count} test face(s) </color> to {runtimeDeck.currentDeck.Count} dice (ChangeAll: {testStartingFaces.changeAll})");
 #endif
     }
 
@@ -217,8 +211,6 @@ public class CombatManager : MonoBehaviour
 
             foreach (var face in channeledFaces)
                 face.Value *= appliedMultiplier;
-            bonusAttack *= appliedMultiplier;
-            bonusDefense *= appliedMultiplier;
 
             CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
             SubmitTurn();
@@ -251,12 +243,10 @@ public class CombatManager : MonoBehaviour
         if (nullifyAttack)
         {
             channeledFaces.RemoveAll(f => f.Type == DieType.Attack);
-            bonusAttack = 0;
         }
         else
         {
             channeledFaces.RemoveAll(f => f.Type == DieType.Defense);
-            bonusDefense = 0;
         }
 
         CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
@@ -338,8 +328,6 @@ public class CombatManager : MonoBehaviour
     {
         channeledFaces.Clear();
         turnEndActions.Clear();
-        bonusAttack = 0;
-        bonusDefense = 0;
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
