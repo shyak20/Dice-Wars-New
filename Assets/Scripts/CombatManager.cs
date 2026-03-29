@@ -33,6 +33,7 @@ public class CombatManager : MonoBehaviour
     private int overchargeBonus;
     private int appliedMultiplier;
     private bool bustProtected;
+    private bool immune;
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
@@ -55,6 +56,7 @@ public class CombatManager : MonoBehaviour
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
+    public void SetImmune() => immune = true;
     public void RefundPower(int amount) => currentPower -= amount;
     public void QueuePrecisionChoice(int amount) => pendingPrecisionChoices.Enqueue(amount);
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
@@ -100,6 +102,7 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
+        immune = false;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
         maxRolls = playerData.maxRollsPerTurn;
@@ -327,7 +330,8 @@ public class CombatManager : MonoBehaviour
             {
                 for (int i = 0; i < action.numberOfAttacks; i++)
                 {
-                    player.TakeDamage(action.damage);
+                    var damage = immune ? Mathf.Min(action.damage, 1) : action.damage;
+                    player.TakeDamage(damage);
 
                     if (CheckDefeat()) yield break;
 
@@ -370,6 +374,7 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
+        immune = false;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
         rollsRemaining = maxRolls;

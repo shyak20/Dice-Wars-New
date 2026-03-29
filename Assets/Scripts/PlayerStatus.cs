@@ -57,6 +57,7 @@ public class PlayerStatus : MonoBehaviour
 
         if (currentArmor > 0)
         {
+            UnityEngine.Debug.Log($"<color=red>Player tasking armor reduction {currentArmor} of {damageRemaining}</color>");
             if (currentArmor >= damageRemaining)
             {
                 currentArmor -= damageRemaining;
