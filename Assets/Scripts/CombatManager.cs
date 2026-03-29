@@ -34,6 +34,7 @@ public class CombatManager : MonoBehaviour
     private int appliedMultiplier;
     private bool bustProtected;
     private bool immune;
+    private int thorns;
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
@@ -57,6 +58,7 @@ public class CombatManager : MonoBehaviour
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
     public void SetImmune() => immune = true;
+    public void AddThorns(int amount) => thorns += amount;
     public void RefundPower(int amount) => currentPower -= amount;
     public void QueuePrecisionChoice(int amount) => pendingPrecisionChoices.Enqueue(amount);
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
@@ -103,6 +105,7 @@ public class CombatManager : MonoBehaviour
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
         immune = false;
+        thorns = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
         maxRolls = playerData.maxRollsPerTurn;
@@ -333,6 +336,12 @@ public class CombatManager : MonoBehaviour
                     var damage = immune ? Mathf.Min(action.damage, 1) : action.damage;
                     player.TakeDamage(damage);
 
+                    if (thorns > 0)
+                    {
+                        activeEnemy.TakeDamage(thorns);
+                        if (CheckVictory()) yield break;
+                    }
+
                     if (CheckDefeat()) yield break;
 
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
@@ -375,6 +384,7 @@ public class CombatManager : MonoBehaviour
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
         immune = false;
+        thorns = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
         rollsRemaining = maxRolls;

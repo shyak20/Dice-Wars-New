@@ -96,6 +96,7 @@ Methods actions can call via `context.CombatManager`:
 | `AddOvercharge(int)` | Immediate | Add to Perfect Strike multiplier |
 | `SetBustProtected()` | Immediate | Prevent bust consequences this turn |
 | `SetImmune()` | Immediate | Cap all enemy damage to 1 this turn |
+| `AddThorns(int)` | Immediate | Add thorns — enemy takes N damage per attack this turn (stacks) |
 | `RefundPower(int)` | Immediate | Subtract from current power |
 | `QueuePrecisionChoice(int)` | Player-prompt | Queue a power-add prompt |
 
@@ -132,6 +133,7 @@ GetPendingDefense() = channeledFaces.Where(Defense).Sum(Value)
 | `EchoAction` | Immediate | Refunds this face's power cost |
 | `PrecisionAction` | Player-prompt | Player chooses to add X power |
 | `ImmuneAction` | Immediate | Enemy attacks deal max 1 damage this turn |
+| `ThornsAction` | Immediate | Enemy takes 1 damage per attack this turn (stacks) |
 
 ## File Structure
 
@@ -146,6 +148,7 @@ Assets/Scripts/Effects/
 │   ├── SafetyNetAction.cs
 │   ├── EchoAction.cs
 │   ├── ImmuneAction.cs
+│   ├── ThornsAction.cs
 │   └── PrecisionAction.cs
 └── DESIGN.md                    — this file
 

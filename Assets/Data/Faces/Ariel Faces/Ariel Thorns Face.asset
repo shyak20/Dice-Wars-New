@@ -10,19 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Ariel Immune Face
+  m_Name: Ariel Thorns Face
   m_EditorClassIdentifier: 
-  Title: Immune
-  Description: Add Bust Protection
-  value: 2
-  type: 0
+  Title: Thorns
+  Description: Thorns
+  value: 3
+  type: 1
   faceMaterial: {fileID: 2100000, guid: b24c54533aab7fd4faef57bdc6c1d149, type: 2}
   rarity: 0
   faceIcon: {fileID: 0}
   action:
-    rid: 6710286049019166721
+    rid: 6710286049019166722
   references:
     version: 2
     RefIds:
-    - rid: 6710286049019166721
-      type: {class: ImmuneAction, ns: , asm: Assembly-CSharp}
+    - rid: 6710286049019166722
+      type: {class: ThornsAction, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 1
