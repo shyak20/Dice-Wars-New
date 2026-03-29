@@ -36,10 +36,16 @@ public class EnemyController : MonoBehaviour
     private Coroutine effectRoutine;
     private Material enemyMaterial;
 
+    public StatusEffectManager StatusEffects { get; private set; }
+
     public int GetCurrentHealth() => currentHealth;
 
     private void Start()
     {
+        StatusEffects = GetComponent<StatusEffectManager>();
+        if (StatusEffects == null)
+            Debug.LogError("EnemyController: Missing StatusEffectManager component!");
+
         if (enemyData != null) Initialize(enemyData);
         if (hitEffectObject != null) hitEffectObject.SetActive(false);
 

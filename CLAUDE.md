@@ -24,7 +24,7 @@ The combat loop is driven by `CombatManager` cycling through `CombatState` enum 
 All game data (dice definitions, face values, enemy types, enemy actions) lives in ScriptableObjects under `Assets/Data/`. Runtime code reads from these — they are the single source of truth for game configuration.
 
 - `DieAssetSO` → 6 faces, attack/defense type
-- `DieFaceSO` → value, type, effect, material
+- `DieFaceSO` → value, type, material, optional `IGameAction` (see [GameAction system design](Assets/Scripts/Effects/DESIGN.md))
 - `EnemyTypeSO` → HP, action list, sequential/random cycle
 - `EnemyActionSO` → damage, armor, attack count
 - `PlayerDataSO` → player's dice deck
@@ -42,11 +42,17 @@ All game data (dice definitions, face values, enemy types, enemy actions) lives 
 
 ### Key Enums
 
-`CombatEnums.cs` defines `DieType` (Attack/Defense) and `FaceEffect` — use these, not string comparisons.
+`CombatEnums.cs` defines `DieType` (Attack/Defense) and `FaceRarity` — use these, not string comparisons.
 
 ## All Scripts Location
 
-Every C# script is in `Assets/Scripts/` (flat structure, 17 files). There are no subdirectories.
+Scripts are in `Assets/Scripts/` with subfolders:
+- `Assets/Scripts/Effects/` — GameAction system (abilities on dice faces)
+- `Assets/Scripts/UI/` — Standalone UI panels (e.g., PrecisionPanel)
+
+## Adding Abilities
+
+See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system design, all ability patterns (immediate, turn-end, player-prompt), the CombatManager API available to actions, and step-by-step instructions for adding new abilities.
 
 ## Agent Behavior
 
@@ -73,3 +79,6 @@ Every C# script is in `Assets/Scripts/` (flat structure, 17 files). There are no
 - Never fix real issues with patching or workarounds — find and fix the actual root cause
 - Avoid `GetComponent`/`GetComponentInChildren` — prefer explicit references
 - Avoid static variables — Unity's "Enter Play Mode Options" (no domain reload) means static state persists between play sessions, causing subtle bugs
+
+
+- When needed (you may ask), use Odin for better inspector in complicated serialized classes.
