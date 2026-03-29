@@ -78,6 +78,18 @@ Both `overchargeBonus` and `appliedMultiplier` reset each turn.
 
 **When writing a new turn-end action**, always multiply the action's value by `ctx.CombatManager.GetAppliedMultiplier()` so it scales with Perfect Strike + Overcharge.
 
+## Player-Prompt Actions (Precision Pattern)
+
+Some actions require player input after dice settle but before bust/turn resolution. These use a queue-and-prompt pattern:
+
+1. Action's `Execute` queues a choice via `CombatManager.QueuePrecisionChoice(amount)`
+2. After all dice settle, `ProcessPrecisionQueue` fires before `CheckBustStatus`
+3. If queue has entries, fires `CombatEvents.OnPrecisionPrompt` → UI shows popup
+4. Player responds → `CombatEvents.OnPrecisionResolved` → applies choice, processes next in queue
+5. When queue is empty → `CheckBustStatus` proceeds normally
+
+This pattern can be extended for future prompt-based actions by adding new queues and events.
+
 ## Bust Handling
 
 On bust, the player chooses to nullify Attack or Defense. This removes all `FaceResult` entries of that type from `channeledFaces` and zeroes the corresponding bonus.
@@ -93,7 +105,8 @@ Assets/Scripts/Effects/
 │   ├── HealAction.cs            — turn-end: heals player HP (scaled by appliedMultiplier)
 │   ├── OverchargeAction.cs      — immediate: adds to Perfect Strike multiplier
 │   ├── SafetyNetAction.cs       — immediate: bust this turn has no consequences
-│   └── EchoAction.cs            — immediate: refunds this face's power cost
+│   ├── EchoAction.cs            — immediate: refunds this face's power cost
+│   └── PrecisionAction.cs       — queued prompt: player chooses to add power
 └── DESIGN.md                    — this file
 ```
 

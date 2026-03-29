@@ -19,6 +19,9 @@ public class CombatManager : MonoBehaviour
     [SerializeField] private int StartStrikeMultiplier = 2;
     
 
+    [Header("UI Panels")]
+    [SerializeField] private PrecisionPanel precisionPanel;
+
     [Header("Testing")]
     [SerializeField] private TestStartingFacesSO testStartingFaces;
 
@@ -33,6 +36,7 @@ public class CombatManager : MonoBehaviour
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
+    private Queue<int> pendingPrecisionChoices = new Queue<int>();
 
     private int diceSettledCount = 0;
     private int expectedDiceCount = 0;
@@ -52,6 +56,7 @@ public class CombatManager : MonoBehaviour
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
     public void RefundPower(int amount) => currentPower -= amount;
+    public void QueuePrecisionChoice(int amount) => pendingPrecisionChoices.Enqueue(amount);
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
 
     private PlayerDataSO playerData;
@@ -95,6 +100,7 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
+        pendingPrecisionChoices.Clear();
         currentPower = 0;
         maxRolls = playerData.maxRollsPerTurn;
         rollsRemaining = maxRolls;
@@ -194,7 +200,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
 
         diceSettledCount++;
-        if (diceSettledCount >= expectedDiceCount) CheckBustStatus();
+        if (diceSettledCount >= expectedDiceCount) ProcessPrecisionQueue();
     }
 
     private GameActionContext BuildContext(FaceResult triggeringFace = null)
@@ -207,6 +213,27 @@ public class CombatManager : MonoBehaviour
             ChanneledFaces = channeledFaces,
             TriggeringFace = triggeringFace
         };
+    }
+
+    private void ProcessPrecisionQueue()
+    {
+        if (pendingPrecisionChoices.Count > 0)
+        {
+            var amount = pendingPrecisionChoices.Dequeue();
+            precisionPanel.Show(amount, accepted =>
+            {
+                if (accepted)
+                {
+                    currentPower += amount;
+                    CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
+                }
+                ProcessPrecisionQueue();
+            });
+        }
+        else
+        {
+            CheckBustStatus();
+        }
     }
 
     private void CheckBustStatus()
@@ -343,6 +370,7 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
+        pendingPrecisionChoices.Clear();
         currentPower = 0;
         rollsRemaining = maxRolls;
         player.ResetArmor();
