@@ -12,8 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: 1 Attack Rare
   m_EditorClassIdentifier: 
+  Title: Rare 1
+  Description: Rare 1 Attack
   value: 1
   type: 0
   faceMaterial: {fileID: 2100000, guid: 6ebbca95617280241abb63445bccf783, type: 2}
   rarity: 1
-  faceIcon: {fileID: 21300000, guid: 57f92b68dc4056f40a840be596543838, type: 3}
+  faceIcon: {fileID: 21300000, guid: 721c2a14be18ece47a21b0ac93757b3b, type: 3}
+  action:
+    rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }

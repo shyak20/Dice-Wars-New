@@ -12,8 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: 4 Attack Common
   m_EditorClassIdentifier: 
+  Title: Basic 4
+  Description: Basic 4 Attack
   value: 4
   type: 0
   faceMaterial: {fileID: 2100000, guid: 704bf9d43d967a54f82680d0ceb3ae0f, type: 2}
   rarity: 0
-  faceIcon: {fileID: 21300000, guid: 021c54286cf255d488da9095dc3d2da3, type: 3}
+  faceIcon: {fileID: 21300000, guid: fdf4d84fdc9b7424481735ecf9c89bd3, type: 3}
+  action:
+    rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
