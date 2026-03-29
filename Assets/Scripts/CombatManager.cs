@@ -221,6 +221,16 @@ public class CombatManager : MonoBehaviour
         };
     }
 
+    private StatusEffectContext BuildStatusContext()
+    {
+        return new StatusEffectContext
+        {
+            CombatManager = this,
+            Player = player,
+            Enemy = activeEnemy
+        };
+    }
+
     private void ProcessPrecisionQueue()
     {
         if (pendingPrecisionChoices.Count > 0)
@@ -253,6 +263,9 @@ public class CombatManager : MonoBehaviour
 
             foreach (var face in channeledFaces)
                 face.Value *= appliedMultiplier;
+
+            activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
+            if (CheckVictory()) return;
 
             CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
             SubmitTurn();
@@ -307,8 +320,14 @@ public class CombatManager : MonoBehaviour
             action.Invoke(turnEndContext);
         turnEndActions.Clear();
 
+        var statusCtx = BuildStatusContext();
+
         int pendingAttack = GetPendingAttack();
+        pendingAttack += player.StatusEffects.GetTotalBonusAttack(statusCtx);
+        pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
+
+        CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
 
         if (pendingAttack > 0)
         {
@@ -328,12 +347,19 @@ public class CombatManager : MonoBehaviour
 
         if (activeEnemy != null && player != null)
         {
+            var statusCtx = BuildStatusContext();
+
+            activeEnemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
+            if (CheckVictory()) yield break;
+
             EnemyActionSO action = activeEnemy.GetCurrentAction();
             if (action.damage > 0)
             {
                 for (int i = 0; i < action.numberOfAttacks; i++)
                 {
-                    var damage = immune ? Mathf.Min(action.damage, 1) : action.damage;
+                    var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, action.damage);
+                    damage = Mathf.Max(0, damage);
+                    if (immune) damage = Mathf.Min(damage, 1);
                     player.TakeDamage(damage);
 
                     if (thorns > 0)
@@ -347,6 +373,10 @@ public class CombatManager : MonoBehaviour
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
                 }
             }
+
+            activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
+            if (CheckVictory()) yield break;
+
             activeEnemy.PrepareNextAction();
         }
 
@@ -389,6 +419,11 @@ public class CombatManager : MonoBehaviour
         currentPower = 0;
         rollsRemaining = maxRolls;
         player.ResetArmor();
+
+        var statusCtx = BuildStatusContext();
+        activeEnemy.StatusEffects.TickTurnStart(statusCtx);
+        player.StatusEffects.TickTurnStart(statusCtx);
+
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);

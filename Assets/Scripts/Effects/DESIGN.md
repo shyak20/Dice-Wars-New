@@ -149,13 +149,66 @@ Assets/Scripts/Effects/
 │   ├── EchoAction.cs
 │   ├── ImmuneAction.cs
 │   ├── ThornsAction.cs
-│   └── PrecisionAction.cs
+│   ├── PrecisionAction.cs
+│   ├── ApplyStatusEffectAction.cs  — applies any status effect (configurable)
+│   └── CleanseAction.cs            — removes all debuffs from player
+├── StatusEffects/               — status effect system
+│   ├── StatusEffectSO.cs        — abstract base ScriptableObject
+│   ├── StatusEffectInstance.cs  — runtime stack wrapper
+│   ├── StatusEffectContext.cs   — context for status hooks
+│   ├── StatusEffectManager.cs   — MonoBehaviour managing effect instances
+│   ├── StatusEffectEnums.cs     — StatusEffectType, StatusEffectTarget
+│   └── Definitions/
+│       ├── ShadowEffectSO.cs
+│       ├── PoisonEffectSO.cs
+│       ├── BleedEffectSO.cs
+│       ├── ChillEffectSO.cs
+│       └── FrozenEffectSO.cs
 └── DESIGN.md                    — this file
 
 Assets/Scripts/UI/
 └── PrecisionPanel.cs            — player-prompt popup
+
+Assets/Data/StatusEffects/       — SO assets for each effect
 ```
 
-## Future: Status Effects
+---
 
-Persistent buffs/debuffs (poison, bleed, etc.) that survive across turns. Designed but not implemented. See `Assets/Scripts/TODO_StatusEffects.md`.
+## Status Effect System
+
+Persistent cross-turn buffs/debuffs with stacking. Per-turn flags (immune, thorns, bustProtected) are NOT status effects — those stay on CombatManager.
+
+### Architecture
+
+**`StatusEffectSO`** (abstract ScriptableObject) — base for all effect definitions.
+- Fields: `effectName`, `icon`, `description`, `type` (Buff/Debuff), `target` (Player/Enemy), `stackDecayPerTurn`
+- Virtual hooks: `OnApply`, `OnTurnStart`, `OnBeforeEnemyTurn`, `ModifyEnemyHitDamage`, `OnAfterEnemyTurn`, `OnPerfectStrike`, `ModifyDamageToOwner`, `GetBonusAttack`, `OnRemove`
+
+**`StatusEffectInstance`** — runtime wrapper: `Definition` + `Stacks`. Auto-removed when stacks reach 0.
+
+**`StatusEffectManager`** (MonoBehaviour) — lives on both PlayerStatus and EnemyController GameObjects. Manages a list of instances, provides `ApplyStatus`, `RemoveStatus`, `GetStacks`, `ClearDebuffs`, and tick methods.
+
+### Integration with CombatManager
+
+| Timing | Hook | Example |
+|--------|------|---------|
+| Turn start (in ResetTurn) | `TickTurnStart` — applies `stackDecayPerTurn`, removes expired | Chill loses 5 stacks |
+| SubmitTurn — attack calc | `GetTotalBonusAttack` + `ApplyDamageModifiers` | Shadow +1/stack, Frozen +20%/stack |
+| Perfect Strike | `TickPerfectStrike` | Bleed deals stacks as damage |
+| Before enemy attacks | `TickBeforeEnemyTurn` | Poison deals 1×stacks |
+| Per enemy hit | `ModifyEnemyHitDamage` | Chill reduces by stacks |
+| After enemy attacks | `TickAfterEnemyTurn` | Bleed deals 2×stacks |
+
+### Applying Status Effects from Dice
+
+Use `ApplyStatusEffectAction` (a generic `IGameAction`) — assign a `StatusEffectSO` reference and stack count. Target is read from the SO's `target` field.
+
+### Existing Status Effects
+
+| Effect | Type | Target | Decay | Behavior |
+|--------|------|--------|-------|----------|
+| Shadow | Buff | Player | 0 | +1 attack per stack at submission |
+| Poison | Debuff | Enemy | 0 | 1×stacks damage before enemy turn (ignores armor) |
+| Bleed | Debuff | Enemy | 1/turn | 2×stacks after enemy turn; stacks as damage on perfect strike |
+| Chill | Debuff | Enemy | 5/turn | -1 damage per hit per stack; adds Frozen at threshold |
+| Frozen | Debuff | Enemy | 0 | +20% damage to owner per stack |
