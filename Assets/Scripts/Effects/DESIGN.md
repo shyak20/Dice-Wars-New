@@ -97,6 +97,7 @@ Methods actions can call via `context.CombatManager`:
 | `SetBustProtected()` | Immediate | Prevent bust consequences this turn |
 | `SetImmune()` | Immediate | Cap all enemy damage to 1 this turn |
 | `AddThorns(int)` | Immediate | Add thorns — enemy takes N damage per attack this turn (stacks) |
+| `ActivateKineticShield()` | Immediate | +1 bonus armor per subsequent die settled this turn |
 | `RefundPower(int)` | Immediate | Subtract from current power |
 | `QueuePrecisionChoice(int)` | Player-prompt | Queue a power-add prompt |
 
@@ -134,6 +135,7 @@ GetPendingDefense() = channeledFaces.Where(Defense).Sum(Value)
 | `PrecisionAction` | Player-prompt | Player chooses to add X power |
 | `ImmuneAction` | Immediate | Enemy attacks deal max 1 damage this turn |
 | `ThornsAction` | Immediate | Enemy takes 1 damage per attack this turn (stacks) |
+| `KineticShieldAction` | Immediate | +1 bonus armor for every die that settles after this one, this turn |
 
 ## File Structure
 
@@ -150,6 +152,7 @@ Assets/Scripts/Effects/
 │   ├── ImmuneAction.cs
 │   ├── ThornsAction.cs
 │   ├── PrecisionAction.cs
+│   ├── KineticShieldAction.cs       — +1 armor per subsequent die this turn
 │   ├── ApplyStatusEffectAction.cs  — applies any status effect (configurable)
 │   └── CleanseAction.cs            — removes all debuffs from player
 ├── StatusEffects/               — status effect system
