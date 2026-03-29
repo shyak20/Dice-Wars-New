@@ -373,16 +373,25 @@ public class CombatManager : MonoBehaviour
                 {
                     var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, action.damage);
                     damage = Mathf.Max(0, damage);
-                    if (immune) damage = Mathf.Min(damage, 1);
-                    player.TakeDamage(damage);
 
-                    if (thorns > 0)
+                    if (activeEnemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx))
                     {
-                        activeEnemy.TakeDamage(thorns);
+                        activeEnemy.TakeDamage(damage);
                         if (CheckVictory()) yield break;
                     }
+                    else
+                    {
+                        if (immune) damage = Mathf.Min(damage, 1);
+                        player.TakeDamage(damage);
 
-                    if (CheckDefeat()) yield break;
+                        if (thorns > 0)
+                        {
+                            activeEnemy.TakeDamage(thorns);
+                            if (CheckVictory()) yield break;
+                        }
+
+                        if (CheckDefeat()) yield break;
+                    }
 
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
                 }

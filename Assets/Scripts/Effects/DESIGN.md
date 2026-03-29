@@ -167,7 +167,8 @@ Assets/Scripts/Effects/
 │       ├── BleedEffectSO.cs
 │       ├── ChillEffectSO.cs
 │       ├── FrozenEffectSO.cs
-│       └── ShatteredEffectSO.cs
+│       ├── ShatteredEffectSO.cs
+│       └── ConfusionEffectSO.cs
 └── DESIGN.md                    — this file
 
 Assets/Scripts/UI/
@@ -186,7 +187,7 @@ Persistent cross-turn buffs/debuffs with stacking. Per-turn flags (immune, thorn
 
 **`StatusEffectSO`** (abstract ScriptableObject) — base for all effect definitions.
 - Fields: `effectName`, `icon`, `description`, `type` (Buff/Debuff), `target` (Player/Enemy), `stackDecayPerTurn`
-- Virtual hooks: `OnApply`, `OnTurnStart`, `OnBeforeEnemyTurn`, `ModifyEnemyHitDamage`, `OnAfterEnemyTurn`, `OnPerfectStrike`, `ModifyDamageToOwner`, `GetBonusAttack`, `OnRemove`
+- Virtual hooks: `OnApply`, `OnTurnStart`, `OnBeforeEnemyTurn`, `ModifyEnemyHitDamage`, `ShouldRedirectAttackToSelf`, `OnAfterEnemyTurn`, `OnPerfectStrike`, `ModifyDamageToOwner`, `GetBonusAttack`, `OnRemove`
 
 **`StatusEffectInstance`** — runtime wrapper: `Definition` + `Stacks`. Auto-removed when stacks reach 0.
 
@@ -201,6 +202,7 @@ Persistent cross-turn buffs/debuffs with stacking. Per-turn flags (immune, thorn
 | Perfect Strike | `TickPerfectStrike` | Bleed deals stacks as damage |
 | Before enemy attacks | `TickBeforeEnemyTurn` | Poison deals 1×stacks |
 | Per enemy hit | `ModifyEnemyHitDamage` | Chill reduces by stacks |
+| Per enemy hit | `CheckRedirectAttackToSelf` | Confusion redirects to self |
 | After enemy attacks | `TickAfterEnemyTurn` | Bleed deals 2×stacks |
 
 ### Applying Status Effects from Dice
@@ -217,3 +219,4 @@ Use `ApplyStatusEffectAction` (a generic `IGameAction`) — assign a `StatusEffe
 | Chill | Debuff | Enemy | 5/turn | -1 damage per hit per stack; adds Frozen at threshold |
 | Frozen | Debuff | Enemy | 0 | +20% damage to owner per stack |
 | Shattered | Debuff | Enemy | 1/turn | -X% enemy attack damage; stacks = duration, not intensity |
+| Confusion | Debuff | Enemy | 0 | X% per stack chance enemy hits itself instead of player |

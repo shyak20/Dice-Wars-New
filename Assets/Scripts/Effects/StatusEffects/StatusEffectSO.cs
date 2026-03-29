@@ -17,5 +17,6 @@ public abstract class StatusEffectSO : ScriptableObject
     public virtual void OnPerfectStrike(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual int ModifyDamageToOwner(StatusEffectInstance instance, StatusEffectContext ctx, int damage) => damage;
     public virtual int GetBonusAttack(StatusEffectInstance instance, StatusEffectContext ctx) => 0;
+    public virtual bool ShouldRedirectAttackToSelf(StatusEffectInstance instance, StatusEffectContext ctx) => false;
     public virtual void OnRemove(StatusEffectInstance instance, StatusEffectContext ctx) { }
 }

@@ -180,6 +180,14 @@ public class StatusEffectManager : MonoBehaviour
         return bonus;
     }
 
+    public bool CheckRedirectAttackToSelf(StatusEffectContext ctx)
+    {
+        foreach (var instance in effects)
+            if (instance.Definition.ShouldRedirectAttackToSelf(instance, ctx))
+                return true;
+        return false;
+    }
+
     private StatusEffectInstance FindInstance(StatusEffectSO definition)
     {
         foreach (var effect in effects)
