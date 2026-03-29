@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Die Side 6
+  m_Name: Ice Die Side 1
   m_Shader: {fileID: 4800000, guid: d12428961551799408aa97256fd770c3, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -68,7 +68,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 64d43b2c1f8889c47a38646cb86e442b, type: 3}
+        m_Texture: {fileID: 2800000, guid: c0b52c8e5c2465749a14800ca442a398, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskFReflection:
@@ -84,7 +84,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskSelfLit:
-        m_Texture: {fileID: 2800000, guid: 64d43b2c1f8889c47a38646cb86e442b, type: 3}
+        m_Texture: {fileID: 2800000, guid: c0b52c8e5c2465749a14800ca442a398, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -133,6 +133,9 @@ Material:
     - _CustomLightDirectionIntensity: 0
     - _Cutoff: 0.5
     - _Cutout: 0
+    - _Depth: 0.2
+    - _DepthColorPower: 1.8
+    - _DepthEdgeHardness: 0.1
     - _DetailNormalMapScale: 1
     - _DirectionalLightIntensity: 0
     - _DoubleSided: 0
@@ -184,12 +187,14 @@ Material:
     - _MCIALO: 0
     - _MCapIntensity: 1
     - _MVCOL: 0
+    - _MainColorAffectTexture: 1
     - _Metallic: 0
-    - _MixMainTexToOutline: 1
+    - _MixMainTexToOutline: 0
     - _Mode: 0
     - _N_F_CA: 0
     - _N_F_CLD: 0
     - _N_F_CO: 0
+    - _N_F_D: 0
     - _N_F_FR: 0
     - _N_F_GLO: 0
     - _N_F_GLOT: 1
@@ -213,7 +218,7 @@ Material:
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_STSDFM: 0
-    - _NoisyOutlineIntensity: 1
+    - _NoisyOutlineIntensity: 0
     - _NormalMapIntensity: 1
     - _ObjePosiZCS: 0
     - _OcclusionStrength: 1
@@ -239,6 +244,7 @@ Material:
     - _RefVal: 0
     - _ReflectionIntensity: 0
     - _ReflectionRoughtness: 0
+    - _RefractionIntensity: 1
     - _RimLightColorPower: 10
     - _RimLightInLight: 1
     - _RimLightSoftness: 1
@@ -251,7 +257,9 @@ Material:
     - _SelfLitIntensity: 1
     - _SelfLitPower: 0
     - _SelfShadowAffectedByLightShadowStrength: 0
+    - _SelfShadowColorPower: 1
     - _SelfShadowHardness: 1
+    - _SelfShadowIntensity: 1
     - _SelfShadowRealTimeShadowColorPower: 1
     - _SelfShadowRealtimeShadowIntensity: 1
     - _SelfShadowShadowTAtViewDirection: 0
@@ -271,6 +279,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _TEXMCOLINT: 1.77
+    - _TextureIntesnity: 0.782
     - _TexturePatternStyle: 0
     - _UVSec: 0
     - _UseSecondaryCutout: 0
@@ -282,6 +291,7 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CustomLightDirection: {r: 0, g: 0, b: 10, a: 0}
+    - _DepthColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
@@ -295,6 +305,7 @@ Material:
     - _RimLigPosi: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
     - _SelfLitColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SelfShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _SelfShadowRealTimeShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowTColor: {r: 1, g: 1, b: 1, a: 1}
     - _XYZPosition: {r: 0, g: 0, b: 0, a: 0}
