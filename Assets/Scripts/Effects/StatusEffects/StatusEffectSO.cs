@@ -1,0 +1,21 @@
+using UnityEngine;
+
+public abstract class StatusEffectSO : ScriptableObject
+{
+    public string effectName;
+    public Sprite icon;
+    [TextArea] public string description;
+    public StatusEffectType type;
+    public StatusEffectTarget target;
+    public int stackDecayPerTurn;
+
+    public virtual void OnApply(StatusEffectInstance instance, StatusEffectContext ctx) { }
+    public virtual void OnTurnStart(StatusEffectInstance instance, StatusEffectContext ctx) { }
+    public virtual void OnBeforeEnemyTurn(StatusEffectInstance instance, StatusEffectContext ctx) { }
+    public virtual int ModifyEnemyHitDamage(StatusEffectInstance instance, StatusEffectContext ctx, int damage) => damage;
+    public virtual void OnAfterEnemyTurn(StatusEffectInstance instance, StatusEffectContext ctx) { }
+    public virtual void OnPerfectStrike(StatusEffectInstance instance, StatusEffectContext ctx) { }
+    public virtual int ModifyDamageToOwner(StatusEffectInstance instance, StatusEffectContext ctx, int damage) => damage;
+    public virtual int GetBonusAttack(StatusEffectInstance instance, StatusEffectContext ctx) => 0;
+    public virtual void OnRemove(StatusEffectInstance instance, StatusEffectContext ctx) { }
+}

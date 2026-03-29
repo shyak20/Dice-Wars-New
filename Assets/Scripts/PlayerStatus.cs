@@ -15,6 +15,8 @@ public class PlayerStatus : MonoBehaviour
     public TMP_Text armorText;
     public GameObject armorIcon; // Optional: A shield icon that shows when armor > 0
 
+    public StatusEffectManager StatusEffects { get; private set; }
+
     public int GetCurrentHealth() => currentHealth;
 
     public void Heal(int amount)
@@ -33,6 +35,10 @@ public class PlayerStatus : MonoBehaviour
 
     private void Awake()
     {
+        StatusEffects = GetComponent<StatusEffectManager>();
+        if (StatusEffects == null)
+            Debug.LogError("PlayerStatus: Missing StatusEffectManager component!");
+
         currentHealth = maxHealth;
         UpdateUI();
     }
@@ -57,6 +63,7 @@ public class PlayerStatus : MonoBehaviour
 
         if (currentArmor > 0)
         {
+            UnityEngine.Debug.Log($"<color=red>Player tasking armor reduction {currentArmor} of {damageRemaining}</color>");
             if (currentArmor >= damageRemaining)
             {
                 currentArmor -= damageRemaining;

@@ -46,7 +46,13 @@ All game data (dice definitions, face values, enemy types, enemy actions) lives 
 
 ## All Scripts Location
 
-Scripts are in `Assets/Scripts/` with `Assets/Scripts/Effects/` for the GameAction system. See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system design.
+Scripts are in `Assets/Scripts/` with subfolders:
+- `Assets/Scripts/Effects/` — GameAction system (abilities on dice faces)
+- `Assets/Scripts/UI/` — Standalone UI panels (e.g., PrecisionPanel)
+
+## Adding Abilities
+
+See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system design, all ability patterns (immediate, turn-end, player-prompt), the CombatManager API available to actions, and step-by-step instructions for adding new abilities.
 
 ## Agent Behavior
 

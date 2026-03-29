@@ -19,6 +19,9 @@ public class CombatManager : MonoBehaviour
     [SerializeField] private int StartStrikeMultiplier = 2;
     
 
+    [Header("UI Panels")]
+    [SerializeField] private PrecisionPanel precisionPanel;
+
     [Header("Testing")]
     [SerializeField] private TestStartingFacesSO testStartingFaces;
 
@@ -30,9 +33,14 @@ public class CombatManager : MonoBehaviour
     private int overchargeBonus;
     private int appliedMultiplier;
     private bool bustProtected;
+    private bool immune;
+    private int thorns;
+    private bool kineticShieldActive;
+    private int kineticShieldBonus;
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
+    private Queue<int> pendingPrecisionChoices = new Queue<int>();
 
     private int diceSettledCount = 0;
     private int expectedDiceCount = 0;
@@ -44,14 +52,18 @@ public class CombatManager : MonoBehaviour
         channeledFaces.Where(f => f.Type == DieType.Attack).Sum(f => f.Value);
 
     public int GetPendingDefense() =>
-        channeledFaces.Where(f => f.Type == DieType.Defense).Sum(f => f.Value);
+        channeledFaces.Where(f => f.Type == DieType.Defense).Sum(f => f.Value) + kineticShieldBonus;
 
     public List<FaceResult> GetChanneledFaces() => channeledFaces;
 
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
+    public void SetImmune() => immune = true;
+    public void AddThorns(int amount) => thorns += amount;
+    public void ActivateKineticShield() => kineticShieldActive = true;
     public void RefundPower(int amount) => currentPower -= amount;
+    public void QueuePrecisionChoice(int amount) => pendingPrecisionChoices.Enqueue(amount);
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
 
     private PlayerDataSO playerData;
@@ -95,6 +107,11 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
+        immune = false;
+        thorns = 0;
+        kineticShieldActive = false;
+        kineticShieldBonus = 0;
+        pendingPrecisionChoices.Clear();
         currentPower = 0;
         maxRolls = playerData.maxRollsPerTurn;
         rollsRemaining = maxRolls;
@@ -173,6 +190,13 @@ public class CombatManager : MonoBehaviour
 
     public void ResolveRollResult(DieFaceSO face)
     {
+        if (kineticShieldActive)
+        {
+            kineticShieldBonus++;
+            if (GameActionDebug.Enabled)
+                Debug.Log($"[KineticShield] +1 bonus armor (total: {kineticShieldBonus})");
+        }
+
         var result = new FaceResult
         {
             Face = face,
@@ -194,7 +218,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
 
         diceSettledCount++;
-        if (diceSettledCount >= expectedDiceCount) CheckBustStatus();
+        if (diceSettledCount >= expectedDiceCount) ProcessPrecisionQueue();
     }
 
     private GameActionContext BuildContext(FaceResult triggeringFace = null)
@@ -209,6 +233,37 @@ public class CombatManager : MonoBehaviour
         };
     }
 
+    private StatusEffectContext BuildStatusContext()
+    {
+        return new StatusEffectContext
+        {
+            CombatManager = this,
+            Player = player,
+            Enemy = activeEnemy
+        };
+    }
+
+    private void ProcessPrecisionQueue()
+    {
+        if (pendingPrecisionChoices.Count > 0)
+        {
+            var amount = pendingPrecisionChoices.Dequeue();
+            precisionPanel.Show(amount, accepted =>
+            {
+                if (accepted)
+                {
+                    currentPower += amount;
+                    CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
+                }
+                ProcessPrecisionQueue();
+            });
+        }
+        else
+        {
+            CheckBustStatus();
+        }
+    }
+
     private void CheckBustStatus()
     {
         int pendingAttack = GetPendingAttack();
@@ -220,6 +275,10 @@ public class CombatManager : MonoBehaviour
 
             foreach (var face in channeledFaces)
                 face.Value *= appliedMultiplier;
+            kineticShieldBonus *= appliedMultiplier;
+
+            activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
+            if (CheckVictory()) return;
 
             CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
             SubmitTurn();
@@ -259,6 +318,7 @@ public class CombatManager : MonoBehaviour
         else
         {
             channeledFaces.RemoveAll(f => f.Type == DieType.Defense);
+            kineticShieldBonus = 0;
         }
 
         CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
@@ -274,8 +334,14 @@ public class CombatManager : MonoBehaviour
             action.Invoke(turnEndContext);
         turnEndActions.Clear();
 
+        var statusCtx = BuildStatusContext();
+
         int pendingAttack = GetPendingAttack();
+        pendingAttack += player.StatusEffects.GetTotalBonusAttack(statusCtx);
+        pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
+
+        CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
 
         if (pendingAttack > 0)
         {
@@ -295,18 +361,36 @@ public class CombatManager : MonoBehaviour
 
         if (activeEnemy != null && player != null)
         {
+            var statusCtx = BuildStatusContext();
+
+            activeEnemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
+            if (CheckVictory()) yield break;
+
             EnemyActionSO action = activeEnemy.GetCurrentAction();
             if (action.damage > 0)
             {
                 for (int i = 0; i < action.numberOfAttacks; i++)
                 {
-                    player.TakeDamage(action.damage);
+                    var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, action.damage);
+                    damage = Mathf.Max(0, damage);
+                    if (immune) damage = Mathf.Min(damage, 1);
+                    player.TakeDamage(damage);
+
+                    if (thorns > 0)
+                    {
+                        activeEnemy.TakeDamage(thorns);
+                        if (CheckVictory()) yield break;
+                    }
 
                     if (CheckDefeat()) yield break;
 
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
                 }
             }
+
+            activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
+            if (CheckVictory()) yield break;
+
             activeEnemy.PrepareNextAction();
         }
 
@@ -343,9 +427,19 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false;
+        immune = false;
+        thorns = 0;
+        kineticShieldActive = false;
+        kineticShieldBonus = 0;
+        pendingPrecisionChoices.Clear();
         currentPower = 0;
         rollsRemaining = maxRolls;
         player.ResetArmor();
+
+        var statusCtx = BuildStatusContext();
+        activeEnemy.StatusEffects.TickTurnStart(statusCtx);
+        player.StatusEffects.TickTurnStart(statusCtx);
+
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);

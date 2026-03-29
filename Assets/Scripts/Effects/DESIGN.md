@@ -1,111 +1,219 @@
-# GameAction & Effects System Design
+# GameAction & Effects System
 
 ## Overview
 
 Modular action system for dice face effects, buffs, and debuffs. GameActions are source-agnostic — triggered by dice faces now, but designed for reuse by potions, relics, or any future system.
 
-## Core Concepts
+## How to Add a New Ability
 
-### IGameAction (Interface)
+1. Create a `[Serializable]` class implementing `IGameAction` in `Assets/Scripts/Effects/GameActions/`
+2. Add `[SerializeField]` fields for configuration (amount, etc.)
+3. Implement `Execute(GameActionContext context)` — pick the right pattern below
+4. Add a debug log gated by `GameActionDebug.Enabled`
+5. Assign it to a `DieFaceSO` via the Odin `[SerializeReference]` dropdown in the inspector
 
-Minimal interface: `void Execute(GameActionContext context)`. No metadata on the interface — name, description, timing are implementation details of each class or the ScriptableObject that references it.
+### Ability Patterns
 
-Concrete actions are `[Serializable]` classes. Odin's `[SerializeReference]` on `DieFaceSO` provides an inspector dropdown to assign them.
+**Immediate** — acts directly in `Execute`. The simplest pattern.
+```csharp
+[Serializable]
+public class MyAction : IGameAction
+{
+    [SerializeField] private int amount = 1;
 
-### GameActionContext
+    public void Execute(GameActionContext context)
+    {
+        // Act directly on context
+        context.CombatManager.SomeMethod(amount);
+        if (GameActionDebug.Enabled)
+            Debug.Log($"[MyAction] Did something: {amount}");
+    }
+}
+```
+Examples: `OverchargeAction`, `SafetyNetAction`, `EchoAction`
 
-A context object passed to every action's `Execute`. Holds references actions might need:
+**Turn-end** — queues work for turn end via `QueueTurnEndAction`. The callback receives a `GameActionContext` so it can read final turn state. **Must multiply values by `GetAppliedMultiplier()`** to scale with Perfect Strike + Overcharge.
+```csharp
+public void Execute(GameActionContext context)
+{
+    var baseAmount = amount;
+    context.CombatManager.QueueTurnEndAction(ctx =>
+    {
+        var final = baseAmount * ctx.CombatManager.GetAppliedMultiplier();
+        // Apply final value
+    });
+}
+```
+Examples: `HealAction`
 
-- `CombatManager` — queue turn-end actions, read/modify bonus values
+**Player-prompt** — requires player input after dice settle but before bust check. Uses CombatManager's precision queue. CombatManager calls `PrecisionPanel.Show(amount, callback)` directly — no events.
+```csharp
+public void Execute(GameActionContext context)
+{
+    context.CombatManager.QueuePrecisionChoice(amount);
+}
+```
+The queue is processed after all dice settle, before `CheckBustStatus`. Each prompt pauses the flow, shows a UI panel, and continues the queue on response.
+Examples: `PrecisionAction`
+
+## Key Classes
+
+### IGameAction (`Effects/IGameAction.cs`)
+```csharp
+public interface IGameAction { void Execute(GameActionContext context); }
+```
+No metadata on the interface — name, description, timing are implementation details.
+
+### GameActionDebug (`Effects/IGameAction.cs`)
+```csharp
+public static class GameActionDebug { public const bool Enabled = true; }
+```
+Set to `false` to silence all action debug logs.
+
+### GameActionContext (`Effects/GameActionContext.cs`)
+Passed to every action's `Execute`. Holds:
+- `CombatManager` — queue actions, read multiplier, refund power, etc.
 - `Player` (PlayerStatus) — heal, damage, armor
 - `Enemy` (EnemyController) — deal damage, read state
 - `ChanneledFaces` (List\<FaceResult\>) — all face results this turn
 - `TriggeringFace` (FaceResult) — the face that triggered this action (null if not face-triggered)
 
-### FaceResult
+### FaceResult (`Effects/FaceResult.cs`)
+Individual dice face landing result:
+- `Face` (DieFaceSO), `Value` (int), `Type` (DieType), `Action` (IGameAction, nullable)
 
-Stores an individual dice face landing result:
+### PrecisionPanel (`UI/PrecisionPanel.cs`)
+MonoBehaviour for player-prompt popups. `Show(int amount, Action<bool> onResult)` — displays panel, calls back with player's choice. Referenced directly by CombatManager (no events).
 
-- `Face` (DieFaceSO) — the source SO
-- `Value` (int) — the face's numeric value (can be modified, e.g., doubled on Perfect Strike)
-- `Type` (DieType) — Attack or Defense
-- `Action` (IGameAction) — the action from the face, nullable
+## CombatManager API for Actions
 
-### Channeled Faces
+Methods actions can call via `context.CombatManager`:
 
-The turn's face results are stored as `List<FaceResult>` instead of accumulated totals. `pendingAttack` and `pendingDefense` are derived:
+| Method | Pattern | Description |
+|--------|---------|-------------|
+| `QueueTurnEndAction(Action<GameActionContext>)` | Turn-end | Queue work for turn end |
+| `GetAppliedMultiplier()` | Turn-end | Get Perfect Strike multiplier (1 normally, 2+ on strike) |
+| `AddOvercharge(int)` | Immediate | Add to Perfect Strike multiplier |
+| `SetBustProtected()` | Immediate | Prevent bust consequences this turn |
+| `SetImmune()` | Immediate | Cap all enemy damage to 1 this turn |
+| `AddThorns(int)` | Immediate | Add thorns — enemy takes N damage per attack this turn (stacks) |
+| `ActivateKineticShield()` | Immediate | +1 bonus armor per subsequent die settled this turn |
+| `RefundPower(int)` | Immediate | Subtract from current power |
+| `QueuePrecisionChoice(int)` | Player-prompt | Queue a power-add prompt |
 
-```
-GetPendingAttack() = channeledFaces.Where(Attack).Sum(Value) + bonusAttack
-GetPendingDefense() = channeledFaces.Where(Defense).Sum(Value) + bonusDefense
-```
-
-`bonusAttack`/`bonusDefense` are for action-granted bonuses (e.g., AddAttackAction adds to bonusAttack).
-
-## Execution Timing
-
-Actions decide their own timing inside `Execute()`:
-
-- **Immediate (on land)**: Act directly in `Execute`. Example: `AddAttackAction` adds to `bonusAttack` immediately.
-- **Turn end**: Queue via `context.CombatManager.QueueTurnEndAction(ctx => ...)`. The callback receives a `GameActionContext` so it can read turn-end state (e.g., `appliedMultiplier`). The queue is processed in `SubmitTurn` before damage/armor are applied. Example: `HealAction` queues healing for turn end.
-
-There is no timing enum — each action knows when it should run.
-
-## Turn Flow Integration
+## Turn Flow
 
 1. **Die settles** → `CombatManager.ResolveRollResult(face)`
 2. Create `FaceResult`, add to `channeledFaces`
-3. `currentPower += face.value` (power cost always applies)
+3. `currentPower += face.value`
 4. If face has action → build `GameActionContext`, call `action.Execute(context)`
 5. Fire UI events with derived totals
-6. All dice settled → `CheckBustStatus` (Perfect Strike multiplies individual `FaceResult.Value` entries by `appliedMultiplier`)
-7. `SubmitTurn` → build context, pass to turn-end action queue → derive final totals → apply damage/armor
-8. `ResetTurn` → clear channeled faces, turn-end queue, bonus values, overcharge, appliedMultiplier
+6. All dice settled → `ProcessPrecisionQueue` (prompt player for each queued choice)
+7. All prompts resolved → `CheckBustStatus`
+   - Perfect Strike (power == max): multiply all values by `appliedMultiplier`
+   - Bust (power > max): if `bustProtected` → submit normally, else player chooses pool to nullify
+   - Under: continue rolling or auto-submit if no rolls remain
+8. `SubmitTurn` → process turn-end action queue → derive final totals → apply damage/armor
+9. `ResetTurn` → clear all per-turn state
 
-## Overcharge & Applied Multiplier
+## Channeled Faces
 
-Perfect Strike base multiplier is 2. `OverchargeAction` adds to this via `CombatManager.AddOvercharge(amount)`.
+Totals are derived from the list, not accumulated:
+```
+GetPendingAttack() = channeledFaces.Where(Attack).Sum(Value)
+GetPendingDefense() = channeledFaces.Where(Defense).Sum(Value)
+```
 
-When Perfect Strike triggers: `appliedMultiplier = 2 + overchargeBonus`. This multiplier is applied to:
+## Existing Abilities
 
-- All `FaceResult.Value` entries in the channeled list (attack, defense)
-- `bonusAttack` and `bonusDefense`
-- Turn-end action values — callbacks receive a `GameActionContext` and should multiply their values by `ctx.CombatManager.GetAppliedMultiplier()`
-
-Without Perfect Strike, `appliedMultiplier` stays 1 — turn-end actions apply their base values.
-
-Both `overchargeBonus` and `appliedMultiplier` reset each turn.
-
-**When writing a new turn-end action**, always multiply the action's value by `ctx.CombatManager.GetAppliedMultiplier()` so it scales with Perfect Strike + Overcharge.
-
-## Bust Handling
-
-On bust, the player chooses to nullify Attack or Defense. This removes all `FaceResult` entries of that type from `channeledFaces` and zeroes the corresponding bonus.
+| Action | Pattern | Description |
+|--------|---------|-------------|
+| `HealAction` | Turn-end | Heals player HP × appliedMultiplier |
+| `OverchargeAction` | Immediate | Adds to Perfect Strike multiplier |
+| `SafetyNetAction` | Immediate | Bust has no consequences this turn |
+| `EchoAction` | Immediate | Refunds this face's power cost |
+| `PrecisionAction` | Player-prompt | Player chooses to add X power |
+| `ImmuneAction` | Immediate | Enemy attacks deal max 1 damage this turn |
+| `ThornsAction` | Immediate | Enemy takes 1 damage per attack this turn (stacks) |
+| `KineticShieldAction` | Immediate | +1 bonus armor for every die that settles after this one, this turn |
 
 ## File Structure
 
 ```
 Assets/Scripts/Effects/
-├── IGameAction.cs              — interface
+├── IGameAction.cs              — interface + GameActionDebug
 ├── GameActionContext.cs         — context object
 ├── FaceResult.cs                — individual face result
 ├── GameActions/                 — concrete action implementations
-│   ├── HealAction.cs            — turn-end: heals player HP (scaled by appliedMultiplier)
-│   ├── OverchargeAction.cs      — immediate: adds to Perfect Strike multiplier
-│   ├── SafetyNetAction.cs       — immediate: bust this turn has no consequences
-│   └── EchoAction.cs            — immediate: refunds this face's power cost
+│   ├── HealAction.cs
+│   ├── OverchargeAction.cs
+│   ├── SafetyNetAction.cs
+│   ├── EchoAction.cs
+│   ├── ImmuneAction.cs
+│   ├── ThornsAction.cs
+│   ├── PrecisionAction.cs
+│   ├── KineticShieldAction.cs       — +1 armor per subsequent die this turn
+│   ├── ApplyStatusEffectAction.cs  — applies any status effect (configurable)
+│   └── CleanseAction.cs            — removes all debuffs from player
+├── StatusEffects/               — status effect system
+│   ├── StatusEffectSO.cs        — abstract base ScriptableObject
+│   ├── StatusEffectInstance.cs  — runtime stack wrapper
+│   ├── StatusEffectContext.cs   — context for status hooks
+│   ├── StatusEffectManager.cs   — MonoBehaviour managing effect instances
+│   ├── StatusEffectEnums.cs     — StatusEffectType, StatusEffectTarget
+│   └── Definitions/
+│       ├── ShadowEffectSO.cs
+│       ├── PoisonEffectSO.cs
+│       ├── BleedEffectSO.cs
+│       ├── ChillEffectSO.cs
+│       ├── FrozenEffectSO.cs
+│       └── ShatteredEffectSO.cs
 └── DESIGN.md                    — this file
+
+Assets/Scripts/UI/
+└── PrecisionPanel.cs            — player-prompt popup
+
+Assets/Data/StatusEffects/       — SO assets for each effect
 ```
 
-## Adding a New GameAction
+---
 
-1. Create a `[Serializable]` class implementing `IGameAction`
-2. Add serialized fields for configuration (amount, etc.)
-3. Implement `Execute(GameActionContext context)`:
-   - For immediate: act directly on context
-   - For turn-end: call `context.CombatManager.QueueTurnEndAction(ctx => ...)` — multiply values by `ctx.CombatManager.GetAppliedMultiplier()`
-4. Assign it to a `DieFaceSO` via the Odin interface dropdown in the inspector
+## Status Effect System
 
-## Future: Status Effects
+Persistent cross-turn buffs/debuffs with stacking. Per-turn flags (immune, thorns, bustProtected) are NOT status effects — those stay on CombatManager.
 
-Persistent buffs/debuffs (poison stacks, bleed, etc.) that survive across turns are designed but not yet implemented. See `Assets/Scripts/TODO_StatusEffects.md` for the design. GameActions will be able to apply/remove status effects via the context once that system is built.
+### Architecture
+
+**`StatusEffectSO`** (abstract ScriptableObject) — base for all effect definitions.
+- Fields: `effectName`, `icon`, `description`, `type` (Buff/Debuff), `target` (Player/Enemy), `stackDecayPerTurn`
+- Virtual hooks: `OnApply`, `OnTurnStart`, `OnBeforeEnemyTurn`, `ModifyEnemyHitDamage`, `OnAfterEnemyTurn`, `OnPerfectStrike`, `ModifyDamageToOwner`, `GetBonusAttack`, `OnRemove`
+
+**`StatusEffectInstance`** — runtime wrapper: `Definition` + `Stacks`. Auto-removed when stacks reach 0.
+
+**`StatusEffectManager`** (MonoBehaviour) — lives on both PlayerStatus and EnemyController GameObjects. Manages a list of instances, provides `ApplyStatus`, `RemoveStatus`, `GetStacks`, `ClearDebuffs`, and tick methods.
+
+### Integration with CombatManager
+
+| Timing | Hook | Example |
+|--------|------|---------|
+| Turn start (in ResetTurn) | `TickTurnStart` — applies `stackDecayPerTurn`, removes expired | Chill loses 5 stacks |
+| SubmitTurn — attack calc | `GetTotalBonusAttack` + `ApplyDamageModifiers` | Shadow +1/stack, Frozen +20%/stack |
+| Perfect Strike | `TickPerfectStrike` | Bleed deals stacks as damage |
+| Before enemy attacks | `TickBeforeEnemyTurn` | Poison deals 1×stacks |
+| Per enemy hit | `ModifyEnemyHitDamage` | Chill reduces by stacks |
+| After enemy attacks | `TickAfterEnemyTurn` | Bleed deals 2×stacks |
+
+### Applying Status Effects from Dice
+
+Use `ApplyStatusEffectAction` (a generic `IGameAction`) — assign a `StatusEffectSO` reference and stack count. Target is read from the SO's `target` field.
+
+### Existing Status Effects
+
+| Effect | Type | Target | Decay | Behavior |
+|--------|------|--------|-------|----------|
+| Shadow | Buff | Player | 0 | +1 attack per stack at submission |
+| Poison | Debuff | Enemy | 0 | 1×stacks damage before enemy turn (ignores armor) |
+| Bleed | Debuff | Enemy | 1/turn | 2×stacks after enemy turn; stacks as damage on perfect strike |
+| Chill | Debuff | Enemy | 5/turn | -1 damage per hit per stack; adds Frozen at threshold |
+| Frozen | Debuff | Enemy | 0 | +20% damage to owner per stack |
+| Shattered | Debuff | Enemy | 1/turn | -X% enemy attack damage; stacks = duration, not intensity |

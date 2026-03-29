@@ -3,7 +3,8 @@
     "allow": [
       "Bash(find D:WorkTheAnosmicDice-Wars-NewAssetsScripts -type f -name *.cs)",
       "Bash(find D:WorkTheAnosmicDice-Wars-NewProjectSettings -type f -name *.asset)",
-      "Bash(grep -i \"\\\\.cs$\")"
+      "Bash(find D:/Work/TheAnosmic/Dice-Wars-New/Assets/Scripts -type f -name *.cs)",
+      "Bash(xargs grep:*)"
     ]
   }
 }
