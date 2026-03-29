@@ -163,7 +163,8 @@ Assets/Scripts/Effects/
 │       ├── PoisonEffectSO.cs
 │       ├── BleedEffectSO.cs
 │       ├── ChillEffectSO.cs
-│       └── FrozenEffectSO.cs
+│       ├── FrozenEffectSO.cs
+│       └── ShatteredEffectSO.cs
 └── DESIGN.md                    — this file
 
 Assets/Scripts/UI/
@@ -212,3 +213,4 @@ Use `ApplyStatusEffectAction` (a generic `IGameAction`) — assign a `StatusEffe
 | Bleed | Debuff | Enemy | 1/turn | 2×stacks after enemy turn; stacks as damage on perfect strike |
 | Chill | Debuff | Enemy | 5/turn | -1 damage per hit per stack; adds Frozen at threshold |
 | Frozen | Debuff | Enemy | 0 | +20% damage to owner per stack |
+| Shattered | Debuff | Enemy | 1/turn | -X% enemy attack damage; stacks = duration, not intensity |

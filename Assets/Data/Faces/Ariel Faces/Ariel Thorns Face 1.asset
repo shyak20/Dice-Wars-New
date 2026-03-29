@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Ariel Temp Status Test Face
+  m_Name: Ariel Thorns Face 1
   m_EditorClassIdentifier: 
   Title: Thorns
   Description: Thorns
@@ -20,12 +20,11 @@ MonoBehaviour:
   rarity: 0
   faceIcon: {fileID: 0}
   action:
-    rid: 6710286049019166723
+    rid: 6710286049019166722
   references:
     version: 2
     RefIds:
-    - rid: 6710286049019166723
-      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+    - rid: 6710286049019166722
+      type: {class: ThornsAction, ns: , asm: Assembly-CSharp}
       data:
-        statusEffect: {fileID: 11400000, guid: 360fe59033bb92b4b84477572b111710, type: 2}
-        stacks: 3
+        amount: 1
