@@ -44,12 +44,15 @@ public class EnemyController : MonoBehaviour
     public int GetCurrentHealth() => currentHealth;
     public int GetCurrentArmor() => currentArmor;
 
-    private void Start()
+    private void Awake()
     {
         StatusEffects = GetComponent<StatusEffectManager>();
         if (StatusEffects == null)
             Debug.LogError("EnemyController: Missing StatusEffectManager component!");
+    }
 
+    private void Start()
+    {
         if (enemyData != null) Initialize(enemyData);
         if (hitEffectObject != null) hitEffectObject.SetActive(false);
 

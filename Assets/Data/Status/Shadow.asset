@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shadow
   m_EditorClassIdentifier: 
   effectName: Shadow
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 1645f6c02b9848b4bb2e0d9f24125005, type: 3}
   description: Shadow Attacks deal +1 Damage per stack without increasing the Power
     Meter. stays.
   type: 0

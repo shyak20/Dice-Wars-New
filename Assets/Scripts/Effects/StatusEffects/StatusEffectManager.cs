@@ -1,11 +1,16 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class StatusEffectManager : MonoBehaviour
 {
     private readonly List<StatusEffectInstance> effects = new List<StatusEffectInstance>();
 
     public IReadOnlyList<StatusEffectInstance> Effects => effects;
+
+    public event Action OnEffectsChanged;
+    private void NotifyChanged() => OnEffectsChanged?.Invoke();
 
     public void ApplyStatus(StatusEffectSO definition, int stacks, StatusEffectContext ctx)
     {
@@ -37,6 +42,8 @@ public class StatusEffectManager : MonoBehaviour
             if (GameActionDebug.Enabled)
                 Debug.Log($"[StatusEffect] {definition.effectName} applied with {stacks} stacks");
         }
+
+        NotifyChanged();
     }
 
     public void RemoveStatus(StatusEffectSO definition, StatusEffectContext ctx)
@@ -47,6 +54,7 @@ public class StatusEffectManager : MonoBehaviour
             {
                 effects[i].Definition.OnRemove(effects[i], ctx);
                 effects.RemoveAt(i);
+                NotifyChanged();
                 return;
             }
         }
@@ -60,6 +68,7 @@ public class StatusEffectManager : MonoBehaviour
             {
                 effects[i].Definition.OnRemove(effects[i], ctx);
                 effects.RemoveAt(i);
+                NotifyChanged();
                 return;
             }
         }
@@ -107,6 +116,7 @@ public class StatusEffectManager : MonoBehaviour
         if (GameActionDebug.Enabled)
             Debug.Log($"[StatusEffect] Cleansed {removed.Definition.effectName}");
 
+        NotifyChanged();
         return true;
     }
 
@@ -120,6 +130,8 @@ public class StatusEffectManager : MonoBehaviour
                 effects.RemoveAt(i);
             }
         }
+
+        NotifyChanged();
     }
 
     public void ClearAll(StatusEffectContext ctx)
@@ -129,6 +141,7 @@ public class StatusEffectManager : MonoBehaviour
             effects[i].Definition.OnRemove(effects[i], ctx);
         }
         effects.Clear();
+        NotifyChanged();
     }
 
     public void TickTurnStart(StatusEffectContext ctx)
@@ -151,6 +164,8 @@ public class StatusEffectManager : MonoBehaviour
 
             instance.Definition.OnTurnStart(instance, ctx);
         }
+
+        NotifyChanged();
     }
 
     public void TickBeforeEnemyTurn(StatusEffectContext ctx)
@@ -180,6 +195,8 @@ public class StatusEffectManager : MonoBehaviour
                 effects.RemoveAt(i);
             }
         }
+
+        NotifyChanged();
     }
 
     public void TickPerfectStrike(StatusEffectContext ctx)

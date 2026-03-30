@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Confusion
   m_EditorClassIdentifier: 
   effectName: Confusion
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 56806ac1fd166114d95209dda74e3339, type: 3}
   description: The enemy has X% per stack to attack himself this turn.
   type: 1
   target: 1
