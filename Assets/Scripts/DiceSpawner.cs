@@ -34,7 +34,7 @@ public class DiceSpawner : MonoBehaviour
                 if (visualizer != null && visualizer.dieData != null)
                 {
                     // 2. Pick the correct effect
-                    GameObject effectPrefab = (visualizer.dieData.dieType == DieType.Attack)
+                    GameObject effectPrefab = (visualizer.dieData.dieType == DieType.Shadow)
                         ? attackDestroyEffect
                         : defenseDestroyEffect;
 

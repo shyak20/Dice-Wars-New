@@ -89,7 +89,7 @@ public class CombatUIController : MonoBehaviour
 
         foreach (DieAssetSO die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
         {
-            GameObject prefab = (die.dieType == DieType.Attack) ? attackButtonPrefab : defenseButtonPrefab;
+            GameObject prefab = (die.dieType == DieType.Shadow) ? attackButtonPrefab : defenseButtonPrefab;
             GameObject btnObj = Instantiate(prefab, diceButtonContainer);
 
             TMP_Text txt = btnObj.GetComponentInChildren<TMP_Text>();

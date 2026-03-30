@@ -49,7 +49,7 @@ public class CombatManager : MonoBehaviour
     private int maxRolls;
 
     public int GetPendingAttack() =>
-        channeledFaces.Where(f => f.Type == DieType.Attack).Sum(f => f.Value);
+        channeledFaces.Where(f => f.Type == DieType.Shadow).Sum(f => f.Value);
 
     public int GetPendingDefense() =>
         channeledFaces.Where(f => f.Type == DieType.Defense).Sum(f => f.Value) + kineticShieldBonus;
@@ -313,7 +313,7 @@ public class CombatManager : MonoBehaviour
     {
         if (nullifyAttack)
         {
-            channeledFaces.RemoveAll(f => f.Type == DieType.Attack);
+            channeledFaces.RemoveAll(f => f.Type == DieType.Shadow);
         }
         else
         {
