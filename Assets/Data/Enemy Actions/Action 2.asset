@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Action 2
   m_EditorClassIdentifier: 
   actionName: 
-  damage: 6
-  numberOfAttacks: 2
-  armor: 0
+  damage: 0
+  numberOfAttacks: 0
+  armor: 2

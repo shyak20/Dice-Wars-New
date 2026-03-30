@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: Test Enemy
   m_EditorClassIdentifier: 
   enemyName: Test Enemy
-  maxHealth: 2
+  maxHealth: 30
+  startArmor: 0
   isSequential: 1
   actionCycle:
   - {fileID: 11400000, guid: b0db59302412e6c4a894f589f7afc276, type: 2}
   - {fileID: 11400000, guid: def30f33406523248ae61118ad5315e3, type: 2}
+  - {fileID: 11400000, guid: f7a23b6f72a71af40b10e162337b73a2, type: 2}
+  - {fileID: 11400000, guid: 8fc5640a551fdb243a8415ef616a3c6a, type: 2}
+  - {fileID: 11400000, guid: ac4a610e35731154bab4b200214985b2, type: 2}

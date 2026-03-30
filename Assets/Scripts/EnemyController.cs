@@ -226,7 +226,7 @@ public class EnemyController : MonoBehaviour
             healthSlider.maxValue = enemyData.maxHealth;
             healthSlider.value = currentHealth;
         }
-        if (healthText != null) healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
+        if (healthText != null) healthText.text = $"{currentHealth}"; //  / {enemyData.maxHealth}
 
         if (armorText != null)
         {
