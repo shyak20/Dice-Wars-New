@@ -12,6 +12,8 @@ public class EnemyController : MonoBehaviour
     public Slider healthSlider;
     public TMP_Text healthText;
     public TMP_Text intentText;
+    public TMP_Text armorText;
+    public GameObject armorIcon;
 
     [Header("Visual Effects (Sprite Overlay)")]
     public SpriteRenderer enemySprite;
@@ -29,6 +31,7 @@ public class EnemyController : MonoBehaviour
     private static readonly int FlashColorID = Shader.PropertyToID("_FlashColor");
 
     private int currentHealth;
+    private int currentArmor;
     private int currentCycleIndex = 0;
     private EnemyActionSO currentIntent;
 
@@ -39,6 +42,7 @@ public class EnemyController : MonoBehaviour
     public StatusEffectManager StatusEffects { get; private set; }
 
     public int GetCurrentHealth() => currentHealth;
+    public int GetCurrentArmor() => currentArmor;
 
     private void Start()
     {
@@ -63,6 +67,7 @@ public class EnemyController : MonoBehaviour
     {
         enemyData = data;
         currentHealth = data.maxHealth;
+        currentArmor = data.startArmor;
         currentCycleIndex = 0;
 
         if (nameText != null) nameText.text = data.enemyName;
@@ -72,28 +77,74 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        currentHealth -= amount;
-        currentHealth = Mathf.Max(0, currentHealth);
-        UpdateUI();
+        var damageRemaining = amount;
+        var armorDamage = 0;
 
-        // 1. Shake Camera (Global)
-        if (CameraShake.Instance != null)
+        if (currentArmor > 0)
         {
-            CameraShake.Instance.Shake(damageShakeDuration, damageShakeMagnitude);
+            if (currentArmor >= damageRemaining)
+            {
+                armorDamage = damageRemaining;
+                currentArmor -= damageRemaining;
+                damageRemaining = 0;
+            }
+            else
+            {
+                armorDamage = currentArmor;
+                damageRemaining -= currentArmor;
+                currentArmor = 0;
+            }
         }
 
-        // 2. Local Hit Visuals
-        TriggerHitVisuals();
+        var healthDamage = 0;
+        if (damageRemaining > 0)
+        {
+            healthDamage = Mathf.Min(damageRemaining, currentHealth);
+            currentHealth -= damageRemaining;
+            currentHealth = Mathf.Max(0, currentHealth);
+        }
+
+        Debug.Log($"{enemyData.enemyName} hit for {amount} — Armor absorbed: {armorDamage}, HP damage: {healthDamage}");
+
+        UpdateUI();
+        TriggerHitJuice();
 
         if (currentHealth <= 0)
         {
-            UnityEngine.Debug.Log($"{enemyData.enemyName} defeated!");
-            // Death Logic
+            Debug.Log($"{enemyData.enemyName} defeated!");
         }
     }
 
-    private void TriggerHitVisuals()
+    public void TakeTrueDamage(int amount)
     {
+        currentHealth -= amount;
+        currentHealth = Mathf.Max(0, currentHealth);
+        UpdateUI();
+        TriggerHitJuice();
+
+        if (currentHealth <= 0)
+        {
+            Debug.Log($"{enemyData.enemyName} defeated!");
+        }
+    }
+
+    public void AddArmor(int amount)
+    {
+        currentArmor += amount;
+        UpdateUI();
+    }
+
+    public void ResetArmor()
+    {
+        currentArmor = 0;
+        UpdateUI();
+    }
+
+    private void TriggerHitJuice()
+    {
+        if (CameraShake.Instance != null)
+            CameraShake.Instance.Shake(damageShakeDuration, damageShakeMagnitude);
+
         if (hitEffectObject != null)
         {
             if (effectRoutine != null) StopCoroutine(effectRoutine);
@@ -173,6 +224,12 @@ public class EnemyController : MonoBehaviour
             healthSlider.value = currentHealth;
         }
         if (healthText != null) healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
+
+        if (armorText != null)
+        {
+            armorText.text = currentArmor > 0 ? currentArmor.ToString() : "";
+            if (armorIcon != null) armorIcon.SetActive(currentArmor > 0);
+        }
     }
 
     public EnemyActionSO GetCurrentAction() => currentIntent;

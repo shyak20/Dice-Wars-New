@@ -361,6 +361,8 @@ public class CombatManager : MonoBehaviour
 
         if (activeEnemy != null && player != null)
         {
+            activeEnemy.ResetArmor();
+
             var statusCtx = BuildStatusContext();
 
             activeEnemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
@@ -396,6 +398,9 @@ public class CombatManager : MonoBehaviour
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
                 }
             }
+
+            if (action.armor > 0)
+                activeEnemy.AddArmor(action.armor);
 
             activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
             if (CheckVictory()) yield break;

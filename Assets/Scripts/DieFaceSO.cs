@@ -3,8 +3,11 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewFace", menuName = "DiceGame/DieFace")]
 public class DieFaceSO : ScriptableObject
 {
-    public string Title;
-    public string Description;
+    [SerializeField] private string title;
+    [SerializeField] private string description;
+
+    public string Title => string.IsNullOrEmpty(title) ? name : title;
+    public string Description => string.IsNullOrEmpty(description) ? name : description;
     public int value;
     public DieType type;
     public Material faceMaterial;
