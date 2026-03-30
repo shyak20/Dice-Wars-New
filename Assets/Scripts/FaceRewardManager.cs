@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,6 +12,9 @@ public class FaceRewardManager : MonoBehaviour
 
     [Header("Data")]
     [SerializeField] private FaceLootTableSO lootTable;
+
+    [Header("Timing")]
+    [SerializeField] private float closeDelay = 2f;
 
     private DieFaceSO chosenFace;
     private DieAssetSO chosenDie;
@@ -69,6 +73,16 @@ public class FaceRewardManager : MonoBehaviour
 
         Debug.Log($"[FaceReward] Replaced '{oldFace.name}' with '{chosenFace.name}' on '{chosenDie.dieName}' slot {slotIndex}");
 
+        faceSlotSelectionView.RefreshSlot(chosenDie, slotIndex);
+        faceSlotSelectionView.DisableInteraction();
+        StartCoroutine(CloseAfterDelay());
+    }
+
+    private IEnumerator CloseAfterDelay()
+    {
+        yield return new WaitForSeconds(closeDelay);
+
+        faceSlotSelectionView.Hide();
         gameObject.SetActive(false);
         FaceRewardEvents.OnFaceRewardCompleted?.Invoke(chosenFace);
     }

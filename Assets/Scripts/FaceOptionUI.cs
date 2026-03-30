@@ -7,6 +7,8 @@ public class FaceOptionUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text descriptionText;
+    [SerializeField] private TMP_Text _dieType;
+    
     [SerializeField] private Button button;
 
     // NEW: Reference for the icon image
@@ -37,6 +39,11 @@ public class FaceOptionUI : MonoBehaviour
             faceIconImage.sprite = face.faceIcon;
         }
 
+        if (_dieType != null)
+        {
+            _dieType.text = face.type.ToString();
+        }
+
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() => onSelected?.Invoke(currentFace));
     }
@@ -47,10 +54,19 @@ public class FaceOptionUI : MonoBehaviour
         titleText.text = face.Title;
         descriptionText.text = face.Description;
 
-        // NEW: Update the icon during refresh
-        if (faceIconImage != null && face.faceIcon != null)
+        if (faceIconImage != null)
         {
             faceIconImage.sprite = face.faceIcon;
         }
+
+        if (_dieType != null)
+        {
+            _dieType.text = face.type.ToString();
+        }
+    }
+
+    public void SetInteractable(bool interactable)
+    {
+        button.interactable = interactable;
     }
 }
