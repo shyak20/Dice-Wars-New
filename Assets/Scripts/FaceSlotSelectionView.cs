@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using TMPro;
 
 public class FaceSlotSelectionView : MonoBehaviour
 {
@@ -10,16 +9,14 @@ public class FaceSlotSelectionView : MonoBehaviour
     [SerializeField] private FaceOptionUI[] slotButtons = new FaceOptionUI[6];
 
     [Header("New Face Preview")]
-    [SerializeField] private TMP_Text newFaceTitleText;
-    [SerializeField] private TMP_Text newFaceDescriptionText;
+    [SerializeField] private FaceOptionUI newFacePreview;
 
     private Action<int> onSlotSelected;
 
     private void Awake()
     {
         if (panel == null) Debug.LogError("FaceSlotSelectionView: panel is not assigned!");
-        if (newFaceTitleText == null) Debug.LogError("FaceSlotSelectionView: newFaceTitleText is not assigned!");
-        if (newFaceDescriptionText == null) Debug.LogError("FaceSlotSelectionView: newFaceDescriptionText is not assigned!");
+        if (newFacePreview == null) Debug.LogError("FaceSlotSelectionView: newFacePreview is not assigned!");
 
         if (slotButtons == null || slotButtons.Length != 6)
         {
@@ -50,13 +47,14 @@ public class FaceSlotSelectionView : MonoBehaviour
 
         onSlotSelected = callback;
 
-        newFaceTitleText.text = newFace.Title;
-        newFaceDescriptionText.text = newFace.Description;
+        newFacePreview.Setup(newFace, null);
+        newFacePreview.SetInteractable(false);
 
         for (var i = 0; i < slotButtons.Length; i++)
         {
             var slotIndex = i;
             slotButtons[i].Setup(die.faces[i], _ => OnSlotClicked(slotIndex));
+            slotButtons[i].SetInteractable(true);
         }
 
         panel.SetActive(true);
@@ -67,9 +65,21 @@ public class FaceSlotSelectionView : MonoBehaviour
         panel.SetActive(false);
     }
 
+    public void RefreshSlot(DieAssetSO die, int slot)
+    {
+        slotButtons[slot].Refresh(die.faces[slot]);
+    }
+
+    public void DisableInteraction()
+    {
+        for (var i = 0; i < slotButtons.Length; i++)
+        {
+            slotButtons[i].SetInteractable(false);
+        }
+    }
+
     private void OnSlotClicked(int slotIndex)
     {
-        Hide();
         onSlotSelected?.Invoke(slotIndex);
     }
 }

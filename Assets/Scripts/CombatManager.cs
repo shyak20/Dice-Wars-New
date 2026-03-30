@@ -22,6 +22,10 @@ public class CombatManager : MonoBehaviour
     [Header("UI Panels")]
     [SerializeField] private PrecisionPanel precisionPanel;
 
+    [Header("Status Effect UI")]
+    [SerializeField] private StatusEffectBarUI playerStatusBar;
+    [SerializeField] private StatusEffectBarUI enemyStatusBar;
+
     [Header("Testing")]
     [SerializeField] private TestStartingFacesSO testStartingFaces;
 
@@ -118,6 +122,17 @@ public class CombatManager : MonoBehaviour
         CalculateMaxPower();
         CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
+
+        if (playerStatusBar == null)
+            Debug.LogError("CombatManager: playerStatusBar is not assigned!");
+        else
+            playerStatusBar.Bind(player.StatusEffects);
+
+        if (enemyStatusBar == null)
+            Debug.LogError("CombatManager: enemyStatusBar is not assigned!");
+        else
+            enemyStatusBar.Bind(activeEnemy.StatusEffects);
+
         ChangeState(CombatState.WaitingForRoll);
     }
 
