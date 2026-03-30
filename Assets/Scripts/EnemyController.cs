@@ -11,8 +11,10 @@ public class EnemyController : MonoBehaviour
     public TMP_Text nameText;
     public Slider healthSlider;
     public TMP_Text healthText;
+    public TMP_Text armorHealthText; // Health value shown when armor is present
+    public Slider armorSlider;       // The "Armor Bar" slider
     public TMP_Text intentText;
-    public TMP_Text armorText;
+    public TMP_Text armorText;       // The text showing the actual armor amount
     public GameObject armorIcon;
 
     [Header("Visual Effects (Sprite Overlay)")]
@@ -20,13 +22,12 @@ public class EnemyController : MonoBehaviour
     public GameObject hitEffectObject;
     public float hitEffectDuration = 0.5f;
     public float flashDuration = 0.15f;
-    public Color flashColor = Color.white; // We still need color reference for initialization
+    public Color flashColor = Color.white;
 
     [Header("Juice (Camera Shake)")]
     [Range(0.01f, 0.5f)] public float damageShakeDuration = 0.1f;
     [Range(0.01f, 1f)] public float damageShakeMagnitude = 0.2f;
 
-    // Shader property ID for performance
     private static readonly int FlashAmountID = Shader.PropertyToID("_FlashAmount");
     private static readonly int FlashColorID = Shader.PropertyToID("_FlashColor");
 
@@ -67,8 +68,8 @@ public class EnemyController : MonoBehaviour
     {
         enemyData = data;
         currentHealth = data.maxHealth;
-        currentArmor = data.startArmor;
-        currentCycleIndex = 0;
+        // Ensure your EnemyTypeSO has a startArmor field, or default to 0
+        currentArmor = 0;
 
         if (nameText != null) nameText.text = data.enemyName;
         UpdateUI();
@@ -103,8 +104,6 @@ public class EnemyController : MonoBehaviour
             currentHealth -= damageRemaining;
             currentHealth = Mathf.Max(0, currentHealth);
         }
-
-        Debug.Log($"{enemyData.enemyName} hit for {amount} — Armor absorbed: {armorDamage}, HP damage: {healthDamage}");
 
         UpdateUI();
         TriggerHitJuice();
@@ -165,20 +164,13 @@ public class EnemyController : MonoBehaviour
         hitEffectObject.SetActive(false);
     }
 
-    /// <summary>
-    /// Uses the new Shader property instead of SpriteRenderer.color
-    /// </summary>
     private IEnumerator SolidFlashSequence()
     {
-        // Set Flash to 100% (Solid Color)
         enemyMaterial.SetFloat(FlashAmountID, 1f);
         yield return new WaitForSeconds(flashDuration);
-        // Set Flash to 0% (Normal Texture)
         enemyMaterial.SetFloat(FlashAmountID, 0f);
         flashRoutine = null;
     }
-
-    // --- Rest of sequential logic below ---
 
     public void PrepareNextAction()
     {
@@ -218,17 +210,49 @@ public class EnemyController : MonoBehaviour
 
     private void UpdateUI()
     {
+        // 1. Core Health Slider
         if (healthSlider != null)
         {
             healthSlider.maxValue = enemyData.maxHealth;
             healthSlider.value = currentHealth;
         }
-        if (healthText != null) healthText.text = $"{currentHealth}"; //  / {enemyData.maxHealth}
 
+        bool hasArmor = currentArmor > 0;
+
+        // 2. Armor Bar Slider (The blue bar)
+        if (armorSlider != null)
+        {
+            armorSlider.gameObject.SetActive(hasArmor);
+            if (hasArmor)
+            {
+                if (currentArmor > armorSlider.maxValue) armorSlider.maxValue = currentArmor;
+                armorSlider.value = currentArmor;
+            }
+        }
+
+        // 3. Text Visibility Toggle
+        if (healthText != null) healthText.gameObject.SetActive(!hasArmor);
+        if (armorHealthText != null) armorHealthText.gameObject.SetActive(hasArmor);
+
+        // 4. Update Values
+        // Both texts receive currentHealth, but they are styled differently
+        if (hasArmor)
+        {
+            if (armorHealthText != null) armorHealthText.text = currentHealth.ToString();
+        }
+        else
+        {
+            if (healthText != null) healthText.text = currentHealth.ToString();
+        }
+
+        // 5. Small Armor Icon/Amount Display
         if (armorText != null)
         {
-            armorText.text = currentArmor > 0 ? currentArmor.ToString() : "";
-            if (armorIcon != null) armorIcon.SetActive(currentArmor > 0);
+            armorText.text = hasArmor ? currentArmor.ToString() : "";
+        }
+        if (armorIcon != null)
+        {
+            armorIcon.SetActive(hasArmor);
         }
     }
 

@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Harness 3 Damage \nHarness 3 Burn
   value: 3
   type: 0
-  faceMaterial: {fileID: 2100000, guid: fb29d41133af9d349b01767b95db51d5, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 57e98965d3724e04e94a3fcf286034af, type: 2}
   rarity: 0
   faceIcon: {fileID: 21300000, guid: 2130e8f815a02114f85b785710ea8bf4, type: 3}
   action:
