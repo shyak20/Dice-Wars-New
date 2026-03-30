@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
+  m_Name: 2 Attack Legendary
+  m_EditorClassIdentifier: 
+  value: 2
+  type: 0
+  faceMaterial: {fileID: 2100000, guid: 40d31c149737b4245b6f8c704ff1225b, type: 2}
+  rarity: 2
+  faceIcon: {fileID: 21300000, guid: 6f3bfc9c88b99214e8f255e4856230fb, type: 3}
