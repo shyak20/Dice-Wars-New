@@ -13,9 +13,11 @@ public class CleanseAction : IGameAction
             Enemy = context.Enemy
         };
 
-        context.Player.StatusEffects.ClearDebuffs(ctx);
+        var removed = context.Player.StatusEffects.RemoveRandomDebuff(ctx);
 
         if (GameActionDebug.Enabled)
-            Debug.Log("[Cleanse] Cleared all debuffs from player");
+            Debug.Log(removed
+                ? "[Cleanse] Removed a random debuff from player"
+                : "[Cleanse] No debuffs to cleanse");
     }
 }

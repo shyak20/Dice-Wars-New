@@ -87,6 +87,29 @@ public class StatusEffectManager : MonoBehaviour
         return false;
     }
 
+    public bool RemoveRandomDebuff(StatusEffectContext ctx)
+    {
+        var debuffIndices = new List<int>();
+        for (var i = 0; i < effects.Count; i++)
+        {
+            if (effects[i].Definition.type == StatusEffectType.Debuff)
+                debuffIndices.Add(i);
+        }
+
+        if (debuffIndices.Count == 0)
+            return false;
+
+        var index = debuffIndices[Random.Range(0, debuffIndices.Count)];
+        var removed = effects[index];
+        removed.Definition.OnRemove(removed, ctx);
+        effects.RemoveAt(index);
+
+        if (GameActionDebug.Enabled)
+            Debug.Log($"[StatusEffect] Cleansed {removed.Definition.effectName}");
+
+        return true;
+    }
+
     public void ClearDebuffs(StatusEffectContext ctx)
     {
         for (var i = effects.Count - 1; i >= 0; i--)
