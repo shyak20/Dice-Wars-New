@@ -220,6 +220,7 @@ GameObject:
   m_Component:
   - component: {fileID: 910767365589581659}
   - component: {fileID: 534256889645741153}
+  - component: {fileID: 3472434687232724940}
   m_Layer: 0
   m_Name: Dice Face Option
   m_TagString: Untagged
@@ -266,6 +267,18 @@ MonoBehaviour:
   descriptionText: {fileID: 6388361476436232061}
   button: {fileID: 6903437176293378503}
   faceIconImage: {fileID: 2141222667140993460}
+--- !u!114 &3472434687232724940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1861012277056834169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 078c9a076e9a3cd4b8e7a966fc1dd8b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4021390626426834364
 GameObject:
   m_ObjectHideFlags: 0
