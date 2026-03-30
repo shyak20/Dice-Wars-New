@@ -6,6 +6,7 @@ public class EnemyTypeSO : ScriptableObject
 {
     public string enemyName;
     public int maxHealth;
+    public int startArmor;
 
     public bool isSequential = true; // Set this to TRUE for your cycle
     public List<EnemyActionSO> actionCycle; // Rename for clarity

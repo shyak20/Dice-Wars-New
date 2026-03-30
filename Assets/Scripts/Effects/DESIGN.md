@@ -136,6 +136,7 @@ GetPendingDefense() = channeledFaces.Where(Defense).Sum(Value)
 | `ImmuneAction` | Immediate | Enemy attacks deal max 1 damage this turn |
 | `ThornsAction` | Immediate | Enemy takes 1 damage per attack this turn (stacks) |
 | `KineticShieldAction` | Immediate | +1 bonus armor for every die that settles after this one, this turn |
+| `BrokenAction` | Turn-end | Strips all enemy armor before player attack |
 
 ## File Structure
 
@@ -153,6 +154,7 @@ Assets/Scripts/Effects/
 │   ├── ThornsAction.cs
 │   ├── PrecisionAction.cs
 │   ├── KineticShieldAction.cs       — +1 armor per subsequent die this turn
+│   ├── BrokenAction.cs              — strips all enemy armor at turn end
 │   ├── ApplyStatusEffectAction.cs  — applies any status effect (configurable)
 │   └── CleanseAction.cs            — removes all debuffs from player
 ├── StatusEffects/               — status effect system
