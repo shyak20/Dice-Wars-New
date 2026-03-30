@@ -53,14 +53,11 @@ public class EnemyController : MonoBehaviour
 
     private void Start()
     {
-        if (enemyData != null) Initialize(enemyData);
         if (hitEffectObject != null) hitEffectObject.SetActive(false);
 
-        // Access the unique instance of the material for this sprite
         if (enemySprite != null)
         {
             enemyMaterial = enemySprite.material;
-            // Initialize the material properties
             enemyMaterial.SetColor(FlashColorID, flashColor);
             enemyMaterial.SetFloat(FlashAmountID, 0f);
         }
