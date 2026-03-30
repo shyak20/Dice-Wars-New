@@ -49,7 +49,16 @@ public class WinLoseUIController : MonoBehaviour
     private void OnFaceRewardCompleted(DieFaceSO face)
     {
         Debug.Log($"Face reward completed: {face.name} ({face.rarity})");
-        GoToMainMenu();
+
+        if (RunManager.Instance != null)
+        {
+            RunManager.Instance.AdvanceToNextRoom();
+        }
+        else
+        {
+            Debug.LogError("WinLoseUIController: RunManager not found! Falling back to main menu.");
+            GoToMainMenu();
+        }
     }
 
     private void ShowGameOver()

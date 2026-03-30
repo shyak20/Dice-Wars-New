@@ -52,6 +52,8 @@ public class CombatManager : MonoBehaviour
     private int rollsRemaining;
     private int maxRolls;
 
+    private bool _appliedTestStartingFaces;
+
     public int GetPendingAttack() =>
         channeledFaces.Where(f => f.Type == DieType.Shadow).Sum(f => f.Value);
 
@@ -78,7 +80,29 @@ public class CombatManager : MonoBehaviour
             Debug.LogError("CombatManager: Missing references!");
     }
 
-    private void Start() => InitializeCombat();
+    private void Start()
+    {
+        InitializeEnemy();
+        InitializeCombat();
+    }
+
+    private void InitializeEnemy()
+    {
+        if (RunManager.Instance == null)
+        {
+            Debug.LogError("CombatManager: RunManager not found! Cannot determine enemy.");
+            return;
+        }
+
+        var room = RunManager.Instance.CurrentRoom;
+        if (room == null || room.roomType != RoomType.Combat)
+        {
+            Debug.LogError("CombatManager: Current room is not a combat room!");
+            return;
+        }
+
+        activeEnemy.Initialize(room.enemyType);
+    }
 
     private void OnEnable()
     {
@@ -139,6 +163,12 @@ public class CombatManager : MonoBehaviour
     private void ApplyTestStartingFaces()
     {
 #if UNITY_EDITOR
+        if (_appliedTestStartingFaces)
+        {
+            return;
+        }
+
+        _appliedTestStartingFaces = true;
         if (testStartingFaces == null || !testStartingFaces.isActive)
             return;
 

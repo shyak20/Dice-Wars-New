@@ -27,5 +27,5 @@ MonoBehaviour:
     - rid: 6710286049019166723
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
-        statusEffect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
+        statusEffect: {fileID: 11400000, guid: a6109525210e14e428f04e24e950f829, type: 2}
         stacks: 3
