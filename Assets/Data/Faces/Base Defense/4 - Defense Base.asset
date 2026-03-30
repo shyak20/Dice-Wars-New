@@ -12,7 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: 4 - Defense Base
   m_EditorClassIdentifier: 
+  title: Base 4
+  description: Harness +4 Shield
   value: 4
   type: 1
-  effect: 0
-  faceMaterial: {fileID: 2100000, guid: 6820393da8a00c84d9f2ae7aa6f390e3, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 61cda76acd7a9be43b8a6d84a984da20, type: 2}
+  rarity: 0
+  faceIcon: {fileID: 21300000, guid: 653e288f6c076ab4e91a5db0f46aa882, type: 3}
+  action:
+    rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }

@@ -12,7 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: 2 - Attack Base
   m_EditorClassIdentifier: 
+  title: Base Shadow 2
+  description: Harness 2 Damage \nHarness +1 Strength
   value: 2
   type: 0
-  effect: 0
-  faceMaterial: {fileID: 2100000, guid: 40d31c149737b4245b6f8c704ff1225b, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 52b940e1549b9774ebc0a8ab346d6eab, type: 2}
+  rarity: 0
+  faceIcon: {fileID: 21300000, guid: a7129468cb1a3ab45864828edc698b50, type: 3}
+  action:
+    rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }

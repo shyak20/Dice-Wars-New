@@ -12,7 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: 1 - Defense Base
   m_EditorClassIdentifier: 
+  title: Base 1
+  description: Harness +1 Shield /nHarness 1 Heal
   value: 1
   type: 1
-  effect: 0
-  faceMaterial: {fileID: 2100000, guid: c1e1e9266556a8046b115c628c56eb6e, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 393fa5dd493d3284193c273d0ef575ee, type: 2}
+  rarity: 0
+  faceIcon: {fileID: 21300000, guid: 821869bc2e05473469fbd9e7cca98e7d, type: 3}
+  action:
+    rid: 1470082923306942464
+  references:
+    version: 2
+    RefIds:
+    - rid: 1470082923306942464
+      type: {class: HealAction, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 1

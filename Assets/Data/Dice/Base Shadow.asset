@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 54206f09e3fdc344fb4859b6091f99bf, type: 3}
-  m_Name: Base Attack
+  m_Name: Base Shadow
   m_EditorClassIdentifier: 
-  dieName: Starting Attack
+  dieName: Base Shadow
   dieType: 0
   faces:
   - {fileID: 11400000, guid: 1c3b340afa77e7c4395c8913616755f7, type: 2}

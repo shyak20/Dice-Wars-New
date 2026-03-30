@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   effectName: Shadow
   icon: {fileID: 0}
-  description: Shadow Attacks deal +1 Damage per stack without increasing the Power
-    Meter. stays.
+  description: Harness +1 Physical Damage per stack without increasing the Power
+    Meter.
   type: 0
   target: 0
   stackDecayPerTurn: 0
