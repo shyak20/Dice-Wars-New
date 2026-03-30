@@ -32,7 +32,9 @@ public class FaceRewardManager : MonoBehaviour
         chosenFace = null;
         chosenDie = null;
 
-        var options = lootTable.GetRandomRewards(3);
+        var preferredTypes = new HashSet<DieType>(
+            PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
+        var options = lootTable.GetRandomRewards(3, preferredTypes);
         faceSelectionView.Show(options, OnFaceChosen);
         gameObject.SetActive(true);
     }
