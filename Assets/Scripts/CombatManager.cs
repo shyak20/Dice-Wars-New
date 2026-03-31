@@ -104,20 +104,29 @@ public class CombatManager : MonoBehaviour
 
     private void InitializeEnemy()
     {
-        if (RunManager.Instance == null)
+        if (RunManager.Instance != null)
         {
-            Debug.LogError("CombatManager: RunManager not found! Cannot determine enemy.");
+            var room = RunManager.Instance.CurrentRoom;
+            if (room == null || room.roomType != RoomType.Combat)
+            {
+                Debug.LogError("CombatManager: Current room is not a combat room!");
+                return;
+            }
+
+            activeEnemy.Initialize(room.enemyType);
             return;
         }
 
-        var room = RunManager.Instance.CurrentRoom;
-        if (room == null || room.roomType != RoomType.Combat)
+        // Fallback: no RunManager, initialize from the scene-serialized enemyData
+        if (activeEnemy.enemyData != null)
         {
-            Debug.LogError("CombatManager: Current room is not a combat room!");
-            return;
+            Debug.Log("CombatManager: No RunManager found, initializing enemy from scene reference.");
+            activeEnemy.Initialize(activeEnemy.enemyData);
         }
-
-        activeEnemy.Initialize(room.enemyType);
+        else
+        {
+            Debug.LogError("CombatManager: No RunManager and no enemyData assigned on EnemyController!");
+        }
     }
 
     private void OnEnable()

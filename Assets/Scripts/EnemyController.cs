@@ -68,8 +68,8 @@ public class EnemyController : MonoBehaviour
     {
         enemyData = data;
         currentHealth = data.maxHealth;
-        // Ensure your EnemyTypeSO has a startArmor field, or default to 0
-        currentArmor = 0;
+        currentArmor = data.startArmor;
+        currentCycleIndex = 0;
 
         if (nameText != null) nameText.text = data.enemyName;
         UpdateUI();
@@ -104,6 +104,8 @@ public class EnemyController : MonoBehaviour
             currentHealth -= damageRemaining;
             currentHealth = Mathf.Max(0, currentHealth);
         }
+
+        Debug.Log($"{enemyData.enemyName} hit for {amount} — Armor absorbed: {armorDamage}, HP damage: {healthDamage}");
 
         UpdateUI();
         TriggerHitJuice();
@@ -242,7 +244,7 @@ public class EnemyController : MonoBehaviour
         }
         else
         {
-            if (healthText != null) healthText.text = currentHealth.ToString();
+            if (healthText != null) healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
         }
 
         // 5. Small Armor Icon/Amount Display
