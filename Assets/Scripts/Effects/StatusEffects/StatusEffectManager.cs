@@ -220,6 +220,13 @@ public class StatusEffectManager : MonoBehaviour
         return bonus;
     }
 
+    public int ModifyFaceValue(StatusEffectContext ctx, int value)
+    {
+        foreach (var instance in effects)
+            value = instance.Definition.ModifyFaceValue(instance, ctx, value);
+        return value;
+    }
+
     public bool CheckRedirectAttackToSelf(StatusEffectContext ctx)
     {
         foreach (var instance in effects)

@@ -267,16 +267,18 @@ public class CombatManager : MonoBehaviour
                 Debug.Log($"[KineticShield] +1 bonus armor (total: {kineticShieldBonus})");
         }
 
+        var modifiedValue = player.StatusEffects.ModifyFaceValue(BuildStatusContext(), face.value);
+
         var result = new FaceResult
         {
             Face = face,
-            Value = face.value,
+            Value = modifiedValue,
             Type = face.type,
             Action = face.action
         };
 
         channeledFaces.Add(result);
-        currentPower += face.value;
+        currentPower += modifiedValue;
 
         if (result.Action != null)
         {

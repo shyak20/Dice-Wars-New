@@ -170,7 +170,8 @@ Assets/Scripts/Effects/
 │       ├── ChillEffectSO.cs
 │       ├── FrozenEffectSO.cs
 │       ├── ShatteredEffectSO.cs
-│       └── ConfusionEffectSO.cs
+│       ├── ConfusionEffectSO.cs
+│       └── StrengthEffectSO.cs
 └── DESIGN.md                    — this file
 
 Assets/Scripts/UI/
@@ -189,7 +190,7 @@ Persistent cross-turn buffs/debuffs with stacking. Per-turn flags (immune, thorn
 
 **`StatusEffectSO`** (abstract ScriptableObject) — base for all effect definitions.
 - Fields: `effectName`, `icon`, `description`, `type` (Buff/Debuff), `target` (Player/Enemy), `stackDecayPerTurn`
-- Virtual hooks: `OnApply`, `OnTurnStart`, `OnBeforeEnemyTurn`, `ModifyEnemyHitDamage`, `ShouldRedirectAttackToSelf`, `OnAfterEnemyTurn`, `OnPerfectStrike`, `ModifyDamageToOwner`, `GetBonusAttack`, `OnRemove`
+- Virtual hooks: `OnApply`, `OnTurnStart`, `OnBeforeEnemyTurn`, `ModifyEnemyHitDamage`, `ShouldRedirectAttackToSelf`, `OnAfterEnemyTurn`, `OnPerfectStrike`, `ModifyDamageToOwner`, `GetBonusAttack`, `ModifyFaceValue`, `OnRemove`
 
 **`StatusEffectInstance`** — runtime wrapper: `Definition` + `Stacks`. Auto-removed when stacks reach 0.
 
@@ -200,6 +201,7 @@ Persistent cross-turn buffs/debuffs with stacking. Per-turn flags (immune, thorn
 | Timing | Hook | Example |
 |--------|------|---------|
 | Turn start (in ResetTurn) | `TickTurnStart` — applies `stackDecayPerTurn`, removes expired | Chill loses 5 stacks |
+| Die settles | `ModifyFaceValue` — adjusts face value before storing | Strength +1/stack per die |
 | SubmitTurn — attack calc | `GetTotalBonusAttack` + `ApplyDamageModifiers` | Shadow +1/stack, Frozen +20%/stack |
 | Perfect Strike | `TickPerfectStrike` | Bleed deals stacks as damage |
 | Before enemy attacks | `TickBeforeEnemyTurn` | Poison deals 1×stacks |
@@ -222,3 +224,4 @@ Use `ApplyStatusEffectAction` (a generic `IGameAction`) — assign a `StatusEffe
 | Frozen | Debuff | Enemy | 0 | +20% damage to owner per stack |
 | Shattered | Debuff | Enemy | 1/turn | -X% enemy attack damage; stacks = duration, not intensity |
 | Confusion | Debuff | Enemy | 0 | X% per stack chance enemy hits itself instead of player |
+| Strength | Buff | Player | 0 | +1 per stack to every die face value as it settles |
