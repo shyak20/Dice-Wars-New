@@ -15,6 +15,7 @@ namespace Enemies
         void Start()
         {
             _enemyController.CurrentIntent
+                .SkipWhile(action => action == null)
                 .Subscribe(OnCurrentIntentChanged)
                 .AddTo(this);
         }

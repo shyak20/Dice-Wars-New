@@ -35,7 +35,7 @@ public class EnemyController : MonoBehaviour
     private int currentHealth;
     private int currentArmor;
     private int currentCycleIndex = 0;
-    public ReactiveProperty<EnemyActionSO> CurrentIntent;
+    public ReactiveProperty<EnemyActionSO> CurrentIntent = new();
 
     private Coroutine flashRoutine;
     private Coroutine effectRoutine;
