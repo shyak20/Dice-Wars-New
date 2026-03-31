@@ -62,6 +62,22 @@ public class CombatManager : MonoBehaviour
 
     public List<FaceResult> GetChanneledFaces() => channeledFaces;
 
+    private Dictionary<DieType, int> BuildElementPools()
+    {
+        var pools = new Dictionary<DieType, int>();
+        foreach (DieType type in Enum.GetValues(typeof(DieType)))
+            pools[type] = 0;
+
+        foreach (var face in channeledFaces)
+            pools[face.Type] += face.Value;
+
+        pools[DieType.Defense] += kineticShieldBonus;
+        return pools;
+    }
+
+    private void FirePoolsUpdated() =>
+        CombatEvents.OnPoolsUpdated?.Invoke(BuildElementPools());
+
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
@@ -144,7 +160,7 @@ public class CombatManager : MonoBehaviour
         maxRolls = playerData.maxRollsPerTurn;
         rollsRemaining = maxRolls;
         CalculateMaxPower();
-        CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
+        FirePoolsUpdated();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
         if (playerStatusBar == null)
@@ -260,7 +276,7 @@ public class CombatManager : MonoBehaviour
         }
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
-        CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
+        FirePoolsUpdated();
 
         diceSettledCount++;
         if (diceSettledCount >= expectedDiceCount) ProcessPrecisionQueue();
@@ -325,7 +341,7 @@ public class CombatManager : MonoBehaviour
             activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
             if (CheckVictory()) return;
 
-            CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
+            FirePoolsUpdated();
             SubmitTurn();
         }
         else if (currentPower > maxPower)
@@ -366,7 +382,7 @@ public class CombatManager : MonoBehaviour
             kineticShieldBonus = 0;
         }
 
-        CombatEvents.OnPoolsUpdated?.Invoke(GetPendingAttack(), GetPendingDefense());
+        FirePoolsUpdated();
         SubmitTurn();
     }
 
@@ -386,7 +402,10 @@ public class CombatManager : MonoBehaviour
         pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
 
-        CombatEvents.OnPoolsUpdated?.Invoke(pendingAttack, pendingDefense);
+        var finalPools = BuildElementPools();
+        finalPools[DieType.Shadow] = pendingAttack;
+        finalPools[DieType.Defense] = pendingDefense;
+        CombatEvents.OnPoolsUpdated?.Invoke(finalPools);
 
         if (pendingAttack > 0)
         {
@@ -499,7 +518,7 @@ public class CombatManager : MonoBehaviour
         activeEnemy.StatusEffects.TickTurnStart(statusCtx);
         player.StatusEffects.TickTurnStart(statusCtx);
 
-        CombatEvents.OnPoolsUpdated?.Invoke(0, 0);
+        FirePoolsUpdated();
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.WaitingForRoll);

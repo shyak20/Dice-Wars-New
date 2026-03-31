@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 
 public static class CombatEvents
 {
     // UI Updates
     public static Action<int, int> OnPowerChanged;
-    public static Action<int, int> OnPoolsUpdated;
+    public static Action<Dictionary<DieType, int>> OnPoolsUpdated;
 
     // Interaction
     public static Action<DieAssetSO> OnDieToggled;

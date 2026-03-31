@@ -131,9 +131,10 @@ public class CombatUIController : MonoBehaviour
         if (powerText != null) powerText.text = $"{current} / {max}";
     }
 
-    private void UpdatePoolsUI(int atk, int def)
+    private void UpdatePoolsUI(Dictionary<DieType, int> pools)
     {
-        if (poolText != null) poolText.text = $"ATK: {atk} | DEF: {def}";
+        if (poolText != null)
+            poolText.text = $"ATK: {pools[DieType.Shadow]} | DEF: {pools[DieType.Defense]}";
     }
 
     /// <summary>
