@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using UniRx;
 
 public class EnemyController : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class EnemyController : MonoBehaviour
     private int currentHealth;
     private int currentArmor;
     private int currentCycleIndex = 0;
-    private EnemyActionSO currentIntent;
+    public ReactiveProperty<EnemyActionSO> CurrentIntent;
 
     private Coroutine flashRoutine;
     private Coroutine effectRoutine;
@@ -180,35 +181,16 @@ public class EnemyController : MonoBehaviour
 
         if (enemyData.isSequential)
         {
-            currentIntent = enemyData.actionCycle[currentCycleIndex];
+            CurrentIntent.Value = enemyData.actionCycle[currentCycleIndex];
             currentCycleIndex = (currentCycleIndex + 1) % enemyData.actionCycle.Count;
         }
         else
         {
             int randomIndex = UnityEngine.Random.Range(0, enemyData.actionCycle.Count);
-            currentIntent = enemyData.actionCycle[randomIndex];
+            CurrentIntent.Value = enemyData.actionCycle[randomIndex];
         }
-
-        UpdateIntentUI();
     }
 
-    private void UpdateIntentUI()
-    {
-        if (intentText == null) return;
-        string description = "";
-        if (currentIntent.damage > 0)
-        {
-            description += (currentIntent.numberOfAttacks > 1)
-                ? $"{currentIntent.damage}x{currentIntent.numberOfAttacks} ATK"
-                : $"{currentIntent.damage} ATK";
-        }
-        if (currentIntent.armor > 0)
-        {
-            if (description != "") description += " & ";
-            description += $"{currentIntent.armor} ARM";
-        }
-        intentText.text = $"Next: {currentIntent.actionName}\n({description})";
-    }
 
     private void UpdateUI()
     {
@@ -258,5 +240,5 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    public EnemyActionSO GetCurrentAction() => currentIntent;
+    public EnemyActionSO GetCurrentAction() => CurrentIntent.Value;
 }

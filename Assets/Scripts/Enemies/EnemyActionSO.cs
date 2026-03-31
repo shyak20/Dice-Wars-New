@@ -4,6 +4,7 @@ using UnityEngine;
 public class EnemyActionSO : ScriptableObject
 {
     public string actionName;
+    public Sprite icon;
     public int damage;
     public int numberOfAttacks = 1; // Default to 1 hit
     public int armor;
