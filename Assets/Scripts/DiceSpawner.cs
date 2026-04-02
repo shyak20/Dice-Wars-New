@@ -18,6 +18,10 @@ public class DiceSpawner : MonoBehaviour
     public float minUpwardForce = 5f;
     public float maxUpwardForce = 10f;
 
+    [Header("Rotation Settings")]
+    public float minTorque = 10f;
+    public float maxTorque = 30f;
+
     private List<GameObject> activeDiceModels = new List<GameObject>();
 
     /// <summary>
@@ -81,15 +85,20 @@ public class DiceSpawner : MonoBehaviour
 
     private void ApplyForces(Rigidbody rb)
     {
+        // Reset velocities to ensure a consistent throw every time
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
+        // Calculate Linear Force
         float forwardForce = Random.Range(minForwardForce, maxForwardForce);
         float upwardForce = Random.Range(minUpwardForce, maxUpwardForce);
-
         Vector3 throwDirection = (spawnPoint.forward * forwardForce) + (spawnPoint.up * upwardForce);
+
+        // Apply Linear Force
         rb.AddForce(throwDirection, ForceMode.Impulse);
 
-        rb.AddTorque(Random.insideUnitSphere * Random.Range(10f, 30f), ForceMode.Impulse);
+        // Calculate and apply Torque (Spin)
+        float torqueMagnitude = Random.Range(minTorque, maxTorque);
+        rb.AddTorque(Random.insideUnitSphere * torqueMagnitude, ForceMode.Impulse);
     }
 }
