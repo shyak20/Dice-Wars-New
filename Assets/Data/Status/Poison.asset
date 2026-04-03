@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Poison
   m_EditorClassIdentifier: 
   effectName: Poison
-  icon: {fileID: 21300000, guid: d1dd986801c382e42baf47027859e0e6, type: 3}
+  icon: {fileID: 21300000, guid: 618a26f22d6051543af8c274abf85fdf, type: 3}
   description: '"Deals 1 Damage per Stack. Before the enemy''s turn. Ignores armor.
 
     stays
