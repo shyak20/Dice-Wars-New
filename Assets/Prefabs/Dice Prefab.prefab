@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   velocityThreshold: 0.05
-  settleTime: 0.5
+  settleTime: 1
 --- !u!114 &1675593947625841633
 MonoBehaviour:
   m_ObjectHideFlags: 0
