@@ -170,7 +170,7 @@ public class CombatUIController : MonoBehaviour
         maxRolls = max;
 
         if (rollButtonText != null)
-            rollButtonText.text = $"{remaining}/{max} Roll!";
+            rollButtonText.text = $"Roll!\n{remaining}/{max}";
     }
 
     private void HandleStateChange(CombatState state)
