@@ -18,7 +18,10 @@ MonoBehaviour:
   type: 0
   faceMaterial: {fileID: 2100000, guid: 5e06bc7ed7ca709419be092a341d8102, type: 2}
   rarity: 0
+  damage: 1
+  armor: 0
   faceIcon: {fileID: 21300000, guid: 54dbe9fe3d5a1814a9677b9979c78378, type: 3}
+  activateImmediately: 0
   action:
     rid: 1470082923306942465
   references:

@@ -1,10 +1,9 @@
 using UnityEngine;
 
-// DO NOT PUT A CLASS HERE. These must be global.
 public enum DieType
 {
-    Shadow,
-    Defense,
+    Damage, // Renamed from Shadow
+    Armor,  // Renamed from Defense
     Fire,
     Ice,
     Nature,
@@ -16,4 +15,3 @@ public enum FaceRarity
     Rare,
     Legendary
 }
-// Note: CombatState was moved to its own file previously

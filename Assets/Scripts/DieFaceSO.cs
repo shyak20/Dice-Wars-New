@@ -8,14 +8,20 @@ public class DieFaceSO : ScriptableObject
 
     public string Title => string.IsNullOrEmpty(title) ? name : title;
     public string Description => string.IsNullOrEmpty(description) ? name : description;
-    public int value;
+
+    public int value; // Keeping this for the Power Bar calculation
     public DieType type;
     public Material faceMaterial;
     public FaceRarity rarity;
+
+    [Header("Values")]
+    public int damage; // New independent damage value
+    public int armor;  // New independent armor value
 
     [Header("UI Visuals")]
     public Sprite faceIcon;
 
     [Header("Game Action")]
+    public bool activateImmediately = true; // Toggle for deferred execution
     [SerializeReference] public IGameAction action;
 }

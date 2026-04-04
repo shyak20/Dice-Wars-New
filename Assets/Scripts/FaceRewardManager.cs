@@ -21,10 +21,8 @@ public class FaceRewardManager : MonoBehaviour
 
     private void Awake()
     {
-        if (faceSelectionView == null) Debug.LogError("FaceRewardManager: faceSelectionView is not assigned!");
-        if (diceSelectionView == null) Debug.LogError("FaceRewardManager: diceSelectionView is not assigned!");
-        if (faceSlotSelectionView == null) Debug.LogError("FaceRewardManager: faceSlotSelectionView is not assigned!");
-        if (lootTable == null) Debug.LogError("FaceRewardManager: lootTable is not assigned!");
+        if (faceSelectionView == null || diceSelectionView == null || faceSlotSelectionView == null || lootTable == null)
+            Debug.LogError("FaceRewardManager: Missing references!");
     }
 
     public void StartFaceReward()
@@ -42,23 +40,13 @@ public class FaceRewardManager : MonoBehaviour
     private void OnFaceChosen(DieFaceSO face)
     {
         chosenFace = face;
-
+        // Logic remains compatible as it checks for type equality
         var matchingDice = PlayerDataContainer.Instance.RuntimeData.currentDeck
             .Where(d => d.dieType == face.type)
             .ToList();
 
-        if (matchingDice.Count == 0)
-        {
-            Debug.LogError($"FaceRewardManager: No dice of type {face.type} in player deck!");
-            return;
-        }
-
-        if (matchingDice.Count == 1)
-        {
-            OnDieChosen(matchingDice[0]);
-            return;
-        }
-
+        if (matchingDice.Count == 0) return;
+        if (matchingDice.Count == 1) { OnDieChosen(matchingDice[0]); return; }
         diceSelectionView.Show(matchingDice, OnDieChosen);
     }
 
@@ -70,11 +58,7 @@ public class FaceRewardManager : MonoBehaviour
 
     private void OnSlotChosen(int slotIndex)
     {
-        var oldFace = chosenDie.faces[slotIndex];
         chosenDie.faces[slotIndex] = chosenFace;
-
-        Debug.Log($"[FaceReward] Replaced '{oldFace.name}' with '{chosenFace.name}' on '{chosenDie.dieName}' slot {slotIndex}");
-
         faceSlotSelectionView.RefreshSlot(chosenDie, slotIndex);
         faceSlotSelectionView.DisableInteraction();
         StartCoroutine(CloseAfterDelay());
@@ -83,7 +67,6 @@ public class FaceRewardManager : MonoBehaviour
     private IEnumerator CloseAfterDelay()
     {
         yield return new WaitForSeconds(closeDelay);
-
         faceSlotSelectionView.Hide();
         gameObject.SetActive(false);
         FaceRewardEvents.OnFaceRewardCompleted?.Invoke(chosenFace);
