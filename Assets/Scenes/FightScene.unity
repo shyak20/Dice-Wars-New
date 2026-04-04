@@ -542,7 +542,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 17.9528, y: 0}
+  m_AnchoredPosition: {x: 17.952805, y: 0}
   m_SizeDelta: {x: 35.9055, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &129140264
@@ -2096,6 +2096,88 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59be618963f0fb242b1fce751b36e6db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &634037714
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 634037715}
+  - component: {fileID: 634037716}
+  m_Layer: 0
+  m_Name: DiceRollOutcomeFlyoutController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &634037715
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 634037714}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1896576053}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &634037716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 634037714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f7f9cea7daaedb41b7cbea61bc1abc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canvas: {fileID: 1896576052}
+  flyoutParent: {fileID: 634037715}
+  elementPoolDisplay: {fileID: 2110974188}
+  worldCamera: {fileID: 963194227}
+  linePrefab: {fileID: 6282203067050408647, guid: 8c38c60e1dea21a458165192404f5a49, type: 3}
+  worldOffsetAboveDie: 0.75
+  lineSpacing: 36
+  waitBeforeFlySeconds: 1
+  flyDurationSeconds: 1
+  flyEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: -0.19789523
+      outSlope: -0.19789523
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.10557433
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2.55074
+      outSlope: 2.55074
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.045608044
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  arcHeightPixels: 300
 --- !u!1 &647604714
 GameObject:
   m_ObjectHideFlags: 0
@@ -2348,7 +2430,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -28.9, y: 37.5}
+  m_AnchoredPosition: {x: -28.900002, y: 37.5}
   m_SizeDelta: {x: 30.9393, y: 31.852798}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &672822301
@@ -6921,7 +7003,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -71.2}
+  m_AnchoredPosition: {x: 0, y: -71.200005}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1599313748
@@ -7490,9 +7572,9 @@ Canvas:
   m_GameObject: {fileID: 1896576049}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_Camera: {fileID: 963194227}
-  m_PlaneDistance: 100
+  m_PlaneDistance: 2.5
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
@@ -7532,6 +7614,7 @@ RectTransform:
   - {fileID: 872838667}
   - {fileID: 1698265189}
   - {fileID: 1101074582}
+  - {fileID: 634037715}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -8260,6 +8343,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f33c07e71dfa3a044b2d51084ccc64a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  incrementPoolIconsWithFlyouts: 1
   damageIcon: {fileID: 4500284168897052504}
   armorIcon: {fileID: 1090115749}
   fireIcon: {fileID: 622184614}
@@ -9297,6 +9381,10 @@ PrefabInstance:
     - target: {fileID: 7951526948807616157, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -270
+      objectReference: {fileID: 0}
+    - target: {fileID: 8143987514159174808, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 222.09998
       objectReference: {fileID: 0}
     - target: {fileID: 8223781628131508153, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_AnchorMax.y

@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class ElementPoolDisplay : MonoBehaviour
 {
+    [Tooltip("When enabled, pool icons only change on flyout landing + full resync events. Wire DiceRollOutcomeFlyoutController and assign it in the scene.")]
+    [SerializeField] private bool incrementPoolIconsWithFlyouts;
+
     [SerializeField] private ElementPoolIcon damageIcon;
     [SerializeField] private ElementPoolIcon armorIcon;
     [SerializeField] private ElementPoolIcon fireIcon;
@@ -11,6 +14,7 @@ public class ElementPoolDisplay : MonoBehaviour
     [SerializeField] private ElementPoolIcon natureIcon;
 
     private Dictionary<DieType, ElementPoolIcon> iconMap;
+    private Dictionary<DieType, int> displayedPools;
 
     private void Awake()
     {
@@ -23,6 +27,10 @@ public class ElementPoolDisplay : MonoBehaviour
             { DieType.Nature, natureIcon },
         };
 
+        displayedPools = new Dictionary<DieType, int>();
+        foreach (DieType type in Enum.GetValues(typeof(DieType)))
+            displayedPools[type] = 0;
+
         foreach (var kvp in iconMap)
         {
             if (kvp.Value == null)
@@ -31,7 +39,6 @@ public class ElementPoolDisplay : MonoBehaviour
             }
             else
             {
-                // Start with all icons hidden
                 kvp.Value.gameObject.SetActive(false);
             }
         }
@@ -39,32 +46,66 @@ public class ElementPoolDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        CombatEvents.OnPoolsUpdated += UpdatePools;
+        CombatEvents.OnPoolIconsFullResync += ApplyFullPoolSync;
+        if (!incrementPoolIconsWithFlyouts)
+            CombatEvents.OnPoolsUpdated += ApplyFullPoolSync;
     }
 
     private void OnDisable()
     {
-        CombatEvents.OnPoolsUpdated -= UpdatePools;
+        CombatEvents.OnPoolIconsFullResync -= ApplyFullPoolSync;
+        if (!incrementPoolIconsWithFlyouts)
+            CombatEvents.OnPoolsUpdated -= ApplyFullPoolSync;
     }
 
-    private void UpdatePools(Dictionary<DieType, int> pools)
+    public bool UsesFlyoutIncrementMode => incrementPoolIconsWithFlyouts;
+
+    public RectTransform GetFlyTargetRect(DieType type)
+    {
+        if (iconMap == null || !iconMap.TryGetValue(type, out var icon) || icon == null)
+        {
+            Debug.LogError($"ElementPoolDisplay: No icon / fly target for {type}.");
+            return null;
+        }
+
+        return icon.FlyTargetRect;
+    }
+
+    /// <summary>Sprite used in the pool bar for this type (same art as <see cref="ElementPoolIcon"/>).</summary>
+    public Sprite GetPoolTypeSprite(DieType type)
+    {
+        if (iconMap == null || !iconMap.TryGetValue(type, out var icon) || icon == null)
+            return null;
+        return icon.PoolTypeSprite;
+    }
+
+    /// <summary>Called when a flyout reaches the pool bar; increments the visible total for that type.</summary>
+    public void ApplyPoolDelta(DieType type, int delta)
+    {
+        if (delta == 0) return;
+        if (!displayedPools.ContainsKey(type))
+            displayedPools[type] = 0;
+        displayedPools[type] += delta;
+        RefreshIcon(type);
+    }
+
+    private void ApplyFullPoolSync(Dictionary<DieType, int> pools)
     {
         foreach (var kvp in pools)
-        {
-            if (iconMap.TryGetValue(kvp.Key, out var icon))
-            {
-                // Check if the element has at least 1 value
-                bool shouldBeVisible = kvp.Value >= 1;
+            displayedPools[kvp.Key] = kvp.Value;
 
-                // Toggle the GameObject visibility
-                icon.gameObject.SetActive(shouldBeVisible);
+        foreach (DieType type in Enum.GetValues(typeof(DieType)))
+            RefreshIcon(type);
+    }
 
-                // Only update the text value if the icon is visible
-                if (shouldBeVisible)
-                {
-                    icon.SetValue(kvp.Value);
-                }
-            }
-        }
+    private void RefreshIcon(DieType type)
+    {
+        if (!iconMap.TryGetValue(type, out var icon) || icon == null) return;
+
+        int v = displayedPools.TryGetValue(type, out var stored) ? stored : 0;
+        bool visible = v >= 1;
+        icon.gameObject.SetActive(visible);
+        if (visible)
+            icon.SetValue(v);
     }
 }

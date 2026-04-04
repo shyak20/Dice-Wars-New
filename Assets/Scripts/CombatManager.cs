@@ -80,6 +80,13 @@ public class CombatManager : MonoBehaviour
 
     private void FirePoolsUpdated() => CombatEvents.OnPoolsUpdated?.Invoke(BuildElementPools());
 
+    private void NotifyAllPoolUI()
+    {
+        var pools = BuildElementPools();
+        CombatEvents.OnPoolsUpdated?.Invoke(pools);
+        CombatEvents.OnPoolIconsFullResync?.Invoke(pools);
+    }
+
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
@@ -157,7 +164,7 @@ public class CombatManager : MonoBehaviour
         maxRolls = playerData.maxRollsPerTurn;
         rollsRemaining = maxRolls;
         CalculateMaxPower();
-        FirePoolsUpdated();
+        NotifyAllPoolUI();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
         if (playerStatusBar != null) playerStatusBar.Bind(player.StatusEffects);
@@ -205,9 +212,10 @@ public class CombatManager : MonoBehaviour
         spawner.SpawnAndRollBatch(selectedDice);
     }
 
-    public void ResolveRollResult(DieFaceSO face)
+    public void ResolveRollResult(DieFaceSO face, Transform dieWorldSource = null)
     {
-        if (kineticShieldActive) kineticShieldBonus++;
+        bool kineticArmorThisRoll = kineticShieldActive;
+        if (kineticArmorThisRoll) kineticShieldBonus++;
 
         var modifiedValue = player.StatusEffects.ModifyFaceValue(BuildStatusContext(), face.value);
 
@@ -236,8 +244,36 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         FirePoolsUpdated();
 
+        if (dieWorldSource != null)
+            RaiseDiceRollVisual(dieWorldSource, result, kineticArmorThisRoll);
+
         diceSettledCount++;
         if (diceSettledCount >= expectedDiceCount) ProcessPrecisionQueue();
+    }
+
+    private static void RaiseDiceRollVisual(Transform dieWorldSource, FaceResult result, bool kineticArmorThisRoll)
+    {
+        var lines = new List<RollOutcomeVisualLine>();
+        void AddLine(DieType t, int amt)
+        {
+            if (amt <= 0) return;
+            lines.Add(new RollOutcomeVisualLine { Type = t, Amount = amt });
+        }
+
+        AddLine(DieType.Damage, result.Damage);
+        AddLine(DieType.Armor, result.Armor);
+        if (result.Type != DieType.Damage && result.Type != DieType.Armor)
+            AddLine(result.Type, result.Value);
+        if (kineticArmorThisRoll)
+            AddLine(DieType.Armor, 1);
+
+        if (lines.Count == 0) return;
+
+        CombatEvents.OnDiceRollVisualFeedback?.Invoke(new DiceRollVisualPayload
+        {
+            WorldAnchor = dieWorldSource.position,
+            Lines = lines
+        });
     }
 
     private GameActionContext BuildContext(FaceResult triggeringFace = null)
@@ -280,7 +316,7 @@ public class CombatManager : MonoBehaviour
             kineticShieldBonus *= appliedMultiplier;
             activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
             if (CheckVictory()) return;
-            FirePoolsUpdated();
+            NotifyAllPoolUI();
             SubmitTurn();
         }
         else if (currentPower > maxPower)
@@ -308,7 +344,7 @@ public class CombatManager : MonoBehaviour
             if (nullifyDamage) face.Damage = 0;
             else { face.Armor = 0; kineticShieldBonus = 0; }
         }
-        FirePoolsUpdated();
+        NotifyAllPoolUI();
         SubmitTurn();
     }
 
@@ -392,7 +428,7 @@ public class CombatManager : MonoBehaviour
         var statusCtx = BuildStatusContext();
         activeEnemy.StatusEffects.TickTurnStart(statusCtx);
         player.StatusEffects.TickTurnStart(statusCtx);
-        FirePoolsUpdated();
+        NotifyAllPoolUI();
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.WaitingForRoll);

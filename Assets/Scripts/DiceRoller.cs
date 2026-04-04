@@ -74,7 +74,7 @@ public class DiceRoller : MonoBehaviour
         {
             // Pick the SO from the matching index in our faces array
             DieFaceSO resultFace = visualizer.dieData.faces[closestIndex];
-            manager.ResolveRollResult(resultFace);
+            manager.ResolveRollResult(resultFace, transform);
         }
     }
 }
