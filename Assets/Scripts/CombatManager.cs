@@ -201,8 +201,17 @@ public class CombatManager : MonoBehaviour
 
     private void CalculateMaxPower()
     {
-        int extraDice = Mathf.Max(0, playerData.currentDeck.Count - 2);
-        maxPower = baseMaxPower + (extraDice * 6);
+        maxPower = baseMaxPower;
+        if (playerData?.currentDeck != null)
+        {
+            for (int i = 2; i < playerData.currentDeck.Count; i++)
+            {
+                var die = playerData.currentDeck[i];
+                if (die != null)
+                    maxPower += die.MaxPowerContribution;
+            }
+        }
+
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
     }
 

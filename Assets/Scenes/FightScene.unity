@@ -4396,10 +4396,10 @@ MonoBehaviour:
   damageDestroyEffect: {fileID: 0}
   armorDestroyEffect: {fileID: 0}
   effectLifetime: 2
-  minForwardForce: 4
-  maxForwardForce: 7
+  minForwardForce: 2
+  maxForwardForce: 6
   minUpwardForce: 2
-  maxUpwardForce: 6
+  maxUpwardForce: 7
   minTorque: 10
   maxTorque: 80
 --- !u!4 &1048341407
