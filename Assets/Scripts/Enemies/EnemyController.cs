@@ -12,7 +12,6 @@ public class EnemyController : MonoBehaviour
     public TMP_Text nameText;
     public Slider healthSlider;
     public TMP_Text healthText;
-    public TMP_Text armorHealthText; // Health value shown when armor is present
     public Slider armorSlider;       // The "Armor Bar" slider
     public TMP_Text intentText;
     public TMP_Text armorText;       // The text showing the actual armor amount
@@ -214,22 +213,17 @@ public class EnemyController : MonoBehaviour
             }
         }
 
-        // 3. Text Visibility Toggle
-        if (healthText != null) healthText.gameObject.SetActive(!hasArmor);
-        if (armorHealthText != null) armorHealthText.gameObject.SetActive(hasArmor);
-
-        // 4. Update Values
-        // Both texts receive currentHealth, but they are styled differently
-        if (hasArmor)
+        // 3. Health text (always shown; armor uses armor bar + armorText only)
+        if (healthText != null)
         {
-            if (armorHealthText != null) armorHealthText.text = currentHealth.ToString();
-        }
-        else
-        {
-            if (healthText != null) healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
+            healthText.gameObject.SetActive(true);
+            if (enemyData != null)
+                healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
+            else
+                healthText.text = currentHealth.ToString();
         }
 
-        // 5. Small Armor Icon/Amount Display
+        // 4. Small Armor Icon/Amount Display
         if (armorText != null)
         {
             armorText.text = hasArmor ? currentArmor.ToString() : "";

@@ -828,7 +828,6 @@ MonoBehaviour:
   nameText: {fileID: 0}
   healthSlider: {fileID: 4072378514654896624}
   healthText: {fileID: 7071833018357280711}
-  armorHealthText: {fileID: 1946754496089152992}
   armorSlider: {fileID: 0}
   intentText: {fileID: 3652815370507214424}
   armorText: {fileID: 1894310180379465275}
