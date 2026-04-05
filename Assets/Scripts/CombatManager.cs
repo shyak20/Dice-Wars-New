@@ -46,6 +46,7 @@ public class CombatManager : MonoBehaviour
 
     private int diceSettledCount = 0;
     private int expectedDiceCount = 0;
+    private int pendingRollVisualSequences;
 
     private int rollsRemaining;
     private int maxRolls;
@@ -206,6 +207,7 @@ public class CombatManager : MonoBehaviour
         if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
         expectedDiceCount = selectedDice.Count;
         diceSettledCount = 0;
+        pendingRollVisualSequences = 0;
         rollsRemaining--;
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.Rolling);
@@ -244,14 +246,47 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         FirePoolsUpdated();
 
-        if (dieWorldSource != null)
-            RaiseDiceRollVisual(dieWorldSource, result, kineticArmorThisRoll);
-
         diceSettledCount++;
-        if (diceSettledCount >= expectedDiceCount) ProcessPrecisionQueue();
+
+        if (dieWorldSource != null)
+        {
+            var lines = BuildRollVisualLines(result, kineticArmorThisRoll);
+            if (lines.Count > 0 && CombatEvents.OnDiceRollVisualFeedback != null)
+            {
+                pendingRollVisualSequences++;
+                var payload = new DiceRollVisualPayload
+                {
+                    WorldAnchor = dieWorldSource.position,
+                    Lines = lines
+                };
+                payload.BindVisualFinished(OnRollVisualSequenceFinished);
+                CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
+            }
+        }
+
+        TryAdvanceAfterDiceSettledAndRollVisuals();
     }
 
-    private static void RaiseDiceRollVisual(Transform dieWorldSource, FaceResult result, bool kineticArmorThisRoll)
+    private void OnRollVisualSequenceFinished()
+    {
+        pendingRollVisualSequences--;
+        if (pendingRollVisualSequences < 0)
+        {
+            Debug.LogError("CombatManager: pendingRollVisualSequences underflow — check DiceRollVisualPayload.ReportVisualFinished is called once per payload.");
+            pendingRollVisualSequences = 0;
+        }
+
+        TryAdvanceAfterDiceSettledAndRollVisuals();
+    }
+
+    private void TryAdvanceAfterDiceSettledAndRollVisuals()
+    {
+        if (diceSettledCount < expectedDiceCount) return;
+        if (pendingRollVisualSequences > 0) return;
+        ProcessPrecisionQueue();
+    }
+
+    private static List<RollOutcomeVisualLine> BuildRollVisualLines(FaceResult result, bool kineticArmorThisRoll)
     {
         var lines = new List<RollOutcomeVisualLine>();
         void AddLine(DieType t, int amt)
@@ -266,14 +301,7 @@ public class CombatManager : MonoBehaviour
             AddLine(result.Type, result.Value);
         if (kineticArmorThisRoll)
             AddLine(DieType.Armor, 1);
-
-        if (lines.Count == 0) return;
-
-        CombatEvents.OnDiceRollVisualFeedback?.Invoke(new DiceRollVisualPayload
-        {
-            WorldAnchor = dieWorldSource.position,
-            Lines = lines
-        });
+        return lines;
     }
 
     private GameActionContext BuildContext(FaceResult triggeringFace = null)

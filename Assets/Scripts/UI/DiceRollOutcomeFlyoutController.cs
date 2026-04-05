@@ -54,78 +54,105 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private void HandleRollVisual(DiceRollVisualPayload payload)
     {
-        if (payload == null || payload.Lines == null || payload.Lines.Count == 0) return;
-        if (canvas == null || flyoutParent == null || elementPoolDisplay == null || linePrefab == null) return;
-        if (!elementPoolDisplay.UsesFlyoutIncrementMode) return;
+        if (payload == null)
+        {
+            Debug.LogError("DiceRollOutcomeFlyoutController: received null payload.");
+            return;
+        }
+
+        if (payload.Lines == null || payload.Lines.Count == 0)
+        {
+            payload.ReportVisualFinished();
+            return;
+        }
+
+        if (canvas == null || flyoutParent == null || elementPoolDisplay == null || linePrefab == null)
+        {
+            payload.ReportVisualFinished();
+            return;
+        }
+
+        if (!elementPoolDisplay.UsesFlyoutIncrementMode)
+        {
+            payload.ReportVisualFinished();
+            return;
+        }
 
         StartCoroutine(PlayFlyoutRoutine(payload));
     }
 
     private IEnumerator PlayFlyoutRoutine(DiceRollVisualPayload payload)
     {
-        var canvasRect = canvas.transform as RectTransform;
-        if (canvasRect == null) yield break;
-
-        Camera eventCam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera != null ? canvas.worldCamera : worldCamera;
-
-        Vector3 anchorWorld = payload.WorldAnchor + Vector3.up * worldOffsetAboveDie;
-        if (!WorldToCanvasLocal(canvasRect, eventCam, anchorWorld, out Vector2 anchorLocal))
-            yield break;
-
-        var lineRects = new List<RectTransform>();
-        for (int i = 0; i < payload.Lines.Count; i++)
+        try
         {
-            var line = payload.Lines[i];
-            GameObject row = Instantiate(linePrefab, flyoutParent);
-            var rt = row.transform as RectTransform;
-            if (rt == null)
+            var canvasRect = canvas.transform as RectTransform;
+            if (canvasRect == null) yield break;
+
+            Camera eventCam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera != null ? canvas.worldCamera : worldCamera;
+
+            Vector3 anchorWorld = payload.WorldAnchor + Vector3.up * worldOffsetAboveDie;
+            if (!WorldToCanvasLocal(canvasRect, eventCam, anchorWorld, out Vector2 anchorLocal))
+                yield break;
+
+            var lineRects = new List<RectTransform>();
+            for (int i = 0; i < payload.Lines.Count; i++)
             {
-                Debug.LogError("DiceRollOutcomeFlyoutController: linePrefab root must have a RectTransform.");
-                Destroy(row);
-                continue;
+                var line = payload.Lines[i];
+                GameObject row = Instantiate(linePrefab, flyoutParent);
+                var rt = row.transform as RectTransform;
+                if (rt == null)
+                {
+                    Debug.LogError("DiceRollOutcomeFlyoutController: linePrefab root must have a RectTransform.");
+                    Destroy(row);
+                    continue;
+                }
+
+                var view = row.GetComponent<RollOutcomeFlyoutLineView>();
+                if (view != null)
+                    view.Setup(elementPoolDisplay.GetPoolTypeSprite(line.Type), line.Amount);
+                else
+                    Debug.LogError("DiceRollOutcomeFlyoutController: linePrefab should include RollOutcomeFlyoutLineView.");
+
+                rt.anchoredPosition = anchorLocal + Vector2.down * (i * lineSpacing);
+                lineRects.Add(rt);
             }
 
-            var view = row.GetComponent<RollOutcomeFlyoutLineView>();
-            if (view != null)
-                view.Setup(elementPoolDisplay.GetPoolTypeSprite(line.Type), line.Amount);
-            else
-                Debug.LogError("DiceRollOutcomeFlyoutController: linePrefab should include RollOutcomeFlyoutLineView.");
+            if (lineRects.Count == 0) yield break;
 
-            rt.anchoredPosition = anchorLocal + Vector2.down * (i * lineSpacing);
-            lineRects.Add(rt);
+            if (waitBeforeFlySeconds > 0f)
+                yield return new WaitForSeconds(waitBeforeFlySeconds);
+
+            var flyCoroutines = new List<Coroutine>();
+            for (int i = 0; i < payload.Lines.Count && i < lineRects.Count; i++)
+            {
+                var line = payload.Lines[i];
+                RectTransform target = elementPoolDisplay.GetFlyTargetRect(line.Type);
+                if (target == null)
+                {
+                    Destroy(lineRects[i].gameObject);
+                    continue;
+                }
+
+                if (!WorldToCanvasLocal(canvasRect, eventCam, GetWorldCornersCenter(target), out Vector2 endLocal))
+                {
+                    Destroy(lineRects[i].gameObject);
+                    continue;
+                }
+
+                Vector2 startLocal = lineRects[i].anchoredPosition;
+                Vector2 mid = (startLocal + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
+                flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line.Type, line.Amount)));
+            }
+
+            foreach (var c in flyCoroutines)
+            {
+                if (c != null)
+                    yield return c;
+            }
         }
-
-        if (lineRects.Count == 0) yield break;
-
-        if (waitBeforeFlySeconds > 0f)
-            yield return new WaitForSeconds(waitBeforeFlySeconds);
-
-        var flyCoroutines = new List<Coroutine>();
-        for (int i = 0; i < payload.Lines.Count && i < lineRects.Count; i++)
+        finally
         {
-            var line = payload.Lines[i];
-            RectTransform target = elementPoolDisplay.GetFlyTargetRect(line.Type);
-            if (target == null)
-            {
-                Destroy(lineRects[i].gameObject);
-                continue;
-            }
-
-            if (!WorldToCanvasLocal(canvasRect, eventCam, GetWorldCornersCenter(target), out Vector2 endLocal))
-            {
-                Destroy(lineRects[i].gameObject);
-                continue;
-            }
-
-            Vector2 startLocal = lineRects[i].anchoredPosition;
-            Vector2 mid = (startLocal + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
-            flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line.Type, line.Amount)));
-        }
-
-        foreach (var c in flyCoroutines)
-        {
-            if (c != null)
-                yield return c;
+            payload.ReportVisualFinished();
         }
     }
 

@@ -14,6 +14,20 @@ public class DiceRollVisualPayload
 {
     public Vector3 WorldAnchor;
     public List<RollOutcomeVisualLine> Lines;
+
+    Action _onVisualFinished;
+    bool _visualFinishedReported;
+
+    /// <summary>CombatManager registers this so bust / precision / turn flow waits for flyout.</summary>
+    public void BindVisualFinished(Action onFinished) => _onVisualFinished = onFinished;
+
+    /// <summary>Call exactly once when this die's flyout sequence ends (or is skipped).</summary>
+    public void ReportVisualFinished()
+    {
+        if (_visualFinishedReported) return;
+        _visualFinishedReported = true;
+        _onVisualFinished?.Invoke();
+    }
 }
 
 public static class CombatEvents
