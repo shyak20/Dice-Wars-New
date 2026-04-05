@@ -3,6 +3,11 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Strength", menuName = "DiceGame/StatusEffects/Strength")]
 public class StrengthEffectSO : StatusEffectSO
 {
+    public override int GetPerDieAttackDamageBonus(StatusEffectInstance instance, StatusEffectContext ctx)
+    {
+        return instance.Stacks;
+    }
+
     public override int ModifyFaceValue(StatusEffectInstance instance, StatusEffectContext ctx, int value)
     {
         if (value <= 0) return value;

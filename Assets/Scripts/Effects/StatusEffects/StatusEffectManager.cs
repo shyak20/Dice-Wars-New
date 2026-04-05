@@ -220,6 +220,14 @@ public class StatusEffectManager : MonoBehaviour
         return bonus;
     }
 
+    public int GetTotalPerDieAttackDamageBonus(StatusEffectContext ctx)
+    {
+        var bonus = 0;
+        foreach (var instance in effects)
+            bonus += instance.Definition.GetPerDieAttackDamageBonus(instance, ctx);
+        return bonus;
+    }
+
     public int ModifyFaceValue(StatusEffectContext ctx, int value)
     {
         foreach (var instance in effects)

@@ -230,7 +230,11 @@ public class CombatManager : MonoBehaviour
         bool kineticArmorThisRoll = kineticShieldActive;
         if (kineticArmorThisRoll) kineticShieldBonus++;
 
-        var modifiedValue = player.StatusEffects.ModifyFaceValue(BuildStatusContext(), face.value);
+        var statusCtx = BuildStatusContext();
+        var modifiedValue = player.StatusEffects.ModifyFaceValue(statusCtx, face.value);
+        var rolledDamage = face.damage;
+        if (rolledDamage > 0)
+            rolledDamage += player.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
 
         // Populate the expanded FaceResult
         var result = new FaceResult
@@ -238,7 +242,7 @@ public class CombatManager : MonoBehaviour
             Face = face,
             Value = modifiedValue,
             Type = face.type,
-            Damage = face.damage,
+            Damage = rolledDamage,
             Armor = face.armor,
             ActivateImmediately = face.activateImmediately,
             Action = face.action

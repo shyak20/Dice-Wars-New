@@ -23,6 +23,6 @@ public class StatusEffectIconUI : MonoBehaviour
 
     public void UpdateStacks(int stacks)
     {
-        stackText.text = stacks > 1 ? stacks.ToString() : "";
+        stackText.text = stacks > 0 ? stacks.ToString() : "";
     }
 }
