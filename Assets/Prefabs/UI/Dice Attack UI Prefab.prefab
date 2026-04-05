@@ -16,6 +16,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 006cfe0597d2da2478962748cb09df7c, type: 3}
+    - target: {fileID: 6099948319502474377, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 1121e27814e1d534986f2ed91b0948b4, type: 3}
     - target: {fileID: 7597361024290441622, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -96,6 +100,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7947949223585866569, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 006cfe0597d2da2478962748cb09df7c, type: 3}
     - target: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
       propertyPath: m_Name
       value: Dice Attack UI Prefab

@@ -27,7 +27,7 @@ public class CombatUIController : MonoBehaviour
     public Button nullifyDamageButton; // Renamed from attack
     public Button nullifyArmorButton;  // Renamed from defense
 
-    private Dictionary<DieAssetSO, UnityEngine.UI.Image> buttonImages = new Dictionary<DieAssetSO, UnityEngine.UI.Image>();
+    private Dictionary<DieAssetSO, DiceTrayButtonView> diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
     private List<DieAssetSO> currentlySelected = new List<DieAssetSO>();
 
     private TMP_Text rollButtonText;
@@ -71,7 +71,7 @@ public class CombatUIController : MonoBehaviour
     {
         if (PlayerDataContainer.Instance == null) return;
         foreach (Transform child in diceButtonContainer) Destroy(child.gameObject);
-        buttonImages.Clear();
+        diceButtonViews.Clear();
         currentlySelected.Clear();
 
         foreach (DieAssetSO die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
@@ -83,8 +83,11 @@ public class CombatUIController : MonoBehaviour
             TMP_Text txt = btnObj.GetComponentInChildren<TMP_Text>();
             if (txt != null) txt.text = die.dieName;
 
-            UnityEngine.UI.Image btnImg = btnObj.GetComponent<UnityEngine.UI.Image>();
-            if (btnImg != null) buttonImages.Add(die, btnImg);
+            var trayView = btnObj.GetComponent<DiceTrayButtonView>();
+            if (trayView != null)
+                diceButtonViews.Add(die, trayView);
+            else
+                Debug.LogError($"CombatUIController: prefab '{prefab.name}' is missing DiceTrayButtonView. Add the component and assign regular/selected images.");
 
             Button btn = btnObj.GetComponent<Button>();
             btn.onClick.AddListener(() => ToggleSelection(die));
@@ -97,12 +100,14 @@ public class CombatUIController : MonoBehaviour
         if (currentlySelected.Contains(die))
         {
             currentlySelected.Remove(die);
-            if (buttonImages.ContainsKey(die)) buttonImages[die].color = Color.white;
+            if (diceButtonViews.TryGetValue(die, out var view))
+                view.SetSelected(false);
         }
         else
         {
             currentlySelected.Add(die);
-            if (buttonImages.ContainsKey(die)) buttonImages[die].color = new Color(0.6f, 1f, 0.9f);
+            if (diceButtonViews.TryGetValue(die, out var view))
+                view.SetSelected(true);
         }
         rollButton.interactable = currentlySelected.Count > 0;
     }

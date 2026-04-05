@@ -1652,7 +1652,7 @@ GameObject:
   - component: {fileID: 434058155}
   - component: {fileID: 434058154}
   m_Layer: 0
-  m_Name: Perfect Strike Controller
+  m_Name: Perfect Strike & Bust Controller
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
