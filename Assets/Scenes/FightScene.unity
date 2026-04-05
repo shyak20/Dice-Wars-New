@@ -467,7 +467,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 803, y: -293}
+  m_AnchoredPosition: {x: 51, y: -293}
   m_SizeDelta: {x: 840.3398, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &112207335
@@ -4390,15 +4390,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dicePrefab: {fileID: 4390715500269665299, guid: 6d049bfe97e675b409ac353f88306b5d, type: 3}
   spawnPoint: {fileID: 1048341407}
+  spawnAreaWidth: 2
+  spawnAreaHeight: 1
+  delayBetweenDice: 0.05
   damageDestroyEffect: {fileID: 0}
   armorDestroyEffect: {fileID: 0}
   effectLifetime: 2
-  minForwardForce: 5
-  maxForwardForce: 6
+  minForwardForce: 4
+  maxForwardForce: 7
   minUpwardForce: 2
-  maxUpwardForce: 4
+  maxUpwardForce: 6
   minTorque: 10
-  maxTorque: 30
+  maxTorque: 80
 --- !u!4 &1048341407
 Transform:
   m_ObjectHideFlags: 0
