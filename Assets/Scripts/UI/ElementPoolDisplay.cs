@@ -108,4 +108,33 @@ public class ElementPoolDisplay : MonoBehaviour
         if (visible)
             icon.SetValue(v);
     }
+
+    /// <summary>Show pre-jackpot values and ×multiplier above each visible pool icon.</summary>
+    public void BeginJackpotPresentation(int multiplier, Dictionary<DieType, int> valuesBefore)
+    {
+        if (valuesBefore == null) return;
+
+        foreach (var kvp in valuesBefore)
+            displayedPools[kvp.Key] = kvp.Value;
+
+        foreach (DieType type in Enum.GetValues(typeof(DieType)))
+            RefreshIcon(type);
+
+        foreach (DieType type in Enum.GetValues(typeof(DieType)))
+        {
+            if (!valuesBefore.TryGetValue(type, out int v) || v < 1) continue;
+            if (!iconMap.TryGetValue(type, out var icon) || icon == null) continue;
+            icon.ShowJackpotMultiplierBadge(multiplier);
+        }
+    }
+
+    /// <summary>Hide badges and apply post-jackpot pool totals to the bar.</summary>
+    public void FinishJackpotPresentation(Dictionary<DieType, int> valuesAfter)
+    {
+        foreach (var kvp in iconMap)
+            kvp.Value?.HideJackpotMultiplierBadge();
+
+        if (valuesAfter != null)
+            ApplyFullPoolSync(valuesAfter);
+    }
 }

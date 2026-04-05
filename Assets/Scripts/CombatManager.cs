@@ -19,6 +19,8 @@ public class CombatManager : MonoBehaviour
 
     [Header("UI Panels")]
     [SerializeField] private PrecisionPanel precisionPanel;
+    [Tooltip("Optional. When assigned, perfect strike waits for jackpot UI (overlay + ×multiplier on pools) before SubmitTurn.")]
+    [SerializeField] private JackpotPresentationController jackpotPresentation;
 
     [Header("Status Effect UI")]
     [SerializeField] private StatusEffectBarUI playerStatusBar;
@@ -77,6 +79,15 @@ public class CombatManager : MonoBehaviour
 
         pools[DieType.Armor] += kineticShieldBonus;
         return pools;
+    }
+
+    private Dictionary<DieType, int> SnapshotPools()
+    {
+        var src = BuildElementPools();
+        var copy = new Dictionary<DieType, int>();
+        foreach (var kvp in src)
+            copy[kvp.Key] = kvp.Value;
+        return copy;
     }
 
     private void FirePoolsUpdated() => CombatEvents.OnPoolsUpdated?.Invoke(BuildElementPools());
@@ -335,17 +346,31 @@ public class CombatManager : MonoBehaviour
     {
         if (currentPower == maxPower)
         {
+            var poolsBefore = SnapshotPools();
             appliedMultiplier += overchargeBonus;
+            int jackpotMultiplier = appliedMultiplier;
             foreach (var face in channeledFaces)
             {
                 face.Damage *= appliedMultiplier;
                 face.Armor *= appliedMultiplier;
             }
+
             kineticShieldBonus *= appliedMultiplier;
             activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
-            if (CheckVictory()) return;
-            NotifyAllPoolUI();
-            SubmitTurn();
+            var poolsAfter = SnapshotPools();
+            if (CheckVictory())
+            {
+                NotifyAllPoolUI();
+                return;
+            }
+
+            if (jackpotPresentation != null)
+                StartCoroutine(CoFinishJackpotAfterPresentation(jackpotMultiplier, poolsBefore, poolsAfter));
+            else
+            {
+                NotifyAllPoolUI();
+                SubmitTurn();
+            }
         }
         else if (currentPower > maxPower)
         {
@@ -405,6 +430,14 @@ public class CombatManager : MonoBehaviour
         if (pendingDefense > 0) player.AddArmor(pendingDefense);
 
         StartCoroutine(EnemyTurnRoutine());
+    }
+
+    private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<DieType, int> poolsBefore, Dictionary<DieType, int> poolsAfter)
+    {
+        // Unity does not reliably run a nested IEnumerator with "yield return routine()"; must use StartCoroutine.
+        yield return StartCoroutine(jackpotPresentation.Run(multiplier, poolsBefore, poolsAfter));
+        NotifyAllPoolUI();
+        SubmitTurn();
     }
 
     private IEnumerator EnemyTurnRoutine()
