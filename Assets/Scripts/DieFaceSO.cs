@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewFace", menuName = "DiceGame/DieFace")]
@@ -24,7 +25,9 @@ public class DieFaceSO : ScriptableObject
     [Header("UI Visuals")]
     public Sprite faceIcon;
 
-    [Header("Game Action")]
-    public bool activateImmediately = true; // Toggle for deferred execution
-    [SerializeReference] public IGameAction action;
+    [Header("Game Actions")]
+    [Tooltip("If true, all actions run when the die settles; if false, they run at turn end before damage resolves.")]
+    public bool activateImmediately = true;
+    [Tooltip("Executed in list order. Use + in the inspector to add multiple polymorphic actions.")]
+    [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();
 }

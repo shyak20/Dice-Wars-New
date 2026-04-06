@@ -254,17 +254,23 @@ public class CombatManager : MonoBehaviour
             Damage = rolledDamage,
             Armor = face.armor,
             ActivateImmediately = face.activateImmediately,
-            Action = face.action
         };
+        if (face.actions != null)
+        {
+            foreach (var a in face.actions)
+                if (a != null)
+                    result.Actions.Add(a);
+        }
 
         channeledFaces.Add(result);
         currentPower += modifiedValue;
 
-        // Immediate Action Execution logic
-        if (result.Action != null && result.ActivateImmediately)
+        // Immediate action execution (all actions on this face, in order)
+        if (result.ActivateImmediately && result.Actions.Count > 0)
         {
             var context = BuildContext(result);
-            result.Action.Execute(context);
+            foreach (var a in result.Actions)
+                a.Execute(context);
         }
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
@@ -419,11 +425,13 @@ public class CombatManager : MonoBehaviour
         ChangeState(CombatState.TurnEnd);
         var ctx = BuildContext();
 
-        // Execution of stored/deferred actions
+        // Execution of stored/deferred actions (per face, in list order)
         foreach (var face in channeledFaces)
         {
-            if (face.Action != null && !face.ActivateImmediately)
-                face.Action.Execute(ctx);
+            if (face.ActivateImmediately || face.Actions == null || face.Actions.Count == 0) continue;
+            foreach (var a in face.Actions)
+                if (a != null)
+                    a.Execute(ctx);
         }
 
         foreach (var action in turnEndActions) action.Invoke(ctx);

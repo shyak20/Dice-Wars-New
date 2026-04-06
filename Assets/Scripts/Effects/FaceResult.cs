@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 public class FaceResult
 {
     public DieFaceSO Face { get; set; }
@@ -8,5 +10,6 @@ public class FaceResult
     public int Damage { get; set; }
     public int Armor { get; set; }
     public bool ActivateImmediately { get; set; }
-    public IGameAction Action { get; set; }
+    /// <summary>Copied from the rolled face; executed in order (immediate vs turn-end per <see cref="ActivateImmediately"/>).</summary>
+    public List<IGameAction> Actions { get; set; } = new List<IGameAction>();
 }
