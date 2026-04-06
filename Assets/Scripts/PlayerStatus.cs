@@ -15,6 +15,10 @@ public class PlayerStatus : MonoBehaviour
     public TMP_Text armorText;
     public GameObject armorIcon; // Optional: A shield icon that shows when armor > 0
 
+    [Header("Floating damage numbers")]
+    [Tooltip("World position used for damage popups; defaults to this transform.")]
+    [SerializeField] private Transform damageNumberWorldAnchor;
+
     public StatusEffectManager StatusEffects { get; private set; }
 
     public int GetCurrentHealth() => currentHealth;
@@ -85,6 +89,12 @@ public class PlayerStatus : MonoBehaviour
         }
 
         UpdateUI();
+
+        if (damage > 0)
+        {
+            Vector3 w = damageNumberWorldAnchor != null ? damageNumberWorldAnchor.position : transform.position;
+            CombatEvents.OnPlayerDamageNumber?.Invoke(damage, w);
+        }
 
         if (currentHealth <= 0)
         {

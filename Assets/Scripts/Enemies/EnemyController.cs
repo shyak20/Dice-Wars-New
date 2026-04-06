@@ -17,6 +17,10 @@ public class EnemyController : MonoBehaviour
     public TMP_Text armorText;       // The text showing the actual armor amount
     public GameObject armorIcon;
 
+    [Header("Floating damage numbers")]
+    [Tooltip("World position for damage popups; defaults to enemy sprite or this transform.")]
+    [SerializeField] private Transform damageNumberWorldAnchor;
+
     [Header("Visual Effects (Sprite Overlay)")]
     public SpriteRenderer enemySprite;
     public GameObject hitEffectObject;
@@ -114,6 +118,16 @@ public class EnemyController : MonoBehaviour
         {
             Debug.Log($"{enemyData.enemyName} defeated!");
         }
+
+        if (amount > 0)
+            CombatEvents.OnEnemyDamageNumber?.Invoke(amount, GetDamageNumberWorldPosition(), this);
+    }
+
+    private Vector3 GetDamageNumberWorldPosition()
+    {
+        if (damageNumberWorldAnchor != null) return damageNumberWorldAnchor.position;
+        if (enemySprite != null) return enemySprite.transform.position;
+        return transform.position;
     }
 
     public void TakeTrueDamage(int amount)
@@ -127,6 +141,9 @@ public class EnemyController : MonoBehaviour
         {
             Debug.Log($"{enemyData.enemyName} defeated!");
         }
+
+        if (amount > 0)
+            CombatEvents.OnEnemyDamageNumber?.Invoke(amount, GetDamageNumberWorldPosition(), this);
     }
 
     public void AddArmor(int amount)

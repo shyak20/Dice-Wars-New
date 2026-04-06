@@ -1,0 +1,40 @@
+using UnityEngine;
+
+/// <summary>
+/// Place on the player UI canvas (or a child). Spawns floating damage for <see cref="CombatEvents.OnPlayerDamageNumber"/>.
+/// </summary>
+public class PlayerFloatingDamageNumberController : MonoBehaviour
+{
+    [Header("Canvas")]
+    [SerializeField] private Canvas canvas;
+    [SerializeField] private RectTransform spawnParent;
+    [SerializeField] private Camera worldCamera;
+
+    [Header("Style")]
+    [SerializeField] private FloatingDamageNumberStyle style = new FloatingDamageNumberStyle();
+
+    private void Awake()
+    {
+        if (canvas == null)
+            Debug.LogError($"PlayerFloatingDamageNumberController on '{gameObject.name}': canvas is not assigned.");
+        if (spawnParent == null)
+            Debug.LogError($"PlayerFloatingDamageNumberController on '{gameObject.name}': spawnParent is not assigned.");
+        if (worldCamera == null)
+            worldCamera = Camera.main;
+    }
+
+    private void OnEnable()
+    {
+        CombatEvents.OnPlayerDamageNumber += HandlePlayerDamage;
+    }
+
+    private void OnDisable()
+    {
+        CombatEvents.OnPlayerDamageNumber -= HandlePlayerDamage;
+    }
+
+    private void HandlePlayerDamage(int amount, Vector3 worldPosition)
+    {
+        FloatingDamageNumberSpawner.Spawn(this, amount, worldPosition, canvas, spawnParent, worldCamera, style);
+    }
+}

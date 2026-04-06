@@ -49,6 +49,11 @@ public static class CombatEvents
     public static Action OnPlayerVictory;
     public static Action OnPlayerDefeat;
 
+    /// <summary>Floating damage UI: amount hit for, world anchor (e.g. player).</summary>
+    public static Action<int, Vector3> OnPlayerDamageNumber;
+    /// <summary>Floating damage UI: amount, world anchor, which enemy was hit (so only that prefab's UI spawns).</summary>
+    public static Action<int, Vector3, EnemyController> OnEnemyDamageNumber;
+
     // Bust Logic
     public static Action<int, int> OnBustOccurred;
     public static Action<bool> OnBustResolved;
