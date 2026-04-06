@@ -48,7 +48,9 @@ public class WinLoseUIController : MonoBehaviour
 
     private void OnFaceRewardCompleted(DieFaceSO face)
     {
-        Debug.Log($"Face reward completed: {face.name} ({face.rarity})");
+        Debug.Log(face != null
+            ? $"Face reward completed: {face.name} ({face.rarity})"
+            : "Face reward flow closed (no face applied).");
 
         if (RunManager.Instance != null)
         {

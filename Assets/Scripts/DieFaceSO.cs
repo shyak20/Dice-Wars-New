@@ -11,6 +11,9 @@ public class DieFaceSO : ScriptableObject
 
     public int value; // Keeping this for the Power Bar calculation
     public DieType type;
+
+    /// <summary>Socketing element (maps from <see cref="type"/>; Physical = Damage, Defense = Armor).</summary>
+    public ElementType Element => ElementTypeExtensions.FromDieType(type);
     public Material faceMaterial;
     public FaceRarity rarity;
 

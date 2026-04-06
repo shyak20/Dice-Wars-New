@@ -1,0 +1,23 @@
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+/// <summary>
+/// Read-only helpers over <see cref="PlayerDataSO.currentDeck"/> for reward / picker flows.
+/// </summary>
+public static class PlayerInventory
+{
+    public static List<DieAssetSO> GetDiceMatchingElement(PlayerDataSO data, ElementType element)
+    {
+        if (data?.currentDeck == null) return new List<DieAssetSO>();
+        return data.currentDeck
+            .Where(d => d != null && ElementTypeExtensions.FromDieType(d.dieType) == element)
+            .ToList();
+    }
+
+    public static List<DieAssetSO> GetDiceMatchingFace(PlayerDataSO data, DieFaceSO face)
+    {
+        if (face == null || data == null) return new List<DieAssetSO>();
+        return GetDiceMatchingElement(data, ElementTypeExtensions.FromDieType(face.type));
+    }
+}
