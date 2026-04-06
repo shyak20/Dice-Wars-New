@@ -7,6 +7,8 @@ public class RarityConfigSO : ScriptableObject
     public int commonWeight = 100;
     public int rareWeight = 25;
     public int legendaryWeight = 5;
+    public int uncommonWeight = 40;
+    public int epicWeight = 10;
 
     public int GetWeight(FaceRarity rarity)
     {
@@ -15,6 +17,8 @@ public class RarityConfigSO : ScriptableObject
             FaceRarity.Common => commonWeight,
             FaceRarity.Rare => rareWeight,
             FaceRarity.Legendary => legendaryWeight,
+            FaceRarity.Uncommon => uncommonWeight,
+            FaceRarity.Epic => epicWeight,
             _ => 0
         };
     }

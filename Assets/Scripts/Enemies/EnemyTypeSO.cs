@@ -8,6 +8,10 @@ public class EnemyTypeSO : ScriptableObject
     public int maxHealth;
     public int startArmor;
 
+    [Header("Rewards")]
+    [Tooltip("Gold granted when this enemy is defeated (run currency).")]
+    public int goldReward;
+
     public bool isSequential = true; // Set this to TRUE for your cycle
     public List<EnemyActionSO> actionCycle; // Rename for clarity
 }

@@ -11,7 +11,17 @@ public class FaceLootTableSO : ScriptableObject
     public List<DieFaceSO> GetRandomRewards(int count, HashSet<DieType> preferredTypes = null)
     {
         List<DieFaceSO> selected = new List<DieFaceSO>();
-        if (allPossibleFaces == null || allPossibleFaces.Count == 0 || rarityConfig == null) return selected;
+        if (allPossibleFaces == null || allPossibleFaces.Count == 0)
+        {
+            Debug.LogError("FaceLootTableSO: allPossibleFaces is empty — assign faces on the loot table asset.");
+            return selected;
+        }
+
+        if (rarityConfig == null)
+        {
+            Debug.LogError("FaceLootTableSO: rarityConfig is not assigned — shop and rewards cannot roll faces without it.");
+            return selected;
+        }
 
         List<DieFaceSO> pool;
         if (preferredTypes != null && preferredTypes.Count > 0)

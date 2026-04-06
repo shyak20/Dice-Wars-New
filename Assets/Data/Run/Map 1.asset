@@ -15,5 +15,7 @@ MonoBehaviour:
   rooms:
   - roomType: 0
     enemyType: {fileID: 11400000, guid: 63d8c4fe53db29f47886bba395eaeaff, type: 2}
+  - roomType: 1
+    enemyType: {fileID: 0}
   - roomType: 0
     enemyType: {fileID: 11400000, guid: c5fda17c40a52a748b4c1d94cd9d5cf3, type: 2}

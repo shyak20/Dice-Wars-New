@@ -15,6 +15,7 @@ MonoBehaviour:
   dieName: Base Fire
   dieType: 2
   uiIcon: {fileID: 21300000, guid: 2d4829cbcac5a514c91a57bde9b53812, type: 3}
+  shopGoldPrice: 50
   faces:
   - {fileID: 11400000, guid: c5917562e3d354844966d38d7f117908, type: 2}
   - {fileID: 11400000, guid: bb450c4943fe1774484fd832c96593ef, type: 2}

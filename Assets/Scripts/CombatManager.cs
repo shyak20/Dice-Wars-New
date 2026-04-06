@@ -485,7 +485,21 @@ public class CombatManager : MonoBehaviour
         ResetTurn();
     }
 
-    private bool CheckVictory() { if (activeEnemy.GetCurrentHealth() <= 0) { ChangeState(CombatState.Victory); CombatEvents.OnPlayerVictory?.Invoke(); return true; } return false; }
+    private bool CheckVictory()
+    {
+        if (activeEnemy.GetCurrentHealth() > 0) return false;
+        ChangeState(CombatState.Victory);
+
+        if (RunEconomyManager.Instance != null && activeEnemy != null && activeEnemy.enemyData != null)
+        {
+            var reward = activeEnemy.enemyData.goldReward;
+            if (reward > 0)
+                RunEconomyManager.Instance.GrantGold(reward, activeEnemy.transform.position);
+        }
+
+        CombatEvents.OnPlayerVictory?.Invoke();
+        return true;
+    }
     private bool CheckDefeat() { if (player.GetCurrentHealth() <= 0) { ChangeState(CombatState.Defeat); CombatEvents.OnPlayerDefeat?.Invoke(); return true; } return false; }
 
     private void ResetTurn()

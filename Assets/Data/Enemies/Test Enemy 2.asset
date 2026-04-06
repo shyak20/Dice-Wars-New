@@ -15,6 +15,7 @@ MonoBehaviour:
   enemyName: Test Enemy 2
   maxHealth: 10
   startArmor: 10
+  goldReward: 290
   isSequential: 1
   actionCycle:
   - {fileID: 11400000, guid: b0db59302412e6c4a894f589f7afc276, type: 2}

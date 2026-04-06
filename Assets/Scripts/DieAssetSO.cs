@@ -14,6 +14,10 @@ public class DieAssetSO : ScriptableObject
     [Tooltip("Icon for this die in deck / reward / die-picker UI (not per-face art).")]
     public Sprite uiIcon;
 
+    [Header("Shop")]
+    [Tooltip("Gold cost when this die appears as a full-die shop offer. 0 = ShopGenerator fallback default.")]
+    public int shopGoldPrice;
+
     [Header("Faces Configuration")]
     [Tooltip("The 6 Face SOs that define this die. Materials will be pulled from here.")]
     public DieFaceSO[] faces = new DieFaceSO[6];

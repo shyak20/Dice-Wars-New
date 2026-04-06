@@ -13,5 +13,8 @@ public enum FaceRarity
 {
     Common,
     Rare,
-    Legendary
+    Legendary,
+    /// <summary>Mid tier (pricing / shop); append-only so existing Common/Rare/Legendary assets keep indices 0–2.</summary>
+    Uncommon,
+    Epic,
 }

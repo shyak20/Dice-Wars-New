@@ -27,6 +27,26 @@ public class PlayerDataContainer : MonoBehaviour
         CloneDeckForRuntime();
     }
 
+    /// <summary>Runtime clone of <paramref name="template"/> is appended to the deck (e.g. shop purchase).</summary>
+    public void AddDieToDeck(DieAssetSO template)
+    {
+        if (template == null)
+        {
+            Debug.LogError("PlayerDataContainer.AddDieToDeck: template is null.");
+            return;
+        }
+
+        if (RuntimeData == null)
+        {
+            Debug.LogError("PlayerDataContainer.AddDieToDeck: RuntimeData is null.");
+            return;
+        }
+
+        var clone = Instantiate(template);
+        clone.name = template.name;
+        RuntimeData.currentDeck.Add(clone);
+    }
+
     private void CloneDeckForRuntime()
     {
         RuntimeData = Instantiate(sourcePlayerData);

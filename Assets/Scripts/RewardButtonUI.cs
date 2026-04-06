@@ -45,8 +45,10 @@ public class RewardButtonUI : MonoBehaviour
         return rarity switch
         {
             FaceRarity.Common => Color.white,
+            FaceRarity.Uncommon => new Color(0.65f, 0.95f, 0.65f),
             FaceRarity.Rare => new Color(0.2f, 0.6f, 1f),
             FaceRarity.Legendary => new Color(1f, 0.8f, 0f),
+            FaceRarity.Epic => new Color(0.75f, 0.45f, 1f),
             _ => Color.white
         };
     }

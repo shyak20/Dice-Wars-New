@@ -7,6 +7,7 @@ public class RunManager : MonoBehaviour
 
     [SerializeField] private EncounterListSO encounterList;
     [SerializeField] private string combatSceneName = "FightScene";
+    [SerializeField] private string shopSceneName = "ShopScene";
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
     private int currentRoomIndex;
@@ -50,6 +51,8 @@ public class RunManager : MonoBehaviour
         }
 
         currentRoomIndex = 0;
+        if (RunEconomyManager.Instance != null)
+            RunEconomyManager.Instance.ResetEconomyForNewRun();
         LoadCurrentRoom();
     }
 
@@ -80,6 +83,15 @@ public class RunManager : MonoBehaviour
                     return;
                 }
                 SceneManager.LoadScene(combatSceneName);
+                break;
+
+            case RoomType.Shop:
+                if (string.IsNullOrEmpty(shopSceneName))
+                {
+                    Debug.LogError("RunManager: shopSceneName is not assigned for Shop rooms.");
+                    return;
+                }
+                SceneManager.LoadScene(shopSceneName);
                 break;
 
             default:
