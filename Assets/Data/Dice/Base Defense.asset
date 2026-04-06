@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dieName: Base Defense
   dieType: 1
+  uiIcon: {fileID: 21300000, guid: eca18e2cf14c282488edf3fe654b1805, type: 3}
   faces:
   - {fileID: 11400000, guid: a0c0a3e6f34f23140a8c9e80248096fc, type: 2}
   - {fileID: 11400000, guid: 30fb8bc8d2a415240a163f4392fdb552, type: 2}

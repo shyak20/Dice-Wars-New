@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// Phase 4: pick which face slot to replace; preview average roll on hover; run etching FX on confirm.
+/// Phase 4: pick which face slot to replace; hover shows that slot's current face title/description; etching FX on confirm.
 /// Uses <see cref="UIRewardSlot"/> for the new face and each current-face option (same prefab as the picker).
 /// </summary>
 public class FaceSwapOverlayView : MonoBehaviour
@@ -12,7 +12,8 @@ public class FaceSwapOverlayView : MonoBehaviour
     [SerializeField] private GameObject panel;
     [SerializeField] private UIRewardSlot newFacePreview;
     [SerializeField] private UIRewardSlot[] slotSlots = new UIRewardSlot[6];
-    [SerializeField] private TMP_Text hoverPreviewText;
+    [SerializeField] private TMP_Text hoverFaceTitleText;
+    [SerializeField] private TMP_Text hoverFaceDescriptionText;
     [SerializeField] private GameObject etchingParticlePrefab;
     [SerializeField] private AudioClip etchingSound;
 
@@ -58,7 +59,7 @@ public class FaceSwapOverlayView : MonoBehaviour
             RegisterHover(slotSlots[i], idx);
         }
 
-        if (hoverPreviewText != null) hoverPreviewText.text = "";
+        ClearHoverPreview();
         panel.SetActive(true);
     }
 
@@ -81,44 +82,29 @@ public class FaceSwapOverlayView : MonoBehaviour
         var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
         et.triggers.Clear();
         var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => UpdateHoverPreview(slotIndex));
+        enter.callback.AddListener(_ => UpdateHoverFaceTexts(slotIndex));
         et.triggers.Add(enter);
         var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
         exit.callback.AddListener(_ => ClearHoverPreview());
         et.triggers.Add(exit);
     }
 
-    private void UpdateHoverPreview(int slotIndex)
+    private void UpdateHoverFaceTexts(int slotIndex)
     {
-        if (hoverPreviewText == null || _die == null || _newFace == null) return;
-        float before = AverageValue(_die);
-        float after = AverageWithReplace(_die, slotIndex, _newFace);
-        hoverPreviewText.text = $"Avg roll: {before:F1} → {after:F1}";
+        if (_die == null || _die.faces == null) return;
+        var face = slotIndex >= 0 && slotIndex < _die.faces.Length ? _die.faces[slotIndex] : null;
+
+        if (hoverFaceTitleText != null)
+            hoverFaceTitleText.text = face != null ? face.Title : "";
+
+        if (hoverFaceDescriptionText != null)
+            hoverFaceDescriptionText.text = face != null ? face.Description : "";
     }
 
     private void ClearHoverPreview()
     {
-        if (hoverPreviewText != null) hoverPreviewText.text = "";
-    }
-
-    private static float AverageValue(DieAssetSO die)
-    {
-        float s = 0;
-        for (var i = 0; i < 6; i++)
-            s += die.faces[i] != null ? die.faces[i].value : 0;
-        return s / 6f;
-    }
-
-    private static float AverageWithReplace(DieAssetSO die, int index, DieFaceSO replacement)
-    {
-        float s = 0;
-        for (var i = 0; i < 6; i++)
-        {
-            var f = i == index ? replacement : die.faces[i];
-            s += f != null ? f.value : 0;
-        }
-
-        return s / 6f;
+        if (hoverFaceTitleText != null) hoverFaceTitleText.text = "";
+        if (hoverFaceDescriptionText != null) hoverFaceDescriptionText.text = "";
     }
 
     private void OnSlotClicked(int slotIndex)
