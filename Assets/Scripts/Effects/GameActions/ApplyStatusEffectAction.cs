@@ -26,7 +26,17 @@ public class ApplyStatusEffectAction : IGameAction
             Enemy = context.Enemy
         };
 
-        manager.ApplyStatus(statusEffect, stacks, ctx);
+        var applyStacks = stacks;
+        if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context.Player != null)
+        {
+            var pyro = context.Player.StatusEffects.GetStacks<PyromaniacEffectSO>();
+            applyStacks += pyro;
+        }
+
+        manager.ApplyStatus(statusEffect, applyStacks, ctx);
+
+        if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context.CombatManager != null)
+            context.CombatManager.TurnRegistry?.RecordBurnApplied(applyStacks);
 
         if (GameActionDebug.Enabled)
             Debug.Log($"[ApplyStatusEffect] Applied {stacks} stacks of {statusEffect.effectName} to {statusEffect.target}");

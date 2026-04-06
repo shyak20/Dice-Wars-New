@@ -54,6 +54,11 @@ public class CombatManager : MonoBehaviour
     private int maxRolls;
     private bool _appliedTestStartingFaces;
 
+    private readonly TurnRegistry _turnRegistry = new TurnRegistry();
+
+    /// <summary>Volatile turn blackboard (physical/armor/burn totals, Brute Force, Supernova).</summary>
+    public TurnRegistry TurnRegistry => _turnRegistry;
+
     // Updated summation logic to pull from FaceResult properties
     public int GetPendingAttack() => channeledFaces.Sum(f => f.Damage);
     public int GetPendingDefense() => channeledFaces.Sum(f => f.Armor) + kineticShieldBonus;
@@ -162,6 +167,7 @@ public class CombatManager : MonoBehaviour
 
     private void ResetStats()
     {
+        _turnRegistry.ResetVolatile();
         selectedDice.Clear();
         channeledFaces.Clear();
         overchargeBonus = 0;
@@ -262,6 +268,19 @@ public class CombatManager : MonoBehaviour
                     result.Actions.Add(a);
         }
 
+        ApplyQueuedNextPhysicalDouble(result, _turnRegistry);
+
+        if (face.actions != null)
+        {
+            foreach (var a in face.actions)
+            {
+                if (a is FaceResolveModifierBase mod)
+                    mod.Modify(face, result, this, _turnRegistry);
+            }
+        }
+
+        _turnRegistry.RecordResolvedFace(result);
+
         channeledFaces.Add(result);
         currentPower += modifiedValue;
 
@@ -270,7 +289,10 @@ public class CombatManager : MonoBehaviour
         {
             var context = BuildContext(result);
             foreach (var a in result.Actions)
+            {
+                if (a is FaceResolveModifierBase) continue;
                 a.Execute(context);
+            }
         }
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
@@ -334,6 +356,14 @@ public class CombatManager : MonoBehaviour
         return lines;
     }
 
+    /// <summary>Brute Force: if the flag is set, double this face's physical damage once and clear the flag.</summary>
+    private static void ApplyQueuedNextPhysicalDouble(FaceResult result, TurnRegistry registry)
+    {
+        if (result.Type != DieType.Damage || result.Damage <= 0 || !registry.NextPhysicalDamageDoubled) return;
+        result.Damage *= 2;
+        registry.NextPhysicalDamageDoubled = false;
+    }
+
     private GameActionContext BuildContext(FaceResult triggeringFace = null)
     {
         return new GameActionContext
@@ -347,6 +377,9 @@ public class CombatManager : MonoBehaviour
     }
 
     private StatusEffectContext BuildStatusContext() => new StatusEffectContext { CombatManager = this, Player = player, Enemy = activeEnemy };
+
+    /// <summary>Used by face resolve modifiers and status actions that need a status context.</summary>
+    public StatusEffectContext BuildStatusContextForEffects() => BuildStatusContext();
 
     private void ProcessPrecisionQueue()
     {
@@ -394,6 +427,14 @@ public class CombatManager : MonoBehaviour
         else if (currentPower > maxPower)
         {
             if (bustProtected) SubmitTurn();
+            else if (_turnRegistry.SupernovaBustOverrideActive)
+            {
+                if (activeEnemy != null && _turnRegistry.SupernovaBustDamage > 0)
+                    activeEnemy.TakeDamage(_turnRegistry.SupernovaBustDamage);
+                _turnRegistry.SupernovaBustOverrideActive = false;
+                if (CheckVictory()) return;
+                SubmitTurn();
+            }
             else
             {
                 ChangeState(CombatState.BustCheck);
@@ -430,8 +471,11 @@ public class CombatManager : MonoBehaviour
         {
             if (face.ActivateImmediately || face.Actions == null || face.Actions.Count == 0) continue;
             foreach (var a in face.Actions)
+            {
+                if (a is FaceResolveModifierBase) continue;
                 if (a != null)
                     a.Execute(ctx);
+            }
         }
 
         foreach (var action in turnEndActions) action.Invoke(ctx);
@@ -464,6 +508,7 @@ public class CombatManager : MonoBehaviour
     private IEnumerator EnemyTurnRoutine()
     {
         ChangeState(CombatState.EnemyTurn);
+        _turnRegistry.ResetVolatile();
         yield return new WaitForSeconds(1.0f);
         if (activeEnemy != null && player != null)
         {
@@ -510,8 +555,16 @@ public class CombatManager : MonoBehaviour
     }
     private bool CheckDefeat() { if (player.GetCurrentHealth() <= 0) { ChangeState(CombatState.Defeat); CombatEvents.OnPlayerDefeat?.Invoke(); return true; } return false; }
 
+    public void AddRollsRemaining(int amount)
+    {
+        if (amount < 0) return;
+        rollsRemaining += amount;
+        CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
+    }
+
     private void ResetTurn()
     {
+        _turnRegistry.ResetVolatile();
         channeledFaces.Clear();
         turnEndActions.Clear();
         overchargeBonus = 0;

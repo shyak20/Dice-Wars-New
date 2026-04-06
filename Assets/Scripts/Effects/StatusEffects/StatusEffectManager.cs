@@ -88,6 +88,23 @@ public class StatusEffectManager : MonoBehaviour
         return instance?.Stacks ?? 0;
     }
 
+    /// <summary>Multiplies stacks of the first effect of type T (e.g. Burn ×2 for Fanning Flames).</summary>
+    public void MultiplyStacks<T>(int multiplier, StatusEffectContext ctx) where T : StatusEffectSO
+    {
+        foreach (var effect in effects)
+        {
+            if (effect.Definition is T)
+            {
+                if (effect.Stacks <= 0 || multiplier <= 1) return;
+                var delta = effect.Stacks * (multiplier - 1);
+                if (delta > 0)
+                    effect.AddStacks(delta);
+                NotifyChanged();
+                return;
+            }
+        }
+    }
+
     public bool HasEffect<T>() where T : StatusEffectSO
     {
         foreach (var effect in effects)
