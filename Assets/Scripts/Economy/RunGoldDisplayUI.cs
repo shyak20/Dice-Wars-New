@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// Shows <see cref="RunEconomyManager.CurrentGold"/> on a TextMeshPro label. Add to the same GameObject as the text or assign the reference.
@@ -10,6 +11,10 @@ public class RunGoldDisplayUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text label;
     [SerializeField] private string format = "Gold: {0}";
+    [SerializeField, Min(0f)] private float countDurationSeconds = 0.35f;
+
+    private Coroutine activeCountRoutine;
+    private int displayedAmount;
 
     private void Awake()
     {
@@ -23,24 +28,66 @@ public class RunGoldDisplayUI : MonoBehaviour
     {
         RunEconomyManager.OnGoldChanged += OnGoldChanged;
         if (RunEconomyManager.Instance != null)
-            OnGoldChanged(RunEconomyManager.Instance.CurrentGold);
+        {
+            displayedAmount = RunEconomyManager.Instance.CurrentGold;
+            ApplyText(displayedAmount);
+        }
         else
-            ApplyText(0);
+        {
+            displayedAmount = 0;
+            ApplyText(displayedAmount);
+        }
     }
 
     private void OnDisable()
     {
         RunEconomyManager.OnGoldChanged -= OnGoldChanged;
+        if (activeCountRoutine != null)
+        {
+            StopCoroutine(activeCountRoutine);
+            activeCountRoutine = null;
+        }
     }
 
     private void OnGoldChanged(int newTotal)
     {
-        ApplyText(newTotal);
+        if (label == null)
+            return;
+
+        if (activeCountRoutine != null)
+            StopCoroutine(activeCountRoutine);
+
+        if (countDurationSeconds <= 0f)
+        {
+            displayedAmount = newTotal;
+            ApplyText(displayedAmount);
+            return;
+        }
+
+        activeCountRoutine = StartCoroutine(AnimateGoldCount(displayedAmount, newTotal, countDurationSeconds));
     }
 
     private void ApplyText(int amount)
     {
         if (label == null) return;
         label.text = string.Format(format, amount);
+    }
+
+    private IEnumerator AnimateGoldCount(int fromAmount, int toAmount, float durationSeconds)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < durationSeconds)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / durationSeconds);
+            displayedAmount = Mathf.RoundToInt(Mathf.Lerp(fromAmount, toAmount, t));
+            ApplyText(displayedAmount);
+            yield return null;
+        }
+
+        displayedAmount = toAmount;
+        ApplyText(displayedAmount);
+        activeCountRoutine = null;
     }
 }
