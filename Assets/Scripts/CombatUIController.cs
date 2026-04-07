@@ -150,7 +150,16 @@ public class CombatUIController : MonoBehaviour
     private void HandleStateChange(CombatState state)
     {
         bool isWaiting = (state == CombatState.WaitingForRoll);
-        if (trayCanvasGroup != null) { trayCanvasGroup.interactable = isWaiting; trayCanvasGroup.alpha = isWaiting ? 1f : 0.5f; }
+        bool isRolling = (state == CombatState.Rolling);
+
+        if (trayCanvasGroup != null)
+        {
+            // Hide the tray while a roll is being resolved, then show it again afterward.
+            trayCanvasGroup.gameObject.SetActive(!isRolling);
+            trayCanvasGroup.interactable = isWaiting;
+            trayCanvasGroup.blocksRaycasts = isWaiting;
+            trayCanvasGroup.alpha = isWaiting ? 1f : 0.5f;
+        }
         if (rollButton != null) { rollButton.gameObject.SetActive(isWaiting); if (isWaiting) rollButton.interactable = currentlySelected.Count > 0; }
         if (endTurnButton != null) { bool showEndTurn = isWaiting && rollsRemaining > 0; endTurnButton.gameObject.SetActive(showEndTurn); endTurnButton.interactable = showEndTurn; }
     }

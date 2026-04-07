@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 1 - Defense Base
   m_EditorClassIdentifier: 
   title: Base 1
-  description: Harness +1 Shield /nHarness 1 Heal
+  description: Gain +1 Shield /nGain 1 Heal
   value: 1
   type: 1
   faceMaterial: {fileID: 2100000, guid: 393fa5dd493d3284193c273d0ef575ee, type: 2}
