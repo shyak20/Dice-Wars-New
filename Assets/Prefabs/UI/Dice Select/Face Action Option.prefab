@@ -446,7 +446,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 445.8, y: 231.25}
+  m_SizeDelta: {x: 445.8, y: 161.76}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3970445694414993595
 MonoBehaviour:
@@ -464,7 +464,13 @@ MonoBehaviour:
   valueText: {fileID: 405326805331773947}
   rarityText: {fileID: 0}
   iconImage: {fileID: 3076422771442022762}
+  typeIconImage: {fileID: 7994187879333195285}
   button: {fileID: 4596921810741333652}
+  damageTypeIcon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
+  armorTypeIcon: {fileID: 21300000, guid: 01e402055d774024b95da23142df863c, type: 3}
+  fireTypeIcon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
+  iceTypeIcon: {fileID: 21300000, guid: 545fd21b1124cc741925dfa1962ad67b, type: 3}
+  natureTypeIcon: {fileID: 21300000, guid: 618a26f22d6051543af8c274abf85fdf, type: 3}
 --- !u!1 &5051790354330536730
 GameObject:
   m_ObjectHideFlags: 0
@@ -759,7 +765,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6059675073513864946}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 13.4}
+  m_LocalPosition: {x: 0, y: 0, z: 40.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -767,7 +773,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 74.3, y: -27.7}
+  m_AnchoredPosition: {x: 68.1, y: -41.6}
   m_SizeDelta: {x: 44.97, y: 44.97}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7237989497634996683
@@ -834,7 +840,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6130063111786603236}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -14.9}
+  m_LocalPosition: {x: 0, y: 0, z: -7.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -842,7 +848,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 77.2, y: 30.7}
+  m_AnchoredPosition: {x: 68, y: -0.0000009536743}
   m_SizeDelta: {x: 92.31, y: 92.31}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5899014392885496203

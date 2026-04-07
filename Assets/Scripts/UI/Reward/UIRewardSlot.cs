@@ -11,7 +11,15 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private TMP_Text valueText;
     [SerializeField] private TMP_Text rarityText;
     [SerializeField] private Image iconImage;
+    [SerializeField] private Image typeIconImage;
     [SerializeField] private Button button;
+
+    [Header("Type Icon Sprites")]
+    [SerializeField] private Sprite damageTypeIcon;
+    [SerializeField] private Sprite armorTypeIcon;
+    [SerializeField] private Sprite fireTypeIcon;
+    [SerializeField] private Sprite iceTypeIcon;
+    [SerializeField] private Sprite natureTypeIcon;
 
     private DieFaceSO _face;
 
@@ -36,6 +44,13 @@ public class UIRewardSlot : MonoBehaviour
             iconImage.enabled = face.faceIcon != null;
         }
 
+        if (typeIconImage != null)
+        {
+            var typeSprite = GetTypeIcon(face.type);
+            typeIconImage.sprite = typeSprite;
+            typeIconImage.enabled = typeSprite != null;
+        }
+
         if (button != null)
         {
             button.onClick.RemoveAllListeners();
@@ -55,5 +70,24 @@ public class UIRewardSlot : MonoBehaviour
     public GameObject GetHoverTarget()
     {
         return button != null ? button.gameObject : gameObject;
+    }
+
+    private Sprite GetTypeIcon(DieType type)
+    {
+        switch (type)
+        {
+            case DieType.Damage:
+                return damageTypeIcon;
+            case DieType.Armor:
+                return armorTypeIcon;
+            case DieType.Fire:
+                return fireTypeIcon;
+            case DieType.Ice:
+                return iceTypeIcon;
+            case DieType.Nature:
+                return natureTypeIcon;
+            default:
+                return null;
+        }
     }
 }
