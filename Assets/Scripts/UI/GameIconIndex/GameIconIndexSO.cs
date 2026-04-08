@@ -35,6 +35,13 @@ public class GameIconIndexSO : ScriptableObject
         public Sprite icon;
     }
 
+    [Serializable]
+    public struct NamedIconEntry
+    {
+        public string key;
+        public Sprite sprite;
+    }
+
     readonly Dictionary<ActionVisualId, Sprite> _actionLookup = new Dictionary<ActionVisualId, Sprite>();
     readonly Dictionary<StatusEffectSO, Sprite> _statusLookup = new Dictionary<StatusEffectSO, Sprite>();
 
@@ -86,5 +93,41 @@ public class GameIconIndexSO : ScriptableObject
         if (_statusLookup.Count == 0 && statusEffectIcons.Count > 0)
             RebuildLookups();
         return _statusLookup.TryGetValue(effect, out var s) ? s : null;
+    }
+
+    /// <summary>
+    /// Export helper for editor tooling (atlas generation, audits). Keys are stable labels; sprite names
+    /// can still be used as display names in generated assets.
+    /// </summary>
+    public List<NamedIconEntry> GetAllIconEntries()
+    {
+        var entries = new List<NamedIconEntry>
+        {
+            new NamedIconEntry { key = "Element.Attack", sprite = attack },
+            new NamedIconEntry { key = "Element.Defense", sprite = defense },
+            new NamedIconEntry { key = "Element.Fire", sprite = fire },
+            new NamedIconEntry { key = "Element.Ice", sprite = ice },
+            new NamedIconEntry { key = "Element.Nature", sprite = nature },
+        };
+
+        foreach (var action in actionIcons)
+        {
+            entries.Add(new NamedIconEntry
+            {
+                key = $"Action.{action.id}",
+                sprite = action.sprite
+            });
+        }
+
+        foreach (var status in statusEffectIcons)
+        {
+            entries.Add(new NamedIconEntry
+            {
+                key = status.effect != null ? $"Status.{status.effect.name}" : "Status.(null)",
+                sprite = status.icon
+            });
+        }
+
+        return entries;
     }
 }
