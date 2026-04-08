@@ -46,6 +46,14 @@ public class StatusEffectBarUI : MonoBehaviour
     {
         if (trackedManager == null) return;
 
+        // Clean up entries whose icon objects were destroyed externally.
+        var nullIconKeys = activeIcons
+            .Where(kvp => kvp.Value == null)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        foreach (var key in nullIconKeys)
+            activeIcons.Remove(key);
+
         var currentEffects = new HashSet<StatusEffectSO>();
 
         foreach (var effect in trackedManager.Effects)
@@ -53,9 +61,11 @@ public class StatusEffectBarUI : MonoBehaviour
             var definition = effect.Definition;
             currentEffects.Add(definition);
 
-            if (activeIcons.TryGetValue(definition, out var existingIcon))
+            if (activeIcons.TryGetValue(definition, out var existingIcon) && existingIcon != null)
             {
-                existingIcon.UpdateStacks(effect.Stacks);
+                if (!existingIcon.gameObject.activeSelf)
+                    existingIcon.gameObject.SetActive(true);
+                existingIcon.RefreshVisual(effect);
             }
             else
             {
@@ -74,12 +84,12 @@ public class StatusEffectBarUI : MonoBehaviour
             }
         }
 
-        // Remove icons for effects that are no longer active
+        // Keep created icons; hide when effect is currently inactive.
         var staleKeys = activeIcons.Keys.Where(k => !currentEffects.Contains(k)).ToList();
         foreach (var key in staleKeys)
         {
-            Destroy(activeIcons[key].gameObject);
-            activeIcons.Remove(key);
+            if (activeIcons.TryGetValue(key, out var iconUi) && iconUi != null)
+                iconUi.gameObject.SetActive(false);
         }
     }
 }

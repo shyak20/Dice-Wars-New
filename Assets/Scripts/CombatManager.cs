@@ -163,9 +163,11 @@ public class CombatManager : MonoBehaviour
             var room = RunManager.Instance.CurrentRoom;
             if (room == null || room.roomType != RoomType.Combat) return;
             activeEnemy.Initialize(room.enemyType);
+            BindStatusBars();
             return;
         }
         if (activeEnemy.enemyData != null) activeEnemy.Initialize(activeEnemy.enemyData);
+        BindStatusBars();
     }
 
     private void OnEnable()
@@ -216,11 +218,19 @@ public class CombatManager : MonoBehaviour
         NotifyAllPoolUI();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
-        if (playerStatusBar != null) playerStatusBar.Bind(player.StatusEffects);
-        if (enemyStatusBar != null) enemyStatusBar.Bind(activeEnemy.StatusEffects);
+        BindStatusBars();
 
         CombatEvents.OnImmediateGameActionBarClear?.Invoke();
         CombatEvents.OnElementPoolRuntimeIconsClear?.Invoke();
+    }
+
+    private void BindStatusBars()
+    {
+        if (playerStatusBar != null && player != null && player.StatusEffects != null)
+            playerStatusBar.Bind(player.StatusEffects);
+
+        if (enemyStatusBar != null && activeEnemy != null && activeEnemy.StatusEffects != null)
+            enemyStatusBar.Bind(activeEnemy.StatusEffects);
     }
 
     private void ApplyTestStartingFaces()
@@ -628,6 +638,9 @@ public class CombatManager : MonoBehaviour
         {
             activeEnemy.ResetArmor();
             var statusCtx = BuildStatusContext();
+            // Enemy turn starts here.
+            activeEnemy.StatusEffects.TickTurnStart(statusCtx);
+            if (CheckVictory()) yield break;
             activeEnemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
             if (CheckVictory()) yield break;
 
@@ -645,6 +658,7 @@ public class CombatManager : MonoBehaviour
             }
             if (action.armor > 0) activeEnemy.AddArmor(action.armor);
             activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
+            player.StatusEffects.TickAfterEnemyTurn(statusCtx);
             if (CheckVictory()) yield break;
             activeEnemy.PrepareNextAction();
         }
@@ -689,7 +703,7 @@ public class CombatManager : MonoBehaviour
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
         player.ResetArmor();
         var statusCtx = BuildStatusContext();
-        activeEnemy.StatusEffects.TickTurnStart(statusCtx);
+        // Player turn starts here.
         player.StatusEffects.TickTurnStart(statusCtx);
         NotifyAllPoolUI();
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);

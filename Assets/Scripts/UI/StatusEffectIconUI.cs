@@ -17,7 +17,15 @@ public class StatusEffectIconUI : MonoBehaviour
 
     public void Setup(StatusEffectInstance effect)
     {
+        RefreshVisual(effect);
+    }
+
+    public void RefreshVisual(StatusEffectInstance effect)
+    {
+        if (effect == null || effect.Definition == null) return;
         var spr = GameIconCatalog.GetStatusIcon(effect.Definition);
+        if (spr == null && effect.Definition is BurnEffectSO)
+            spr = GameIconCatalog.GetElementIcon(DieType.Fire);
         if (iconImage != null)
         {
             iconImage.sprite = spr;

@@ -12,17 +12,22 @@ public class BurnEffectSO : StatusEffectSO
         return applyTarget == StatusEffectTarget.Enemy && displayedStacks > 0;
     }
 
-    public override void OnAfterEnemyTurn(StatusEffectInstance instance, StatusEffectContext ctx)
+    public override void OnTurnStart(StatusEffectInstance instance, StatusEffectContext ctx)
     {
         var damage = damagePerStack * instance.Stacks;
-        ctx.Enemy.TakeDamage(damage);
+        if (target == StatusEffectTarget.Enemy)
+            ctx.Enemy.TakeDamage(damage);
+        else
+            ctx.Player.TakeDamage(damage);
 
         if (GameActionDebug.Enabled)
-            Debug.Log($"[Burn] Dealt {damage} damage to enemy ({damagePerStack}×{instance.Stacks} stacks)");
+            Debug.Log($"[Burn] Turn-start tick: dealt {damage} burn damage to {target} ({damagePerStack}×{instance.Stacks} stacks)");
     }
 
     public override void OnPerfectStrike(StatusEffectInstance instance, StatusEffectContext ctx)
     {
+        if (target != StatusEffectTarget.Enemy) return;
+
         var damage = instance.Stacks;
         ctx.Enemy.TakeDamage(damage);
 
