@@ -343,6 +343,10 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         importer.alphaIsTransparency = true;
         importer.isReadable = true;
         importer.mipmapEnabled = false;
+        importer.npotScale = TextureImporterNPOTScale.None;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.spritePixelsPerUnit = 100f;
+        importer.filterMode = FilterMode.Bilinear;
 
         var metas = new SpriteMetaData[sourceSprites.Count];
         for (var i = 0; i < sourceSprites.Count; i++)
@@ -372,7 +376,10 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         }
 
         importer.spritesheet = metas;
-        importer.SaveAndReimport();
+        // Avoid SaveAndReimport re-entrancy ("Existing reset not completed") while this texture is already
+        // mid-import; write settings then request a fresh import explicitly.
+        AssetDatabase.WriteImportSettingsIfDirty(atlasPngPath);
+        AssetDatabase.ImportAsset(atlasPngPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
     }
 
     private string ResolveOutputFolder()

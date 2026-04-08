@@ -72,7 +72,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,10 +113,10 @@ TextureImporter:
       name: Attack Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 466
-        width: 434
-        height: 455
+        x: 348
+        y: 0
+        width: 325
+        height: 341
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -131,13 +131,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Armor Icon
+      name: Shield Icon
       rect:
         serializedVersion: 2
-        x: 464
-        y: 415
-        width: 337
-        height: 408
+        x: 675
+        y: 0
+        width: 252
+        height: 306
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -145,8 +145,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a7b251beb61373f50800000000000000
-      internalID: 6861006896897534842
+      spriteID: 371db4fa3206c38b0800000000000000
+      internalID: -5171152565747068557
       vertices: []
       indices: 
       edges: []
@@ -157,8 +157,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 462
-        height: 464
+        width: 346
+        height: 348
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -176,10 +176,10 @@ TextureImporter:
       name: Freeze Icon
       rect:
         serializedVersion: 2
-        x: 464
-        y: 0
-        width: 406
-        height: 413
+        x: 0
+        y: 710
+        width: 304
+        height: 309
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -193,10 +193,31 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Heal Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 350
+        width: 334
+        height: 358
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 66f8608fb8b18a349b6bd0780b12514a
     internalID: 0
     vertices: []
     indices: 
@@ -204,10 +225,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Armor Icon: 6861006896897534842
       Attack Icon: 486815761338871706
       Burn Icon: -6939843676462808804
       Freeze Icon: -2081690915641676523
+      Heal Icon: 0
+      Shield Icon: -5171152565747068557
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

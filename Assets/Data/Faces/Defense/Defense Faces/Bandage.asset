@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Bandage
   m_EditorClassIdentifier: 
   title: Bandage
-  description: Gain +2
+  description: Gain <Style=Shield>Shield 2</Style> /nGain <Style=Heal>Heal 3</Style>
   value: 2
   type: 1
   faceMaterial: {fileID: 2100000, guid: 1df214fcb0dce354abf802f527c2f8b2, type: 2}
@@ -30,4 +30,4 @@ MonoBehaviour:
     - rid: 6494956095240142852
       type: {class: HealAction, ns: , asm: Assembly-CSharp}
       data:
-        amount: 1
+        amount: 2
