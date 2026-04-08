@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54206f09e3fdc344fb4859b6091f99bf, type: 3}
   m_Name: Base Physical
   m_EditorClassIdentifier: 
-  dieName: Base Shadow
+  dieName: Base Attack
   dieType: 0
-  uiIcon: {fileID: 21300000, guid: 006cfe0597d2da2478962748cb09df7c, type: 3}
+  uiIcon: {fileID: 21300000, guid: 5a82c1d08c4c36a438cb81762a370f7b, type: 3}
   shopGoldPrice: 50
   faces:
   - {fileID: 11400000, guid: 1c3b340afa77e7c4395c8913616755f7, type: 2}

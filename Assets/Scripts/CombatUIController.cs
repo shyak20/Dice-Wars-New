@@ -102,7 +102,10 @@ public class CombatUIController : MonoBehaviour
 
             var trayView = btnObj.GetComponent<DiceTrayButtonView>();
             if (trayView != null)
+            {
+                trayView.SetIcon(die.uiIcon);
                 diceButtonViews.Add(die, trayView);
+            }
             else
                 Debug.LogError($"CombatUIController: prefab '{prefab.name}' is missing DiceTrayButtonView. Add the component and assign regular/selected images.");
 

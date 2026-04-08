@@ -617,7 +617,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 51, y: -293}
+  m_AnchoredPosition: {x: 0, y: -293}
   m_SizeDelta: {x: 840.3398, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &83159039
@@ -2650,7 +2650,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   diceButtonContainer: {fileID: 391193354}
   trayCanvasGroup: {fileID: 391193356}
-  damageButtonPrefab: {fileID: 5179343703184696144, guid: 16958f7d48bca55479ff5687a90feddb, type: 3}
+  damageButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
   armorButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
   rollButton: {fileID: 1450787361}
   endTurnButton: {fileID: 415261149}
@@ -5001,7 +5001,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1001816083
 RectTransform:
   m_ObjectHideFlags: 0
