@@ -32,11 +32,12 @@ public class UIRewardSlot : MonoBehaviour
         if (valueText != null) valueText.text = face.value.ToString();
         if (rarityText != null) rarityText.text = face.rarity.ToString();
 
+        var faceSprite = face.uiIcon;
         var elementSprite = GameIconCatalog.GetElementIcon(face.type);
         if (iconImage != null)
         {
-            iconImage.sprite = elementSprite;
-            iconImage.enabled = elementSprite != null;
+            iconImage.sprite = faceSprite;
+            iconImage.enabled = faceSprite != null;
         }
 
         if (typeIconImage != null)

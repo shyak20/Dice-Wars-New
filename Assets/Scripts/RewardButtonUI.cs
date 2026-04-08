@@ -20,7 +20,7 @@ public class RewardButtonUI : MonoBehaviour
 
         if (valueIcon != null)
         {
-            var spr = GameIconCatalog.GetElementIcon(face.type);
+            var spr = face.uiIcon;
             valueIcon.sprite = spr;
             valueIcon.enabled = spr != null;
         }
