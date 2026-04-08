@@ -14,18 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: Base Shadow 2
   description: Harness 2 Damage \nHarness +1 Strength
+  descriptionLines: []
   value: 2
   type: 0
   faceMaterial: {fileID: 2100000, guid: 52b940e1549b9774ebc0a8ab346d6eab, type: 2}
   rarity: 0
   damage: 2
   armor: 0
-  faceIcon: {fileID: 21300000, guid: a7129468cb1a3ab45864828edc698b50, type: 3}
+  uiIcon: {fileID: 21300000, guid: a7129468cb1a3ab45864828edc698b50, type: 3}
   activateImmediately: 1
-  action:
-    rid: -2
+  actions: []
   references:
     version: 2
-    RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
+    RefIds: []

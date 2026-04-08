@@ -42,4 +42,6 @@ MonoBehaviour:
     sprite: {fileID: 0}
   - id: 13
     sprite: {fileID: 0}
-  statusEffectIcons: []
+  statusEffectIcons:
+  - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
+    icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}

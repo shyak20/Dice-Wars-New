@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Momentum Ward
   description: 
   descriptionLines:
-  - Gain <style=Shield>Shield 5</style>
+  - Gain <style=Shield>5</style>
   - Gain <style=Kinetic Shield>Kinetic Shield
   value: 5
   type: 1

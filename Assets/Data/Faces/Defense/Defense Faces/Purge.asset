@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Purge
   description: Gain 1 Shield \nCleanse 1
   descriptionLines:
-  - Gain <style=Shield>Shield 3</style>
+  - Gain <style=Shield>3</style>
   - Gain <style=Cleanse>Cleanse 3</style>
   value: 3
   type: 1

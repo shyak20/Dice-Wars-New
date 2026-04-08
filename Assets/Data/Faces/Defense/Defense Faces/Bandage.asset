@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Bandage
   description: Gain <Style=Shield>Shield 2</Style> /nGain <Style=Heal>Heal 3</Style>
   descriptionLines:
-  - Gain <style=Shield>Shield 2</style>
+  - Gain <style=Shield>2</style>
   - Gain <style=Heal>Heal 2</style>
   value: 2
   type: 1

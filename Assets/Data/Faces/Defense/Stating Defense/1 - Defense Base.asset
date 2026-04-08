@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: 1 - Defense Base
   m_EditorClassIdentifier: 
-  title: Base 1
+  title: Basic 1
   description: Gain <Style=Shield>Shield 1</Style> /nGain 1 Heal
   descriptionLines:
-  - Gain <style=Shield>Shield 1</style>
+  - Gain <style=Shield>1</style>
   - Gain <style=Heal>Heal 1</style>
   value: 1
   type: 1

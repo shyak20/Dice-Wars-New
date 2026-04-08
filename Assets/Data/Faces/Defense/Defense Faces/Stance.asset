@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Stance
   description: 
   descriptionLines:
-  - Gain <style=Shield>Shield 5</style>
+  - Gain <style=Shield>5</style>
   - If this is your first roll each turn gain extra <style=Shield>Shield 5</style>
   value: 5
   type: 1

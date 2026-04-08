@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Second Wind
   description: 
   descriptionLines:
-  - Gain <style=Shield>Shield 6</style>
+  - Gain <style=Shield>6</style>
   - Adds +1 Rolls this turn
   value: 6
   type: 1

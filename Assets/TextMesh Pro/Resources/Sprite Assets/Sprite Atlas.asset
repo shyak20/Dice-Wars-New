@@ -82,6 +82,12 @@ MonoBehaviour:
     m_Scale: 1
     m_Name: Shield Icon
     m_HashCode: 198985492
+  - m_ElementType: 2
+    m_Unicode: 57351
+    m_GlyphIndex: 7
+    m_Scale: 1
+    m_Name: Strength Icon
+    m_HashCode: -1581046482
   m_SpriteGlyphTable:
   - m_Index: 0
     m_Metrics:
@@ -130,7 +136,7 @@ MonoBehaviour:
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
-    sprite: {fileID: 713241228378286685, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+    sprite: {fileID: 8799247948289453121, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - m_Index: 3
     m_Metrics:
       m_Width: 304
@@ -178,7 +184,7 @@ MonoBehaviour:
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
-    sprite: {fileID: 1312963805606297871, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+    sprite: {fileID: 163897839599830385, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - m_Index: 6
     m_Metrics:
       m_Width: 252
@@ -187,14 +193,30 @@ MonoBehaviour:
       m_HorizontalBearingY: 306
       m_HorizontalAdvance: 252
     m_GlyphRect:
-      m_X: 0
-      m_Y: 691
+      m_X: 348
+      m_Y: 701
       m_Width: 252
       m_Height: 306
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 7
+    m_Metrics:
+      m_Width: 286
+      m_Height: 289
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 289
+      m_HorizontalAdvance: 286
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 691
+      m_Width: 286
+      m_Height: 289
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 8449021659917730306, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   spriteInfoList:
   - id: 0
     x: 684
@@ -237,7 +259,7 @@ MonoBehaviour:
     hashCode: -831836616
     unicode: 57346
     pivot: {x: 183.5, y: 169.5}
-    sprite: {fileID: 713241228378286685, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+    sprite: {fileID: 8799247948289453121, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 3
     x: 713
     y: 0
@@ -279,10 +301,10 @@ MonoBehaviour:
     hashCode: -1426757565
     unicode: 57349
     pivot: {x: 171, y: 157.5}
-    sprite: {fileID: 1312963805606297871, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+    sprite: {fileID: 163897839599830385, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 6
-    x: 0
-    y: 691
+    x: 348
+    y: 701
     width: 252
     height: 306
     xOffset: 0
@@ -294,4 +316,18 @@ MonoBehaviour:
     unicode: 57350
     pivot: {x: 126, y: 153}
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 7
+    x: 0
+    y: 691
+    width: 286
+    height: 289
+    xOffset: 0
+    yOffset: 289
+    xAdvance: 286
+    scale: 1
+    name: Strength Icon
+    hashCode: -1581046482
+    unicode: 57351
+    pivot: {x: 143, y: 144.5}
+    sprite: {fileID: 8449021659917730306, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   fallbackSpriteAssets: []

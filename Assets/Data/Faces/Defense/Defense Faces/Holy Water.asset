@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Holy Water
   description: Gain 3 Shield \nCleanse 3
   descriptionLines:
-  - Gain <style=Shield>Shield 3</style>
+  - Gain <style=Shield>3</style>
   - Gain <style=Cleanse>Cleanse 6</style>
   value: 3
   type: 1

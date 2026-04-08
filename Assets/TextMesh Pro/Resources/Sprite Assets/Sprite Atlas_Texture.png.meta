@@ -134,8 +134,8 @@ TextureImporter:
       name: Shield Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 691
+        x: 348
+        y: 701
         width: 252
         height: 306
       alignment: 0
@@ -256,6 +256,27 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Strength Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 691
+        width: 286
+        height: 289
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -274,6 +295,7 @@ TextureImporter:
       Heal Icon: 0
       Kinetic Shield Icon: 0
       Shield Icon: -5171152565747068557
+      Strength Icon: 0
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
