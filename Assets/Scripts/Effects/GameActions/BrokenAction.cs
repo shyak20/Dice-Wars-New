@@ -2,9 +2,11 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class BrokenAction : IGameAction
+public class BrokenAction : GameActionWithIcon
 {
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.Broken;
+
+    public override void Execute(GameActionContext context)
     {
         context.CombatManager.QueueTurnEndAction(ctx =>
         {

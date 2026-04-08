@@ -10,6 +10,10 @@ public class RunManager : MonoBehaviour
     [SerializeField] private string shopSceneName = "ShopScene";
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+    [Header("UI")]
+    [Tooltip("Register once for shop/reward/menu scenes; combat can also assign on CombatManager.")]
+    [SerializeField] private GameIconIndexSO gameIconIndex;
+
     private int currentRoomIndex;
 
     public RoomDefinition CurrentRoom
@@ -40,6 +44,9 @@ public class RunManager : MonoBehaviour
 
         if (encounterList == null)
             Debug.LogError("RunManager: encounterList is not assigned!");
+
+        if (gameIconIndex != null)
+            GameIconCatalog.Register(gameIconIndex);
     }
 
     public void StartRun()

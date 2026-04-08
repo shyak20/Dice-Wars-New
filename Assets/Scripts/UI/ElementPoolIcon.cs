@@ -14,8 +14,15 @@ public class ElementPoolIcon : MonoBehaviour
     /// <summary>Rect used as the fly animation destination for this pool type.</summary>
     public RectTransform FlyTargetRect => (RectTransform)transform;
 
-    /// <summary>Static pool-type art (same sprite shown in the bar for this element).</summary>
+    /// <summary>Current art on the pool icon (defaults + runtime overrides).</summary>
     public Sprite PoolTypeSprite => icon != null ? icon.sprite : null;
+
+    public void SetPoolSprite(Sprite sprite)
+    {
+        if (icon == null) return;
+        icon.sprite = sprite;
+        icon.enabled = sprite != null;
+    }
 
     public void SetValue(int value)
     {

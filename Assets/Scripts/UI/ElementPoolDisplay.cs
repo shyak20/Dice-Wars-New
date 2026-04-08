@@ -2,51 +2,64 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Builds one <see cref="ElementPoolIcon"/> per <see cref="DieType"/> from a prefab and assigns sprites from <see cref="GameIconCatalog"/>.
+/// </summary>
 public class ElementPoolDisplay : MonoBehaviour
 {
     [Tooltip("When enabled, pool icons only change on flyout landing + full resync events. Wire DiceRollOutcomeFlyoutController and assign it in the scene.")]
     [SerializeField] private bool incrementPoolIconsWithFlyouts;
 
-    [SerializeField] private ElementPoolIcon damageIcon;
-    [SerializeField] private ElementPoolIcon armorIcon;
-    [SerializeField] private ElementPoolIcon fireIcon;
-    [SerializeField] private ElementPoolIcon iceIcon;
-    [SerializeField] private ElementPoolIcon natureIcon;
+    [Header("Dynamic pool icons")]
+    [Tooltip("Parent for instantiated icons (defaults to this transform). Use a layout group here for spacing.")]
+    [SerializeField] private RectTransform iconContainer;
+    [SerializeField] private ElementPoolIcon poolIconPrefab;
 
     private Dictionary<DieType, ElementPoolIcon> iconMap;
     private Dictionary<DieType, int> displayedPools;
+    private readonly Dictionary<DieType, Sprite> runtimeTypeIcons = new Dictionary<DieType, Sprite>();
 
     private void Awake()
     {
-        iconMap = new Dictionary<DieType, ElementPoolIcon>
+        if (poolIconPrefab == null)
         {
-            { DieType.Damage, damageIcon },
-            { DieType.Armor, armorIcon },
-            { DieType.Fire, fireIcon },
-            { DieType.Ice, iceIcon },
-            { DieType.Nature, natureIcon },
-        };
+            Debug.LogError($"ElementPoolDisplay on '{name}': assign poolIconPrefab (ElementPoolIcon).");
+            return;
+        }
+
+        var parent = iconContainer != null ? iconContainer : (RectTransform)transform;
+        iconMap = new Dictionary<DieType, ElementPoolIcon>();
+
+        foreach (DieType type in Enum.GetValues(typeof(DieType)))
+        {
+            var inst = Instantiate(poolIconPrefab, parent);
+            inst.name = $"PoolIcon_{type}";
+            var rt = inst.transform as RectTransform;
+            if (rt != null)
+                rt.localScale = Vector3.one;
+
+            var comp = inst.GetComponent<ElementPoolIcon>();
+            if (comp == null)
+            {
+                Debug.LogError($"ElementPoolDisplay: poolIconPrefab must have an ElementPoolIcon component.");
+                Destroy(inst.gameObject);
+                continue;
+            }
+
+            iconMap[type] = comp;
+            comp.gameObject.SetActive(false);
+        }
 
         displayedPools = new Dictionary<DieType, int>();
         foreach (DieType type in Enum.GetValues(typeof(DieType)))
             displayedPools[type] = 0;
-
-        foreach (var kvp in iconMap)
-        {
-            if (kvp.Value == null)
-            {
-                Debug.LogError($"ElementPoolDisplay: {kvp.Key} icon is not assigned!");
-            }
-            else
-            {
-                kvp.Value.gameObject.SetActive(false);
-            }
-        }
     }
 
     private void OnEnable()
     {
         CombatEvents.OnPoolIconsFullResync += ApplyFullPoolSync;
+        CombatEvents.OnElementPoolRuntimeIconsClear += ClearRuntimeTypeIcons;
+        CombatEvents.OnRuntimePoolIconForType += OnRuntimePoolIconForType;
         if (!incrementPoolIconsWithFlyouts)
             CombatEvents.OnPoolsUpdated += ApplyFullPoolSync;
     }
@@ -54,8 +67,17 @@ public class ElementPoolDisplay : MonoBehaviour
     private void OnDisable()
     {
         CombatEvents.OnPoolIconsFullResync -= ApplyFullPoolSync;
+        CombatEvents.OnElementPoolRuntimeIconsClear -= ClearRuntimeTypeIcons;
+        CombatEvents.OnRuntimePoolIconForType -= OnRuntimePoolIconForType;
         if (!incrementPoolIconsWithFlyouts)
             CombatEvents.OnPoolsUpdated -= ApplyFullPoolSync;
+    }
+
+    private void OnRuntimePoolIconForType(DieType type, Sprite sprite)
+    {
+        if (sprite == null) return;
+        runtimeTypeIcons[type] = sprite;
+        RefreshIcon(type);
     }
 
     public bool UsesFlyoutIncrementMode => incrementPoolIconsWithFlyouts;
@@ -71,22 +93,31 @@ public class ElementPoolDisplay : MonoBehaviour
         return icon.FlyTargetRect;
     }
 
-    /// <summary>Sprite used in the pool bar for this type (same art as <see cref="ElementPoolIcon"/>).</summary>
+    /// <summary>Sprite for flyout row + pool bar: runtime override, then <see cref="GameIconCatalog"/>.</summary>
     public Sprite GetPoolTypeSprite(DieType type)
     {
-        if (iconMap == null || !iconMap.TryGetValue(type, out var icon) || icon == null)
-            return null;
-        return icon.PoolTypeSprite;
+        if (runtimeTypeIcons.TryGetValue(type, out var rt) && rt != null)
+            return rt;
+        return GameIconCatalog.GetElementIcon(type);
     }
 
     /// <summary>Called when a flyout reaches the pool bar; increments the visible total for that type.</summary>
-    public void ApplyPoolDelta(DieType type, int delta)
+    public void ApplyPoolDelta(DieType type, int delta, Sprite lineIconOverride = null)
     {
         if (delta == 0) return;
         if (!displayedPools.ContainsKey(type))
             displayedPools[type] = 0;
         displayedPools[type] += delta;
+        if (lineIconOverride != null)
+            runtimeTypeIcons[type] = lineIconOverride;
         RefreshIcon(type);
+    }
+
+    public void ClearRuntimeTypeIcons()
+    {
+        runtimeTypeIcons.Clear();
+        foreach (DieType type in Enum.GetValues(typeof(DieType)))
+            RefreshIcon(type);
     }
 
     private void ApplyFullPoolSync(Dictionary<DieType, int> pools)
@@ -100,19 +131,25 @@ public class ElementPoolDisplay : MonoBehaviour
 
     private void RefreshIcon(DieType type)
     {
-        if (!iconMap.TryGetValue(type, out var icon) || icon == null) return;
+        if (iconMap == null || !iconMap.TryGetValue(type, out var poolIcon) || poolIcon == null) return;
 
         int v = displayedPools.TryGetValue(type, out var stored) ? stored : 0;
-        bool visible = v >= 1;
-        icon.gameObject.SetActive(visible);
-        if (visible)
-            icon.SetValue(v);
+        if (v < 1)
+        {
+            runtimeTypeIcons.Remove(type);
+            poolIcon.gameObject.SetActive(false);
+            return;
+        }
+
+        poolIcon.gameObject.SetActive(true);
+        poolIcon.SetPoolSprite(GetPoolTypeSprite(type));
+        poolIcon.SetValue(v);
     }
 
     /// <summary>Show pre-jackpot values and ×multiplier above each visible pool icon.</summary>
     public void BeginJackpotPresentation(int multiplier, Dictionary<DieType, int> valuesBefore)
     {
-        if (valuesBefore == null) return;
+        if (valuesBefore == null || iconMap == null) return;
 
         foreach (var kvp in valuesBefore)
             displayedPools[kvp.Key] = kvp.Value;
@@ -131,6 +168,7 @@ public class ElementPoolDisplay : MonoBehaviour
     /// <summary>Hide badges and apply post-jackpot pool totals to the bar.</summary>
     public void FinishJackpotPresentation(Dictionary<DieType, int> valuesAfter)
     {
+        if (iconMap == null) return;
         foreach (var kvp in iconMap)
             kvp.Value?.HideJackpotMultiplierBadge();
 

@@ -2,9 +2,11 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class SafetyNetAction : IGameAction
+public class SafetyNetAction : GameActionWithIcon
 {
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.SafetyNet;
+
+    public override void Execute(GameActionContext context)
     {
         context.CombatManager.SetBustProtected();
         if (GameActionDebug.Enabled)

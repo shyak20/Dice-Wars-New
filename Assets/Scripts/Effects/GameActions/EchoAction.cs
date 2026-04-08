@@ -2,9 +2,11 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class EchoAction : IGameAction
+public class EchoAction : GameActionWithIcon
 {
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.Echo;
+
+    public override void Execute(GameActionContext context)
     {
         var refund = context.TriggeringFace.Face.value;
         context.CombatManager.RefundPower(refund);

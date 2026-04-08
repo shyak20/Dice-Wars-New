@@ -16,8 +16,10 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [Header("Prefab")]
     [SerializeField] private GameObject linePrefab;
 
-    [Header("Layout (canvas space)")]
+    [Header("Layout")]
+    [Tooltip("World-units: lift the stack anchor above the die. First line starts here.")]
     [SerializeField] private float worldOffsetAboveDie = 0.75f;
+    [Tooltip("Canvas pixels: each additional line is placed this far above the previous line (toward top of screen).")]
     [SerializeField] private float lineSpacing = 36f;
 
     [Header("Timing")]
@@ -109,11 +111,15 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
                 var view = row.GetComponent<RollOutcomeFlyoutLineView>();
                 if (view != null)
-                    view.Setup(elementPoolDisplay.GetPoolTypeSprite(line.Type), line.Amount);
+                {
+                    var sprite = line.IconOverride != null ? line.IconOverride : elementPoolDisplay.GetPoolTypeSprite(line.Type);
+                    view.Setup(sprite, line.Amount);
+                }
                 else
                     Debug.LogError("DiceRollOutcomeFlyoutController: linePrefab should include RollOutcomeFlyoutLineView.");
 
-                rt.anchoredPosition = anchorLocal + Vector2.down * (i * lineSpacing);
+                // First line at anchor (die + worldOffsetAboveDie → canvas). Each next line stacks above the previous by lineSpacing.
+                rt.anchoredPosition = anchorLocal + Vector2.up * (i * lineSpacing);
                 lineRects.Add(rt);
             }
 
@@ -141,7 +147,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
                 Vector2 startLocal = lineRects[i].anchoredPosition;
                 Vector2 mid = (startLocal + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
-                flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line.Type, line.Amount)));
+                flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line)));
             }
 
             foreach (var c in flyCoroutines)
@@ -156,7 +162,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
     }
 
-    private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, DieType type, int amount)
+    private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line)
     {
         float dur = Mathf.Max(0.01f, flyDurationSeconds);
         float t = 0f;
@@ -170,7 +176,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
 
         rt.anchoredPosition = end;
-        elementPoolDisplay.ApplyPoolDelta(type, amount);
+        elementPoolDisplay.ApplyPoolDelta(line.Type, line.Amount, line.IconOverride);
         Destroy(rt.gameObject);
     }
 

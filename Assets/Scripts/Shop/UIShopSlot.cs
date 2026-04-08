@@ -61,9 +61,10 @@ public class UIShopSlot : MonoBehaviour
             if (statsText != null) statsText.text = $"Value {f.value} · {f.type}";
             if (iconImage != null)
             {
-                iconImage.sprite = f.faceIcon;
-                iconImage.enabled = true;
-                iconImage.color = f.faceIcon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+                var spr = GameIconCatalog.GetElementIcon(f.type);
+                iconImage.sprite = spr;
+                iconImage.enabled = spr != null;
+                iconImage.color = spr != null ? Color.white : new Color(1f, 1f, 1f, 0f);
             }
         }
         else

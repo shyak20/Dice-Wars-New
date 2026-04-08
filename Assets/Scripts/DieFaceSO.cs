@@ -22,9 +22,6 @@ public class DieFaceSO : ScriptableObject
     public int damage; // New independent damage value
     public int armor;  // New independent armor value
 
-    [Header("UI Visuals")]
-    public Sprite faceIcon;
-
     [Header("Game Actions")]
     [Tooltip("If true, all actions run when the die settles; if false, they run at turn end before damage resolves.")]
     public bool activateImmediately = true;

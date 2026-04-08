@@ -6,6 +6,15 @@ public class PlayerDataContainerEditor : Editor
 {
     private bool[] dieFoldouts = new bool[0];
 
+    static Sprite TryGetElementIconForEditor(DieType type)
+    {
+        var guids = AssetDatabase.FindAssets("t:GameIconIndexSO");
+        if (guids.Length == 0) return null;
+        var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+        var index = AssetDatabase.LoadAssetAtPath<GameIconIndexSO>(path);
+        return index != null ? index.GetElementIcon(type) : null;
+    }
+
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
@@ -70,10 +79,11 @@ public class PlayerDataContainerEditor : Editor
 
                 EditorGUILayout.BeginHorizontal();
 
-                if (face.faceIcon != null)
+                var deckIcon = TryGetElementIconForEditor(face.type);
+                if (deckIcon != null)
                 {
                     var iconRect = GUILayoutUtility.GetRect(24, 24, GUILayout.Width(24), GUILayout.Height(24));
-                    GUI.DrawTexture(iconRect, face.faceIcon.texture, ScaleMode.ScaleToFit);
+                    GUI.DrawTexture(iconRect, deckIcon.texture, ScaleMode.ScaleToFit);
                 }
 
                 EditorGUILayout.LabelField($"[{f}] {face.Title}", GUILayout.Width(140));

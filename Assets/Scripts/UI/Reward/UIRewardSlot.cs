@@ -14,13 +14,6 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private Image typeIconImage;
     [SerializeField] private Button button;
 
-    [Header("Type Icon Sprites")]
-    [SerializeField] private Sprite damageTypeIcon;
-    [SerializeField] private Sprite armorTypeIcon;
-    [SerializeField] private Sprite fireTypeIcon;
-    [SerializeField] private Sprite iceTypeIcon;
-    [SerializeField] private Sprite natureTypeIcon;
-
     private DieFaceSO _face;
 
     private void Awake()
@@ -38,17 +31,18 @@ public class UIRewardSlot : MonoBehaviour
         if (nameText != null) nameText.text = face.Title;
         if (valueText != null) valueText.text = face.value.ToString();
         if (rarityText != null) rarityText.text = face.rarity.ToString();
+
+        var elementSprite = GameIconCatalog.GetElementIcon(face.type);
         if (iconImage != null)
         {
-            iconImage.sprite = face.faceIcon;
-            iconImage.enabled = face.faceIcon != null;
+            iconImage.sprite = elementSprite;
+            iconImage.enabled = elementSprite != null;
         }
 
         if (typeIconImage != null)
         {
-            var typeSprite = GetTypeIcon(face.type);
-            typeIconImage.sprite = typeSprite;
-            typeIconImage.enabled = typeSprite != null;
+            typeIconImage.sprite = elementSprite;
+            typeIconImage.enabled = elementSprite != null;
         }
 
         if (button != null)
@@ -70,24 +64,5 @@ public class UIRewardSlot : MonoBehaviour
     public GameObject GetHoverTarget()
     {
         return button != null ? button.gameObject : gameObject;
-    }
-
-    private Sprite GetTypeIcon(DieType type)
-    {
-        switch (type)
-        {
-            case DieType.Damage:
-                return damageTypeIcon;
-            case DieType.Armor:
-                return armorTypeIcon;
-            case DieType.Fire:
-                return fireTypeIcon;
-            case DieType.Ice:
-                return iceTypeIcon;
-            case DieType.Nature:
-                return natureTypeIcon;
-            default:
-                return null;
-        }
     }
 }

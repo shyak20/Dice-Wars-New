@@ -2,22 +2,31 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class CleanseAction : IGameAction
+public class CleanseAction : GameActionWithIcon
 {
-    public void Execute(GameActionContext context)
+    [SerializeField] private int stacks = 1;
+
+    protected override ActionVisualId VisualKey => ActionVisualId.Cleanse;
+
+    public override void Execute(GameActionContext context)
     {
-        var ctx = new StatusEffectContext
+        var cleanseStacks = stacks;
+        context.CombatManager.QueueTurnEndAction(ctx =>
         {
-            CombatManager = context.CombatManager,
-            Player = context.Player,
-            Enemy = context.Enemy
-        };
+            var finalStacks = cleanseStacks * ctx.CombatManager.GetAppliedMultiplier();
+            var statusCtx = new StatusEffectContext
+            {
+                CombatManager = ctx.CombatManager,
+                Player = ctx.Player,
+                Enemy = ctx.Enemy
+            };
 
-        var removed = context.Player.StatusEffects.RemoveRandomDebuff(ctx);
+            var reduced = ctx.Player.StatusEffects.ReduceRandomDebuffStacks(finalStacks, statusCtx);
 
-        if (GameActionDebug.Enabled)
-            Debug.Log(removed
-                ? "[Cleanse] Removed a random debuff from player"
-                : "[Cleanse] No debuffs to cleanse");
+            if (GameActionDebug.Enabled)
+                Debug.Log(reduced
+                    ? $"[Cleanse] Reduced a random debuff by {finalStacks} stack(s) (base: {cleanseStacks}, multiplier: {ctx.CombatManager.GetAppliedMultiplier()})"
+                    : "[Cleanse] No debuffs to cleanse");
+        });
     }
 }

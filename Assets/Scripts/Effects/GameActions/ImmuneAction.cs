@@ -2,9 +2,11 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class ImmuneAction : IGameAction
+public class ImmuneAction : GameActionWithIcon
 {
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.Immune;
+
+    public override void Execute(GameActionContext context)
     {
         context.CombatManager.SetImmune();
         if (GameActionDebug.Enabled)

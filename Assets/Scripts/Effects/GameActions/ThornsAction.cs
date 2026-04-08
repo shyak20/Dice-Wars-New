@@ -2,11 +2,13 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class ThornsAction : IGameAction
+public class ThornsAction : GameActionWithIcon
 {
     [SerializeField] private int amount = 1;
 
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.Thorns;
+
+    public override void Execute(GameActionContext context)
     {
         context.CombatManager.AddThorns(amount);
         if (GameActionDebug.Enabled)

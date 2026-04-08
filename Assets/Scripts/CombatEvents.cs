@@ -7,6 +7,8 @@ public struct RollOutcomeVisualLine
 {
     public DieType Type;
     public int Amount;
+    /// <summary>From turn-end actions on this face; flyout + pool use when set, else <see cref="ElementPoolDisplay"/> default art.</summary>
+    public Sprite IconOverride;
 }
 
 /// <summary>Spawned by CombatManager when a die settles; UI flies lines to <see cref="ElementPoolDisplay"/>.</summary>
@@ -39,6 +41,15 @@ public static class CombatEvents
     public static Action<Dictionary<DieType, int>> OnPoolIconsFullResync;
     /// <summary>3D die position + outcome lines; optional if no listener.</summary>
     public static Action<DiceRollVisualPayload> OnDiceRollVisualFeedback;
+
+    /// <summary>Icons for actions that ran immediately on the rolled face (player HUD).</summary>
+    public static Action<IReadOnlyList<Sprite>> OnImmediateGameActionIconsShown;
+    /// <summary>Clear <see cref="OnImmediateGameActionIconsShown"/> UI (new combat turn).</summary>
+    public static Action OnImmediateGameActionBarClear;
+    /// <summary>Clear dynamic pool icons from turn-end actions; default element art is shown again.</summary>
+    public static Action OnElementPoolRuntimeIconsClear;
+    /// <summary>When a turn-end face resolves, set pool bar art for each element type that gained value (non-flyout mode).</summary>
+    public static Action<DieType, Sprite> OnRuntimePoolIconForType;
 
     // Interaction
     public static Action<DieAssetSO> OnDieToggled;

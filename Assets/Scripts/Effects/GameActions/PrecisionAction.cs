@@ -2,11 +2,13 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class PrecisionAction : IGameAction
+public class PrecisionAction : GameActionWithIcon
 {
     [SerializeField] private int powerAmount = 1;
 
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.Precision;
+
+    public override void Execute(GameActionContext context)
     {
         context.CombatManager.QueuePrecisionChoice(powerAmount);
         if (GameActionDebug.Enabled)

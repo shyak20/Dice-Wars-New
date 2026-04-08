@@ -18,10 +18,11 @@ public class RewardButtonUI : MonoBehaviour
         currentFace = face;
         onSelected = callback;
 
-        // Set the Icon instead of text
-        if (valueIcon != null && face.faceIcon != null)
+        if (valueIcon != null)
         {
-            valueIcon.sprite = face.faceIcon;
+            var spr = GameIconCatalog.GetElementIcon(face.type);
+            valueIcon.sprite = spr;
+            valueIcon.enabled = spr != null;
         }
 
         if (typeText != null) typeText.text = face.type.ToString();

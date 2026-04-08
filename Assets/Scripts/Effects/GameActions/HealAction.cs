@@ -2,11 +2,13 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class HealAction : IGameAction
+public class HealAction : GameActionWithIcon
 {
     [SerializeField] private int amount = 1;
 
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.Heal;
+
+    public override void Execute(GameActionContext context)
     {
         var healAmount = amount;
         context.CombatManager.QueueTurnEndAction(ctx =>

@@ -2,11 +2,13 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class OverchargeAction : IGameAction
+public class OverchargeAction : GameActionWithIcon
 {
     [SerializeField] private int amount = 1;
 
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.Overcharge;
+
+    public override void Execute(GameActionContext context)
     {
         context.CombatManager.AddOvercharge(amount);
         if (GameActionDebug.Enabled)

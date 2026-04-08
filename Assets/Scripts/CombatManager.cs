@@ -29,6 +29,10 @@ public class CombatManager : MonoBehaviour
     [Header("Testing")]
     [SerializeField] private TestStartingFacesSO testStartingFaces;
 
+    [Header("UI Icons")]
+    [Tooltip("Central icon index (also register on RunManager if combat is not the first scene).")]
+    [SerializeField] private GameIconIndexSO gameIconIndex;
+
     private CombatState currentState;
     private List<DieAssetSO> selectedDice = new List<DieAssetSO>();
 
@@ -80,6 +84,12 @@ public class CombatManager : MonoBehaviour
             // Only add extra elements if they aren't Damage/Armor to avoid double-counting
             if (face.Type != DieType.Damage && face.Type != DieType.Armor)
                 pools[face.Type] += face.Value;
+
+            if (face.ActionPoolContributions != null)
+            {
+                foreach (var extra in face.ActionPoolContributions)
+                    pools[extra.PoolType] += extra.Amount;
+            }
         }
 
         pools[DieType.Armor] += kineticShieldBonus;
@@ -120,6 +130,8 @@ public class CombatManager : MonoBehaviour
     {
         if (spawner == null || player == null || activeEnemy == null)
             Debug.LogError("CombatManager: Missing references!");
+        if (gameIconIndex != null)
+            GameIconCatalog.Register(gameIconIndex);
     }
 
     private void Start()
@@ -187,6 +199,9 @@ public class CombatManager : MonoBehaviour
 
         if (playerStatusBar != null) playerStatusBar.Bind(player.StatusEffects);
         if (enemyStatusBar != null) enemyStatusBar.Bind(activeEnemy.StatusEffects);
+
+        CombatEvents.OnImmediateGameActionBarClear?.Invoke();
+        CombatEvents.OnElementPoolRuntimeIconsClear?.Invoke();
     }
 
     private void ApplyTestStartingFaces()
@@ -281,6 +296,8 @@ public class CombatManager : MonoBehaviour
 
         _turnRegistry.RecordResolvedFace(result);
 
+        PopulateActionPoolContributions(result);
+
         channeledFaces.Add(result);
         currentPower += modifiedValue;
 
@@ -288,15 +305,26 @@ public class CombatManager : MonoBehaviour
         if (result.ActivateImmediately && result.Actions.Count > 0)
         {
             var context = BuildContext(result);
+            List<Sprite> immediateIcons = null;
             foreach (var a in result.Actions)
             {
                 if (a is FaceResolveModifierBase) continue;
                 a.Execute(context);
+                var icon = GameActionIconUtility.GetDisplayIcon(a);
+                if (icon != null)
+                {
+                    immediateIcons ??= new List<Sprite>();
+                    immediateIcons.Add(icon);
+                }
             }
+            if (immediateIcons != null && immediateIcons.Count > 0)
+                CombatEvents.OnImmediateGameActionIconsShown?.Invoke(immediateIcons);
         }
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         FirePoolsUpdated();
+        if (!result.ActivateImmediately)
+            PushDeferredPoolIconHints(result);
 
         diceSettledCount++;
 
@@ -338,21 +366,63 @@ public class CombatManager : MonoBehaviour
         ProcessPrecisionQueue();
     }
 
+    private void PopulateActionPoolContributions(FaceResult result)
+    {
+        result.ActionPoolContributions.Clear();
+        if (result.Actions == null || player == null) return;
+        foreach (var a in result.Actions)
+        {
+            if (a is FaceResolveModifierBase) continue;
+            if (a is ApplyStatusEffectAction apply)
+                apply.AppendPoolContributionIfAny(result, player);
+        }
+    }
+
+    private static void PushDeferredPoolIconHints(FaceResult result)
+    {
+        if (result.ActivateImmediately) return;
+
+        void Hint(DieType t, int amt, Sprite icon)
+        {
+            if (amt > 0 && icon != null)
+                CombatEvents.OnRuntimePoolIconForType?.Invoke(t, icon);
+        }
+
+        Hint(DieType.Damage, result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
+        Hint(DieType.Armor, result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
+        if (result.Type != DieType.Damage && result.Type != DieType.Armor)
+            Hint(result.Type, result.Value, GameIconCatalog.GetElementIcon(result.Type));
+
+        if (result.ActionPoolContributions != null)
+        {
+            foreach (var extra in result.ActionPoolContributions)
+                Hint(extra.PoolType, extra.Amount, extra.Icon);
+        }
+    }
+
     private static List<RollOutcomeVisualLine> BuildRollVisualLines(FaceResult result, bool kineticArmorThisRoll)
     {
         var lines = new List<RollOutcomeVisualLine>();
-        void AddLine(DieType t, int amt)
+
+        void AddLine(DieType t, int amt, Sprite icon)
         {
             if (amt <= 0) return;
-            lines.Add(new RollOutcomeVisualLine { Type = t, Amount = amt });
+            lines.Add(new RollOutcomeVisualLine { Type = t, Amount = amt, IconOverride = icon });
         }
 
-        AddLine(DieType.Damage, result.Damage);
-        AddLine(DieType.Armor, result.Armor);
+        AddLine(DieType.Damage, result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
+        AddLine(DieType.Armor, result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
         if (result.Type != DieType.Damage && result.Type != DieType.Armor)
-            AddLine(result.Type, result.Value);
+            AddLine(result.Type, result.Value, GameIconCatalog.GetElementIcon(result.Type));
+
+        if (result.ActionPoolContributions != null)
+        {
+            foreach (var extra in result.ActionPoolContributions)
+                AddLine(extra.PoolType, extra.Amount, extra.Icon);
+        }
+
         if (kineticArmorThisRoll)
-            AddLine(DieType.Armor, 1);
+            AddLine(DieType.Armor, 1, null);
         return lines;
     }
 
@@ -580,6 +650,8 @@ public class CombatManager : MonoBehaviour
         NotifyAllPoolUI();
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
+        CombatEvents.OnImmediateGameActionBarClear?.Invoke();
+        CombatEvents.OnElementPoolRuntimeIconsClear?.Invoke();
         ChangeState(CombatState.WaitingForRoll);
     }
 

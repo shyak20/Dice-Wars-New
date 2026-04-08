@@ -17,7 +17,12 @@ public class StatusEffectIconUI : MonoBehaviour
 
     public void Setup(StatusEffectInstance effect)
     {
-        iconImage.sprite = effect.Definition.icon;
+        var spr = GameIconCatalog.GetStatusIcon(effect.Definition);
+        if (iconImage != null)
+        {
+            iconImage.sprite = spr;
+            iconImage.enabled = spr != null;
+        }
         UpdateStacks(effect.Stacks);
     }
 

@@ -3,6 +3,13 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Chill", menuName = "DiceGame/StatusEffects/Chill")]
 public class ChillEffectSO : StatusEffectSO
 {
+    public override bool TryGetRollFlyoutContribution(int displayedStacks, StatusEffectTarget applyTarget, out DieType poolType, out int poolAmount)
+    {
+        poolType = DieType.Ice;
+        poolAmount = displayedStacks;
+        return applyTarget == StatusEffectTarget.Enemy && displayedStacks > 0;
+    }
+
     [SerializeField] private int frozenThreshold = 5;
     [SerializeField] private StatusEffectSO frozenEffect;
 

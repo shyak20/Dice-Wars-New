@@ -1,12 +1,16 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Effects.GameActions
 {
-    public class MaxHpAction : IGameAction
+    [Serializable]
+    public class MaxHpAction : GameActionWithIcon
     {
         [SerializeField] private int amount = 1;
 
-        public void Execute(GameActionContext context)
+        protected override ActionVisualId VisualKey => ActionVisualId.MaxHp;
+
+        public override void Execute(GameActionContext context)
         {
             if (GameActionDebug.Enabled)
                 Debug.Log($"[MaxHpAction] Add {amount}");
