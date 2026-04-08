@@ -10840,58 +10840,6 @@ PrefabInstance:
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: worldCamera
-      value: 
-      objectReference: {fileID: 963194227}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.prefab
-      value: 
-      objectReference: {fileID: 8121471973030696828, guid: 810403edda846fe47b88f9113b05d07c, type: 3}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.duration
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.verticalMotionGraph.m_Curve.Array.data[0].inSlope
-      value: -0.36578652
-      objectReference: {fileID: 0}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.verticalMotionGraph.m_Curve.Array.data[1].inSlope
-      value: 2.2517798
-      objectReference: {fileID: 0}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.verticalMotionGraph.m_Curve.Array.data[0].outSlope
-      value: -0.36578652
-      objectReference: {fileID: 0}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.verticalMotionGraph.m_Curve.Array.data[1].inWeight
-      value: 0.033755302
-      objectReference: {fileID: 0}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.verticalMotionGraph.m_Curve.Array.data[1].outSlope
-      value: 2.2517798
-      objectReference: {fileID: 0}
-    - target: {fileID: 2184287337653457536, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: style.verticalMotionGraph.m_Curve.Array.data[0].outWeight
-      value: 0.22338957
-      objectReference: {fileID: 0}
-    - target: {fileID: 2730008945048704530, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2730008945048704530, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2730008945048704530, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2730008945048704530, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 3440934713375229664, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
