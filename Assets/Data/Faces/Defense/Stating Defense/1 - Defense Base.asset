@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: Base 1
   description: Gain <Style=Shield>Shield 1</Style> /nGain 1 Heal
+  descriptionLines:
+  - Gain <style=Shield>Shield 1</style>
+  - Gain <style=Heal>Heal 1</style>
   value: 1
   type: 1
   faceMaterial: {fileID: 2100000, guid: 393fa5dd493d3284193c273d0ef575ee, type: 2}

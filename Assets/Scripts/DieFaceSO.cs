@@ -5,10 +5,11 @@ using UnityEngine;
 public class DieFaceSO : ScriptableObject
 {
     [SerializeField] private string title;
-    [SerializeField] private string description;
+    [SerializeField, HideInInspector] private string description; // Legacy single-line description (migration fallback).
+    [SerializeField] private List<string> descriptionLines = new List<string>();
 
     public string Title => string.IsNullOrEmpty(title) ? name : title;
-    public string Description => string.IsNullOrEmpty(description) ? name : description;
+    public string Description => BuildDescription();
 
     public int value; // Keeping this for the Power Bar calculation
     public DieType type;
@@ -30,4 +31,23 @@ public class DieFaceSO : ScriptableObject
     public bool activateImmediately = true;
     [Tooltip("Executed in list order. Use + in the inspector to add multiple polymorphic actions.")]
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();
+
+    private string BuildDescription()
+    {
+        if (descriptionLines != null && descriptionLines.Count > 0)
+        {
+            var nonEmptyLines = new List<string>();
+            for (var i = 0; i < descriptionLines.Count; i++)
+            {
+                var line = descriptionLines[i];
+                if (!string.IsNullOrWhiteSpace(line))
+                    nonEmptyLines.Add(line.Trim());
+            }
+
+            if (nonEmptyLines.Count > 0)
+                return string.Join("\n\n", nonEmptyLines);
+        }
+
+        return string.IsNullOrEmpty(description) ? name : description;
+    }
 }

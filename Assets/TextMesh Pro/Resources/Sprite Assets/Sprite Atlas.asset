@@ -56,17 +56,29 @@ MonoBehaviour:
     m_Unicode: 57346
     m_GlyphIndex: 2
     m_Scale: 1
-    m_Name: Freeze Icon
-    m_HashCode: 512502304
+    m_Name: Cleanse Icon
+    m_HashCode: -831836616
   - m_ElementType: 2
     m_Unicode: 57347
     m_GlyphIndex: 3
     m_Scale: 1
-    m_Name: Heal Icon
-    m_HashCode: 479724235
+    m_Name: Freeze Icon
+    m_HashCode: 512502304
   - m_ElementType: 2
     m_Unicode: 57348
     m_GlyphIndex: 4
+    m_Scale: 1
+    m_Name: Heal Icon
+    m_HashCode: 479724235
+  - m_ElementType: 2
+    m_Unicode: 57349
+    m_GlyphIndex: 5
+    m_Scale: 1
+    m_Name: Kinetic Shield Icon
+    m_HashCode: -1426757565
+  - m_ElementType: 2
+    m_Unicode: 57350
+    m_GlyphIndex: 6
     m_Scale: 1
     m_Name: Shield Icon
     m_HashCode: 198985492
@@ -79,8 +91,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 341
       m_HorizontalAdvance: 325
     m_GlyphRect:
-      m_X: 348
-      m_Y: 0
+      m_X: 684
+      m_Y: 341
       m_Width: 325
       m_Height: 341
     m_Scale: 1
@@ -96,7 +108,7 @@ MonoBehaviour:
       m_HorizontalAdvance: 346
     m_GlyphRect:
       m_X: 0
-      m_Y: 0
+      m_Y: 341
       m_Width: 346
       m_Height: 348
     m_Scale: 1
@@ -105,21 +117,37 @@ MonoBehaviour:
     sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - m_Index: 2
     m_Metrics:
+      m_Width: 367
+      m_Height: 339
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 339
+      m_HorizontalAdvance: 367
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 0
+      m_Width: 367
+      m_Height: 339
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 713241228378286685, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 3
+    m_Metrics:
       m_Width: 304
       m_Height: 309
       m_HorizontalBearingX: 0
       m_HorizontalBearingY: 309
       m_HorizontalAdvance: 304
     m_GlyphRect:
-      m_X: 0
-      m_Y: 710
+      m_X: 713
+      m_Y: 0
       m_Width: 304
       m_Height: 309
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 3
+  - m_Index: 4
     m_Metrics:
       m_Width: 334
       m_Height: 358
@@ -127,15 +155,31 @@ MonoBehaviour:
       m_HorizontalBearingY: 358
       m_HorizontalAdvance: 334
     m_GlyphRect:
-      m_X: 0
-      m_Y: 350
+      m_X: 348
+      m_Y: 341
       m_Width: 334
       m_Height: 358
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 0, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 4
+  - m_Index: 5
+    m_Metrics:
+      m_Width: 342
+      m_Height: 315
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 315
+      m_HorizontalAdvance: 342
+    m_GlyphRect:
+      m_X: 369
+      m_Y: 0
+      m_Width: 342
+      m_Height: 315
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1312963805606297871, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 6
     m_Metrics:
       m_Width: 252
       m_Height: 306
@@ -143,8 +187,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 306
       m_HorizontalAdvance: 252
     m_GlyphRect:
-      m_X: 675
-      m_Y: 0
+      m_X: 0
+      m_Y: 691
       m_Width: 252
       m_Height: 306
     m_Scale: 1
@@ -153,8 +197,8 @@ MonoBehaviour:
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   spriteInfoList:
   - id: 0
-    x: 348
-    y: 0
+    x: 684
+    y: 341
     width: 325
     height: 341
     xOffset: 0
@@ -168,7 +212,7 @@ MonoBehaviour:
     sprite: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 1
     x: 0
-    y: 0
+    y: 341
     width: 346
     height: 348
     xOffset: 0
@@ -182,7 +226,21 @@ MonoBehaviour:
     sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 2
     x: 0
-    y: 710
+    y: 0
+    width: 367
+    height: 339
+    xOffset: 0
+    yOffset: 339
+    xAdvance: 367
+    scale: 1
+    name: Cleanse Icon
+    hashCode: -831836616
+    unicode: 57346
+    pivot: {x: 183.5, y: 169.5}
+    sprite: {fileID: 713241228378286685, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 3
+    x: 713
+    y: 0
     width: 304
     height: 309
     xOffset: 0
@@ -191,12 +249,12 @@ MonoBehaviour:
     scale: 1
     name: Freeze Icon
     hashCode: 512502304
-    unicode: 57346
+    unicode: 57347
     pivot: {x: 152, y: 154.5}
     sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 3
-    x: 0
-    y: 350
+  - id: 4
+    x: 348
+    y: 341
     width: 334
     height: 358
     xOffset: 0
@@ -205,12 +263,26 @@ MonoBehaviour:
     scale: 1
     name: Heal Icon
     hashCode: 479724235
-    unicode: 57347
+    unicode: 57348
     pivot: {x: 167, y: 179}
     sprite: {fileID: 0, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 4
-    x: 675
+  - id: 5
+    x: 369
     y: 0
+    width: 342
+    height: 315
+    xOffset: 0
+    yOffset: 315
+    xAdvance: 342
+    scale: 1
+    name: Kinetic Shield Icon
+    hashCode: -1426757565
+    unicode: 57349
+    pivot: {x: 171, y: 157.5}
+    sprite: {fileID: 1312963805606297871, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 6
+    x: 0
+    y: 691
     width: 252
     height: 306
     xOffset: 0
@@ -219,7 +291,7 @@ MonoBehaviour:
     scale: 1
     name: Shield Icon
     hashCode: 198985492
-    unicode: 57348
+    unicode: 57350
     pivot: {x: 126, y: 153}
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   fallbackSpriteAssets: []

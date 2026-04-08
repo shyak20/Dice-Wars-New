@@ -10,29 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Stance
+  m_Name: Momentum Ward
   m_EditorClassIdentifier: 
-  title: Stance
+  title: Momentum Ward
   description: 
   descriptionLines:
   - Gain <style=Shield>Shield 5</style>
-  - If this is your first roll each turn gain extra <style=Shield>Shield 5</style>
+  - Gain <style=Kinetic Shield>Kinetic Shield
   value: 5
   type: 1
   faceMaterial: {fileID: 2100000, guid: 8df2c884e3d4c4f4c800319d8090fff0, type: 2}
-  rarity: 0
+  rarity: 1
   damage: 0
   armor: 5
   uiIcon: {fileID: 21300000, guid: 65d8887db19ae6545b307f87fc0a4639, type: 3}
   activateImmediately: 0
   actions:
-  - rid: 6494956095240142855
+  - rid: 6494956095240142859
   references:
     version: 2
     RefIds:
-    - rid: 6494956095240142855
-      type: {class: FirstRollAction, ns: , asm: Assembly-CSharp}
-      data:
-        bonusDamage: 0
-        bonusArmor: 5
-        actions: []
+    - rid: 6494956095240142859
+      type: {class: KineticShieldAction, ns: , asm: Assembly-CSharp}

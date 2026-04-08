@@ -40,6 +40,8 @@ public class CombatManager : MonoBehaviour
     private int maxPower;
     private int overchargeBonus;
     private int appliedMultiplier;
+    private int bonusDamageFromActions;
+    private int bonusArmorFromActions;
     private bool bustProtected;
     private bool immune;
     private int thorns;
@@ -56,6 +58,7 @@ public class CombatManager : MonoBehaviour
 
     private int rollsRemaining;
     private int maxRolls;
+    private bool currentBatchIsFirstRollOfTurn;
     private bool _appliedTestStartingFaces;
 
     private readonly TurnRegistry _turnRegistry = new TurnRegistry();
@@ -64,8 +67,8 @@ public class CombatManager : MonoBehaviour
     public TurnRegistry TurnRegistry => _turnRegistry;
 
     // Updated summation logic to pull from FaceResult properties
-    public int GetPendingAttack() => channeledFaces.Sum(f => f.Damage);
-    public int GetPendingDefense() => channeledFaces.Sum(f => f.Armor) + kineticShieldBonus;
+    public int GetPendingAttack() => channeledFaces.Sum(f => f.Damage) + bonusDamageFromActions;
+    public int GetPendingDefense() => channeledFaces.Sum(f => f.Armor) + kineticShieldBonus + bonusArmorFromActions;
 
     public List<FaceResult> GetChanneledFaces() => channeledFaces;
 
@@ -92,7 +95,9 @@ public class CombatManager : MonoBehaviour
             }
         }
 
+        pools[DieType.Damage] += bonusDamageFromActions;
         pools[DieType.Armor] += kineticShieldBonus;
+        pools[DieType.Armor] += bonusArmorFromActions;
         return pools;
     }
 
@@ -123,6 +128,17 @@ public class CombatManager : MonoBehaviour
     public void RefundPower(int amount) => currentPower -= amount;
     public void QueuePrecisionChoice(int amount) => pendingPrecisionChoices.Enqueue(amount);
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
+    public bool IsResolvingFirstRollOfTurn() => currentBatchIsFirstRollOfTurn;
+    public void AddBonusDamageFromAction(int amount)
+    {
+        if (amount <= 0) return;
+        bonusDamageFromActions += amount;
+    }
+    public void AddBonusArmorFromAction(int amount)
+    {
+        if (amount <= 0) return;
+        bonusArmorFromActions += amount;
+    }
 
     private PlayerDataSO playerData;
 
@@ -189,10 +205,13 @@ public class CombatManager : MonoBehaviour
         thorns = 0;
         kineticShieldActive = false;
         kineticShieldBonus = 0;
+        bonusDamageFromActions = 0;
+        bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
         maxRolls = playerData.maxRollsPerTurn;
         rollsRemaining = maxRolls;
+        currentBatchIsFirstRollOfTurn = false;
         CalculateMaxPower();
         NotifyAllPoolUI();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
@@ -249,6 +268,7 @@ public class CombatManager : MonoBehaviour
         expectedDiceCount = selectedDice.Count;
         diceSettledCount = 0;
         pendingRollVisualSequences = 0;
+        currentBatchIsFirstRollOfTurn = (rollsRemaining == maxRolls);
         rollsRemaining--;
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.Rolling);
@@ -283,7 +303,7 @@ public class CombatManager : MonoBehaviour
                     result.Actions.Add(a);
         }
 
-        ApplyQueuedNextPhysicalDouble(result, _turnRegistry);
+        ApplyQueuedNextRollMultiplier(result, _turnRegistry);
 
         if (face.actions != null)
         {
@@ -426,12 +446,32 @@ public class CombatManager : MonoBehaviour
         return lines;
     }
 
-    /// <summary>Brute Force: if the flag is set, double this face's physical damage once and clear the flag.</summary>
-    private static void ApplyQueuedNextPhysicalDouble(FaceResult result, TurnRegistry registry)
+    /// <summary>Applies queued next-roll multiplier once when eligible damage/armor channels are present.</summary>
+    private static void ApplyQueuedNextRollMultiplier(FaceResult result, TurnRegistry registry)
     {
-        if (result.Type != DieType.Damage || result.Damage <= 0 || !registry.NextPhysicalDamageDoubled) return;
-        result.Damage *= 2;
-        registry.NextPhysicalDamageDoubled = false;
+        if (!registry.NextRollMultiplierActive) return;
+        if (registry.NextRollMultiplier <= 0f) return;
+
+        bool applied = false;
+
+        if (registry.NextRollMultiplyDamage && result.Damage > 0)
+        {
+            result.Damage = Mathf.Max(0, Mathf.RoundToInt(result.Damage * registry.NextRollMultiplier));
+            applied = true;
+        }
+
+        if (registry.NextRollMultiplyArmor && result.Armor > 0)
+        {
+            result.Armor = Mathf.Max(0, Mathf.RoundToInt(result.Armor * registry.NextRollMultiplier));
+            applied = true;
+        }
+
+        if (!applied) return;
+
+        registry.NextRollMultiplierActive = false;
+        registry.NextRollMultiplyDamage = false;
+        registry.NextRollMultiplyArmor = false;
+        registry.NextRollMultiplier = 1f;
     }
 
     private GameActionContext BuildContext(FaceResult triggeringFace = null)
@@ -478,6 +518,8 @@ public class CombatManager : MonoBehaviour
             }
 
             kineticShieldBonus *= appliedMultiplier;
+            bonusDamageFromActions *= appliedMultiplier;
+            bonusArmorFromActions *= appliedMultiplier;
             activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
             var poolsAfter = SnapshotPools();
             if (CheckVictory())
@@ -525,8 +567,10 @@ public class CombatManager : MonoBehaviour
         foreach (var face in channeledFaces)
         {
             if (nullifyDamage) face.Damage = 0;
-            else { face.Armor = 0; kineticShieldBonus = 0; }
+            else face.Armor = 0;
         }
+        if (nullifyDamage) bonusDamageFromActions = 0;
+        else { bonusArmorFromActions = 0; kineticShieldBonus = 0; }
         NotifyAllPoolUI();
         SubmitTurn();
     }
@@ -640,9 +684,9 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = StartStrikeMultiplier;
         bustProtected = false; immune = false; thorns = 0;
-        kineticShieldActive = false; kineticShieldBonus = 0;
+        kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();
-        currentPower = 0; rollsRemaining = maxRolls;
+        currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
         player.ResetArmor();
         var statusCtx = BuildStatusContext();
         activeEnemy.StatusEffects.TickTurnStart(statusCtx);

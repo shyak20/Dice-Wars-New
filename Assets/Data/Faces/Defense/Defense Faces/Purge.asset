@@ -14,13 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: Purge
   description: Gain 1 Shield \nCleanse 1
-  value: 1
+  descriptionLines:
+  - Gain <style=Shield>Shield 3</style>
+  - Gain <style=Cleanse>Cleanse 3</style>
+  value: 3
   type: 1
-  faceMaterial: {fileID: 2100000, guid: 393fa5dd493d3284193c273d0ef575ee, type: 2}
+  faceMaterial: {fileID: 2100000, guid: b79feab573e635f4dba618f242f94b3c, type: 2}
   rarity: 0
   damage: 0
-  armor: 0
-  faceIcon: {fileID: 21300000, guid: 821869bc2e05473469fbd9e7cca98e7d, type: 3}
+  armor: 3
+  uiIcon: {fileID: 21300000, guid: d333fbbe67a0e0f47953e09df3120a95, type: 3}
   activateImmediately: 0
   actions:
   - rid: 6494956095240142849
@@ -30,4 +33,4 @@ MonoBehaviour:
     - rid: 6494956095240142849
       type: {class: CleanseAction, ns: , asm: Assembly-CSharp}
       data:
-        stacks: 1
+        stacks: 3

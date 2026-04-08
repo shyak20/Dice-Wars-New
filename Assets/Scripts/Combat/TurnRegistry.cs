@@ -10,8 +10,14 @@ public class TurnRegistry
     public int AccumulatedArmor { get; private set; }
     public int BurnAppliedThisTurn { get; private set; }
 
-    /// <summary>Brute Force: next Physical damage face has its damage doubled once.</summary>
-    public bool NextPhysicalDamageDoubled { get; set; }
+    /// <summary>
+    /// Queued one-shot multiplier for the next eligible roll result this turn.
+    /// Applied in <see cref="CombatManager"/> before the face is recorded.
+    /// </summary>
+    public bool NextRollMultiplierActive { get; set; }
+    public bool NextRollMultiplyDamage { get; set; }
+    public bool NextRollMultiplyArmor { get; set; }
+    public float NextRollMultiplier { get; set; } = 1f;
 
     /// <summary>Supernova: if player busts, skip bust UI and apply this instead.</summary>
     public bool SupernovaBustOverrideActive { get; set; }
@@ -28,7 +34,10 @@ public class TurnRegistry
         AccumulatedPhysicalDamage = 0;
         AccumulatedArmor = 0;
         BurnAppliedThisTurn = 0;
-        NextPhysicalDamageDoubled = false;
+        NextRollMultiplierActive = false;
+        NextRollMultiplyDamage = false;
+        NextRollMultiplyArmor = false;
+        NextRollMultiplier = 1f;
         SupernovaBustOverrideActive = false;
         SupernovaBustDamage = 0;
     }

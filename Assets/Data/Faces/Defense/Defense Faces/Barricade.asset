@@ -10,20 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: 4 - Defense Base
+  m_Name: Barricade
   m_EditorClassIdentifier: 
-  title: Base 4
-  description: Gain <Style=Shield>Shield 4</Style>
+  title: Barricade
+  description: 
   descriptionLines:
-  - Gain <style=Shield>Shield 4</style>
-  value: 4
+  - Gain <style=Shield>Shield 6</style>
+  - Adds +1 Rolls this turn
+  value: 6
   type: 1
-  faceMaterial: {fileID: 2100000, guid: 61cda76acd7a9be43b8a6d84a984da20, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 3f7122d4f64a56341a40bc26b951971d, type: 2}
   rarity: 0
   damage: 0
-  armor: 4
-  uiIcon: {fileID: 21300000, guid: 653e288f6c076ab4e91a5db0f46aa882, type: 3}
-  activateImmediately: 0
+  armor: 6
+  uiIcon: {fileID: 21300000, guid: ee8a5f538c79db44493b373daa0529b1, type: 3}
+  activateImmediately: 1
   actions: []
   references:
     version: 2

@@ -13,4 +13,6 @@ public enum ActionVisualId
     SafetyNet = 9,
     Thorns = 10,
     MaxHp = 11,
+    FirstRollAction = 12,
+    AddRolls = 13,
 }
