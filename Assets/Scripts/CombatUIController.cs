@@ -19,6 +19,7 @@ public class CombatUIController : MonoBehaviour
     [Header("Controls")]
     public Button rollButton;
     public Button endTurnButton;
+    public Button cheatWinButton;
 
     [Header("Status Displays")]
     public Slider powerSlider;
@@ -85,6 +86,7 @@ public class CombatUIController : MonoBehaviour
             rollButton.interactable = false;
         }
         if (endTurnButton != null) endTurnButton.onClick.AddListener(() => CombatEvents.OnEndTurnPressed?.Invoke());
+        if (cheatWinButton != null) cheatWinButton.onClick.AddListener(() => CombatEvents.OnCheatWinPressed?.Invoke());
         Invoke(nameof(InitializeDiceButtons), 0.15f);
     }
 

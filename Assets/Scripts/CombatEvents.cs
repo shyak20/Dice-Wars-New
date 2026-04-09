@@ -55,6 +55,7 @@ public static class CombatEvents
     public static Action<DieAssetSO> OnDieToggled;
     public static Action OnRollCommand;
     public static Action OnEndTurnPressed;
+    public static Action OnCheatWinPressed;
 
     // Check Battle Outcome
     public static Action OnPlayerVictory;

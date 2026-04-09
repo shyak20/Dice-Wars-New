@@ -176,6 +176,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnRollCommand += ExecuteBatchRoll;
         CombatEvents.OnBustResolved += ResolveBust;
         CombatEvents.OnEndTurnPressed += ManualEndTurn;
+        CombatEvents.OnCheatWinPressed += CheatWinCombat;
     }
 
     private void OnDisable()
@@ -184,6 +185,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnRollCommand -= ExecuteBatchRoll;
         CombatEvents.OnBustResolved -= ResolveBust;
         CombatEvents.OnEndTurnPressed -= ManualEndTurn;
+        CombatEvents.OnCheatWinPressed -= CheatWinCombat;
     }
 
     private void InitializeCombat()
@@ -680,6 +682,20 @@ public class CombatManager : MonoBehaviour
 
         CombatEvents.OnPlayerVictory?.Invoke();
         return true;
+    }
+
+    private void CheatWinCombat()
+    {
+        if (activeEnemy == null) return;
+        var hp = activeEnemy.GetCurrentHealth();
+        if (hp <= 0)
+        {
+            CheckVictory();
+            return;
+        }
+
+        activeEnemy.TakeTrueDamage(hp);
+        CheckVictory();
     }
     private bool CheckDefeat() { if (player.GetCurrentHealth() <= 0) { ChangeState(CombatState.Defeat); CombatEvents.OnPlayerDefeat?.Invoke(); return true; } return false; }
 
