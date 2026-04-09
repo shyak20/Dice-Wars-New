@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,11 +9,14 @@ using UnityEngine.UI;
 public class UIRewardSlot : MonoBehaviour
 {
     [SerializeField] private TMP_Text nameText;
+    [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private TMP_Text valueText;
     [SerializeField] private TMP_Text rarityText;
     [SerializeField] private Image iconImage;
     [SerializeField] private Image typeIconImage;
     [SerializeField] private Button button;
+    [Header("Optional Status Hover Tooltip")]
+    [SerializeField] private HoverTooltipTargetUI statusHoverTooltipTarget;
 
     private DieFaceSO _face;
 
@@ -29,6 +33,7 @@ public class UIRewardSlot : MonoBehaviour
         if (face == null) return;
 
         if (nameText != null) nameText.text = face.Title;
+        if (descriptionText != null) descriptionText.text = face.Description;
         if (valueText != null) valueText.text = face.value.ToString();
         if (rarityText != null) rarityText.text = face.rarity.ToString();
 
@@ -45,6 +50,8 @@ public class UIRewardSlot : MonoBehaviour
             typeIconImage.sprite = elementSprite;
             typeIconImage.enabled = elementSprite != null;
         }
+
+        SetupStatusHoverTooltip(face);
 
         if (button != null)
         {
@@ -65,5 +72,48 @@ public class UIRewardSlot : MonoBehaviour
     public GameObject GetHoverTarget()
     {
         return button != null ? button.gameObject : gameObject;
+    }
+
+    private void SetupStatusHoverTooltip(DieFaceSO face)
+    {
+        var target = statusHoverTooltipTarget;
+        if (target == null)
+        {
+            var hoverGo = GetHoverTarget();
+            if (hoverGo == null) return;
+            target = hoverGo.GetComponent<HoverTooltipTargetUI>() ?? hoverGo.AddComponent<HoverTooltipTargetUI>();
+            statusHoverTooltipTarget = target;
+        }
+
+        BuildStatusTooltip(face, out var title, out var description);
+        target.SetContent(title, description);
+    }
+
+    private static void BuildStatusTooltip(DieFaceSO face, out string title, out string description)
+    {
+        title = string.Empty;
+        description = string.Empty;
+        if (face?.actions == null || face.actions.Count == 0) return;
+
+        var statusNames = new List<string>();
+        var descriptions = new List<string>();
+        var seen = new HashSet<StatusEffectSO>();
+
+        for (var i = 0; i < face.actions.Count; i++)
+        {
+            if (face.actions[i] is not ApplyStatusEffectAction apply) continue;
+            var def = apply.StatusEffectDefinition;
+            if (def == null || !seen.Add(def)) continue;
+
+            var effectName = string.IsNullOrWhiteSpace(def.effectName) ? def.name : def.effectName;
+            if (!string.IsNullOrWhiteSpace(effectName))
+                statusNames.Add(effectName.Trim());
+            if (!string.IsNullOrWhiteSpace(def.description))
+                descriptions.Add(def.description.Trim());
+        }
+
+        if (statusNames.Count == 0 && descriptions.Count == 0) return;
+        title = statusNames.Count > 0 ? string.Join(" · ", statusNames) : "Status";
+        description = descriptions.Count > 0 ? string.Join("\n\n", descriptions) : string.Empty;
     }
 }
