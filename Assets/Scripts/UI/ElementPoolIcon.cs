@@ -10,6 +10,8 @@ public class ElementPoolIcon : MonoBehaviour
     [Header("Jackpot presentation (optional)")]
     [SerializeField] private GameObject jackpotMultiplierRoot;
     [SerializeField] private TMP_Text jackpotMultiplierText;
+    private HoverTooltipTargetUI hoverTooltipTarget;
+    private DieType configuredType;
 
     /// <summary>Rect used as the fly animation destination for this pool type.</summary>
     public RectTransform FlyTargetRect => (RectTransform)transform;
@@ -27,6 +29,12 @@ public class ElementPoolIcon : MonoBehaviour
     public void SetValue(int value)
     {
         valueText.text = value.ToString();
+    }
+
+    public void ConfigureType(DieType type)
+    {
+        configuredType = type;
+        UpdateTooltipText();
     }
 
     public void ShowJackpotMultiplierBadge(int multiplier)
@@ -51,5 +59,28 @@ public class ElementPoolIcon : MonoBehaviour
             Debug.LogError($"ElementPoolIcon on '{gameObject.name}': valueText is not assigned!");
         if (jackpotMultiplierRoot != null)
             jackpotMultiplierRoot.SetActive(false);
+
+        var hoverTargetGo = icon != null ? icon.gameObject : gameObject;
+        hoverTooltipTarget = hoverTargetGo.GetComponent<HoverTooltipTargetUI>() ?? hoverTargetGo.AddComponent<HoverTooltipTargetUI>();
+        UpdateTooltipText();
+    }
+
+    private void UpdateTooltipText()
+    {
+        if (hoverTooltipTarget == null) return;
+        hoverTooltipTarget.SetContent(configuredType.ToString(), GetElementDescription(configuredType));
+    }
+
+    private static string GetElementDescription(DieType type)
+    {
+        return type switch
+        {
+            DieType.Damage => "Stored physical damage that will be dealt on turn end.",
+            DieType.Armor => "Stored armor gained for this turn.",
+            DieType.Fire => "Stored fire effect power from rolled actions.",
+            DieType.Ice => "Stored ice effect power from rolled actions.",
+            DieType.Nature => "Stored nature effect power from rolled actions.",
+            _ => "Stored element value from the current roll.",
+        };
     }
 }

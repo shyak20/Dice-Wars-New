@@ -6,6 +6,7 @@ public class StatusEffectIconUI : MonoBehaviour
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text stackText;
+    private HoverTooltipTargetUI hoverTooltipTarget;
 
     private void Awake()
     {
@@ -13,6 +14,9 @@ public class StatusEffectIconUI : MonoBehaviour
             Debug.LogError($"StatusEffectIconUI on '{gameObject.name}': iconImage is not assigned!");
         if (stackText == null)
             Debug.LogError($"StatusEffectIconUI on '{gameObject.name}': stackText is not assigned!");
+
+        var hoverTargetGo = iconImage != null ? iconImage.gameObject : gameObject;
+        hoverTooltipTarget = hoverTargetGo.GetComponent<HoverTooltipTargetUI>() ?? hoverTargetGo.AddComponent<HoverTooltipTargetUI>();
     }
 
     public void Setup(StatusEffectInstance effect)
@@ -30,6 +34,11 @@ public class StatusEffectIconUI : MonoBehaviour
         {
             iconImage.sprite = spr;
             iconImage.enabled = spr != null;
+        }
+        if (hoverTooltipTarget != null)
+        {
+            var title = string.IsNullOrWhiteSpace(effect.Definition.effectName) ? effect.Definition.name : effect.Definition.effectName;
+            hoverTooltipTarget.SetContent(title, effect.Definition.description);
         }
         UpdateStacks(effect.Stacks);
     }

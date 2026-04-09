@@ -47,6 +47,7 @@ public class ElementPoolDisplay : MonoBehaviour
             }
 
             iconMap[type] = comp;
+            comp.ConfigureType(type);
             comp.gameObject.SetActive(false);
         }
 
