@@ -16,15 +16,17 @@ public class UIShopWindow : MonoBehaviour
     [SerializeField] private Transform faceSlotsContainer;
     [Tooltip("RectTransform that has a Layout Group for full-die offers.")]
     [SerializeField] private Transform diceSlotsContainer;
-    [Tooltip("Prefab root must have a UIShopSlot component. Drag your prefab from Project here — this is how the shop knows what to spawn.")]
+    [Tooltip("Face offers prefab root must have a UIShopSlot component.")]
     [SerializeField] private UIShopSlot slotPrefab;
+    [Tooltip("Optional full-die offers prefab root. If null, falls back to Slot Prefab.")]
+    [SerializeField] private UIShopSlot diceSlotPrefab;
     [SerializeField] private Button leaveShopButton;
 
     private readonly List<UIShopSlot> _slots = new List<UIShopSlot>();
 
     private void Start()
     {
-        Debug.Log($"[UIShopWindow] Start on '{name}' — shopGenerator={(shopGenerator != null)}, slotPrefab={(slotPrefab != null)}, faceContainer={(faceSlotsContainer != null)}, diceContainer={(diceSlotsContainer != null)}", this);
+        Debug.Log($"[UIShopWindow] Start on '{name}' — shopGenerator={(shopGenerator != null)}, faceSlotPrefab={(slotPrefab != null)}, diceSlotPrefab={(diceSlotPrefab != null)}, faceContainer={(faceSlotsContainer != null)}, diceContainer={(diceSlotsContainer != null)}", this);
 
         if (leaveShopButton != null)
             leaveShopButton.onClick.AddListener(OnLeaveShop);
@@ -55,7 +57,7 @@ public class UIShopWindow : MonoBehaviour
     private void OnGoldChanged(int newTotal)
     {
         if (goldHeaderText != null)
-            goldHeaderText.text = $"Gold: {newTotal}";
+            goldHeaderText.text = newTotal.ToString();
 
         foreach (var s in _slots)
         {
@@ -91,26 +93,14 @@ public class UIShopWindow : MonoBehaviour
 
         _slots.Clear();
 
-        if (faceSlotsContainer != null)
-        {
-            foreach (Transform c in faceSlotsContainer)
-                Destroy(c.gameObject);
-        }
-
-        if (diceSlotsContainer != null)
-        {
-            foreach (Transform c in diceSlotsContainer)
-                Destroy(c.gameObject);
-        }
-
         foreach (var item in shopGenerator.FaceOffers)
-            AddSlot(faceSlotsContainer, item);
+            AddSlot(faceSlotsContainer, item, slotPrefab);
 
         foreach (var item in shopGenerator.DiceOffers)
-            AddSlot(diceSlotsContainer, item);
+            AddSlot(diceSlotsContainer, item, diceSlotPrefab != null ? diceSlotPrefab : slotPrefab);
     }
 
-    private void AddSlot(Transform parent, ShopItem item)
+    private void AddSlot(Transform parent, ShopItem item, UIShopSlot prefab)
     {
         if (parent == null)
         {
@@ -118,11 +108,17 @@ public class UIShopWindow : MonoBehaviour
             return;
         }
 
-        var go = Instantiate(slotPrefab, parent);
+        if (prefab == null)
+        {
+            Debug.LogError("UIShopWindow: slot prefab is not assigned for this section.");
+            return;
+        }
+
+        var go = Instantiate(prefab, parent);
         var slot = go.GetComponent<UIShopSlot>();
         if (slot == null)
         {
-            Debug.LogError("UIShopWindow: slotPrefab needs UIShopSlot.");
+            Debug.LogError("UIShopWindow: assigned slot prefab needs UIShopSlot.");
             Destroy(go);
             return;
         }

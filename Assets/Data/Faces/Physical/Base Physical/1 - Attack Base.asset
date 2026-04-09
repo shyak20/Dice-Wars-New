@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Harness 1 Damage \nHarness +1 Strength
   descriptionLines:
   - Deal <style=Attack>1</style>
-  - 'Gain '
+  - Gain <style=Strength>1</style> <style=Strength>Strength
   value: 1
   type: 0
   faceMaterial: {fileID: 2100000, guid: 122d2e4928f660c439be1f3f1c8f46a8, type: 2}

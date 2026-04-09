@@ -38,6 +38,11 @@ public class CombatUIController : MonoBehaviour
     [SerializeField] private TMP_Text faceHoverTitleText;
     [SerializeField] private TMP_Text faceHoverDescriptionText;
 
+    [Header("Status hover (face has Apply Status action)")]
+    [SerializeField] private GameObject statusHoverTooltipPanel;
+    [SerializeField] private TMP_Text statusHoverTitleText;
+    [SerializeField] private TMP_Text statusHoverDescriptionText;
+
     private Dictionary<DieAssetSO, DiceTrayButtonView> diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
     private Dictionary<DieAssetSO, Button> diceButtons = new Dictionary<DieAssetSO, Button>();
     private List<DieAssetSO> currentlySelected = new List<DieAssetSO>();
@@ -73,6 +78,7 @@ public class CombatUIController : MonoBehaviour
         if (bustPanel != null) bustPanel.SetActive(false);
         HideDieTooltip();
         HideFaceHoverTooltip();
+        HideStatusHoverTooltip();
         if (rollButton != null)
         {
             rollButton.onClick.AddListener(() => CombatEvents.OnRollCommand?.Invoke());
@@ -155,6 +161,7 @@ public class CombatUIController : MonoBehaviour
         tooltipShownForDie = die;
         dieTooltipPanel.SetActive(true);
         HideFaceHoverTooltip();
+        HideStatusHoverTooltip();
 
         foreach (Transform child in dieTooltipSlotContainer)
             Destroy(child.gameObject);
@@ -218,6 +225,7 @@ public class CombatUIController : MonoBehaviour
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);
         HideFaceHoverTooltip();
+        HideStatusHoverTooltip();
     }
 
     private void RegisterFaceHover(UIRewardSlot slot, DieFaceSO face)
@@ -235,16 +243,28 @@ public class CombatUIController : MonoBehaviour
         et.triggers.Add(enter);
 
         var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ => HideFaceHoverTooltip());
+        exit.callback.AddListener(_ =>
+        {
+            HideFaceHoverTooltip();
+            HideStatusHoverTooltip();
+        });
         et.triggers.Add(exit);
     }
 
     private void ShowFaceHoverTooltip(DieFaceSO face)
     {
-        if (faceHoverTooltipPanel == null) return;
-        if (faceHoverTitleText != null) faceHoverTitleText.text = face != null ? face.Title : "";
-        if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = face != null ? face.Description : "";
-        faceHoverTooltipPanel.SetActive(true);
+        if (faceHoverTooltipPanel != null)
+        {
+            if (faceHoverTitleText != null) faceHoverTitleText.text = face != null ? face.Title : "";
+            if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = face != null ? face.Description : "";
+            faceHoverTooltipPanel.SetActive(true);
+        }
+
+        var statusDefs = CollectUniqueStatusEffectsFromFace(face);
+        if (statusDefs.Count > 0)
+            ShowStatusHoverTooltip(statusDefs);
+        else
+            HideStatusHoverTooltip();
     }
 
     private void HideFaceHoverTooltip()
@@ -252,6 +272,55 @@ public class CombatUIController : MonoBehaviour
         if (faceHoverTitleText != null) faceHoverTitleText.text = "";
         if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = "";
         if (faceHoverTooltipPanel != null) faceHoverTooltipPanel.SetActive(false);
+    }
+
+    private void ShowStatusHoverTooltip(IReadOnlyList<StatusEffectSO> definitions)
+    {
+        if (statusHoverTooltipPanel == null || definitions == null || definitions.Count == 0) return;
+
+        var titleParts = new List<string>();
+        var descParts = new List<string>();
+        for (var i = 0; i < definitions.Count; i++)
+        {
+            var d = definitions[i];
+            if (d == null) continue;
+            if (!string.IsNullOrWhiteSpace(d.effectName))
+                titleParts.Add(d.effectName.Trim());
+            if (!string.IsNullOrWhiteSpace(d.description))
+                descParts.Add(d.description.Trim());
+        }
+
+        if (statusHoverTitleText != null)
+            statusHoverTitleText.text = titleParts.Count > 0 ? string.Join(" · ", titleParts) : "";
+        if (statusHoverDescriptionText != null)
+            statusHoverDescriptionText.text = descParts.Count > 0 ? string.Join("\n\n", descParts) : "";
+
+        statusHoverTooltipPanel.SetActive(true);
+    }
+
+    private void HideStatusHoverTooltip()
+    {
+        if (statusHoverTitleText != null) statusHoverTitleText.text = "";
+        if (statusHoverDescriptionText != null) statusHoverDescriptionText.text = "";
+        if (statusHoverTooltipPanel != null) statusHoverTooltipPanel.SetActive(false);
+    }
+
+    private static List<StatusEffectSO> CollectUniqueStatusEffectsFromFace(DieFaceSO face)
+    {
+        var result = new List<StatusEffectSO>();
+        if (face?.actions == null || face.actions.Count == 0) return result;
+
+        var seen = new HashSet<StatusEffectSO>();
+        for (var i = 0; i < face.actions.Count; i++)
+        {
+            if (face.actions[i] is not ApplyStatusEffectAction apply) continue;
+            var def = apply.StatusEffectDefinition;
+            if (def == null) continue;
+            if (!seen.Add(def)) continue;
+            result.Add(def);
+        }
+
+        return result;
     }
 
     private bool ClickShouldKeepTooltipOpen()
@@ -268,6 +337,7 @@ public class CombatUIController : MonoBehaviour
         if (hits.Count == 0) return false; // Clicked non-UI world area.
 
         var tooltipTransform = dieTooltipPanel != null ? dieTooltipPanel.transform : null;
+        var statusTooltipTransform = statusHoverTooltipPanel != null ? statusHoverTooltipPanel.transform : null;
         Transform selectedButtonTransform = null;
         if (tooltipShownForDie != null && diceButtons.TryGetValue(tooltipShownForDie, out var btn) && btn != null)
             selectedButtonTransform = btn.transform;
@@ -277,6 +347,7 @@ public class CombatUIController : MonoBehaviour
             var hitTransform = hits[i].gameObject != null ? hits[i].gameObject.transform : null;
             if (hitTransform == null) continue;
             if (tooltipTransform != null && hitTransform.IsChildOf(tooltipTransform)) return true;
+            if (statusTooltipTransform != null && hitTransform.IsChildOf(statusTooltipTransform)) return true;
             if (selectedButtonTransform != null && hitTransform.IsChildOf(selectedButtonTransform)) return true;
         }
 

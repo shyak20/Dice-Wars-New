@@ -10,7 +10,7 @@ using System.Collections;
 public class RunGoldDisplayUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text label;
-    [SerializeField] private string format = "Gold: {0}";
+    [SerializeField] private string format = "{0}";
     [SerializeField, Min(0f)] private float countDurationSeconds = 0.35f;
 
     private Coroutine activeCountRoutine;

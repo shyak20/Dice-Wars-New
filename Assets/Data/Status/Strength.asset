@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c60234fe17381843a40a8bf4c7bb08d, type: 3}
   m_Name: Strength
   m_EditorClassIdentifier: 
-  effectName: Strength
-  icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
-  description: Physical attacks deal +1 Damage per stack
+  effectName: <style=Strength>Strength </style>
+  description: <style=Attack>Attacks </style> deal +1 Damage per stack
   type: 0
   target: 0
   stackDecayPerTurn: 0

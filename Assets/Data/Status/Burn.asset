@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b1a52753e55b7345902e4476d4791c5, type: 3}
   m_Name: Burn
   m_EditorClassIdentifier: 
-  effectName: Burn
-  description: "Deals 2 Damage per Stack. \nReduce 1 stack each turn.\nWhen you land
-    a perfect strike deal all stacks as damage. "
+  effectName: <style=Burn>Burn </style>
+  description: 'Deals 1 Damage per stack and reduce stack by 1
+
+    If you land a
+    perfect strike deal all stacks as damage. '
   type: 1
   target: 1
   stackDecayPerTurn: 1

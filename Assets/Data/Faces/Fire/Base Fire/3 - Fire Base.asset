@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: Basic Fire 3
   description: Harness 3 Damage \nHarness 3 Burn
-  descriptionLines: []
+  descriptionLines:
+  - Apply <style=Burn>4</style>
   value: 4
   type: 0
   faceMaterial: {fileID: 2100000, guid: 57e98965d3724e04e94a3fcf286034af, type: 2}

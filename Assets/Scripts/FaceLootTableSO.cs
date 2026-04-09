@@ -23,12 +23,19 @@ public class FaceLootTableSO : ScriptableObject
             return selected;
         }
 
+        var validFaces = allPossibleFaces.FindAll(f => f != null);
+        if (validFaces.Count == 0)
+        {
+            Debug.LogError("FaceLootTableSO: allPossibleFaces contains only null entries — fix the loot table asset.");
+            return selected;
+        }
+
         List<DieFaceSO> pool;
         if (preferredTypes != null && preferredTypes.Count > 0)
         {
-            pool = allPossibleFaces.Where(f => preferredTypes.Contains(f.type)).ToList();
+            pool = validFaces.Where(f => preferredTypes.Contains(f.type)).ToList();
             if (pool.Count < count)
-                pool = new List<DieFaceSO>(allPossibleFaces);
+                pool = new List<DieFaceSO>(validFaces);
         }
         else
         {
@@ -36,8 +43,8 @@ public class FaceLootTableSO : ScriptableObject
             {
                 Debug.LogError($"Unable to find enough faces ({count}) for {string.Join(", ", preferredTypes)}");
             }
-            
-            pool = new List<DieFaceSO>(allPossibleFaces);
+
+            pool = new List<DieFaceSO>(validFaces);
         }
 
         for (int i = 0; i < count; i++)

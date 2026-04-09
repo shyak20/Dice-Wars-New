@@ -16,6 +16,5 @@ MonoBehaviour:
   allPossibleFaces:
   - {fileID: 11400000, guid: 8fe1d2e21ba9639458ad56ad86290129, type: 2}
   - {fileID: 11400000, guid: 28b61a9e373006e44bd54cf91ae4df80, type: 2}
-  - {fileID: 11400000, guid: 60025a6227e4fe344a0ad74af4c61b47, type: 2}
   - {fileID: 11400000, guid: c94d60cf23a61d843bd0ac3f2f87f132, type: 2}
   - {fileID: 11400000, guid: 0eb71236aeab18f45b751923925da1f6, type: 2}
