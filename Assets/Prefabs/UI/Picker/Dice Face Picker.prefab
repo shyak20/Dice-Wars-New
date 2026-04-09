@@ -140,7 +140,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
@@ -827,6 +827,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1328982194882317905, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d333fbbe67a0e0f47953e09df3120a95, type: 3}
     - target: {fileID: 1852450253250844014, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -835,6 +839,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dice Face Option (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: statusHoverTooltipTarget
+      value: 
+      objectReference: {fileID: 239201298963214015}
     - target: {fileID: 2289681079079297244, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -871,11 +879,25 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6388361476436232061, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7337365345550791029, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: Holy Water
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 534256889645741153, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 239201298963214015}
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1210490999971081350}
   m_SourcePrefab: {fileID: 100100000, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
 --- !u!114 &108420200809371918 stripped
 MonoBehaviour:
@@ -904,6 +926,47 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 910767365589581659, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
   m_PrefabInstance: {fileID: 1991429758845005028}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6693796722657207345 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+  m_PrefabInstance: {fileID: 1991429758845005028}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &239201298963214015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6693796722657207345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 0}
+--- !u!114 &1210490999971081350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6693796722657207345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
+  - eventID: 1
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!1001 &2490323551865965550
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1008,6 +1071,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dice Face Option
       objectReference: {fileID: 0}
+    - target: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: statusHoverTooltipTarget
+      value: 
+      objectReference: {fileID: -891622624326825885}
     - target: {fileID: 2289681079079297244, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -1044,6 +1111,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6388361476436232061, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6903437176293378503, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_Colors.m_HighlightedColor.b
       value: 0.050980397
@@ -1052,11 +1123,21 @@ PrefabInstance:
       propertyPath: m_Colors.m_HighlightedColor.g
       value: 0.8196079
       objectReference: {fileID: 0}
+    - target: {fileID: 7337365345550791029, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: Basic 1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 534256889645741153, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -891622624326825885}
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3551129790579114098}
   m_SourcePrefab: {fileID: 100100000, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
 --- !u!224 &3327273937821152437 stripped
 RectTransform:
@@ -1085,6 +1166,47 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3225d9ba80b666a4e93f68c798871500, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &7334312536393876283 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+  m_PrefabInstance: {fileID: 2490323551865965550}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-891622624326825885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7334312536393876283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: Heal
+  tooltipDescription: Heals 1 HP at turn end.
+  tooltipPanel: {fileID: 0}
+--- !u!114 &3551129790579114098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7334312536393876283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
+  - eventID: 1
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!1001 &2873793413218500102
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1093,10 +1215,34 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8566754025766896182}
     m_Modifications:
+    - target: {fileID: 1484590420778220009, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+      propertyPath: m_text
+      value: Holy Water
+      objectReference: {fileID: 0}
+    - target: {fileID: 3017931945645150177, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+      propertyPath: m_text
+      value: 'Gain <style=Shield>3</style>
+
+
+        Gain <style=Cleanse>Cleanse
+        6</style>'
+      objectReference: {fileID: 0}
+    - target: {fileID: 3351859540316340571, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+      propertyPath: m_Interactable
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7149644405387396813, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d333fbbe67a0e0f47953e09df3120a95, type: 3}
     - target: {fileID: 7537470213338628837, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
       propertyPath: m_Name
       value: Added Action
       objectReference: {fileID: 0}
+    - target: {fileID: 7740008524731596150, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+      propertyPath: statusHoverTooltipTarget
+      value: 
+      objectReference: {fileID: -1626266845588161991}
     - target: {fileID: 9073187411068073927, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1152,8 +1298,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3895054580241596489, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -1626266845588161991}
   m_SourcePrefab: {fileID: 100100000, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+--- !u!1 &1292463148920602191 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3895054580241596489, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
+  m_PrefabInstance: {fileID: 2873793413218500102}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-1626266845588161991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1292463148920602191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 0}
 --- !u!114 &5515725767119586160 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7740008524731596150, guid: 5383277d2ea889b46a8c1d63b4f3d9cd, type: 3}
@@ -1266,6 +1435,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1328982194882317905, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 653e288f6c076ab4e91a5db0f46aa882, type: 3}
     - target: {fileID: 1852450253250844014, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -1274,6 +1447,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dice Face Option (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: statusHoverTooltipTarget
+      value: 
+      objectReference: {fileID: 8280870314100630519}
     - target: {fileID: 2289681079079297244, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -1310,12 +1487,67 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6388361476436232061, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7337365345550791029, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: Basic 4
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 534256889645741153, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8280870314100630519}
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1379586975693368996}
   m_SourcePrefab: {fileID: 100100000, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+--- !u!1 &977775321435645669 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+  m_PrefabInstance: {fileID: 5392531751360900656}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8280870314100630519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977775321435645669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 0}
+--- !u!114 &1379586975693368996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977775321435645669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
+  - eventID: 1
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!224 &5077154479512326507 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 910767365589581659, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
@@ -1439,6 +1671,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1328982194882317905, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 653e288f6c076ab4e91a5db0f46aa882, type: 3}
     - target: {fileID: 1852450253250844014, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -1447,6 +1683,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dice Face Option (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: statusHoverTooltipTarget
+      value: 
+      objectReference: {fileID: 8692408374878717570}
     - target: {fileID: 2289681079079297244, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -1483,12 +1723,67 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6388361476436232061, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7337365345550791029, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: Basic 4
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 534256889645741153, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8692408374878717570}
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8390177210836137325}
   m_SourcePrefab: {fileID: 100100000, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+--- !u!1 &2401878046370400836 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+  m_PrefabInstance: {fileID: 7355206314408444561}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8692408374878717570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2401878046370400836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 0}
+--- !u!114 &-8390177210836137325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2401878046370400836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
+  - eventID: 1
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!224 &7687999962113293770 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 910767365589581659, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
@@ -1612,6 +1907,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1328982194882317905, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d333fbbe67a0e0f47953e09df3120a95, type: 3}
     - target: {fileID: 1852450253250844014, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -1620,6 +1919,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dice Face Option (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: statusHoverTooltipTarget
+      value: 
+      objectReference: {fileID: -6045677652631875816}
     - target: {fileID: 2289681079079297244, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -1656,12 +1959,67 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6388361476436232061, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7337365345550791029, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: Basic 3
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 534256889645741153, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -6045677652631875816}
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5532204338289009427}
   m_SourcePrefab: {fileID: 100100000, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+--- !u!1 &4567106152356051405 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+  m_PrefabInstance: {fileID: 8657678453780246808}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-6045677652631875816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4567106152356051405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 0}
+--- !u!114 &5532204338289009427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4567106152356051405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
+  - eventID: 1
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!114 &7063216411476149490 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
@@ -1785,6 +2143,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1328982194882317905, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 653e288f6c076ab4e91a5db0f46aa882, type: 3}
     - target: {fileID: 1852450253250844014, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -1793,6 +2155,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dice Face Option (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: statusHoverTooltipTarget
+      value: 
+      objectReference: {fileID: -5215276891991605705}
     - target: {fileID: 2289681079079297244, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -1829,12 +2195,67 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6388361476436232061, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7337365345550791029, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      propertyPath: m_text
+      value: Basic 4
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 534256889645741153, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -5215276891991605705}
+    - targetCorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -324473050751517988}
   m_SourcePrefab: {fileID: 100100000, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+--- !u!1 &4477327530007928473 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5136318506608953557, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+  m_PrefabInstance: {fileID: 8747529643625682508}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-5215276891991605705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4477327530007928473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 0}
+--- !u!114 &-324473050751517988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4477327530007928473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
+  - eventID: 1
+    callback:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!114 &7153583818524533670 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1883583581509465578, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
