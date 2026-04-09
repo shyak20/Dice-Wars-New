@@ -85,35 +85,47 @@ public class UIRewardSlot : MonoBehaviour
             statusHoverTooltipTarget = target;
         }
 
-        BuildStatusTooltip(face, out var title, out var description);
+        BuildEffectTooltip(face, out var title, out var description);
         target.SetContent(title, description);
     }
 
-    private static void BuildStatusTooltip(DieFaceSO face, out string title, out string description)
+    private static void BuildEffectTooltip(DieFaceSO face, out string title, out string description)
     {
         title = string.Empty;
         description = string.Empty;
         if (face?.actions == null || face.actions.Count == 0) return;
 
-        var statusNames = new List<string>();
+        var effectNames = new List<string>();
         var descriptions = new List<string>();
-        var seen = new HashSet<StatusEffectSO>();
+        var seenStatuses = new HashSet<StatusEffectSO>();
+        var healAdded = false;
 
         for (var i = 0; i < face.actions.Count; i++)
         {
-            if (face.actions[i] is not ApplyStatusEffectAction apply) continue;
-            var def = apply.StatusEffectDefinition;
-            if (def == null || !seen.Add(def)) continue;
+            var action = face.actions[i];
+            if (action is ApplyStatusEffectAction apply)
+            {
+                var def = apply.StatusEffectDefinition;
+                if (def == null || !seenStatuses.Add(def)) continue;
 
-            var effectName = string.IsNullOrWhiteSpace(def.effectName) ? def.name : def.effectName;
-            if (!string.IsNullOrWhiteSpace(effectName))
-                statusNames.Add(effectName.Trim());
-            if (!string.IsNullOrWhiteSpace(def.description))
-                descriptions.Add(def.description.Trim());
+                var effectName = string.IsNullOrWhiteSpace(def.effectName) ? def.name : def.effectName;
+                if (!string.IsNullOrWhiteSpace(effectName))
+                    effectNames.Add(effectName.Trim());
+                if (!string.IsNullOrWhiteSpace(def.description))
+                    descriptions.Add(def.description.Trim());
+                continue;
+            }
+
+            if (action is HealAction heal && !healAdded)
+            {
+                healAdded = true;
+                effectNames.Add("Heal");
+                descriptions.Add($"Heals {heal.Amount} HP at turn end.");
+            }
         }
 
-        if (statusNames.Count == 0 && descriptions.Count == 0) return;
-        title = statusNames.Count > 0 ? string.Join(" · ", statusNames) : "Status";
+        if (effectNames.Count == 0 && descriptions.Count == 0) return;
+        title = effectNames.Count > 0 ? string.Join(" · ", effectNames) : "Effect";
         description = descriptions.Count > 0 ? string.Join("\n\n", descriptions) : string.Empty;
     }
 }

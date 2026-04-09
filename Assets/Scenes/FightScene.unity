@@ -935,6 +935,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 126273968}
+  - component: {fileID: 126273969}
   m_Layer: 0
   m_Name: Face Tooltip
   m_TagString: Untagged
@@ -966,6 +967,21 @@ RectTransform:
   m_AnchoredPosition: {x: 170.13013, y: 84.91}
   m_SizeDelta: {x: 340.26, y: 158.56}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &126273969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126273967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 857477596}
 --- !u!1 &129140262
 GameObject:
   m_ObjectHideFlags: 0
@@ -2376,7 +2392,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "Gain<style=Shield> Shield 4</style>\nGain <style=Shield>4</style> \nDeal
-    <style=Attack>5</style>\nGain <style=Strength>5</style>"
+    <style=Attack>5</style>\nGain <style=Strength>5</style>\nGain <style=Burn>5</style>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}
@@ -2749,9 +2765,9 @@ MonoBehaviour:
   faceHoverTooltipPanel: {fileID: 126273967}
   faceHoverTitleText: {fileID: 391875690}
   faceHoverDescriptionText: {fileID: 83159041}
-  statusHoverTooltipPanel: {fileID: 857477593}
-  statusHoverTitleText: {fileID: 636104733}
-  statusHoverDescriptionText: {fileID: 905153282}
+  statusHoverTooltipPanel: {fileID: 0}
+  statusHoverTitleText: {fileID: 0}
+  statusHoverDescriptionText: {fileID: 0}
 --- !u!114 &430063146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4875,6 +4891,7 @@ GameObject:
   m_Component:
   - component: {fileID: 857477594}
   - component: {fileID: 857477595}
+  - component: {fileID: 857477596}
   m_Layer: 0
   m_Name: Explain Tooltip Layout
   m_TagString: Untagged
@@ -4928,6 +4945,21 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &857477596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 857477593}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3848c6ebeaba79e449344ced7efca79d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  panelRoot: {fileID: 857477593}
+  titleText: {fileID: 636104733}
+  descriptionText: {fileID: 905153282}
 --- !u!1 &872838666
 GameObject:
   m_ObjectHideFlags: 0

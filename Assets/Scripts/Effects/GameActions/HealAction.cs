@@ -5,6 +5,7 @@ using UnityEngine;
 public class HealAction : GameActionWithIcon
 {
     [SerializeField] private int amount = 1;
+    public int Amount => amount;
 
     protected override ActionVisualId VisualKey => ActionVisualId.Heal;
 

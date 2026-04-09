@@ -492,6 +492,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8772609939246955444}
   - component: {fileID: 3970445694414993595}
+  - component: {fileID: 5017782993015015625}
   m_Layer: 0
   m_Name: Face Action Option
   m_TagString: Untagged
@@ -543,7 +544,25 @@ MonoBehaviour:
   iconImage: {fileID: 3076422771442022762}
   typeIconImage: {fileID: 7994187879333195285}
   button: {fileID: 4596921810741333652}
-  statusHoverTooltipTarget: {fileID: -2480298370339156225, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  statusHoverTooltipTarget: {fileID: 5017782993015015625}
+--- !u!114 &5017782993015015625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4976156703028391988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipTitle: 
+  tooltipDescription: 
+  tooltipPanel: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  tooltipPanelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  tooltipSpawnParent: {fileID: 8772609939246955444}
+  tooltipOffset: {x: 103.41, y: 0}
 --- !u!1 &5051790354330536730
 GameObject:
   m_ObjectHideFlags: 0

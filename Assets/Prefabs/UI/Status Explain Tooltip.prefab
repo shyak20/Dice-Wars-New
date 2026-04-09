@@ -86,14 +86,13 @@ GameObject:
   - component: {fileID: 7019382877085822306}
   - component: {fileID: 4347350993658855120}
   - component: {fileID: 6651844007766589498}
-  - component: {fileID: -2480298370339156225}
   m_Layer: 0
   m_Name: Status Explain Tooltip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7019382877085822306
 RectTransform:
   m_ObjectHideFlags: 0
@@ -155,24 +154,6 @@ MonoBehaviour:
   panelRoot: {fileID: 2178087498563358608}
   titleText: {fileID: 6003087190861710556}
   descriptionText: {fileID: 6928276046804571106}
---- !u!114 &-2480298370339156225
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2178087498563358608}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccdda479a05e0d84f8621ae3680c8b35, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  tooltipTitle: 
-  tooltipDescription: 
-  tooltipPanel: {fileID: 6651844007766589498}
-  tooltipPanelPrefab: {fileID: 6651844007766589498}
-  tooltipSpawnParent: {fileID: 0}
-  tooltipOffset: {x: 24, y: 16}
 --- !u!1 &3694773606399478266
 GameObject:
   m_ObjectHideFlags: 0
@@ -238,7 +219,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Title
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}
@@ -447,13 +428,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'New Text<style=Shield> sads</style> dsadsad
-
-    sadasdasd
-
-    asdasdasd
-
-    sadasdsad'
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
