@@ -29,18 +29,19 @@ public class FaceSwapOverlayView : MonoBehaviour
             Debug.LogError("FaceSwapOverlayView: slotSlots must have 6 UIRewardSlot entries.");
     }
 
-    public void Show(DieAssetSO die, DieFaceSO newFace, Action onCommitted)
+    /// <returns>False if the die/face was invalid and the overlay did not open.</returns>
+    public bool Show(DieAssetSO die, DieFaceSO newFace, Action onCommitted)
     {
         if (die == null || die.faces == null || die.faces.Length != 6)
         {
             Debug.LogError("FaceSwapOverlayView: invalid die.");
-            return;
+            return false;
         }
 
         if (newFace != null && !die.CanAttachFace(newFace))
         {
             Debug.LogError("FaceSwapOverlayView: face element does not match die.");
-            return;
+            return false;
         }
 
         _die = die;
@@ -61,6 +62,7 @@ public class FaceSwapOverlayView : MonoBehaviour
 
         ClearHoverPreview();
         panel.SetActive(true);
+        return true;
     }
 
     public void Hide()

@@ -137,10 +137,27 @@ public class UIShopWindow : MonoBehaviour
             return;
         }
 
+        if (item.ItemKind == ShopItem.Kind.Face && item.Face != null)
+        {
+            var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+            if (data == null || !PlayerInventory.HasDieSupportingFace(data, item.Face))
+            {
+                Debug.LogWarning("UIShopWindow: Face purchase blocked — no die in deck supports this face's element.");
+                return;
+            }
+        }
+
         if (!shopGenerator.PurchaseItem(item))
         {
             Debug.LogWarning($"UIShopWindow: Purchase failed (gold={RunEconomyManager.Instance.CurrentGold}, price={item.CalculatedPrice}).", this);
             return;
+        }
+
+        if (item.ItemKind == ShopItem.Kind.FullDie && item.Die != null)
+        {
+            if (PlayerDataContainer.Instance != null)
+                PlayerDataContainer.Instance.AddDieToDeck(item.Die);
+            ShopToastUI.Show("New Die Acquired");
         }
 
         RefreshAllSlots();
@@ -156,12 +173,6 @@ public class UIShopWindow : MonoBehaviour
             }
 
             socketFlow.BeginInstallFace(item.Face, item, shopGenerator, RefreshSlotsAfterSocket);
-        }
-        else if (item.ItemKind == ShopItem.Kind.FullDie && item.Die != null)
-        {
-            if (PlayerDataContainer.Instance != null)
-                PlayerDataContainer.Instance.AddDieToDeck(item.Die);
-            ShopToastUI.Show("New Die Acquired");
         }
     }
 

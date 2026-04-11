@@ -4,7 +4,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
-/// After victory: waits, hides the enemy root, shows win popup with rewards (gold collect + optional face pick).
+/// After victory: waits, hides the enemy root, shows win popup with rewards (gold collect + optional face reward row).
 /// </summary>
 public class WinStageFlowController : MonoBehaviour
 {
@@ -13,7 +13,9 @@ public class WinStageFlowController : MonoBehaviour
     [SerializeField] private GameObject winStagePanel;
     [SerializeField] private Transform rewardsLayout;
     [SerializeField] private GameObject goldRewardRowPrefab;
-    [SerializeField] private Button chooseFaceButton;
+    [Tooltip("Reward row with WinStageFaceRewardRow + Select button; opens FaceRewardManager when pressed.")]
+    [SerializeField] private GameObject faceRewardRowPrefab;
+    [SerializeField] private string faceRewardRowLabel = "New face";
     [SerializeField] private Button continueButton;
     [FormerlySerializedAs("enemyHealthBarRoot")]
     [Tooltip("Root GameObject for the enemy in the fight (sprite, HP bar, intent UI, etc.). Hidden when the win stage appears.")]
@@ -23,12 +25,12 @@ public class WinStageFlowController : MonoBehaviour
 
     private int _uncollectedGold;
     private bool _faceFlowComplete = true;
-    private bool _chooseFaceUsedOrSkipped;
     private Coroutine _flowRoutine;
+    /// <summary>True after the post-victory intro (delay + first layout) has run for this fight.</summary>
+    private bool _victoryIntroCompletedForCurrentFight;
 
     private void OnDisable()
     {
-        FaceRewardEvents.OnFaceRewardCompleted -= OnFaceRewardFlowEnded;
         if (_flowRoutine != null)
         {
             StopCoroutine(_flowRoutine);
@@ -41,22 +43,26 @@ public class WinStageFlowController : MonoBehaviour
         if (winStagePanel != null) winStagePanel.SetActive(false);
         if (continueButton != null)
             continueButton.onClick.AddListener(OnContinueClicked);
-        if (chooseFaceButton != null)
-            chooseFaceButton.onClick.AddListener(OnChooseFaceClicked);
     }
 
     /// <summary>Called from <see cref="WinLoseUIController"/> on victory (after <see cref="VictoryRewardBuffer"/> was set).</summary>
     public void BeginVictoryFlow()
     {
-        // Multiple listeners on <see cref="CombatEvents.OnPlayerVictory"/> (e.g. duplicate WinLoseUIController) would otherwise
-        // run this twice in one invoke: first call clears the buffer, second overwrites _uncollectedGold with 0.
         if (_flowRoutine != null)
             return;
+
+        // Spurious second victory notification: bring win UI back without replaying delay or rebuilding rewards.
+        if (_victoryIntroCompletedForCurrentFight)
+        {
+            if (winStagePanel != null)
+                winStagePanel.SetActive(true);
+            UpdateContinueInteractable();
+            return;
+        }
 
         _uncollectedGold = VictoryRewardBuffer.PendingGold;
         VictoryRewardBuffer.Clear();
         _faceFlowComplete = true;
-        _chooseFaceUsedOrSkipped = false;
 
         _flowRoutine = StartCoroutine(VictorySequence());
     }
@@ -73,11 +79,8 @@ public class WinStageFlowController : MonoBehaviour
             winStagePanel.SetActive(true);
 
         RebuildRewardsLayout();
-        RefreshChooseFaceButton();
-        FaceRewardEvents.OnFaceRewardCompleted -= OnFaceRewardFlowEnded;
-        FaceRewardEvents.OnFaceRewardCompleted += OnFaceRewardFlowEnded;
-
         UpdateContinueInteractable();
+        _victoryIntroCompletedForCurrentFight = true;
         _flowRoutine = null;
     }
 
@@ -96,38 +99,42 @@ public class WinStageFlowController : MonoBehaviour
             {
                 Debug.LogError("WinStageFlowController: goldRewardRowPrefab needs WinStageGoldRewardRow.");
                 Destroy(go);
-                return;
             }
-
-            row.Setup(_uncollectedGold, () =>
+            else
             {
-                _uncollectedGold = 0;
-                UpdateContinueInteractable();
-            });
+                row.Setup(_uncollectedGold, () =>
+                {
+                    _uncollectedGold = 0;
+                    UpdateContinueInteractable();
+                });
+            }
+        }
+
+        if (faceRewardManager != null && faceRewardRowPrefab != null)
+        {
+            var go = Instantiate(faceRewardRowPrefab, rewardsLayout);
+            var faceRow = go.GetComponent<WinStageFaceRewardRow>();
+            if (faceRow == null)
+            {
+                Debug.LogError("WinStageFlowController: faceRewardRowPrefab needs WinStageFaceRewardRow.");
+                Destroy(go);
+            }
+            else
+                faceRow.Setup(this, faceRewardManager, faceRewardRowLabel);
         }
     }
 
-    private void RefreshChooseFaceButton()
+    /// <summary>Called when the player opens the face picker from the reward row.</summary>
+    public void NotifyFacePickerOpening()
     {
-        if (chooseFaceButton == null) return;
-        var canOfferFace = faceRewardManager != null;
-        chooseFaceButton.gameObject.SetActive(canOfferFace && !_chooseFaceUsedOrSkipped);
-    }
-
-    private void OnChooseFaceClicked()
-    {
-        if (faceRewardManager == null) return;
-
         _faceFlowComplete = false;
-        UpdateContinueInteractable();
-
         if (winStagePanel != null)
             winStagePanel.SetActive(false);
-
-        faceRewardManager.StartFaceRewardFromWinStage(OnFacePickerBack, OnFacePickerSkipped);
+        UpdateContinueInteractable();
     }
 
-    private void OnFacePickerBack()
+    /// <summary>Called when the player uses Back on the face picker (reward not consumed; row stays).</summary>
+    public void NotifyFacePickerBackedOut()
     {
         _faceFlowComplete = true;
         if (winStagePanel != null)
@@ -135,23 +142,12 @@ public class WinStageFlowController : MonoBehaviour
         UpdateContinueInteractable();
     }
 
-    private void OnFacePickerSkipped()
+    /// <summary>Called when the face reward row is consumed (Skip, swap finished, or no-match close).</summary>
+    public void NotifyFaceRewardRowRemoved()
     {
-        _chooseFaceUsedOrSkipped = true;
         _faceFlowComplete = true;
         if (winStagePanel != null)
             winStagePanel.SetActive(true);
-        RefreshChooseFaceButton();
-        UpdateContinueInteractable();
-    }
-
-    private void OnFaceRewardFlowEnded(DieFaceSO _)
-    {
-        _chooseFaceUsedOrSkipped = true;
-        _faceFlowComplete = true;
-        if (winStagePanel != null)
-            winStagePanel.SetActive(true);
-        RefreshChooseFaceButton();
         UpdateContinueInteractable();
     }
 
@@ -163,7 +159,7 @@ public class WinStageFlowController : MonoBehaviour
 
     private void OnContinueClicked()
     {
-        FaceRewardEvents.OnFaceRewardCompleted -= OnFaceRewardFlowEnded;
+        _victoryIntroCompletedForCurrentFight = false;
 
         if (winStagePanel != null)
             winStagePanel.SetActive(false);

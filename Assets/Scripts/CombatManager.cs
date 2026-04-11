@@ -671,6 +671,10 @@ public class CombatManager : MonoBehaviour
     private bool CheckVictory()
     {
         if (activeEnemy.GetCurrentHealth() > 0) return false;
+        // Enemy still at 0 HP on later ticks (turn start, thorns, etc.) must not re-fire victory UI.
+        if (currentState == CombatState.Victory)
+            return true;
+
         ChangeState(CombatState.Victory);
 
         VictoryRewardBuffer.PendingGold = 0;

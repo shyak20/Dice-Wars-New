@@ -20,4 +20,7 @@ public static class PlayerInventory
         if (face == null || data == null) return new List<DieAssetSO>();
         return GetDiceMatchingElement(data, ElementTypeExtensions.FromDieType(face.type));
     }
+
+    public static bool HasDieSupportingFace(PlayerDataSO data, DieFaceSO face) =>
+        face != null && data != null && GetDiceMatchingFace(data, face).Count > 0;
 }

@@ -18,7 +18,8 @@ public class FaceRewardManager : MonoBehaviour
     [SerializeField] private FaceLootTableSO lootTable;
 
     [Header("Timing")]
-    [SerializeField] private float closeDelay = 2f;
+    [Tooltip("Seconds to wait after swap (or no-match close) before hiding overlay, firing OnFaceRewardCompleted, and deactivating. Set to 0 for immediate.")]
+    [SerializeField, Min(0f)] private float closeDelay = 2f;
 
     private DieFaceSO chosenFace;
     private DieAssetSO chosenDie;
@@ -103,7 +104,8 @@ public class FaceRewardManager : MonoBehaviour
     private void OnDieChosen(DieAssetSO die)
     {
         chosenDie = die;
-        faceSwapOverlayView.Show(die, chosenFace, OnSwapCommitted);
+        if (!faceSwapOverlayView.Show(die, chosenFace, OnSwapCommitted))
+            StartCoroutine(CloseAfterDelay());
     }
 
     private void OnSwapCommitted()
@@ -113,9 +115,13 @@ public class FaceRewardManager : MonoBehaviour
 
     private IEnumerator CloseAfterDelay()
     {
-        yield return new WaitForSeconds(closeDelay);
-        faceSwapOverlayView.Hide();
-        gameObject.SetActive(false);
+        if (closeDelay > 0f)
+            yield return new WaitForSeconds(closeDelay);
+
+        if (faceSwapOverlayView != null)
+            faceSwapOverlayView.Hide();
+
         FaceRewardEvents.OnFaceRewardCompleted?.Invoke(chosenFace);
+        gameObject.SetActive(false);
     }
 }

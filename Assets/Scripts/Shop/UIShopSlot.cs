@@ -16,6 +16,11 @@ public class UIShopSlot : MonoBehaviour
     [SerializeField] private Color unaffordablePriceColor = new Color(1f, 0.35f, 0.35f);
     [SerializeField] private Button buyButton;
     [SerializeField] private GameObject soldOutStamp;
+    [Header("Face offer — locked when no deck die matches element")]
+    [Tooltip("Shown when this face cannot be socketed (no matching die in deck). Hide all children when unlocked.")]
+    [SerializeField] private GameObject lockedOverlay;
+    [SerializeField] private TMP_Text lockedLabel;
+    [SerializeField] private string lockedMessage = "No matching die in deck";
     [Header("Optional Full-Die Faces UI")]
     [Tooltip("Parent for runtime-created face entries (used by full-die shop slots).")]
     [SerializeField] private Transform dieFacesContainer;
@@ -50,9 +55,20 @@ public class UIShopSlot : MonoBehaviour
         var canAffordGold = eco != null && eco.CanAfford(_item.CalculatedPrice);
         var economyMissing = eco == null;
 
+        var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+        var faceSocketLocked = _item.ItemKind == ShopItem.Kind.Face && _item.Face != null && data != null &&
+                               !PlayerInventory.HasDieSupportingFace(data, _item.Face);
+        if (_item.ItemKind == ShopItem.Kind.Face && (data == null || _item.Face == null))
+            faceSocketLocked = true;
+
+        if (lockedOverlay != null)
+            lockedOverlay.SetActive(!sold && faceSocketLocked);
+        if (lockedLabel != null && faceSocketLocked)
+            lockedLabel.text = lockedMessage;
+
         if (soldOutStamp != null) soldOutStamp.SetActive(sold);
         if (buyButton != null)
-            buyButton.interactable = !sold && (economyMissing || canAffordGold);
+            buyButton.interactable = !sold && !faceSocketLocked && (economyMissing || canAffordGold);
 
         if (priceText != null)
         {
