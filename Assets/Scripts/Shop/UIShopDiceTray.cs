@@ -1,40 +1,26 @@
-using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class CombatUIController : MonoBehaviour
+/// <summary>
+/// Read-only dice tray for the shop: same tray prefabs and die/face tooltip behavior as <see cref="CombatUIController"/>.
+/// Wire the same tooltip panel hierarchy as the fight scene (or a shop copy). Refresh is driven by <see cref="UIShopWindow"/>.
+/// </summary>
+public class UIShopDiceTray : MonoBehaviour
 {
     private static readonly int[] DieTooltipGridTemplate = { -1, 0, -1, -1, 1, 2, 3, 4, -1, 5 };
 
-    [Header("Dice Tray (The Hand)")]
-    public Transform diceButtonContainer;
-    public CanvasGroup trayCanvasGroup;
+    [Header("Dice Tray")]
+    [SerializeField] private Transform diceButtonContainer;
+    [SerializeField] private GameObject damageButtonPrefab;
+    [SerializeField] private GameObject armorButtonPrefab;
 
-    [Header("Dynamic Prefabs")]
-    public GameObject damageButtonPrefab; // Renamed from attack
-    public GameObject armorButtonPrefab;  // Renamed from defense
-
-    [Header("Controls")]
-    public Button rollButton;
-    public Button endTurnButton;
-    public Button cheatWinButton;
-
-    [Header("Status Displays")]
-    public Slider powerSlider;
-    public TMP_Text powerText;
-    public TMP_Text poolText;
-
-    [Header("Bust Panel")]
-    public GameObject bustPanel;
-    public Button nullifyDamageButton; // Renamed from attack
-    public Button nullifyArmorButton;  // Renamed from defense
-
-    [Header("Die Tooltip (Fight Scene)")]
+    [Header("Die Tooltip (match Fight scene)")]
     [SerializeField] private GameObject dieTooltipPanel;
     [SerializeField] private Transform dieTooltipSlotContainer;
-    [SerializeField] private GameObject dieTooltipSlotPrefab; // Should use UIRewardSlot prefab.
+    [SerializeField] private GameObject dieTooltipSlotPrefab;
     [SerializeField] private GameObject faceHoverTooltipPanel;
     [SerializeField] private TMP_Text faceHoverTitleText;
     [SerializeField] private TMP_Text faceHoverDescriptionText;
@@ -44,84 +30,16 @@ public class CombatUIController : MonoBehaviour
     [SerializeField] private TMP_Text statusHoverTitleText;
     [SerializeField] private TMP_Text statusHoverDescriptionText;
 
-    private Dictionary<DieAssetSO, DiceTrayButtonView> diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
-    private Dictionary<DieAssetSO, Button> diceButtons = new Dictionary<DieAssetSO, Button>();
-    private List<DieAssetSO> currentlySelected = new List<DieAssetSO>();
-    private DieAssetSO tooltipShownForDie;
+    private readonly Dictionary<DieAssetSO, DiceTrayButtonView> _diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
+    private readonly Dictionary<DieAssetSO, Button> _diceButtons = new Dictionary<DieAssetSO, Button>();
+    private DieAssetSO _tooltipShownForDie;
 
-    private TMP_Text rollButtonText;
-    private int rollsRemaining;
-    private int maxRolls;
-
-    private void OnEnable()
+    private void Awake()
     {
-        if (rollButton != null && rollButtonText == null)
-            rollButtonText = rollButton.GetComponentInChildren<TMP_Text>();
-
-        CombatEvents.OnPowerChanged += UpdatePowerUI;
-        CombatEvents.OnPoolsUpdated += UpdatePoolsUI;
-        CombatEvents.OnBustOccurred += ShowBustPanel;
-        CombatEvents.OnStateChanged += HandleStateChange;
-        CombatEvents.OnRollsRemainingChanged += UpdateRollsUI;
-    }
-
-    private void OnDisable()
-    {
-        CombatEvents.OnPowerChanged -= UpdatePowerUI;
-        CombatEvents.OnPoolsUpdated -= UpdatePoolsUI;
-        CombatEvents.OnBustOccurred -= ShowBustPanel;
-        CombatEvents.OnStateChanged -= HandleStateChange;
-        CombatEvents.OnRollsRemainingChanged -= UpdateRollsUI;
-    }
-
-    private void Start()
-    {
-        if (bustPanel != null) bustPanel.SetActive(false);
-        HideDieTooltip();
-        HideFaceHoverTooltip();
-        HideStatusHoverTooltip();
-        if (rollButton != null)
-        {
-            rollButton.onClick.AddListener(() => CombatEvents.OnRollCommand?.Invoke());
-            rollButton.interactable = false;
-        }
-        if (endTurnButton != null) endTurnButton.onClick.AddListener(() => CombatEvents.OnEndTurnPressed?.Invoke());
-        if (cheatWinButton != null) cheatWinButton.onClick.AddListener(() => CombatEvents.OnCheatWinPressed?.Invoke());
-        Invoke(nameof(InitializeDiceButtons), 0.15f);
-    }
-
-    public void InitializeDiceButtons()
-    {
-        if (PlayerDataContainer.Instance == null) return;
-        foreach (Transform child in diceButtonContainer) Destroy(child.gameObject);
-        diceButtonViews.Clear();
-        diceButtons.Clear();
-        currentlySelected.Clear();
-        HideDieTooltip();
-
-        foreach (DieAssetSO die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
-        {
-            // Logic updated for renamed types
-            GameObject prefab = (die.dieType == DieType.Damage) ? damageButtonPrefab : armorButtonPrefab;
-            GameObject btnObj = Instantiate(prefab, diceButtonContainer);
-
-            TMP_Text txt = btnObj.GetComponentInChildren<TMP_Text>();
-            if (txt != null) txt.text = die.dieName;
-
-            var trayView = btnObj.GetComponent<DiceTrayButtonView>();
-            if (trayView != null)
-            {
-                trayView.SetIcon(die.uiIcon);
-                trayView.SetSelectedIconShakeEnabled(true);
-                diceButtonViews.Add(die, trayView);
-            }
-            else
-                Debug.LogError($"CombatUIController: prefab '{prefab.name}' is missing DiceTrayButtonView. Add the component and assign regular/selected images.");
-
-            Button btn = btnObj.GetComponent<Button>();
-            diceButtons[die] = btn;
-            btn.onClick.AddListener(() => ToggleSelection(die));
-        }
+        if (diceButtonContainer == null)
+            Debug.LogError("UIShopDiceTray: assign diceButtonContainer.", this);
+        if (damageButtonPrefab == null || armorButtonPrefab == null)
+            Debug.LogError("UIShopDiceTray: assign damage and armor button prefabs (same as CombatUIController).", this);
     }
 
     private void Update()
@@ -130,30 +48,82 @@ public class CombatUIController : MonoBehaviour
         if (!Input.GetMouseButtonDown(0)) return;
         if (ClickShouldKeepTooltipOpen()) return;
 
+        ClearTraySelectionVisuals();
         HideDieTooltip();
     }
 
-    private void ToggleSelection(DieAssetSO die)
+    /// <summary>Rebuilds tray from <see cref="PlayerDataSO.currentDeck"/>.</summary>
+    public void RebuildFromDeck()
     {
-        CombatEvents.OnDieToggled?.Invoke(die);
-        if (currentlySelected.Contains(die))
+        if (diceButtonContainer == null) return;
+        if (PlayerDataContainer.Instance == null || PlayerDataContainer.Instance.RuntimeData == null)
         {
-            currentlySelected.Remove(die);
-            if (diceButtonViews.TryGetValue(die, out var view))
-                view.SetSelected(false);
-
-            if (tooltipShownForDie == die)
-                HideDieTooltip();
+            Debug.LogError("UIShopDiceTray: PlayerDataContainer or RuntimeData missing.", this);
+            return;
         }
-        else
+
+        foreach (Transform child in diceButtonContainer)
+            Destroy(child.gameObject);
+        _diceButtonViews.Clear();
+        _diceButtons.Clear();
+        ClearTraySelectionVisuals();
+        HideDieTooltip();
+
+        foreach (var die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
         {
-            currentlySelected.Add(die);
-            if (diceButtonViews.TryGetValue(die, out var view))
-                view.SetSelected(true);
+            if (die == null) continue;
 
-            ShowDieTooltip(die);
+            var prefab = die.dieType == DieType.Damage ? damageButtonPrefab : armorButtonPrefab;
+            if (prefab == null) continue;
+
+            var btnObj = Instantiate(prefab, diceButtonContainer);
+            var txt = btnObj.GetComponentInChildren<TMP_Text>();
+            if (txt != null) txt.text = die.dieName;
+
+            var trayView = btnObj.GetComponent<DiceTrayButtonView>();
+            if (trayView != null)
+            {
+                trayView.SetIcon(die.uiIcon);
+                trayView.SetSelectedIconShakeEnabled(false);
+                _diceButtonViews[die] = trayView;
+            }
+            else
+                Debug.LogError($"UIShopDiceTray: prefab '{prefab.name}' needs DiceTrayButtonView.", btnObj);
+
+            var btn = btnObj.GetComponent<Button>();
+            if (btn == null)
+            {
+                Debug.LogError($"UIShopDiceTray: prefab '{prefab.name}' needs a Button.", btnObj);
+                continue;
+            }
+
+            _diceButtons[die] = btn;
+            var captured = die;
+            btn.onClick.AddListener(() => OnTrayDieClicked(captured));
         }
-        rollButton.interactable = currentlySelected.Count > 0;
+    }
+
+    private void OnTrayDieClicked(DieAssetSO die)
+    {
+        if (die == null) return;
+
+        if (_tooltipShownForDie == die && dieTooltipPanel != null && dieTooltipPanel.activeSelf)
+        {
+            if (_diceButtonViews.TryGetValue(die, out var v)) v.SetSelected(false);
+            HideDieTooltip();
+            return;
+        }
+
+        foreach (var kv in _diceButtonViews)
+            kv.Value.SetSelected(kv.Key == die);
+
+        ShowDieTooltip(die);
+    }
+
+    private void ClearTraySelectionVisuals()
+    {
+        foreach (var kv in _diceButtonViews)
+            kv.Value.SetSelected(false);
     }
 
     private void ShowDieTooltip(DieAssetSO die)
@@ -161,7 +131,7 @@ public class CombatUIController : MonoBehaviour
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
 
-        tooltipShownForDie = die;
+        _tooltipShownForDie = die;
         dieTooltipPanel.SetActive(true);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
@@ -190,7 +160,7 @@ public class CombatUIController : MonoBehaviour
             var slot = go.GetComponent<UIRewardSlot>();
             if (slot == null)
             {
-                Debug.LogError("CombatUIController: dieTooltipSlotPrefab must include UIRewardSlot.");
+                Debug.LogError("UIShopDiceTray: dieTooltipSlotPrefab must include UIRewardSlot.", this);
                 Destroy(go);
                 continue;
             }
@@ -224,7 +194,7 @@ public class CombatUIController : MonoBehaviour
 
     private void HideDieTooltip()
     {
-        tooltipShownForDie = null;
+        _tooltipShownForDie = null;
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);
         HideFaceHoverTooltip();
@@ -337,12 +307,12 @@ public class CombatUIController : MonoBehaviour
 
         var hits = new List<RaycastResult>();
         EventSystem.current.RaycastAll(pointer, hits);
-        if (hits.Count == 0) return false; // Clicked non-UI world area.
+        if (hits.Count == 0) return false;
 
         var tooltipTransform = dieTooltipPanel != null ? dieTooltipPanel.transform : null;
         var statusTooltipTransform = statusHoverTooltipPanel != null ? statusHoverTooltipPanel.transform : null;
         Transform selectedButtonTransform = null;
-        if (tooltipShownForDie != null && diceButtons.TryGetValue(tooltipShownForDie, out var btn) && btn != null)
+        if (_tooltipShownForDie != null && _diceButtons.TryGetValue(_tooltipShownForDie, out var btn) && btn != null)
             selectedButtonTransform = btn.transform;
 
         for (var i = 0; i < hits.Count; i++)
@@ -355,59 +325,5 @@ public class CombatUIController : MonoBehaviour
         }
 
         return false;
-    }
-
-    private void UpdatePowerUI(int current, int max)
-    {
-        if (powerSlider != null) { powerSlider.maxValue = max; powerSlider.value = current; }
-        if (powerText != null) powerText.text = $"{current} / {max}";
-    }
-
-    private void UpdatePoolsUI(Dictionary<DieType, int> pools)
-    {
-        // UI updated for renamed types
-        if (poolText != null)
-            poolText.text = $"DMG: {pools[DieType.Damage]} | ARM: {pools[DieType.Armor]}";
-    }
-
-    private void ShowBustPanel(int currentDmg, int currentArm)
-    {
-        if (bustPanel == null) return;
-        bustPanel.SetActive(true);
-
-        nullifyDamageButton.gameObject.SetActive(currentDmg > 0);
-        nullifyArmorButton.gameObject.SetActive(currentArm > 0);
-
-        nullifyDamageButton.onClick.RemoveAllListeners();
-        nullifyArmorButton.onClick.RemoveAllListeners();
-
-        nullifyDamageButton.onClick.AddListener(() => { CombatEvents.OnBustResolved?.Invoke(true); bustPanel.SetActive(false); });
-        nullifyArmorButton.onClick.AddListener(() => { CombatEvents.OnBustResolved?.Invoke(false); bustPanel.SetActive(false); });
-    }
-
-    private void UpdateRollsUI(int remaining, int max)
-    {
-        rollsRemaining = remaining;
-        maxRolls = max;
-        if (rollButtonText != null) rollButtonText.text = $"Roll!\n{remaining}/{max}";
-    }
-
-    private void HandleStateChange(CombatState state)
-    {
-        bool isWaiting = (state == CombatState.WaitingForRoll);
-        bool isRolling = (state == CombatState.Rolling);
-
-        if (trayCanvasGroup != null)
-        {
-            // Hide the tray while a roll is being resolved, then show it again afterward.
-            trayCanvasGroup.gameObject.SetActive(!isRolling);
-            trayCanvasGroup.interactable = isWaiting;
-            trayCanvasGroup.blocksRaycasts = isWaiting;
-            trayCanvasGroup.alpha = isWaiting ? 1f : 0.5f;
-        }
-        if (!isWaiting)
-            HideDieTooltip();
-        if (rollButton != null) { rollButton.gameObject.SetActive(isWaiting); if (isWaiting) rollButton.interactable = currentlySelected.Count > 0; }
-        if (endTurnButton != null) { bool showEndTurn = isWaiting && rollsRemaining > 0; endTurnButton.gameObject.SetActive(showEndTurn); endTurnButton.interactable = showEndTurn; }
     }
 }

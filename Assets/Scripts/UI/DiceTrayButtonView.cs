@@ -17,9 +17,17 @@ public class DiceTrayButtonView : MonoBehaviour
     [SerializeField, Min(0f)] private float shakeSpeed = 12f;
     [SerializeField] private bool randomizeShakePhase = true;
 
+    /// <summary>
+    /// When false, selected-icon shake is off (e.g. shop / other UI). Combat enables this after spawning tray buttons.
+    /// </summary>
+    private bool _selectedIconShakeEnabled;
+
     private bool isSelected;
     private Quaternion iconBaseRotation;
     private float shakePhase;
+
+    /// <param name="enabled">Pass true only in the combat scene when using the dice hand for rolls.</param>
+    public void SetSelectedIconShakeEnabled(bool enabled) => _selectedIconShakeEnabled = enabled;
 
     private void Awake()
     {
@@ -37,7 +45,7 @@ public class DiceTrayButtonView : MonoBehaviour
 
     private void Update()
     {
-        if (!isSelected || !shakeWhenSelected || iconImage == null)
+        if (!isSelected || !_selectedIconShakeEnabled || !shakeWhenSelected || iconImage == null)
             return;
 
         var angle = Mathf.Sin((Time.unscaledTime + shakePhase) * shakeSpeed) * shakeRotationDegrees;

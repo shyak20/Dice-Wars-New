@@ -21,6 +21,9 @@ public class UIShopWindow : MonoBehaviour
     [Tooltip("Optional full-die offers prefab root. If null, falls back to Slot Prefab.")]
     [SerializeField] private UIShopSlot diceSlotPrefab;
     [SerializeField] private Button leaveShopButton;
+    [Header("Optional")]
+    [Tooltip("Player deck tray; refreshes when the shop UI refreshes (e.g. after buying a die or socketing a face).")]
+    [SerializeField] private UIShopDiceTray shopDiceTray;
 
     private readonly List<UIShopSlot> _slots = new List<UIShopSlot>();
 
@@ -98,6 +101,8 @@ public class UIShopWindow : MonoBehaviour
 
         foreach (var item in shopGenerator.DiceOffers)
             AddSlot(diceSlotsContainer, item, diceSlotPrefab != null ? diceSlotPrefab : slotPrefab);
+
+        RefreshShopDiceTray();
     }
 
     private void AddSlot(Transform parent, ShopItem item, UIShopSlot prefab)
@@ -191,6 +196,14 @@ public class UIShopWindow : MonoBehaviour
 
         if (RunEconomyManager.Instance != null)
             OnGoldChanged(RunEconomyManager.Instance.CurrentGold);
+
+        RefreshShopDiceTray();
+    }
+
+    private void RefreshShopDiceTray()
+    {
+        if (shopDiceTray != null)
+            shopDiceTray.RebuildFromDeck();
     }
 
     private void OnLeaveShop()
