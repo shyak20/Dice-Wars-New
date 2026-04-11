@@ -673,12 +673,9 @@ public class CombatManager : MonoBehaviour
         if (activeEnemy.GetCurrentHealth() > 0) return false;
         ChangeState(CombatState.Victory);
 
-        if (RunEconomyManager.Instance != null && activeEnemy != null && activeEnemy.enemyData != null)
-        {
-            var reward = activeEnemy.enemyData.goldReward;
-            if (reward > 0)
-                RunEconomyManager.Instance.GrantGold(reward, activeEnemy.transform.position);
-        }
+        VictoryRewardBuffer.PendingGold = 0;
+        if (activeEnemy != null && activeEnemy.enemyData != null)
+            VictoryRewardBuffer.PendingGold = Mathf.Max(0, activeEnemy.enemyData.goldReward);
 
         CombatEvents.OnPlayerVictory?.Invoke();
         return true;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,6 +41,41 @@ public class FaceRewardManager : MonoBehaviour
             PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
         var options = lootTable.GetRandomRewards(3, preferredTypes);
         facePickerView.Show(options, OnFaceChosen);
+        gameObject.SetActive(true);
+    }
+
+    /// <summary>Win-stage flow: picker with Back (return to win popup) and Skip (no new face).</summary>
+    public void StartFaceRewardFromWinStage(Action onBackToWin, Action onSkippedFace)
+    {
+        chosenFace = null;
+        chosenDie = null;
+
+        if (dieDisambiguationView != null) dieDisambiguationView.Hide();
+        if (faceSwapOverlayView != null) faceSwapOverlayView.Hide();
+
+        if (lootTable == null || facePickerView == null || PlayerDataContainer.Instance == null)
+        {
+            Debug.LogError("FaceRewardManager.StartFaceRewardFromWinStage: missing loot table, picker, or player data.");
+            onBackToWin?.Invoke();
+            return;
+        }
+
+        var preferredTypes = new HashSet<DieType>(
+            PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
+        var options = lootTable.GetRandomRewards(3, preferredTypes);
+        facePickerView.Show(
+            options,
+            OnFaceChosen,
+            () =>
+            {
+                gameObject.SetActive(false);
+                onBackToWin?.Invoke();
+            },
+            () =>
+            {
+                gameObject.SetActive(false);
+                onSkippedFace?.Invoke();
+            });
         gameObject.SetActive(true);
     }
 

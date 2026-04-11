@@ -6,6 +6,32 @@ public class RunEconomyManager : MonoBehaviour
 {
     public static RunEconomyManager Instance { get; private set; }
 
+    /// <summary>
+    /// Resolves the economy for UI/collect paths. Creates a DontDestroyOnLoad fallback if the scene has no manager
+    /// (e.g. FightScene played directly without MainMenu bootstrap).
+    /// </summary>
+    public static RunEconomyManager TryGetRuntime()
+    {
+        if (Instance != null)
+            return Instance;
+
+        var found = FindObjectOfType<RunEconomyManager>(true);
+        if (found != null)
+            return found;
+
+        return CreateRuntimeFallback();
+    }
+
+    private static RunEconomyManager CreateRuntimeFallback()
+    {
+        Debug.LogWarning(
+            "RunEconomyManager: No economy in scene — creating a runtime fallback (starting gold = 0). " +
+            "Add RunEconomyManager next to RunManager in your bootstrap scene for proper run setup.");
+
+        var go = new GameObject(nameof(RunEconomyManager));
+        return go.AddComponent<RunEconomyManager>();
+    }
+
     [SerializeField] private int startingGold;
 
     [Header("Gold pop-up (optional)")]

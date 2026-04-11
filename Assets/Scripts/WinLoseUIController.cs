@@ -4,7 +4,11 @@ using UnityEngine.UI;
 
 public class WinLoseUIController : MonoBehaviour
 {
-    [Header("Face Reward")]
+    [Header("Victory")]
+    [Tooltip("Post-combat win popup + rewards. If null, falls back to Face Reward only.")]
+    [SerializeField] private WinStageFlowController winStageFlow;
+
+    [Header("Face Reward (legacy if Win Stage not assigned)")]
     [SerializeField] private FaceRewardManager faceRewardManager;
 
     [Header("Defeat UI")]
@@ -13,14 +17,14 @@ public class WinLoseUIController : MonoBehaviour
 
     private void OnEnable()
     {
-        CombatEvents.OnPlayerVictory += StartFaceReward;
+        CombatEvents.OnPlayerVictory += OnPlayerVictory;
         CombatEvents.OnPlayerDefeat += ShowGameOver;
         FaceRewardEvents.OnFaceRewardCompleted += OnFaceRewardCompleted;
     }
 
     private void OnDisable()
     {
-        CombatEvents.OnPlayerVictory -= StartFaceReward;
+        CombatEvents.OnPlayerVictory -= OnPlayerVictory;
         CombatEvents.OnPlayerDefeat -= ShowGameOver;
         FaceRewardEvents.OnFaceRewardCompleted -= OnFaceRewardCompleted;
     }
@@ -35,11 +39,17 @@ public class WinLoseUIController : MonoBehaviour
         }
     }
 
-    private void StartFaceReward()
+    private void OnPlayerVictory()
     {
+        if (winStageFlow != null)
+        {
+            winStageFlow.BeginVictoryFlow();
+            return;
+        }
+
         if (faceRewardManager == null)
         {
-            Debug.LogError("WinLoseUIController: faceRewardManager is not assigned!");
+            Debug.LogError("WinLoseUIController: Assign Win Stage Flow or Face Reward Manager for victory.");
             return;
         }
 
@@ -52,10 +62,11 @@ public class WinLoseUIController : MonoBehaviour
             ? $"Face reward completed: {face.name} ({face.rarity})"
             : "Face reward flow closed (no face applied).");
 
+        if (winStageFlow != null)
+            return;
+
         if (RunManager.Instance != null)
-        {
             RunManager.Instance.AdvanceToNextRoom();
-        }
         else
         {
             Debug.LogError("WinLoseUIController: RunManager not found! Falling back to main menu.");
