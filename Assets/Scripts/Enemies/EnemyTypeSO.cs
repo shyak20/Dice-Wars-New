@@ -1,10 +1,21 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+public enum EnemyRank
+{
+    Normal,
+    Elite,
+    Boss
+}
+
 [CreateAssetMenu(fileName = "NewEnemy", menuName = "DiceGame/EnemyType")]
 public class EnemyTypeSO : ScriptableObject
 {
     public string enemyName;
+
+    [Header("Classification")]
+    public EnemyRank enemyRank = EnemyRank.Normal;
+
     public int maxHealth;
     public int startArmor;
 
