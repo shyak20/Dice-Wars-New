@@ -424,12 +424,39 @@ public static class MapGridGenerator
             grid.SetTile(e.x, e.y, t);
         }
 
+        var filler = new List<Vector2Int>();
+        foreach (var c in candidates)
+        {
+            if (!eliteCells.Contains(c))
+                filler.Add(c);
+        }
+
+        Shuffle(filler, rng);
+
+        var shopMin = Mathf.Max(0, p.ShopMinCount);
+        var shopMax = Mathf.Max(shopMin, p.ShopMaxCount);
+        var useFixedShopCount = shopMin > 0 || shopMax > 0;
+        var shopTarget = useFixedShopCount ? rng.Next(shopMin, shopMax + 1) : 0;
+        shopTarget = Mathf.Min(shopTarget, filler.Count);
+        if (useFixedShopCount && shopTarget < shopMin)
+            Debug.LogWarning(
+                $"MapGridGenerator: placed {shopTarget} shop tile(s) but shop min was {shopMin} (grid {grid.Width}×{grid.Height}).");
+
+        var shopCells = new HashSet<Vector2Int>();
+        for (var i = 0; i < shopTarget; i++)
+            shopCells.Add(filler[i]);
+
         foreach (var c in candidates)
         {
             if (eliteCells.Contains(c))
                 continue;
             var t = grid.Get(c.x, c.y);
-            t.eventType = PickNonEliteEventType(p, rng);
+            if (shopCells.Contains(c))
+                t.eventType = MapEventType.Shop;
+            else if (useFixedShopCount)
+                t.eventType = PickNonShopFillerType(p, rng);
+            else
+                t.eventType = PickNonEliteEventType(p, rng);
             grid.SetTile(c.x, c.y, t);
         }
     }
@@ -459,6 +486,25 @@ public static class MapGridGenerator
         if (r < wShop)
             return MapEventType.Shop;
         r -= wShop;
+        if (r < wShrine)
+            return MapEventType.Shrine;
+        return MapEventType.Unknown;
+    }
+
+    /// <summary>Remaining fillers after fixed shop tiles: normal / shrine / unknown only.</summary>
+    private static MapEventType PickNonShopFillerType(MapGenerationEventsParams p, System.Random rng)
+    {
+        var wN = Mathf.Max(0, p.WeightNormal);
+        var wShrine = Mathf.Max(0, p.WeightShrine);
+        var wUnk = Mathf.Max(0, p.WeightUnknown);
+        var total = wN + wShrine + wUnk;
+        if (total <= 0)
+            return MapEventType.CombatNormal;
+
+        var r = rng.Next(total);
+        if (r < wN)
+            return MapEventType.CombatNormal;
+        r -= wN;
         if (r < wShrine)
             return MapEventType.Shrine;
         return MapEventType.Unknown;

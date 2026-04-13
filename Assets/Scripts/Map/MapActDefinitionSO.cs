@@ -17,6 +17,9 @@ public class MapActDefinitionSO : ScriptableObject
     [Header("Map layout (this act)")]
     [Min(0)] public int eliteMinOnMap = 1;
     [Min(0)] public int eliteMaxOnMap = 2;
+    [Tooltip("Forced shop tiles (count rolled between min and max). If both are 0, shop frequency uses only RunManager filler weights.")]
+    [Min(0)] public int shopMinOnMap;
+    [Min(0)] public int shopMaxOnMap;
 
     /// <summary>Non-allocating: clears <paramref name="into"/> then adds all non-null enemies matching <paramref name="rank"/>.</summary>
     public void CollectEnemiesForRank(EnemyRank rank, List<EnemyTypeSO> into)
@@ -34,6 +37,7 @@ public class MapActDefinitionSO : ScriptableObject
     private void OnValidate()
     {
         eliteMaxOnMap = Mathf.Max(eliteMaxOnMap, eliteMinOnMap);
+        shopMaxOnMap = Mathf.Max(shopMaxOnMap, shopMinOnMap);
         WarnIfRankMissing(EnemyRank.Boss, "boss end tile");
         WarnIfRankMissing(EnemyRank.Normal, "normal combat tiles");
         WarnIfRankMissing(EnemyRank.Elite, "elite combat tiles");

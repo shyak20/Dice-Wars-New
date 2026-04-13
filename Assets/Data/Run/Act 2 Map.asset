@@ -20,3 +20,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7e1da11a59278e24199798074da7997d, type: 2}
   eliteMinOnMap: 3
   eliteMaxOnMap: 4
+  shopMinOnMap: 1
+  shopMaxOnMap: 2

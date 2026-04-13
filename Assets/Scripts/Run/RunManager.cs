@@ -147,6 +147,8 @@ public class RunManager : MonoBehaviour
         {
             EliteMinCount = act.eliteMinOnMap,
             EliteMaxCount = act.eliteMaxOnMap,
+            ShopMinCount = act.shopMinOnMap,
+            ShopMaxCount = act.shopMaxOnMap,
             WeightNormal = mapWeightNormal,
             WeightShop = mapWeightShop,
             WeightShrine = mapWeightShrine,
