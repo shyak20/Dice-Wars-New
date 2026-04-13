@@ -146,7 +146,7 @@ public sealed class MapMovementManager : MonoBehaviour
                 }
             }
 
-            if (!MapCorruptionUtility.TryCloseOneRandomExitPreservingPath(_grid, PlayerGridPosition, BossPosition, _rng))
+            if (!MapCorruptionUtility.TryCloseOneRandomExitPreservingPath(_grid, PlayerGridPosition, StartPosition, BossPosition, _rng))
                 Debug.LogWarning("MapMovementManager: corruption could not close any passage without leaving a path from the player to the boss — map unchanged.", this);
             mapView?.RefreshAllTileExits();
         }

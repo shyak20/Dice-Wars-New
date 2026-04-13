@@ -72,4 +72,29 @@ public static class MapPathfinding
 
         return set;
     }
+
+    /// <summary>
+    /// True when every cell except <paramref name="end"/> is on some directed path from <paramref name="start"/>.
+    /// The end (boss) tile is excluded so its sink state (no outgoing exits) is not part of this check.
+    /// </summary>
+    public static bool AllNonEndCellsReachableFromStart(MapGrid grid, Vector2Int start, Vector2Int end)
+    {
+        if (grid == null || !grid.Contains(start) || !grid.Contains(end))
+            return false;
+
+        var reachable = ReachableFromStart(grid, start);
+        for (var y = 0; y < grid.Height; y++)
+        {
+            for (var x = 0; x < grid.Width; x++)
+            {
+                var p = new Vector2Int(x, y);
+                if (p == end)
+                    continue;
+                if (!reachable.Contains(p))
+                    return false;
+            }
+        }
+
+        return true;
+    }
 }

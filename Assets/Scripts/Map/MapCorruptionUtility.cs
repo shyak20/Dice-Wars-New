@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Closes one random passage (both directions) only if the player can still reach the end tile from their current cell.
+/// Closes one random passage (both directions) only if the player can still reach the end from their cell and
+/// every non-end tile stays reachable from the map start (directed paths).
 /// </summary>
 public static class MapCorruptionUtility
 {
@@ -12,12 +13,13 @@ public static class MapCorruptionUtility
     public static bool TryCloseOneRandomExitPreservingPath(
         MapGrid grid,
         Vector2Int playerPosition,
+        Vector2Int start,
         Vector2Int end,
         System.Random rng,
         int maxAttempts = DefaultMaxAttempts)
     {
         if (grid == null || rng == null) return false;
-        if (!grid.Contains(playerPosition) || !grid.Contains(end))
+        if (!grid.Contains(playerPosition) || !grid.Contains(start) || !grid.Contains(end))
             return false;
 
         var candidates = new List<(int x, int y, MapCardinalDirection d)>();
@@ -25,6 +27,8 @@ public static class MapCorruptionUtility
         {
             for (var x = 0; x < grid.Width; x++)
             {
+                if (x == end.x && y == end.y)
+                    continue;
                 var mask = grid.Get(x, y).exitMask;
                 for (var di = 0; di < 4; di++)
                 {
@@ -53,17 +57,41 @@ public static class MapCorruptionUtility
             grid.RemoveExit(x, y, d);
             grid.RemoveExit(n.x, n.y, back);
 
-            if (MapPathfinding.HasPath(grid, playerPosition, end))
+            if (MapPathfinding.HasPath(grid, playerPosition, end) &&
+                MapPathfinding.AllNonEndCellsReachableFromStart(grid, start, end))
+            {
+                EnsureBossTileHasNoOutgoingExits(grid, end);
                 return true;
+            }
 
-            var tA = grid.Get(x, y);
-            tA.exitMask = tA.exitMask.With(d);
-            grid.SetTile(x, y, tA);
-            var tB = grid.Get(n.x, n.y);
-            tB.exitMask = tB.exitMask.With(back);
-            grid.SetTile(n.x, n.y, tB);
+            // Revert: restore the passage, but never assign an outgoing exit on the boss tile (sink).
+            var p = new Vector2Int(x, y);
+            if (p.x != end.x || p.y != end.y)
+            {
+                var tA = grid.Get(x, y);
+                tA.exitMask = tA.exitMask.With(d);
+                grid.SetTile(x, y, tA);
+            }
+
+            if (n.x != end.x || n.y != end.y)
+            {
+                var tB = grid.Get(n.x, n.y);
+                tB.exitMask = tB.exitMask.With(back);
+                grid.SetTile(n.x, n.y, tB);
+            }
         }
 
+        EnsureBossTileHasNoOutgoingExits(grid, end);
         return false;
+    }
+
+    /// <summary>Boss / end cell must stay a sink (matches <see cref="MapGridGenerator"/> strip step).</summary>
+    private static void EnsureBossTileHasNoOutgoingExits(MapGrid grid, Vector2Int endCell)
+    {
+        if (grid == null || !grid.Contains(endCell))
+            return;
+        var t = grid.Get(endCell.x, endCell.y);
+        t.exitMask = 0;
+        grid.SetTile(endCell.x, endCell.y, t);
     }
 }
