@@ -29,7 +29,7 @@ public class DiceRoller : MonoBehaviour
     {
         if (!isChecking) return;
 
-        if (rb.velocity.magnitude < velocityThreshold && rb.angularVelocity.magnitude < velocityThreshold)
+        if (rb.linearVelocity.magnitude < velocityThreshold && rb.angularVelocity.magnitude < velocityThreshold)
         {
             settleTimer += Time.deltaTime;
             if (settleTimer >= settleTime)

@@ -104,7 +104,7 @@ public class DiceSpawner : MonoBehaviour
 
     private void ApplyForces(Rigidbody rb)
     {
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         float forwardForce = Random.Range(minForwardForce, maxForwardForce);
         float upwardForce = Random.Range(minUpwardForce, maxUpwardForce);
