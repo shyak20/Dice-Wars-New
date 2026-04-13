@@ -71,6 +71,7 @@ MonoBehaviour:
   noneTileColor: {r: 0.32, g: 0.34, b: 0.38, a: 1}
   nodeTypeLabel: {fileID: 0}
   eventIconImage: {fileID: 8305204956806355480}
+  visitedEventIconColor: {r: 1, g: 1, b: 1, a: 0.22745098}
 --- !u!1 &2285730536328856891
 GameObject:
   m_ObjectHideFlags: 0

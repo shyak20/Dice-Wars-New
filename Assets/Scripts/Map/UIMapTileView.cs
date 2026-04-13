@@ -28,11 +28,16 @@ public class UIMapTileView : MonoBehaviour
     [Header("Optional")]
     [SerializeField] private TMP_Text nodeTypeLabel;
     [SerializeField] private Image eventIconImage;
+    [Header("Visited tiles")]
+    [Tooltip("Tint for the event icon after this tile's event was completed (sprite stays visible).")]
+    [SerializeField] private Color visitedEventIconColor = new Color(0.65f, 0.65f, 0.7f, 0.9f);
 
     private Vector2Int _cell;
     private MapMovementManager _manager;
     private int _lastExitMask;
     private bool _playerOnThisTile;
+    /// <summary>Tile has an event icon sprite; hidden while <see cref="_playerOnThisTile"/>.</summary>
+    private bool _eventIconActiveForTile;
 
     private void Awake()
     {
@@ -76,17 +81,23 @@ public class UIMapTileView : MonoBehaviour
                 nodeTypeLabel.text = tile.eventType.ToString();
         }
 
+        _eventIconActiveForTile = false;
         if (eventIconImage != null)
         {
             if (tile.eventConsumed)
             {
+                Sprite sp = null;
                 if (presentation != null && presentation.visitedTileIcon != null)
+                    sp = presentation.visitedTileIcon;
+                else if (presentation != null)
+                    sp = presentation.GetEventIcon(tile.eventType, isStart, isBoss);
+
+                if (sp != null)
                 {
-                    eventIconImage.sprite = presentation.visitedTileIcon;
-                    eventIconImage.enabled = true;
+                    eventIconImage.sprite = sp;
+                    eventIconImage.color = visitedEventIconColor;
+                    _eventIconActiveForTile = true;
                 }
-                else
-                    eventIconImage.enabled = false;
             }
             else if (presentation != null)
             {
@@ -94,16 +105,14 @@ public class UIMapTileView : MonoBehaviour
                 if (sp != null)
                 {
                     eventIconImage.sprite = sp;
-                    eventIconImage.enabled = true;
+                    eventIconImage.color = Color.white;
+                    _eventIconActiveForTile = true;
                 }
-                else
-                    eventIconImage.enabled = false;
             }
-            else
-                eventIconImage.enabled = false;
         }
 
         _playerOnThisTile = manager != null && cell == manager.PlayerGridPosition;
+        ApplyEventIconVisibilityForStanding();
         ApplyExitMask(tile.exitMask);
     }
 
@@ -111,7 +120,21 @@ public class UIMapTileView : MonoBehaviour
     public void SetPlayerStandingHere(bool standingHere)
     {
         _playerOnThisTile = standingHere;
+        ApplyEventIconVisibilityForStanding();
         ApplyExitMask(_lastExitMask);
+    }
+
+    private void ApplyEventIconVisibilityForStanding()
+    {
+        if (eventIconImage == null)
+            return;
+        if (!_eventIconActiveForTile)
+        {
+            eventIconImage.enabled = false;
+            return;
+        }
+
+        eventIconImage.enabled = !_playerOnThisTile;
     }
 
     public void RefreshExits(MapGrid grid)
