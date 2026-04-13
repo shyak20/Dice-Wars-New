@@ -12,9 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84a92b25f83d49b9bc132d206b370281, type: 3}
   m_Name: Sprite Atlas
   m_EditorClassIdentifier: 
-  hashCode: -372219838
-  material: {fileID: 2100000, guid: d54c208fa35797c4caa3993376e32723, type: 2}
-  materialHashCode: 0
   m_Version: 1.1.0
   m_FaceInfo:
     m_FaceIndex: 0
@@ -38,6 +35,7 @@ MonoBehaviour:
     m_StrikethroughOffset: 0
     m_StrikethroughThickness: 0
     m_TabWidth: 0
+  m_Material: {fileID: 2100000, guid: d54c208fa35797c4caa3993376e32723, type: 2}
   spriteSheet: {fileID: 2800000, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   m_SpriteCharacterTable:
   - m_ElementType: 2
@@ -45,56 +43,48 @@ MonoBehaviour:
     m_GlyphIndex: 0
     m_Scale: 1
     m_Name: Attack Icon
-    m_HashCode: 502227619
   - m_ElementType: 2
     m_Unicode: 57345
     m_GlyphIndex: 1
     m_Scale: 1
     m_Name: Burn Icon
-    m_HashCode: -1089975744
   - m_ElementType: 2
     m_Unicode: 57346
     m_GlyphIndex: 2
     m_Scale: 1
     m_Name: Cleanse Icon
-    m_HashCode: -831836616
   - m_ElementType: 2
     m_Unicode: 57347
     m_GlyphIndex: 3
     m_Scale: 1
     m_Name: Freeze Icon
-    m_HashCode: 512502304
   - m_ElementType: 2
     m_Unicode: 57348
     m_GlyphIndex: 4
     m_Scale: 1
     m_Name: Heal Icon
-    m_HashCode: 479724235
   - m_ElementType: 2
     m_Unicode: 57349
     m_GlyphIndex: 5
     m_Scale: 1
     m_Name: Kinetic Shield Icon
-    m_HashCode: -1426757565
   - m_ElementType: 2
     m_Unicode: 57350
     m_GlyphIndex: 6
     m_Scale: 1
     m_Name: Shield Icon
-    m_HashCode: 198985492
   - m_ElementType: 2
     m_Unicode: 57351
     m_GlyphIndex: 7
     m_Scale: 1
     m_Name: Strength Icon
-    m_HashCode: -1581046482
-  m_SpriteGlyphTable:
+  m_GlyphTable:
   - m_Index: 0
     m_Metrics:
       m_Width: 325
       m_Height: 341
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 341
+      m_HorizontalBearingY: 275.1
       m_HorizontalAdvance: 325
     m_GlyphRect:
       m_X: 684
@@ -110,7 +100,7 @@ MonoBehaviour:
       m_Width: 346
       m_Height: 348
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 348
+      m_HorizontalBearingY: 313.8
       m_HorizontalAdvance: 346
     m_GlyphRect:
       m_X: 0
@@ -190,7 +180,7 @@ MonoBehaviour:
       m_Width: 252
       m_Height: 306
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 306
+      m_HorizontalBearingY: 260.6
       m_HorizontalAdvance: 252
     m_GlyphRect:
       m_X: 348
@@ -206,7 +196,7 @@ MonoBehaviour:
       m_Width: 286
       m_Height: 289
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 289
+      m_HorizontalBearingY: 261.9
       m_HorizontalAdvance: 286
     m_GlyphRect:
       m_X: 0
