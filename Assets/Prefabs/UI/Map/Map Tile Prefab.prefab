@@ -58,8 +58,8 @@ MonoBehaviour:
   arrowRight: {fileID: 2427844403442939250}
   arrowBottom: {fileID: 7898677891603883761}
   arrowLeft: {fileID: 8407788217964606773}
-  arrowColorCurrentTile: {r: 0.85068494, g: 1, b: 0.39999998, a: 1}
-  arrowColorOtherTiles: {r: 0.55, g: 0.55, b: 0.6, a: 0.9}
+  arrowColorCurrentTile: {r: 0.122641504, g: 0.0026463494, b: 0, a: 1}
+  arrowColorOtherTiles: {r: 0.25882354, g: 0.25882354, b: 0.32941177, a: 0.22745098}
   startTileColor: {r: 0.2, g: 0.85, b: 0.25, a: 1}
   bossTileColor: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   combatNormalColor: {r: 0.35, g: 0.35, b: 0.4, a: 1}
@@ -273,13 +273,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3178865174854417424}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.75, b: 0.75, a: 1}
+  m_Color: {r: 1, g: 0.75, b: 0.75, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
