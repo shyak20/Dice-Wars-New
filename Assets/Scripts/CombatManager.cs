@@ -158,6 +158,19 @@ public class CombatManager : MonoBehaviour
 
     private void InitializeEnemy()
     {
+        if (RunEncounterBuffer.TryConsumePendingEnemy(out var mapEnemy))
+        {
+            activeEnemy.Initialize(mapEnemy);
+            BindStatusBars();
+            return;
+        }
+
+        if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+        {
+            Debug.LogError("CombatManager: Map-based run expected a pending enemy from RunEncounterBuffer.");
+            return;
+        }
+
         if (RunManager.Instance != null)
         {
             var room = RunManager.Instance.CurrentRoom;
@@ -193,6 +206,8 @@ public class CombatManager : MonoBehaviour
         if (PlayerDataContainer.Instance == null) return;
         playerData = PlayerDataContainer.Instance.RuntimeData;
         ApplyTestStartingFaces();
+        if (RunManager.Instance != null)
+            RunManager.Instance.ApplyRunVitalityToPlayerIfAny(player);
         ResetStats();
         ChangeState(CombatState.WaitingForRoll);
     }
@@ -254,6 +269,8 @@ public class CombatManager : MonoBehaviour
     private void CalculateMaxPower()
     {
         maxPower = baseMaxPower;
+        if (RunManager.Instance != null)
+            maxPower += RunManager.Instance.RunShrineBonusMaxPower;
         if (playerData?.currentDeck != null)
         {
             for (int i = 2; i < playerData.currentDeck.Count; i++)

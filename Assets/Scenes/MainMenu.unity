@@ -1041,6 +1041,17 @@ MonoBehaviour:
   combatSceneName: FightScene
   shopSceneName: ShopScene
   mainMenuSceneName: MainMenu
+  useMapInsteadOfEncounterList: 1
+  mapSceneName: MapScene
+  mapActDefinitionsByAct:
+  - {fileID: 11400000, guid: c9f2b8f7ec3628b4ebc0460819251c78, type: 2}
+  - {fileID: 11400000, guid: 725dd13c93cb50d439dafa9ffbe6efac, type: 2}
+  - {fileID: 11400000, guid: 5d3f0d32aabaffa47aa4661c79e8ae3c, type: 2}
+  mapWeightNormal: 4
+  mapWeightShop: 2
+  mapWeightShrine: 2
+  mapWeightUnknown: 1
+  defaultRunMaxHp: 100
   gameIconIndex: {fileID: 11400000, guid: e7a9d94c00e44a54a8e1204408a75e96, type: 2}
 --- !u!4 &1943770114
 Transform:

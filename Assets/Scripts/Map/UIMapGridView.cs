@@ -13,6 +13,7 @@ public class UIMapGridView : MonoBehaviour
 
     private UIMapTileView[,] _tiles;
     private MapMovementManager _manager;
+    private MapPresentationSO _presentation;
 
     private void Awake()
     {
@@ -26,7 +27,7 @@ public class UIMapGridView : MonoBehaviour
             Debug.LogError("UIMapGridView: assign gridLayout (or add GridLayoutGroup to tilesParent).", this);
     }
 
-    public void Present(MapGrid grid, MapMovementManager manager)
+    public void Present(MapGrid grid, MapMovementManager manager, MapPresentationSO presentation = null)
     {
         if (grid == null || manager == null || tilesParent == null || tilePrefab == null || gridLayout == null)
             return;
@@ -36,6 +37,7 @@ public class UIMapGridView : MonoBehaviour
         DetachPlayerIconBeforeClearingTiles();
 
         _manager = manager;
+        _presentation = presentation;
         ClearChildren();
 
         gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -53,12 +55,28 @@ public class UIMapGridView : MonoBehaviour
                 _tiles[x, y] = view;
                 var isStart = manager.IsStart(cell);
                 var isBoss = manager.IsBoss(cell);
-                view.Setup(cell, tile, isStart, isBoss, manager);
+                view.Setup(cell, tile, isStart, isBoss, manager, presentation);
             }
         }
 
         RefreshPlayerIcon();
         RefreshArrowHighlights();
+    }
+
+    /// <summary>Re-applies tile visuals after <see cref="MapTile.eventConsumed"/> changes.</summary>
+    public void RefreshTile(MapGrid grid, Vector2Int cell)
+    {
+        if (grid == null || _tiles == null || _manager == null || !grid.Contains(cell))
+            return;
+        if (cell.x < 0 || cell.x >= _tiles.GetLength(0) || cell.y < 0 || cell.y >= _tiles.GetLength(1))
+            return;
+        var view = _tiles[cell.x, cell.y];
+        if (view == null)
+            return;
+        var tile = grid.Get(cell.x, cell.y);
+        var isStart = _manager.IsStart(cell);
+        var isBoss = _manager.IsBoss(cell);
+        view.Setup(cell, tile, isStart, isBoss, _manager, _presentation);
     }
 
     public void RefreshAllTileExits()

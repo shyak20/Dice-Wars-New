@@ -164,9 +164,16 @@ public class WinStageFlowController : MonoBehaviour
         if (winStagePanel != null)
             winStagePanel.SetActive(false);
 
-        if (RunManager.Instance != null)
-            RunManager.Instance.AdvanceToNextRoom();
-        else
+        if (RunManager.Instance == null)
+        {
             Debug.LogError("WinStageFlowController: RunManager missing — cannot advance.");
+            return;
+        }
+
+        var player = FindObjectOfType<PlayerStatus>();
+        if (player != null)
+            RunManager.Instance.CaptureRunVitalityFromPlayer(player);
+
+        RunManager.Instance.HandleVictoryContinueFromCombat();
     }
 }

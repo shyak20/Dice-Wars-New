@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9269c5f2bed249041a0d59bf9ef9677f, type: 3}
+  m_Name: Map Presentation Icons
+  m_EditorClassIdentifier: 
+  startTileIcon: {fileID: 0}
+  bossTileIcon: {fileID: 0}
+  combatNormalIcon: {fileID: 21300000, guid: da21dfef0c1019c4b9ad2dd3ff17d481, type: 3}
+  combatEliteIcon: {fileID: 21300000, guid: aadbddcce9eccea4f943317a2d000a81, type: 3}
+  combatBossIcon: {fileID: 21300000, guid: deb1c267c6e4540428bdf0eda091b861, type: 3}
+  shopIcon: {fileID: 21300000, guid: f1c1262013618084491c451046d7ebb0, type: 3}
+  unknownIcon: {fileID: 21300000, guid: 19618fabf9d74694897b81edd02a8375, type: 3}
+  shrineIcon: {fileID: 21300000, guid: f1012328c13c09c4c88833e8b97a4af8, type: 3}
+  visitedTileIcon: {fileID: 0}

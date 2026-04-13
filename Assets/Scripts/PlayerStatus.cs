@@ -23,6 +23,14 @@ public class PlayerStatus : MonoBehaviour
 
     public int GetCurrentHealth() => currentHealth;
 
+    /// <summary>Applies persisted run HP after loading the combat scene (see <see cref="RunManager"/>).</summary>
+    public void ApplyRunVitality(int hp, int maxHp)
+    {
+        maxHealth = Mathf.Max(1, maxHp);
+        currentHealth = Mathf.Clamp(hp, 1, maxHealth);
+        UpdateUI();
+    }
+
     public void Heal(int amount)
     {
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);

@@ -66,7 +66,12 @@ public class WinLoseUIController : MonoBehaviour
             return;
 
         if (RunManager.Instance != null)
-            RunManager.Instance.AdvanceToNextRoom();
+        {
+            if (RunManager.Instance.UseMapBasedRun)
+                RunManager.Instance.HandleVictoryContinueFromCombat();
+            else
+                RunManager.Instance.AdvanceToNextRoom();
+        }
         else
         {
             Debug.LogError("WinLoseUIController: RunManager not found! Falling back to main menu.");
@@ -81,6 +86,7 @@ public class WinLoseUIController : MonoBehaviour
 
     public void GoToMainMenu()
     {
+        RunEncounterBuffer.AbortPendingMapCombatState();
         SceneManager.LoadScene("MainMenu");
     }
 }

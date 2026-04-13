@@ -208,9 +208,15 @@ public class UIShopWindow : MonoBehaviour
 
     private void OnLeaveShop()
     {
-        if (RunManager.Instance != null)
-            RunManager.Instance.AdvanceToNextRoom();
-        else
+        if (RunManager.Instance == null)
+        {
             Debug.LogError("UIShopWindow: RunManager missing — cannot leave shop.");
+            return;
+        }
+
+        if (RunManager.Instance.UseMapBasedRun)
+            RunManager.Instance.ReturnToMapFromSubScene();
+        else
+            RunManager.Instance.AdvanceToNextRoom();
     }
 }

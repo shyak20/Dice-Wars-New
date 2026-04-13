@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 47f39be93aa91a64db3c96645f857392, type: 3}
-  m_Name: Map 1
+  m_Name: Encounter (Old)
   m_EditorClassIdentifier: 
   rooms:
   - roomType: 0

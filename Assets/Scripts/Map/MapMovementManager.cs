@@ -2,7 +2,8 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Run map: generation modes (multi-path or unique spanning tree), player steps, move limit, corruption, and auto-regen when the boss tile is reached.
+/// Run map: generation modes (multi-path or unique spanning tree), player steps, move limit, corruption,
+/// and map-event routing when <see cref="RunManager.UseMapBasedRun"/> is true.
 /// </summary>
 public sealed class MapMovementManager : MonoBehaviour
 {
@@ -14,10 +15,13 @@ public sealed class MapMovementManager : MonoBehaviour
     [Header("Connectivity")]
     [Tooltip("First map when the scene loads (or after RegenerateMap() from code).")]
     [SerializeField] private MapConnectivityMode initialMapMode = MapConnectivityMode.MultiPathRandom;
-    [Tooltip("After stepping on the boss tile, a new map is built with this mode. Use Unique Path for a single route start→boss.")]
+    [Tooltip("Acts 2–3 (index ≥ 1) use this connectivity when a new map is generated.")]
     [SerializeField] private MapConnectivityMode mapModeAfterBossReach = MapConnectivityMode.UniquePathSpanningTree;
     [SerializeField] private UIMapGridView mapView;
     [SerializeField] private UIMapMoveCounterUI moveCounterUI;
+    [Header("Presentation (map run)")]
+    [SerializeField] private MapPresentationSO mapPresentation;
+    [SerializeField] private MapShrineChoicePanel shrineChoicePanel;
 
     private MapGrid _grid;
     private System.Random _rng;
@@ -45,16 +49,27 @@ public sealed class MapMovementManager : MonoBehaviour
 
     private void Start()
     {
+        if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun &&
+            RunManager.Instance.TryRestorePersistedMap(out var restoredGrid, out var playerCell, out var moves))
+        {
+            _grid = restoredGrid;
+            PlayerGridPosition = playerCell;
+            MovesTaken = moves;
+            mapView?.Present(_grid, this, mapPresentation);
+            moveCounterUI?.Bind(this);
+            return;
+        }
+
         RegenerateMap();
     }
 
-    /// <summary>Rebuilds grid with <see cref="initialMapMode"/> and resets player at start.</summary>
+    /// <summary>Rebuilds grid and resets player at start. Act 1+ may use <see cref="mapModeAfterBossReach"/>.</summary>
     public void RegenerateMap()
     {
-        RegenerateMapInternal(false);
+        RegenerateMapInternal();
     }
 
-    private void RegenerateMapInternal(bool afterBossClear)
+    private void RegenerateMapInternal()
     {
         if (gridWidth < 2 || gridHeight < 2)
         {
@@ -62,12 +77,19 @@ public sealed class MapMovementManager : MonoBehaviour
             return;
         }
 
-        var mode = afterBossClear ? mapModeAfterBossReach : initialMapMode;
-        _grid = MapGridGenerator.Generate(gridWidth, gridHeight, _rng, mode);
+        var usePostFirstActMode = RunManager.Instance != null && RunManager.Instance.UseMapBasedRun &&
+                                  RunManager.Instance.CurrentActIndex > 0;
+        var mode = usePostFirstActMode ? mapModeAfterBossReach : initialMapMode;
+        var evtParams = RunManager.Instance != null && RunManager.Instance.UseMapBasedRun
+            ? RunManager.Instance.GetMapGenerationParamsForCurrentAct()
+            : MapGenerationEventsParams.Default;
+
+        _grid = MapGridGenerator.Generate(gridWidth, gridHeight, _rng, mode, MapGridGenerator.DefaultMaxRegenerateAttempts, evtParams);
+        RunManager.Instance?.OnNewMapGeneratedCleanupDraws();
         MovesTaken = 0;
         PlayerGridPosition = StartPosition;
 
-        mapView?.Present(_grid, this);
+        mapView?.Present(_grid, this, mapPresentation);
         moveCounterUI?.Bind(this);
     }
 
@@ -101,15 +123,76 @@ public sealed class MapMovementManager : MonoBehaviour
         }
 
         if (PlayerGridPosition == BossPosition)
-        {
             OnBossReached?.Invoke();
-            RegenerateMapInternal(true);
-            return true;
-        }
+
+        ResolveTileAfterMoveIfMapRun();
 
         mapView?.RefreshPlayerIcon();
         moveCounterUI?.Refresh();
         return true;
+    }
+
+    private void MarkCurrentTileConsumedAndRefresh()
+    {
+        var c = PlayerGridPosition;
+        var t = _grid.Get(c.x, c.y);
+        t.eventConsumed = true;
+        _grid.SetTile(c.x, c.y, t);
+        mapView?.RefreshTile(_grid, c);
+    }
+
+    private void ResolveTileAfterMoveIfMapRun()
+    {
+        if (RunManager.Instance == null || !RunManager.Instance.UseMapBasedRun || _grid == null)
+            return;
+
+        var tile = _grid.Get(PlayerGridPosition);
+        if (tile.eventConsumed)
+            return;
+
+        switch (tile.eventType)
+        {
+            case MapEventType.None:
+                MarkCurrentTileConsumedAndRefresh();
+                return;
+            case MapEventType.CombatNormal:
+                MarkCurrentTileConsumedAndRefresh();
+                RunManager.Instance.PersistAndLoadFightScene(_grid.Clone(), PlayerGridPosition, MovesTaken, EnemyRank.Normal, false);
+                return;
+            case MapEventType.CombatElite:
+                MarkCurrentTileConsumedAndRefresh();
+                RunManager.Instance.PersistAndLoadFightScene(_grid.Clone(), PlayerGridPosition, MovesTaken, EnemyRank.Elite, false);
+                return;
+            case MapEventType.CombatBoss:
+                MarkCurrentTileConsumedAndRefresh();
+                RunManager.Instance.PersistAndLoadFightScene(_grid.Clone(), PlayerGridPosition, MovesTaken, EnemyRank.Boss, true);
+                return;
+            case MapEventType.Shop:
+                MarkCurrentTileConsumedAndRefresh();
+                RunManager.Instance.PersistAndLoadShopScene(_grid.Clone(), PlayerGridPosition, MovesTaken);
+                return;
+            case MapEventType.Shrine:
+                if (shrineChoicePanel != null)
+                {
+                    MarkCurrentTileConsumedAndRefresh();
+                    shrineChoicePanel.OpenPanel();
+                }
+                else
+                    Debug.LogError("MapMovementManager: assign shrineChoicePanel for Shrine tiles.", this);
+                return;
+            case MapEventType.Unknown:
+            {
+                MarkCurrentTileConsumedAndRefresh();
+                var unknown = RunManager.Instance.DrawUnknownMapEvent();
+                if (unknown != null)
+                    Debug.Log($"Unknown tile: {unknown.DisplayLabel}" + (string.IsNullOrEmpty(unknown.description) ? "" : $" — {unknown.description}"));
+                else
+                    Debug.Log("Unknown tile: no possibleUnknownEvents configured for this act.");
+                return;
+            }
+            default:
+                return;
+        }
     }
 
     public bool IsBoss(Vector2Int cell) => cell == BossPosition;

@@ -62,11 +62,15 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.55, g: 0.55, b: 0.6, a: 0.9}
   startTileColor: {r: 0.2, g: 0.85, b: 0.25, a: 1}
   bossTileColor: {r: 0.9, g: 0.15, b: 0.15, a: 1}
-  combatColor: {r: 0.35, g: 0.35, b: 0.4, a: 1}
+  combatNormalColor: {r: 0.35, g: 0.35, b: 0.4, a: 1}
+  combatEliteColor: {r: 0.65, g: 0.35, b: 0.55, a: 1}
+  combatBossColor: {r: 0.55, g: 0.1, b: 0.1, a: 1}
   shopColor: {r: 0.45, g: 0.55, b: 0.75, a: 1}
-  treasureColor: {r: 0.85, g: 0.7, b: 0.2, a: 1}
-  mysteryColor: {r: 0.55, g: 0.35, b: 0.65, a: 1}
+  unknownColor: {r: 0.45, g: 0.45, b: 0.5, a: 1}
+  shrineColor: {r: 0.55, g: 0.75, b: 0.5, a: 1}
+  noneTileColor: {r: 0.32, g: 0.34, b: 0.38, a: 1}
   nodeTypeLabel: {fileID: 0}
+  eventIconImage: {fileID: 8305204956806355480}
 --- !u!1 &2285730536328856891
 GameObject:
   m_ObjectHideFlags: 0
@@ -84,7 +88,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2214673038886398419
 RectTransform:
   m_ObjectHideFlags: 0

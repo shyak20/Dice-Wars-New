@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>One map cell: background color, optional node label, exit arrows, click to move.</summary>
+/// <summary>One map cell: background color, optional node label, event icon, exit arrows, click to move.</summary>
 public class UIMapTileView : MonoBehaviour
 {
     [SerializeField] private Image backgroundImage;
@@ -18,12 +18,16 @@ public class UIMapTileView : MonoBehaviour
     [Header("Tile colors")]
     [SerializeField] private Color startTileColor = new Color(0.2f, 0.85f, 0.25f, 1f);
     [SerializeField] private Color bossTileColor = new Color(0.9f, 0.15f, 0.15f, 1f);
-    [SerializeField] private Color combatColor = new Color(0.35f, 0.35f, 0.4f, 1f);
+    [SerializeField] private Color combatNormalColor = new Color(0.35f, 0.35f, 0.4f, 1f);
+    [SerializeField] private Color combatEliteColor = new Color(0.65f, 0.35f, 0.55f, 1f);
+    [SerializeField] private Color combatBossColor = new Color(0.55f, 0.1f, 0.1f, 1f);
     [SerializeField] private Color shopColor = new Color(0.45f, 0.55f, 0.75f, 1f);
-    [SerializeField] private Color treasureColor = new Color(0.85f, 0.7f, 0.2f, 1f);
-    [SerializeField] private Color mysteryColor = new Color(0.55f, 0.35f, 0.65f, 1f);
+    [SerializeField] private Color unknownColor = new Color(0.45f, 0.45f, 0.5f, 1f);
+    [SerializeField] private Color shrineColor = new Color(0.55f, 0.75f, 0.5f, 1f);
+    [SerializeField] private Color noneTileColor = new Color(0.32f, 0.34f, 0.38f, 1f);
     [Header("Optional")]
     [SerializeField] private TMP_Text nodeTypeLabel;
+    [SerializeField] private Image eventIconImage;
 
     private Vector2Int _cell;
     private MapMovementManager _manager;
@@ -38,7 +42,8 @@ public class UIMapTileView : MonoBehaviour
             Debug.LogError("UIMapTileView: assign clickButton.", this);
     }
 
-    public void Setup(Vector2Int cell, MapTile tile, bool isStart, bool isBoss, MapMovementManager manager)
+    public void Setup(Vector2Int cell, MapTile tile, bool isStart, bool isBoss, MapMovementManager manager,
+        MapPresentationSO presentation)
     {
         _cell = cell;
         _manager = manager;
@@ -56,17 +61,46 @@ public class UIMapTileView : MonoBehaviour
             else if (isBoss)
                 backgroundImage.color = bossTileColor;
             else
-                backgroundImage.color = ColorForNodeType(tile.nodeType);
+                backgroundImage.color = ColorForEventType(tile.eventType);
         }
 
         if (nodeTypeLabel != null)
         {
-            if (isStart)
+            if (tile.eventConsumed)
+                nodeTypeLabel.text = presentation != null && presentation.visitedTileIcon != null ? "" : "V";
+            else if (isStart)
                 nodeTypeLabel.text = "Start";
             else if (isBoss)
                 nodeTypeLabel.text = "Boss";
             else
-                nodeTypeLabel.text = tile.nodeType.ToString();
+                nodeTypeLabel.text = tile.eventType.ToString();
+        }
+
+        if (eventIconImage != null)
+        {
+            if (tile.eventConsumed)
+            {
+                if (presentation != null && presentation.visitedTileIcon != null)
+                {
+                    eventIconImage.sprite = presentation.visitedTileIcon;
+                    eventIconImage.enabled = true;
+                }
+                else
+                    eventIconImage.enabled = false;
+            }
+            else if (presentation != null)
+            {
+                var sp = presentation.GetEventIcon(tile.eventType, isStart, isBoss);
+                if (sp != null)
+                {
+                    eventIconImage.sprite = sp;
+                    eventIconImage.enabled = true;
+                }
+                else
+                    eventIconImage.enabled = false;
+            }
+            else
+                eventIconImage.enabled = false;
         }
 
         _playerOnThisTile = manager != null && cell == manager.PlayerGridPosition;
@@ -108,15 +142,18 @@ public class UIMapTileView : MonoBehaviour
             graphic.color = _playerOnThisTile ? arrowColorCurrentTile : arrowColorOtherTiles;
     }
 
-    private Color ColorForNodeType(MapNodeType t)
+    private Color ColorForEventType(MapEventType t)
     {
         return t switch
         {
-            MapNodeType.Combat => combatColor,
-            MapNodeType.Shop => shopColor,
-            MapNodeType.Treasure => treasureColor,
-            MapNodeType.Mystery => mysteryColor,
-            _ => combatColor
+            MapEventType.CombatNormal => combatNormalColor,
+            MapEventType.CombatElite => combatEliteColor,
+            MapEventType.CombatBoss => combatBossColor,
+            MapEventType.Shop => shopColor,
+            MapEventType.Unknown => unknownColor,
+            MapEventType.Shrine => shrineColor,
+            MapEventType.None => noneTileColor,
+            _ => combatNormalColor
         };
     }
 

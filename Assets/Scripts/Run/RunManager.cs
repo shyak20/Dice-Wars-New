@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,11 +12,44 @@ public class RunManager : MonoBehaviour
     [SerializeField] private string shopSceneName = "ShopScene";
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+    [Header("Map-based run")]
+    [Tooltip("When true, StartRun() loads the map scene instead of the encounter list.")]
+    [SerializeField] private bool useMapInsteadOfEncounterList;
+    [SerializeField] private string mapSceneName = "MapScene";
+    [SerializeField] private MapActDefinitionSO[] mapActDefinitionsByAct = new MapActDefinitionSO[3];
+    [SerializeField, Min(0)] private int mapWeightNormal = 4;
+    [SerializeField, Min(0)] private int mapWeightShop = 2;
+    [SerializeField, Min(0)] private int mapWeightShrine = 2;
+    [SerializeField, Min(0)] private int mapWeightUnknown = 1;
+    [SerializeField, Min(1)] private int defaultRunMaxHp = 100;
+
     [Header("UI")]
     [Tooltip("Register once for shop/reward/menu scenes; combat can also assign on CombatManager.")]
     [SerializeField] private GameIconIndexSO gameIconIndex;
 
     private int currentRoomIndex;
+    private bool _useMapBasedRun;
+    private int _currentActIndex;
+    private int _runShrineBonusMaxPower;
+    private bool _runVitalityInitialized;
+    private int _runCurrentHp;
+    private int _runMaxHp;
+
+    private MapGrid _persistedMapGrid;
+    private Vector2Int _persistedPlayerCell;
+    private int _persistedMovesTaken;
+    private bool _hasPersistedMapState;
+
+    private readonly System.Random _enemyDrawRng = new System.Random();
+    private readonly Dictionary<EnemyRank, HashSet<EnemyTypeSO>> _drawnUniquesThisMap = new Dictionary<EnemyRank, HashSet<EnemyTypeSO>>();
+    private readonly HashSet<UnknownMapEventSO> _drawnUnknownThisMap = new HashSet<UnknownMapEventSO>();
+    private readonly List<EnemyTypeSO> _enemyDrawScratch = new List<EnemyTypeSO>();
+    private readonly List<UnknownMapEventSO> _unknownValidScratch = new List<UnknownMapEventSO>();
+    private readonly List<UnknownMapEventSO> _unknownUnusedScratch = new List<UnknownMapEventSO>();
+
+    public bool UseMapBasedRun => _useMapBasedRun;
+    public int CurrentActIndex => _currentActIndex;
+    public int RunShrineBonusMaxPower => _runShrineBonusMaxPower;
 
     public RoomDefinition CurrentRoom
     {
@@ -29,7 +64,7 @@ public class RunManager : MonoBehaviour
         }
     }
 
-    public bool HasNextRoom => currentRoomIndex < encounterList.rooms.Count - 1;
+    public bool HasNextRoom => encounterList != null && currentRoomIndex < encounterList.rooms.Count - 1;
 
     private void Awake()
     {
@@ -42,8 +77,8 @@ public class RunManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        if (encounterList == null)
-            Debug.LogError("RunManager: encounterList is not assigned!");
+        if (encounterList == null && !useMapInsteadOfEncounterList)
+            Debug.LogError("RunManager: encounterList is not assigned (required when not using map run).");
 
         if (gameIconIndex != null)
             GameIconCatalog.Register(gameIconIndex);
@@ -51,16 +86,319 @@ public class RunManager : MonoBehaviour
 
     public void StartRun()
     {
+        if (RunEconomyManager.Instance != null)
+            RunEconomyManager.Instance.ResetEconomyForNewRun();
+
+        if (useMapInsteadOfEncounterList)
+        {
+            StartMapBasedRunInternal();
+            return;
+        }
+
         if (encounterList == null || encounterList.rooms.Count == 0)
         {
             Debug.LogError("RunManager: Cannot start run — encounter list is empty or null!");
             return;
         }
 
+        _useMapBasedRun = false;
         currentRoomIndex = 0;
-        if (RunEconomyManager.Instance != null)
-            RunEconomyManager.Instance.ResetEconomyForNewRun();
         LoadCurrentRoom();
+    }
+
+    private void StartMapBasedRunInternal()
+    {
+        if (mapActDefinitionsByAct == null || mapActDefinitionsByAct.Length < 3)
+        {
+            Debug.LogError("RunManager: mapActDefinitionsByAct must have 3 entries (one per act).");
+            return;
+        }
+
+        for (var i = 0; i < 3; i++)
+        {
+            if (mapActDefinitionsByAct[i] == null)
+            {
+                Debug.LogError($"RunManager: mapActDefinitionsByAct[{i}] is not assigned.");
+                return;
+            }
+        }
+
+        if (string.IsNullOrEmpty(mapSceneName))
+        {
+            Debug.LogError("RunManager: mapSceneName is not assigned.");
+            return;
+        }
+
+        _useMapBasedRun = true;
+        _currentActIndex = 0;
+        _runShrineBonusMaxPower = 0;
+        _runVitalityInitialized = false;
+        ClearMapPersistenceForNewAct();
+        ClearMapEncounterDrawState();
+        currentRoomIndex = 0;
+
+        SceneManager.LoadScene(mapSceneName);
+    }
+
+    public MapGenerationEventsParams GetMapGenerationParamsForCurrentAct()
+    {
+        var act = GetActDefinitionOrThrow();
+        return new MapGenerationEventsParams
+        {
+            EliteMinCount = act.eliteMinOnMap,
+            EliteMaxCount = act.eliteMaxOnMap,
+            WeightNormal = mapWeightNormal,
+            WeightShop = mapWeightShop,
+            WeightShrine = mapWeightShrine,
+            WeightUnknown = mapWeightUnknown
+        };
+    }
+
+    public void OnNewMapGeneratedCleanupDraws()
+    {
+        if (!_useMapBasedRun)
+            return;
+        _drawnUniquesThisMap.Clear();
+        _drawnUnknownThisMap.Clear();
+    }
+
+    public void SaveMapPersistence(MapGrid gridClone, Vector2Int playerCell, int movesTaken)
+    {
+        _persistedMapGrid = gridClone ?? throw new ArgumentNullException(nameof(gridClone));
+        _persistedPlayerCell = playerCell;
+        _persistedMovesTaken = movesTaken;
+        _hasPersistedMapState = true;
+    }
+
+    public bool TryRestorePersistedMap(out MapGrid grid, out Vector2Int playerCell, out int movesTaken)
+    {
+        if (!_hasPersistedMapState || _persistedMapGrid == null)
+        {
+            grid = null;
+            playerCell = default;
+            movesTaken = 0;
+            return false;
+        }
+
+        grid = _persistedMapGrid;
+        playerCell = _persistedPlayerCell;
+        movesTaken = _persistedMovesTaken;
+        _persistedMapGrid = null;
+        _hasPersistedMapState = false;
+        return true;
+    }
+
+    public void ClearMapPersistenceForNewAct()
+    {
+        _persistedMapGrid = null;
+        _hasPersistedMapState = false;
+    }
+
+    public void PersistAndLoadFightScene(MapGrid grid, Vector2Int playerCell, int movesTaken, EnemyRank rank,
+        bool isBossEndTile)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.PersistAndLoadFightScene: not in map-based run.");
+            return;
+        }
+
+        var enemy = DrawEnemyForMapCombat(rank);
+        SaveMapPersistence(grid, playerCell, movesTaken);
+        RunEncounterBuffer.SetPendingCombat(enemy, isBossEndTile);
+        SceneManager.LoadScene(combatSceneName);
+    }
+
+    public void PersistAndLoadShopScene(MapGrid grid, Vector2Int playerCell, int movesTaken)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.PersistAndLoadShopScene: not in map-based run.");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(shopSceneName))
+        {
+            Debug.LogError("RunManager: shopSceneName is not assigned.");
+            return;
+        }
+
+        SaveMapPersistence(grid, playerCell, movesTaken);
+        SceneManager.LoadScene(shopSceneName);
+    }
+
+    public void ReturnToMapFromSubScene()
+    {
+        if (string.IsNullOrEmpty(mapSceneName))
+        {
+            Debug.LogError("RunManager: mapSceneName is not assigned.");
+            return;
+        }
+
+        SceneManager.LoadScene(mapSceneName);
+    }
+
+    public EnemyTypeSO DrawEnemyForMapCombat(EnemyRank rank)
+    {
+        var act = GetActDefinitionOrThrow();
+        act.CollectEnemiesForRank(rank, _enemyDrawScratch);
+        var valid = _enemyDrawScratch;
+
+        if (valid.Count == 0)
+            throw new InvalidOperationException(
+                $"RunManager: act {_currentActIndex} has no enemies with rank {rank} in possibleEnemies.");
+
+        if (!_drawnUniquesThisMap.TryGetValue(rank, out var used))
+        {
+            used = new HashSet<EnemyTypeSO>();
+            _drawnUniquesThisMap[rank] = used;
+        }
+
+        var unused = new List<EnemyTypeSO>();
+        foreach (var e in valid)
+        {
+            if (!used.Contains(e))
+                unused.Add(e);
+        }
+
+        EnemyTypeSO pick;
+        if (unused.Count > 0)
+        {
+            pick = unused[_enemyDrawRng.Next(unused.Count)];
+            used.Add(pick);
+        }
+        else
+        {
+            pick = valid[_enemyDrawRng.Next(valid.Count)];
+        }
+
+        return pick;
+    }
+
+    public void ClearMapEncounterDrawState()
+    {
+        _drawnUniquesThisMap.Clear();
+        _drawnUnknownThisMap.Clear();
+    }
+
+    /// <summary>
+    /// Picks an unknown event for the current act (unique entries preferred until the pool is exhausted).
+    /// Returns null if the act defines no unknown events.
+    /// </summary>
+    public UnknownMapEventSO DrawUnknownMapEvent()
+    {
+        var act = GetActDefinitionOrThrow();
+        _unknownValidScratch.Clear();
+        if (act.possibleUnknownEvents != null)
+        {
+            foreach (var u in act.possibleUnknownEvents)
+            {
+                if (u != null)
+                    _unknownValidScratch.Add(u);
+            }
+        }
+
+        if (_unknownValidScratch.Count == 0)
+            return null;
+
+        _unknownUnusedScratch.Clear();
+        foreach (var u in _unknownValidScratch)
+        {
+            if (!_drawnUnknownThisMap.Contains(u))
+                _unknownUnusedScratch.Add(u);
+        }
+
+        UnknownMapEventSO pick;
+        if (_unknownUnusedScratch.Count > 0)
+        {
+            pick = _unknownUnusedScratch[_enemyDrawRng.Next(_unknownUnusedScratch.Count)];
+            _drawnUnknownThisMap.Add(pick);
+        }
+        else
+        {
+            pick = _unknownValidScratch[_enemyDrawRng.Next(_unknownValidScratch.Count)];
+        }
+
+        return pick;
+    }
+
+    public void ApplyRunVitalityToPlayerIfAny(PlayerStatus player)
+    {
+        if (player == null || !_runVitalityInitialized)
+            return;
+        player.ApplyRunVitality(_runCurrentHp, _runMaxHp);
+    }
+
+    public void CaptureRunVitalityFromPlayer(PlayerStatus player)
+    {
+        if (player == null)
+            return;
+        _runCurrentHp = player.GetCurrentHealth();
+        _runMaxHp = player.maxHealth;
+        _runVitalityInitialized = true;
+    }
+
+    public void ApplyShrineHeal(int amount)
+    {
+        if (amount <= 0)
+            return;
+        EnsureRunVitalityBaseline();
+        _runCurrentHp = Mathf.Min(_runCurrentHp + amount, _runMaxHp);
+    }
+
+    public void ApplyShrineMaxPowerBonus(int amount)
+    {
+        if (amount <= 0)
+            return;
+        _runShrineBonusMaxPower += amount;
+    }
+
+    public void HandleVictoryContinueFromCombat()
+    {
+        if (!_useMapBasedRun)
+        {
+            AdvanceToNextRoom();
+            return;
+        }
+
+        var wasBoss = RunEncounterBuffer.TakeAndClearWasBossFight();
+        if (wasBoss)
+        {
+            if (_currentActIndex >= 2)
+            {
+                _useMapBasedRun = false;
+                EndRun();
+                return;
+            }
+
+            _currentActIndex++;
+            ClearMapPersistenceForNewAct();
+            ClearMapEncounterDrawState();
+            SceneManager.LoadScene(mapSceneName);
+            return;
+        }
+
+        ReturnToMapFromSubScene();
+    }
+
+    private void EnsureRunVitalityBaseline()
+    {
+        if (_runVitalityInitialized)
+            return;
+        _runMaxHp = defaultRunMaxHp;
+        _runCurrentHp = _runMaxHp;
+        _runVitalityInitialized = true;
+    }
+
+    private MapActDefinitionSO GetActDefinitionOrThrow()
+    {
+        if (mapActDefinitionsByAct == null || mapActDefinitionsByAct.Length == 0)
+            throw new InvalidOperationException("RunManager: mapActDefinitionsByAct is not configured.");
+        var i = Mathf.Clamp(_currentActIndex, 0, mapActDefinitionsByAct.Length - 1);
+        var p = mapActDefinitionsByAct[i];
+        if (p == null)
+            throw new InvalidOperationException($"RunManager: mapActDefinitionsByAct[{i}] is null.");
+        return p;
     }
 
     public void AdvanceToNextRoom()

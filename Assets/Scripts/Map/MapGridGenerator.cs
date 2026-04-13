@@ -13,14 +13,6 @@ public enum MapConnectivityMode
 /// <summary>Map generation: multi-path random or unique-path spanning tree.</summary>
 public static class MapGridGenerator
 {
-    private static readonly MapNodeType[] NodeTypes =
-    {
-        MapNodeType.Combat,
-        MapNodeType.Shop,
-        MapNodeType.Treasure,
-        MapNodeType.Mystery
-    };
-
     public const int DefaultMaxRegenerateAttempts = 5000;
 
     /// <summary>Start = (0,0), end = (width-1, height-1).</summary>
@@ -30,6 +22,18 @@ public static class MapGridGenerator
         System.Random rng,
         MapConnectivityMode mode = MapConnectivityMode.MultiPathRandom,
         int maxAttempts = DefaultMaxRegenerateAttempts)
+    {
+        return Generate(width, height, rng, mode, maxAttempts, MapGenerationEventsParams.Default);
+    }
+
+    /// <summary>Start = (0,0), end = (width-1, height-1). Assigns <see cref="MapEventType"/> per <paramref name="mapEvents"/>.</summary>
+    public static MapGrid Generate(
+        int width,
+        int height,
+        System.Random rng,
+        MapConnectivityMode mode,
+        int maxAttempts,
+        MapGenerationEventsParams mapEvents)
     {
         if (rng == null) throw new ArgumentNullException(nameof(rng));
         if (width < 2 || height < 2)
@@ -43,7 +47,7 @@ public static class MapGridGenerator
             var treeGrid = GenerateUniquePathSpanningTree(width, height, rng);
             EnsureNoIsolatedNonEndTiles(treeGrid, end, rng);
             EnsureEveryTileReachableFromStart(treeGrid, start, rng);
-            AssignRandomNodeTypes(treeGrid, rng, start, end);
+            AssignMapEventTypes(treeGrid, rng, start, end, mapEvents);
             StripEndTileExits(treeGrid, end);
             return treeGrid;
         }
@@ -56,7 +60,7 @@ public static class MapGridGenerator
             EnsureBidirectionalExits(grid);
             EnsureNoIsolatedNonEndTiles(grid, end, rng);
             EnsureEveryTileReachableFromStart(grid, start, rng);
-            AssignRandomNodeTypes(grid, rng, start, end);
+            AssignMapEventTypes(grid, rng, start, end, mapEvents);
             if (!MapPathfinding.HasPath(grid, start, end))
                 continue;
             StripEndTileExits(grid, end);
@@ -363,20 +367,101 @@ public static class MapGridGenerator
         grid.SetTile(endCell.x, endCell.y, t);
     }
 
-    private static void AssignRandomNodeTypes(MapGrid grid, System.Random rng, Vector2Int start, Vector2Int end)
+    /// <summary>Start stays <see cref="MapEventType.None"/>; end is <see cref="MapEventType.CombatBoss"/>; elites are not orthogonally adjacent.</summary>
+    private static void AssignMapEventTypes(MapGrid grid, System.Random rng, Vector2Int start, Vector2Int end, MapGenerationEventsParams p)
     {
         for (var y = 0; y < grid.Height; y++)
         {
             for (var x = 0; x < grid.Width; x++)
             {
-                var p = new Vector2Int(x, y);
-                if (p == start || p == end)
-                    continue;
                 var t = grid.Get(x, y);
-                t.nodeType = NodeTypes[rng.Next(NodeTypes.Length)];
+                t.eventType = MapEventType.None;
                 grid.SetTile(x, y, t);
             }
         }
+
+        var tEnd = grid.Get(end.x, end.y);
+        tEnd.eventType = MapEventType.CombatBoss;
+        grid.SetTile(end.x, end.y, tEnd);
+
+        var candidates = new List<Vector2Int>();
+        for (var y = 0; y < grid.Height; y++)
+        {
+            for (var x = 0; x < grid.Width; x++)
+            {
+                var pos = new Vector2Int(x, y);
+                if (pos == start || pos == end)
+                    continue;
+                candidates.Add(pos);
+            }
+        }
+
+        Shuffle(candidates, rng);
+
+        var eliteMin = Mathf.Max(0, p.EliteMinCount);
+        var eliteMax = Mathf.Max(eliteMin, p.EliteMaxCount);
+        var eliteTarget = rng.Next(eliteMin, eliteMax + 1);
+        eliteTarget = Mathf.Min(eliteTarget, candidates.Count);
+
+        var eliteCells = new HashSet<Vector2Int>();
+        foreach (var c in candidates)
+        {
+            if (eliteCells.Count >= eliteTarget)
+                break;
+            if (HasOrthogonalNeighborInSet(c, eliteCells))
+                continue;
+            eliteCells.Add(c);
+        }
+
+        if (eliteCells.Count < eliteMin)
+            Debug.LogWarning(
+                $"MapGridGenerator: placed {eliteCells.Count} elite tile(s) but elite min was {eliteMin} (grid {grid.Width}×{grid.Height}).");
+
+        foreach (var e in eliteCells)
+        {
+            var t = grid.Get(e.x, e.y);
+            t.eventType = MapEventType.CombatElite;
+            grid.SetTile(e.x, e.y, t);
+        }
+
+        foreach (var c in candidates)
+        {
+            if (eliteCells.Contains(c))
+                continue;
+            var t = grid.Get(c.x, c.y);
+            t.eventType = PickNonEliteEventType(p, rng);
+            grid.SetTile(c.x, c.y, t);
+        }
+    }
+
+    private static bool HasOrthogonalNeighborInSet(Vector2Int c, HashSet<Vector2Int> set)
+    {
+        return set.Contains(c + new Vector2Int(1, 0))
+               || set.Contains(c + new Vector2Int(-1, 0))
+               || set.Contains(c + new Vector2Int(0, 1))
+               || set.Contains(c + new Vector2Int(0, -1));
+    }
+
+    private static MapEventType PickNonEliteEventType(MapGenerationEventsParams p, System.Random rng)
+    {
+        var wN = Mathf.Max(0, p.WeightNormal);
+        var wShop = Mathf.Max(0, p.WeightShop);
+        var wShrine = Mathf.Max(0, p.WeightShrine);
+        var wUnk = Mathf.Max(0, p.WeightUnknown);
+        var total = wN + wShop + wShrine + wUnk;
+        if (total <= 0)
+            return MapEventType.CombatNormal;
+
+        var r = rng.Next(total);
+        if (r < wN)
+            return MapEventType.CombatNormal;
+        r -= wN;
+        if (r < wShop)
+            return MapEventType.Shop;
+        r -= wShop;
+        if (r < wShrine)
+            return MapEventType.Shrine;
+        return MapEventType.Unknown;
     }
 
     private static void Shuffle<T>(IList<T> list, System.Random rng)

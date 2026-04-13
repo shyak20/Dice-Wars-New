@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-/// <summary>Width × height map with per-tile directed exits and node types.</summary>
+/// <summary>Width × height map with per-tile directed exits and event types.</summary>
 public sealed class MapGrid
 {
     private readonly MapTile[] _tiles;
@@ -38,11 +38,11 @@ public sealed class MapGrid
         _tiles[i] = t;
     }
 
-    public void SetNodeType(int x, int y, MapNodeType type)
+    public void SetEventType(int x, int y, MapEventType type)
     {
         var i = Index(x, y);
         var t = _tiles[i];
-        t.nodeType = type;
+        t.eventType = type;
         _tiles[i] = t;
     }
 
