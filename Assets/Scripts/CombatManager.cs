@@ -60,6 +60,7 @@ public class CombatManager : MonoBehaviour
     private int maxRolls;
     private bool currentBatchIsFirstRollOfTurn;
     private bool _appliedTestStartingFaces;
+    private RelicRuntimeState _relicRuntime;
 
     private readonly TurnRegistry _turnRegistry = new TurnRegistry();
 
@@ -208,8 +209,26 @@ public class CombatManager : MonoBehaviour
         ApplyTestStartingFaces();
         if (RunManager.Instance != null)
             RunManager.Instance.ApplyRunVitalityToPlayerIfAny(player);
+        _relicRuntime = new RelicRuntimeState();
         ResetStats();
+        RelicActionRunner.RunPhase(this, RelicPhases.CombatStart);
         ChangeState(CombatState.WaitingForRoll);
+    }
+
+    public GameActionContext BuildRelicContext(FaceResult face)
+    {
+        return new GameActionContext
+        {
+            CombatManager = this,
+            Player = player,
+            Enemy = activeEnemy,
+            ChanneledFaces = channeledFaces,
+            TriggeringFace = face,
+            PlayerData = playerData,
+            RelicRuntime = _relicRuntime,
+            CurrentPower = currentPower,
+            MaxPower = maxPower
+        };
     }
 
     private void ResetStats()
@@ -218,7 +237,8 @@ public class CombatManager : MonoBehaviour
         selectedDice.Clear();
         channeledFaces.Clear();
         overchargeBonus = 0;
-        appliedMultiplier = StartStrikeMultiplier;
+        var relicPerfectReset = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
+        appliedMultiplier = relicPerfectReset > 0 ? Mathf.Max(StartStrikeMultiplier, relicPerfectReset) : StartStrikeMultiplier;
         bustProtected = false;
         immune = false;
         thorns = 0;
@@ -280,6 +300,8 @@ public class CombatManager : MonoBehaviour
                     maxPower += die.MaxPowerContribution;
             }
         }
+
+        maxPower += RelicActionRunner.QueryIntSum(RelicPhases.QueryMaxPowerBonus, this);
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
     }
@@ -343,12 +365,24 @@ public class CombatManager : MonoBehaviour
             }
         }
 
+        var relicModifyCtx = BuildRelicContext(result);
+        relicModifyCtx.RelicPhase = RelicPhases.ModifyFaceResult;
+        relicModifyCtx.CurrentPower = currentPower;
+        relicModifyCtx.MaxPower = maxPower;
+        RelicActionRunner.ExecuteAllRelics(relicModifyCtx);
+
         _turnRegistry.RecordResolvedFace(result);
 
         PopulateActionPoolContributions(result);
 
         channeledFaces.Add(result);
         currentPower += modifiedValue;
+
+        var relicAfterPowerCtx = BuildRelicContext(result);
+        relicAfterPowerCtx.RelicPhase = RelicPhases.AfterPowerChangedFromRoll;
+        relicAfterPowerCtx.CurrentPower = currentPower;
+        relicAfterPowerCtx.MaxPower = maxPower;
+        RelicActionRunner.ExecuteAllRelics(relicAfterPowerCtx);
 
         // Immediate action execution (all actions on this face, in order)
         if (result.ActivateImmediately && result.Actions.Count > 0)
@@ -535,9 +569,15 @@ public class CombatManager : MonoBehaviour
 
     private void CheckBustStatus()
     {
-        if (currentPower == maxPower)
+        var perfectAtMax = currentPower == maxPower;
+        var perfectAtMaxMinusOne = maxPower > 1 && currentPower == maxPower - 1 &&
+                                   RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this);
+        if (perfectAtMax || perfectAtMaxMinusOne)
         {
             var poolsBefore = SnapshotPools();
+            var relicPerfect = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
+            if (relicPerfect > 0)
+                appliedMultiplier = Mathf.Max(appliedMultiplier, relicPerfect);
             appliedMultiplier += overchargeBonus;
             int jackpotMultiplier = appliedMultiplier;
             foreach (var face in channeledFaces)
@@ -550,6 +590,7 @@ public class CombatManager : MonoBehaviour
             bonusDamageFromActions *= appliedMultiplier;
             bonusArmorFromActions *= appliedMultiplier;
             activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
+            RelicActionRunner.RunPhase(this, RelicPhases.OnPerfectStrike);
             var poolsAfter = SnapshotPools();
             if (CheckVictory())
             {
@@ -567,6 +608,12 @@ public class CombatManager : MonoBehaviour
         }
         else if (currentPower > maxPower)
         {
+            if (RelicActionRunner.TryConsumeFreeBust(this))
+            {
+                SubmitTurn();
+                return;
+            }
+
             if (bustProtected) SubmitTurn();
             else if (_turnRegistry.SupernovaBustOverrideActive)
             {
@@ -730,7 +777,8 @@ public class CombatManager : MonoBehaviour
         channeledFaces.Clear();
         turnEndActions.Clear();
         overchargeBonus = 0;
-        appliedMultiplier = StartStrikeMultiplier;
+        var relicPerfectTurn = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
+        appliedMultiplier = relicPerfectTurn > 0 ? Mathf.Max(StartStrikeMultiplier, relicPerfectTurn) : StartStrikeMultiplier;
         bustProtected = false; immune = false; thorns = 0;
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();

@@ -475,7 +475,8 @@ public static class MapGridGenerator
         var wShop = Mathf.Max(0, p.WeightShop);
         var wShrine = Mathf.Max(0, p.WeightShrine);
         var wUnk = Mathf.Max(0, p.WeightUnknown);
-        var total = wN + wShop + wShrine + wUnk;
+        var wTreasure = Mathf.Max(0, p.WeightTreasure);
+        var total = wN + wShop + wShrine + wUnk + wTreasure;
         if (total <= 0)
             return MapEventType.CombatNormal;
 
@@ -488,7 +489,10 @@ public static class MapGridGenerator
         r -= wShop;
         if (r < wShrine)
             return MapEventType.Shrine;
-        return MapEventType.Unknown;
+        r -= wShrine;
+        if (r < wUnk)
+            return MapEventType.Unknown;
+        return MapEventType.Treasure;
     }
 
     /// <summary>Remaining fillers after fixed shop tiles: normal / shrine / unknown only.</summary>
@@ -497,7 +501,8 @@ public static class MapGridGenerator
         var wN = Mathf.Max(0, p.WeightNormal);
         var wShrine = Mathf.Max(0, p.WeightShrine);
         var wUnk = Mathf.Max(0, p.WeightUnknown);
-        var total = wN + wShrine + wUnk;
+        var wTreasure = Mathf.Max(0, p.WeightTreasure);
+        var total = wN + wShrine + wUnk + wTreasure;
         if (total <= 0)
             return MapEventType.CombatNormal;
 
@@ -507,7 +512,10 @@ public static class MapGridGenerator
         r -= wN;
         if (r < wShrine)
             return MapEventType.Shrine;
-        return MapEventType.Unknown;
+        r -= wShrine;
+        if (r < wUnk)
+            return MapEventType.Unknown;
+        return MapEventType.Treasure;
     }
 
     private static void Shuffle<T>(IList<T> list, System.Random rng)

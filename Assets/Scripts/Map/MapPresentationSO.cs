@@ -16,6 +16,7 @@ public class MapPresentationSO : ScriptableObject
     public Sprite shopIcon;
     public Sprite unknownIcon;
     public Sprite shrineIcon;
+    public Sprite treasureIcon;
 
     public Sprite GetEventIcon(MapEventType eventType, bool isStart, bool isBossEnd)
     {
@@ -32,6 +33,7 @@ public class MapPresentationSO : ScriptableObject
             MapEventType.Shop => shopIcon,
             MapEventType.Unknown => unknownIcon,
             MapEventType.Shrine => shrineIcon,
+            MapEventType.Treasure => treasureIcon,
             _ => null
         };
     }

@@ -16,16 +16,21 @@ public class UIShopWindow : MonoBehaviour
     [SerializeField] private Transform faceSlotsContainer;
     [Tooltip("RectTransform that has a Layout Group for full-die offers.")]
     [SerializeField] private Transform diceSlotsContainer;
+    [Tooltip("RectTransform that has a Layout Group for relic offers.")]
+    [SerializeField] private Transform relicSlotsContainer;
     [Tooltip("Face offers prefab root must have a UIShopSlot component.")]
     [SerializeField] private UIShopSlot slotPrefab;
     [Tooltip("Optional full-die offers prefab root. If null, falls back to Slot Prefab.")]
     [SerializeField] private UIShopSlot diceSlotPrefab;
+    [Tooltip("Relic offers prefab root must have UIShopRelicSlot.")]
+    [SerializeField] private UIShopRelicSlot relicSlotPrefab;
     [SerializeField] private Button leaveShopButton;
     [Header("Optional")]
     [Tooltip("Player deck tray; refreshes when the shop UI refreshes (e.g. after buying a die or socketing a face).")]
     [SerializeField] private UIShopDiceTray shopDiceTray;
 
     private readonly List<UIShopSlot> _slots = new List<UIShopSlot>();
+    private readonly List<UIShopRelicSlot> _relicSlots = new List<UIShopRelicSlot>();
 
     private void Start()
     {
@@ -67,6 +72,12 @@ public class UIShopWindow : MonoBehaviour
             if (s != null)
                 s.Refresh();
         }
+
+        foreach (var s in _relicSlots)
+        {
+            if (s != null)
+                s.Refresh();
+        }
     }
 
     private void RebuildSlots()
@@ -96,11 +107,27 @@ public class UIShopWindow : MonoBehaviour
 
         _slots.Clear();
 
+        foreach (var s in _relicSlots)
+        {
+            if (s != null && s.gameObject != null)
+                Destroy(s.gameObject);
+        }
+
+        _relicSlots.Clear();
+
         foreach (var item in shopGenerator.FaceOffers)
             AddSlot(faceSlotsContainer, item, slotPrefab);
 
         foreach (var item in shopGenerator.DiceOffers)
             AddSlot(diceSlotsContainer, item, diceSlotPrefab != null ? diceSlotPrefab : slotPrefab);
+
+        if (relicSlotsContainer != null)
+        {
+            foreach (var item in shopGenerator.RelicOffers)
+                AddRelicSlot(relicSlotsContainer, item);
+        }
+        else if (shopGenerator.RelicOffers.Count > 0)
+            Debug.LogWarning("UIShopWindow: assign relicSlotsContainer to show relic offers.", this);
 
         RefreshShopDiceTray();
     }
@@ -130,6 +157,33 @@ public class UIShopWindow : MonoBehaviour
 
         slot.Bind(this, item);
         _slots.Add(slot);
+    }
+
+    private void AddRelicSlot(Transform parent, ShopItem item)
+    {
+        if (parent == null)
+        {
+            Debug.LogError("UIShopWindow: relicSlotsContainer is not assigned.");
+            return;
+        }
+
+        if (relicSlotPrefab == null)
+        {
+            Debug.LogError("UIShopWindow: assign relicSlotPrefab (UIShopRelicSlot) for relic offers.", this);
+            return;
+        }
+
+        var go = Instantiate(relicSlotPrefab, parent);
+        var slot = go.GetComponent<UIShopRelicSlot>();
+        if (slot == null)
+        {
+            Debug.LogError("UIShopWindow: relic slot prefab needs UIShopRelicSlot.");
+            Destroy(go);
+            return;
+        }
+
+        slot.Bind(this, item);
+        _relicSlots.Add(slot);
     }
 
     public void TryBuy(ShopItem item)
@@ -165,6 +219,12 @@ public class UIShopWindow : MonoBehaviour
             ShopToastUI.Show("New Die Acquired");
         }
 
+        if (item.ItemKind == ShopItem.Kind.Relic && item.Relic != null && RunManager.Instance != null)
+        {
+            RunManager.Instance.AddRunRelic(item.Relic);
+            ShopToastUI.Show($"Relic: {item.Relic.title}");
+        }
+
         RefreshAllSlots();
 
         if (item.ItemKind == ShopItem.Kind.Face)
@@ -189,6 +249,12 @@ public class UIShopWindow : MonoBehaviour
     private void RefreshAllSlots()
     {
         foreach (var s in _slots)
+        {
+            if (s != null)
+                s.Refresh();
+        }
+
+        foreach (var s in _relicSlots)
         {
             if (s != null)
                 s.Refresh();

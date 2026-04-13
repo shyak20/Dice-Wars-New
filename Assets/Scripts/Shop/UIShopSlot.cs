@@ -60,6 +60,8 @@ public class UIShopSlot : MonoBehaviour
                                !PlayerInventory.HasDieSupportingFace(data, _item.Face);
         if (_item.ItemKind == ShopItem.Kind.Face && (data == null || _item.Face == null))
             faceSocketLocked = true;
+        if (_item.ItemKind == ShopItem.Kind.Relic)
+            faceSocketLocked = false;
 
         if (lockedOverlay != null)
             lockedOverlay.SetActive(!sold && faceSocketLocked);
@@ -94,7 +96,7 @@ public class UIShopSlot : MonoBehaviour
                 iconImage.color = spr != null ? Color.white : new Color(1f, 1f, 1f, 0f);
             }
         }
-        else
+        else if (_item.ItemKind == ShopItem.Kind.FullDie)
         {
             var d = _item.Die;
             if (d == null) return;
@@ -108,6 +110,17 @@ public class UIShopSlot : MonoBehaviour
             }
 
             RebuildDieFacesUi(d);
+        }
+        else
+        {
+            ClearDieFacesUi();
+            if (nameText != null) nameText.text = "";
+            if (statsText != null) statsText.text = "Use UIShopRelicSlot for relic offers";
+            if (iconImage != null)
+            {
+                iconImage.sprite = null;
+                iconImage.enabled = false;
+            }
         }
     }
 

@@ -13,6 +13,7 @@ public struct MapGenerationEventsParams
     public int WeightShop;
     public int WeightShrine;
     public int WeightUnknown;
+    public int WeightTreasure;
 
     public static MapGenerationEventsParams Default => new MapGenerationEventsParams
     {
@@ -23,6 +24,7 @@ public struct MapGenerationEventsParams
         WeightNormal = 4,
         WeightShop = 2,
         WeightShrine = 2,
-        WeightUnknown = 1
+        WeightUnknown = 1,
+        WeightTreasure = 1
     };
 }

@@ -20,4 +20,4 @@ MonoBehaviour:
   shopIcon: {fileID: 21300000, guid: f1c1262013618084491c451046d7ebb0, type: 3}
   unknownIcon: {fileID: 21300000, guid: 19618fabf9d74694897b81edd02a8375, type: 3}
   shrineIcon: {fileID: 21300000, guid: f1012328c13c09c4c88833e8b97a4af8, type: 3}
-  visitedTileIcon: {fileID: 21300000, guid: bcb3ff125f15dc744aa4a4f3afb22781, type: 3}
+  treasureIcon: {fileID: 21300000, guid: 45340d43c09ffd843aa3306f764a4080, type: 3}

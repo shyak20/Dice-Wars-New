@@ -32,6 +32,7 @@ public sealed class MapMovementManager : MonoBehaviour
     [Header("Presentation (map run)")]
     [SerializeField] private MapPresentationSO mapPresentation;
     [SerializeField] private MapShrineChoicePanel shrineChoicePanel;
+    [SerializeField] private MapTreasurePanel treasurePanel;
 
     private MapGrid _grid;
     private System.Random _rng;
@@ -59,6 +60,24 @@ public sealed class MapMovementManager : MonoBehaviour
     {
         _rng = useFixedSeed ? new System.Random(fixedSeed) : new System.Random();
         RefreshEffectiveMapLayoutFromActOrDefaults();
+    }
+
+    private void OnEnable()
+    {
+        if (RunManager.Instance != null)
+            RunManager.Instance.OnRunRelicsChanged += OnRunRelicsChangedRefreshMoves;
+    }
+
+    private void OnDisable()
+    {
+        if (RunManager.Instance != null)
+            RunManager.Instance.OnRunRelicsChanged -= OnRunRelicsChangedRefreshMoves;
+    }
+
+    private void OnRunRelicsChangedRefreshMoves()
+    {
+        RefreshEffectiveMapLayoutFromActOrDefaults();
+        moveCounterUI?.Refresh();
     }
 
     private void Start()
@@ -212,6 +231,22 @@ public sealed class MapMovementManager : MonoBehaviour
 
                 MarkCurrentTileConsumedAndRefresh();
                 return;
+            case MapEventType.Treasure:
+                if (treasurePanel == null)
+                {
+                    Debug.LogError("MapMovementManager: assign treasurePanel for Treasure tiles.", this);
+                    return;
+                }
+
+                var pack = RunManager.Instance.DrawRandomTreasurePack();
+                if (pack == null)
+                    Debug.LogWarning("MapMovementManager: no MapTreasurePackSO entries in this act’s treasure list — chest is empty.");
+
+                if (!treasurePanel.TryOpen(pack))
+                    return;
+
+                MarkCurrentTileConsumedAndRefresh();
+                return;
             case MapEventType.Unknown:
             {
                 MarkCurrentTileConsumedAndRefresh();
@@ -267,11 +302,11 @@ public sealed class MapMovementManager : MonoBehaviour
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
         {
             var act = RunManager.Instance.GetCurrentMapActDefinitionOrNull();
-                       if (act != null)
+            if (act != null)
             {
                 _effectiveGridWidth = Mathf.Max(1, act.gridWidth);
                 _effectiveGridHeight = Mathf.Max(1, act.gridHeight);
-                _effectiveMoveLimit = Mathf.Max(1, act.moveLimit);
+                _effectiveMoveLimit = Mathf.Max(1, act.moveLimit) + RelicActionRunner.QueryIntSum(RelicPhases.QueryMapMoveBonus);
                 return;
             }
 
@@ -280,6 +315,6 @@ public sealed class MapMovementManager : MonoBehaviour
 
         _effectiveGridWidth = Mathf.Max(1, gridWidth);
         _effectiveGridHeight = Mathf.Max(1, gridHeight);
-        _effectiveMoveLimit = Mathf.Max(1, moveLimit);
+        _effectiveMoveLimit = Mathf.Max(1, moveLimit) + RelicActionRunner.QueryIntSum(RelicPhases.QueryMapMoveBonus);
     }
 }

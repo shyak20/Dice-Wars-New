@@ -14,13 +14,18 @@ public class MapActDefinitionSO : ScriptableObject
     [Tooltip("Pool for Unknown tiles — drawn with unique-first logic like combat enemies.")]
     public List<UnknownMapEventSO> possibleUnknownEvents = new List<UnknownMapEventSO>();
 
-    [Header("Map layout (this act)")]
+    [Tooltip("Treasure tiles pick one pack at random when the player opens the chest.")]
+    public List<MapTreasurePackSO> treasurePacks = new List<MapTreasurePackSO>();
+
+    [Header("Map layout")]
     [Tooltip("Grid columns for maps generated this act (start at x=0, boss at width−1).")]
     [Min(1)] public int gridWidth = 4;
     [Tooltip("Grid rows for maps generated this act.")]
     [Min(1)] public int gridHeight = 4;
     [Tooltip("Moves allowed before corruption / overflow damage (see MapMovementManager).")]
     [Min(1)] public int moveLimit = 8;
+
+    [Header("Map Events")]
     [Min(0)] public int eliteMinOnMap = 1;
     [Min(0)] public int eliteMaxOnMap = 2;
     [Tooltip("Forced shop tiles (count rolled between min and max). If both are 0, shop frequency uses only RunManager filler weights.")]

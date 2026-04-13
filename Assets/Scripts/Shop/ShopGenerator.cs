@@ -7,20 +7,24 @@ public class ShopGenerator : MonoBehaviour
 {
     [SerializeField] private FaceLootTableSO faceLootTable;
     [SerializeField] private DieLootTableSO dieLootTable;
+    [SerializeField] private RelicLootTableSO relicLootTable;
     [SerializeField] private int defaultFullDiePrice = 100;
     [SerializeField, Range(0f, 1f)] private float preferredElementWeight = 0.7f;
 
     [Header("Offer counts")]
     [SerializeField, Min(0)] private int faceOfferCount = 4;
     [SerializeField, Min(0)] private int diceOfferCount = 1;
+    [SerializeField, Min(0)] private int relicOfferCount = 2;
     [Tooltip("If true, the same die asset cannot appear twice in one shop refresh.")]
     [SerializeField] private bool uniqueDicePerShopRefresh = true;
 
     public IReadOnlyList<ShopItem> FaceOffers => _faceItems;
     public IReadOnlyList<ShopItem> DiceOffers => _diceItems;
+    public IReadOnlyList<ShopItem> RelicOffers => _relicItems;
 
     private readonly List<ShopItem> _faceItems = new List<ShopItem>();
     private readonly List<ShopItem> _diceItems = new List<ShopItem>();
+    private readonly List<ShopItem> _relicItems = new List<ShopItem>();
 
     public static event Action InventoryChanged;
 
@@ -36,6 +40,7 @@ public class ShopGenerator : MonoBehaviour
     {
         _faceItems.Clear();
         _diceItems.Clear();
+        _relicItems.Clear();
 
         var preferredTypes = BuildPreferredDieTypes();
 
@@ -76,12 +81,24 @@ public class ShopGenerator : MonoBehaviour
         else if (diceOfferCount > 0 && dieLootTable == null)
             Debug.LogWarning("ShopGenerator: dieLootTable is not assigned.");
 
+        if (relicLootTable != null && relicOfferCount > 0)
+        {
+            var relics = relicLootTable.GetRandomRelics(relicOfferCount);
+            foreach (var r in relics)
+            {
+                if (r == null) continue;
+                _relicItems.Add(ShopItem.CreateRelic(r, RelicPriceUtility.GetRelicGoldPrice(r)));
+            }
+        }
+        else if (relicOfferCount > 0 && relicLootTable == null)
+            Debug.LogWarning("ShopGenerator: relicLootTable is not assigned but relic offers requested.");
+
         if (_faceItems.Count == 0 && faceOfferCount > 0)
             Debug.LogWarning("ShopGenerator: no face offers generated. Check FaceLootTableSO (faces list + Rarity Config) on the assigned asset.");
         if (_diceItems.Count == 0 && diceOfferCount > 0)
             Debug.LogWarning("ShopGenerator: no die offers. Check DieLootTableSO has at least one DieAssetSO and Dice Offer Count > 0.");
 
-        Debug.Log($"[ShopGenerator] Generated shop: {_faceItems.Count} face offer(s), {_diceItems.Count} die offer(s).", this);
+        Debug.Log($"[ShopGenerator] Generated shop: {_faceItems.Count} face, {_diceItems.Count} die, {_relicItems.Count} relic offer(s).", this);
 
         InventoryChanged?.Invoke();
     }

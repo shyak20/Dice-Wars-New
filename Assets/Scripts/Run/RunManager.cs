@@ -21,6 +21,7 @@ public class RunManager : MonoBehaviour
     [SerializeField, Min(0)] private int mapWeightShop = 2;
     [SerializeField, Min(0)] private int mapWeightShrine = 2;
     [SerializeField, Min(0)] private int mapWeightUnknown = 1;
+    [SerializeField, Min(0)] private int mapWeightTreasure = 1;
     [SerializeField, Min(1)] private int defaultRunMaxHp = 100;
 
     [Header("UI")]
@@ -46,6 +47,7 @@ public class RunManager : MonoBehaviour
     private readonly List<EnemyTypeSO> _enemyDrawScratch = new List<EnemyTypeSO>();
     private readonly List<UnknownMapEventSO> _unknownValidScratch = new List<UnknownMapEventSO>();
     private readonly List<UnknownMapEventSO> _unknownUnusedScratch = new List<UnknownMapEventSO>();
+    private readonly List<RelicSO> _runRelics = new List<RelicSO>();
 
     public bool UseMapBasedRun => _useMapBasedRun;
     public int CurrentActIndex => _currentActIndex;
@@ -72,6 +74,11 @@ public class RunManager : MonoBehaviour
 
     /// <summary>Fired after run HP changes from map overflow, shrine heal, etc. (not every combat frame).</summary>
     public event Action OnRunVitalityChanged;
+
+    /// <summary>Relics collected this run (shop, treasure, etc.).</summary>
+    public IReadOnlyList<RelicSO> RunRelics => _runRelics;
+
+    public event Action OnRunRelicsChanged;
 
     public RoomDefinition CurrentRoom
     {
@@ -110,6 +117,8 @@ public class RunManager : MonoBehaviour
     {
         if (RunEconomyManager.Instance != null)
             RunEconomyManager.Instance.ResetEconomyForNewRun();
+
+        ClearRunRelics();
 
         if (useMapInsteadOfEncounterList)
         {
@@ -174,8 +183,46 @@ public class RunManager : MonoBehaviour
             WeightNormal = mapWeightNormal,
             WeightShop = mapWeightShop,
             WeightShrine = mapWeightShrine,
-            WeightUnknown = mapWeightUnknown
+            WeightUnknown = mapWeightUnknown,
+            WeightTreasure = mapWeightTreasure
         };
+    }
+
+    public void AddRunRelic(RelicSO relic)
+    {
+        if (relic == null)
+        {
+            Debug.LogError("RunManager.AddRunRelic: relic is null.");
+            return;
+        }
+
+        _runRelics.Add(relic);
+        OnRunRelicsChanged?.Invoke();
+    }
+
+    void ClearRunRelics()
+    {
+        _runRelics.Clear();
+        OnRunRelicsChanged?.Invoke();
+    }
+
+    /// <summary>Random treasure pack for the current act’s map (null if none configured).</summary>
+    public MapTreasurePackSO DrawRandomTreasurePack()
+    {
+        var act = GetCurrentMapActDefinitionOrNull();
+        if (act?.treasurePacks == null || act.treasurePacks.Count == 0)
+            return null;
+
+        var valid = new List<MapTreasurePackSO>();
+        foreach (var p in act.treasurePacks)
+        {
+            if (p != null)
+                valid.Add(p);
+        }
+
+        if (valid.Count == 0)
+            return null;
+        return valid[_enemyDrawRng.Next(valid.Count)];
     }
 
     public void OnNewMapGeneratedCleanupDraws()

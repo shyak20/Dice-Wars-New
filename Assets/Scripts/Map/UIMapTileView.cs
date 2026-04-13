@@ -24,6 +24,7 @@ public class UIMapTileView : MonoBehaviour
     [SerializeField] private Color shopColor = new Color(0.45f, 0.55f, 0.75f, 1f);
     [SerializeField] private Color unknownColor = new Color(0.45f, 0.45f, 0.5f, 1f);
     [SerializeField] private Color shrineColor = new Color(0.55f, 0.75f, 0.5f, 1f);
+    [SerializeField] private Color treasureColor = new Color(0.85f, 0.7f, 0.25f, 1f);
     [SerializeField] private Color noneTileColor = new Color(0.32f, 0.34f, 0.38f, 1f);
     [Header("Optional")]
     [SerializeField] private TMP_Text nodeTypeLabel;
@@ -202,6 +203,7 @@ public class UIMapTileView : MonoBehaviour
             MapEventType.Shop => shopColor,
             MapEventType.Unknown => unknownColor,
             MapEventType.Shrine => shrineColor,
+            MapEventType.Treasure => treasureColor,
             MapEventType.None => noneTileColor,
             _ => combatNormalColor
         };

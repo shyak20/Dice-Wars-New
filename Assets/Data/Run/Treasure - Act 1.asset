@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71bd3f5905345684292ddf9dc8fb8ccc, type: 3}
+  m_Name: Treasure - Act 1
+  m_EditorClassIdentifier: Assembly-CSharp::MapTreasurePackSO
+  packTitle: Treasure Act 1
+  packDescription: Bulbul Gabol
+  rewards:
+  - kind: 0
+    goldMin: 300
+    goldMax: 500
+    dieLootTable: {fileID: 0}
+    relicLootTable: {fileID: 0}
+  - kind: 1
+    goldMin: 0
+    goldMax: 0
+    dieLootTable: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
+    relicLootTable: {fileID: 0}
+  - kind: 2
+    goldMin: 0
+    goldMax: 0
+    dieLootTable: {fileID: 0}
+    relicLootTable: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}

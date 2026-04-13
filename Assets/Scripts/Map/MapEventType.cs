@@ -8,5 +8,6 @@ public enum MapEventType
     CombatBoss,
     Shop,
     Unknown,
-    Shrine
+    Shrine,
+    Treasure
 }

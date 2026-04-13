@@ -1,0 +1,42 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public enum TreasureRewardKind
+{
+    Gold,
+    Die,
+    Relic
+}
+
+[Serializable]
+public struct TreasureRewardEntry
+{
+    public TreasureRewardKind kind;
+    [Min(0)] public int goldMin;
+    [Min(0)] public int goldMax;
+    public DieLootTableSO dieLootTable;
+    public RelicLootTableSO relicLootTable;
+}
+
+/// <summary>One treasure chest definition for map <see cref="MapEventType.Treasure"/> tiles; rolled per act from <see cref="MapActDefinitionSO"/>.</summary>
+[CreateAssetMenu(fileName = "MapTreasurePack", menuName = "DiceGame/Map/Treasure Pack")]
+public class MapTreasurePackSO : ScriptableObject
+{
+    public string packTitle;
+    [TextArea] public string packDescription;
+    public List<TreasureRewardEntry> rewards = new List<TreasureRewardEntry>();
+
+    private void OnValidate()
+    {
+        if (rewards == null) return;
+        for (var i = 0; i < rewards.Count; i++)
+        {
+            var e = rewards[i];
+            if (e.kind != TreasureRewardKind.Gold) continue;
+            if (e.goldMax < e.goldMin)
+                e.goldMax = e.goldMin;
+            rewards[i] = e;
+        }
+    }
+}

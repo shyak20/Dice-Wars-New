@@ -8,10 +8,8 @@ public static class FacePriceUtility
         return rarity switch
         {
             FaceRarity.Common => 10,
-            FaceRarity.Uncommon => 25,
             FaceRarity.Rare => 50,
             FaceRarity.Legendary => 100,
-            FaceRarity.Epic => 100,
             _ => 10
         };
     }
