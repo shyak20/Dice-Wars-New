@@ -17,10 +17,6 @@ public class MapPresentationSO : ScriptableObject
     public Sprite unknownIcon;
     public Sprite shrineIcon;
 
-    [Header("Visited")]
-    [Tooltip("Shown on the event icon after the tile has been visited once.")]
-    public Sprite visitedTileIcon;
-
     public Sprite GetEventIcon(MapEventType eventType, bool isStart, bool isBossEnd)
     {
         if (isStart && startTileIcon != null)

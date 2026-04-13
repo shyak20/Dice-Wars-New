@@ -13,6 +13,9 @@ public class PlayerFloatingDamageNumberController : MonoBehaviour
     [Header("Style")]
     [SerializeField] private FloatingDamageNumberStyle style = new FloatingDamageNumberStyle();
 
+    [Tooltip("When enabled, spawns as a child at the spawn parent’s local center (0,0,0) with anchoredPosition 0,0. Turn on for map/HUD; leave off for 3D world-anchored combat popups.")]
+    [SerializeField] private bool spawnAtSpawnParentCenter;
+
     private void Awake()
     {
         if (canvas == null)
@@ -35,6 +38,7 @@ public class PlayerFloatingDamageNumberController : MonoBehaviour
 
     private void HandlePlayerDamage(int amount, Vector3 worldPosition)
     {
-        FloatingDamageNumberSpawner.Spawn(this, amount, worldPosition, canvas, spawnParent, worldCamera, style);
+        FloatingDamageNumberSpawner.Spawn(this, amount, worldPosition, canvas, spawnParent, worldCamera, style,
+            spawnAtSpawnParentCenter);
     }
 }

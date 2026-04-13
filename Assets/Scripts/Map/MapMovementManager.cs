@@ -19,6 +19,13 @@ public sealed class MapMovementManager : MonoBehaviour
     [SerializeField] private MapConnectivityMode mapModeAfterBossReach = MapConnectivityMode.UniquePathSpanningTree;
     [SerializeField] private UIMapGridView mapView;
     [SerializeField] private UIMapMoveCounterUI moveCounterUI;
+    [Header("Move limit overflow (corruption)")]
+    [Tooltip("Damage on the first move after exceeding move limit (move limit + 1).")]
+    [SerializeField, Min(0)] private int overflowDamageBase = 3;
+    [Tooltip("Added to damage for each further over-limit move (2nd over move = base + this, 3rd = base + 2×this, …).")]
+    [SerializeField, Min(0)] private int overflowDamageIncreasePerMove = 2;
+    [Tooltip("World position for floating damage text (same pipeline as combat). If unset, uses a point in front of the main camera.")]
+    [SerializeField] private Transform overflowDamageNumberWorldAnchor;
     [Header("Presentation (map run)")]
     [SerializeField] private MapPresentationSO mapPresentation;
     [SerializeField] private MapShrineChoicePanel shrineChoicePanel;
@@ -117,6 +124,17 @@ public sealed class MapMovementManager : MonoBehaviour
         if (MovesTaken > moveLimit)
         {
             OnCorruptionTriggered?.Invoke();
+            if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+            {
+                var overCount = MovesTaken - moveLimit;
+                var damage = overflowDamageBase + (overCount - 1) * overflowDamageIncreasePerMove;
+                if (damage > 0)
+                {
+                    var anchor = ResolveOverflowDamageWorldAnchor();
+                    RunManager.Instance.ApplyRunMapDamage(damage, anchor);
+                }
+            }
+
             if (!MapCorruptionUtility.TryCloseOneRandomExitPreservingPath(_grid, PlayerGridPosition, BossPosition, _rng))
                 Debug.LogWarning("MapMovementManager: corruption could not close any passage without leaving a path from the player to the boss — map unchanged.", this);
             mapView?.RefreshAllTileExits();
@@ -214,5 +232,15 @@ public sealed class MapMovementManager : MonoBehaviour
         if (d.y == 1) return MapCardinalDirection.Bottom;
         if (d.y == -1) return MapCardinalDirection.Top;
         throw new InvalidOperationException("DirectionFromTo: cells are not orthogonally adjacent.");
+    }
+
+    private Vector3 ResolveOverflowDamageWorldAnchor()
+    {
+        if (overflowDamageNumberWorldAnchor != null)
+            return overflowDamageNumberWorldAnchor.position;
+        var cam = Camera.main;
+        if (cam != null)
+            return cam.transform.position + cam.transform.forward * 8f;
+        return Vector3.zero;
     }
 }

@@ -51,6 +51,28 @@ public class RunManager : MonoBehaviour
     public int CurrentActIndex => _currentActIndex;
     public int RunShrineBonusMaxPower => _runShrineBonusMaxPower;
 
+    /// <summary>Current run HP (map + combat). Call <see cref="EnsureRunVitalityBaseline"/> via getters before first use.</summary>
+    public int RunCurrentHp
+    {
+        get
+        {
+            EnsureRunVitalityBaseline();
+            return _runCurrentHp;
+        }
+    }
+
+    public int RunMaxHp
+    {
+        get
+        {
+            EnsureRunVitalityBaseline();
+            return _runMaxHp;
+        }
+    }
+
+    /// <summary>Fired after run HP changes from map overflow, shrine heal, etc. (not every combat frame).</summary>
+    public event Action OnRunVitalityChanged;
+
     public RoomDefinition CurrentRoom
     {
         get
@@ -346,7 +368,34 @@ public class RunManager : MonoBehaviour
             return;
         EnsureRunVitalityBaseline();
         _runCurrentHp = Mathf.Min(_runCurrentHp + amount, _runMaxHp);
+        NotifyRunVitalityChanged();
     }
+
+    /// <summary>
+    /// Map move overflow (beyond <see cref="MapMovementManager.MoveLimit"/>): subtracts HP and shows floating damage like combat.
+    /// </summary>
+    public void ApplyRunMapDamage(int damage, Vector3 damageNumberWorldAnchor)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.ApplyRunMapDamage: not in map-based run.");
+            return;
+        }
+
+        if (damage <= 0)
+            return;
+
+        EnsureRunVitalityBaseline();
+        _runCurrentHp = Mathf.Max(0, _runCurrentHp - damage);
+        NotifyRunVitalityChanged();
+
+        CombatEvents.OnPlayerDamageNumber?.Invoke(damage, damageNumberWorldAnchor);
+
+        if (_runCurrentHp <= 0)
+            EndRunFromPlayerDefeat();
+    }
+
+    private void NotifyRunVitalityChanged() => OnRunVitalityChanged?.Invoke();
 
     public void ApplyShrineMaxPowerBonus(int amount)
     {
@@ -450,6 +499,12 @@ public class RunManager : MonoBehaviour
     private void EndRun()
     {
         Debug.Log("RunManager: Run complete!");
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
+
+    private void EndRunFromPlayerDefeat()
+    {
+        Debug.LogError("RunManager: Game over — player HP reached 0.");
         SceneManager.LoadScene(mainMenuSceneName);
     }
 }

@@ -29,15 +29,22 @@ public class UIMapTileView : MonoBehaviour
     [SerializeField] private TMP_Text nodeTypeLabel;
     [SerializeField] private Image eventIconImage;
     [Header("Visited tiles")]
-    [Tooltip("Tint for the event icon after this tile's event was completed (sprite stays visible).")]
+    [Tooltip("Shown when tile.eventConsumed (e.g. checkmark overlay). Wire a child object on the tile prefab; not from MapPresentationSO.")]
+    [SerializeField] private GameObject visitedMarker;
+    [Tooltip("Tint for the event icon after this tile's event was completed (sprite stays the normal event icon).")]
     [SerializeField] private Color visitedEventIconColor = new Color(0.65f, 0.65f, 0.7f, 0.9f);
+    [Header("Boss tile")]
+    [Tooltip("Uniform scale multiplier for the event icon on the boss / end cell only.")]
+    [SerializeField, Min(0.01f)] private float bossTileEventIconScale = 1.2f;
 
+    private Vector3 _eventIconBaseLocalScale = Vector3.one;
     private Vector2Int _cell;
     private MapMovementManager _manager;
     private int _lastExitMask;
     private bool _playerOnThisTile;
     /// <summary>Tile has an event icon sprite; hidden while <see cref="_playerOnThisTile"/>.</summary>
     private bool _eventIconActiveForTile;
+    private bool _tileEventConsumed;
 
     private void Awake()
     {
@@ -45,6 +52,10 @@ public class UIMapTileView : MonoBehaviour
             Debug.LogError("UIMapTileView: assign backgroundImage.", this);
         if (clickButton == null)
             Debug.LogError("UIMapTileView: assign clickButton.", this);
+        if (eventIconImage != null)
+            _eventIconBaseLocalScale = eventIconImage.transform.localScale;
+        if (visitedMarker != null)
+            visitedMarker.SetActive(false);
     }
 
     public void Setup(Vector2Int cell, MapTile tile, bool isStart, bool isBoss, MapMovementManager manager,
@@ -52,6 +63,7 @@ public class UIMapTileView : MonoBehaviour
     {
         _cell = cell;
         _manager = manager;
+        _tileEventConsumed = tile.eventConsumed;
 
         if (clickButton != null)
         {
@@ -72,7 +84,7 @@ public class UIMapTileView : MonoBehaviour
         if (nodeTypeLabel != null)
         {
             if (tile.eventConsumed)
-                nodeTypeLabel.text = presentation != null && presentation.visitedTileIcon != null ? "" : "V";
+                nodeTypeLabel.text = visitedMarker != null ? "" : "V";
             else if (isStart)
                 nodeTypeLabel.text = "Start";
             else if (isBoss)
@@ -87,9 +99,7 @@ public class UIMapTileView : MonoBehaviour
             if (tile.eventConsumed)
             {
                 Sprite sp = null;
-                if (presentation != null && presentation.visitedTileIcon != null)
-                    sp = presentation.visitedTileIcon;
-                else if (presentation != null)
+                if (presentation != null)
                     sp = presentation.GetEventIcon(tile.eventType, isStart, isBoss);
 
                 if (sp != null)
@@ -111,8 +121,17 @@ public class UIMapTileView : MonoBehaviour
             }
         }
 
+        if (eventIconImage != null)
+        {
+            if (_eventIconActiveForTile)
+                eventIconImage.transform.localScale = _eventIconBaseLocalScale * (isBoss ? bossTileEventIconScale : 1f);
+            else
+                eventIconImage.transform.localScale = _eventIconBaseLocalScale;
+        }
+
         _playerOnThisTile = manager != null && cell == manager.PlayerGridPosition;
         ApplyEventIconVisibilityForStanding();
+        ApplyVisitedMarkerVisibility();
         ApplyExitMask(tile.exitMask);
     }
 
@@ -121,7 +140,15 @@ public class UIMapTileView : MonoBehaviour
     {
         _playerOnThisTile = standingHere;
         ApplyEventIconVisibilityForStanding();
+        ApplyVisitedMarkerVisibility();
         ApplyExitMask(_lastExitMask);
+    }
+
+    private void ApplyVisitedMarkerVisibility()
+    {
+        if (visitedMarker == null)
+            return;
+        visitedMarker.SetActive(_tileEventConsumed && !_playerOnThisTile);
     }
 
     private void ApplyEventIconVisibilityForStanding()
