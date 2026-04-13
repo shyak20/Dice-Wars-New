@@ -24,21 +24,28 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
             closeButton.onClick.AddListener(Close);
     }
 
-    public void OpenPanel()
+    /// <summary>Shows the shrine UI. Returns false if the run is not in a valid map state (tile should stay unconsumed).</summary>
+    public bool TryOpenPanel()
     {
         if (RunManager.Instance == null)
         {
             Debug.LogError("MapShrineChoicePanel: RunManager missing.", this);
-            return;
+            return false;
         }
 
         if (!RunManager.Instance.UseMapBasedRun)
         {
             Debug.LogError("MapShrineChoicePanel: not in map-based run.", this);
-            return;
+            return false;
         }
 
+        if (root == null)
+            root = gameObject;
+
+        // Parents must be active before children; otherwise the panel stays invisible even if root is enabled.
+        ActivateSelfAndAncestors(root.transform);
         root.SetActive(true);
+        return true;
     }
 
     private void OnMaxPowerChosen()
@@ -54,4 +61,12 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
     }
 
     private void Close() => root.SetActive(false);
+
+    private static void ActivateSelfAndAncestors(Transform t)
+    {
+        if (t == null) return;
+        if (t.parent != null)
+            ActivateSelfAndAncestors(t.parent);
+        t.gameObject.SetActive(true);
+    }
 }

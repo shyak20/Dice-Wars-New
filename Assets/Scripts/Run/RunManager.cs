@@ -441,6 +441,15 @@ public class RunManager : MonoBehaviour
         _runVitalityInitialized = true;
     }
 
+    /// <summary>Act asset for the current map run act, or null if not in a map-based run.</summary>
+    public MapActDefinitionSO GetCurrentMapActDefinitionOrNull()
+    {
+        if (!_useMapBasedRun || mapActDefinitionsByAct == null || mapActDefinitionsByAct.Length == 0)
+            return null;
+        var i = Mathf.Clamp(_currentActIndex, 0, mapActDefinitionsByAct.Length - 1);
+        return mapActDefinitionsByAct[i];
+    }
+
     private MapActDefinitionSO GetActDefinitionOrThrow()
     {
         if (mapActDefinitionsByAct == null || mapActDefinitionsByAct.Length == 0)

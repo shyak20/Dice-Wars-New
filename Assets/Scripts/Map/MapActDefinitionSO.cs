@@ -15,6 +15,12 @@ public class MapActDefinitionSO : ScriptableObject
     public List<UnknownMapEventSO> possibleUnknownEvents = new List<UnknownMapEventSO>();
 
     [Header("Map layout (this act)")]
+    [Tooltip("Grid columns for maps generated this act (start at x=0, boss at width−1).")]
+    [Min(1)] public int gridWidth = 4;
+    [Tooltip("Grid rows for maps generated this act.")]
+    [Min(1)] public int gridHeight = 4;
+    [Tooltip("Moves allowed before corruption / overflow damage (see MapMovementManager).")]
+    [Min(1)] public int moveLimit = 8;
     [Min(0)] public int eliteMinOnMap = 1;
     [Min(0)] public int eliteMaxOnMap = 2;
     [Tooltip("Forced shop tiles (count rolled between min and max). If both are 0, shop frequency uses only RunManager filler weights.")]
@@ -36,6 +42,9 @@ public class MapActDefinitionSO : ScriptableObject
 
     private void OnValidate()
     {
+        gridWidth = Mathf.Max(1, gridWidth);
+        gridHeight = Mathf.Max(1, gridHeight);
+        moveLimit = Mathf.Max(1, moveLimit);
         eliteMaxOnMap = Mathf.Max(eliteMaxOnMap, eliteMinOnMap);
         shopMaxOnMap = Mathf.Max(shopMaxOnMap, shopMinOnMap);
         WarnIfRankMissing(EnemyRank.Boss, "boss end tile");

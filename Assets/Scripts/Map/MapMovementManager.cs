@@ -7,8 +7,11 @@ using UnityEngine;
 /// </summary>
 public sealed class MapMovementManager : MonoBehaviour
 {
+    [Tooltip("Used when not in a map-based run, or when the current MapActDefinitionSO is missing layout fields.")]
     [SerializeField] private int gridWidth = 4;
+    [Tooltip("Used when not in a map-based run, or when the current MapActDefinitionSO is missing layout fields.")]
     [SerializeField] private int gridHeight = 4;
+    [Tooltip("Used when not in a map-based run, or when the current MapActDefinitionSO is missing layout fields.")]
     [SerializeField] private int moveLimit = 8;
     [SerializeField] private bool useFixedSeed;
     [SerializeField] private int fixedSeed;
@@ -32,9 +35,12 @@ public sealed class MapMovementManager : MonoBehaviour
 
     private MapGrid _grid;
     private System.Random _rng;
+    private int _effectiveGridWidth;
+    private int _effectiveGridHeight;
+    private int _effectiveMoveLimit;
 
     public int MovesTaken { get; private set; }
-    public int MoveLimit => moveLimit;
+    public int MoveLimit => _effectiveMoveLimit;
     public MapGrid Grid => _grid;
     public Vector2Int PlayerGridPosition { get; private set; }
 
@@ -52,10 +58,13 @@ public sealed class MapMovementManager : MonoBehaviour
     private void Awake()
     {
         _rng = useFixedSeed ? new System.Random(fixedSeed) : new System.Random();
+        RefreshEffectiveMapLayoutFromActOrDefaults();
     }
 
     private void Start()
     {
+        RefreshEffectiveMapLayoutFromActOrDefaults();
+
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun &&
             RunManager.Instance.TryRestorePersistedMap(out var restoredGrid, out var playerCell, out var moves))
         {
@@ -78,9 +87,11 @@ public sealed class MapMovementManager : MonoBehaviour
 
     private void RegenerateMapInternal()
     {
-        if (gridWidth < 2 || gridHeight < 2)
+        RefreshEffectiveMapLayoutFromActOrDefaults();
+
+        if (_effectiveGridWidth < 1 || _effectiveGridHeight < 1)
         {
-            Debug.LogError("MapMovementManager: gridWidth and gridHeight must be at least 2.", this);
+            Debug.LogError("MapMovementManager: effective grid width and height must be at least 1.", this);
             return;
         }
 
@@ -91,7 +102,7 @@ public sealed class MapMovementManager : MonoBehaviour
             ? RunManager.Instance.GetMapGenerationParamsForCurrentAct()
             : MapGenerationEventsParams.Default;
 
-        _grid = MapGridGenerator.Generate(gridWidth, gridHeight, _rng, mode, MapGridGenerator.DefaultMaxRegenerateAttempts, evtParams);
+        _grid = MapGridGenerator.Generate(_effectiveGridWidth, _effectiveGridHeight, _rng, mode, MapGridGenerator.DefaultMaxRegenerateAttempts, evtParams);
         RunManager.Instance?.OnNewMapGeneratedCleanupDraws();
         MovesTaken = 0;
         PlayerGridPosition = StartPosition;
@@ -121,12 +132,12 @@ public sealed class MapMovementManager : MonoBehaviour
         MovesTaken++;
         OnPlayerMoved?.Invoke();
 
-        if (MovesTaken > moveLimit)
+        if (MovesTaken > _effectiveMoveLimit)
         {
             OnCorruptionTriggered?.Invoke();
             if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
             {
-                var overCount = MovesTaken - moveLimit;
+                var overCount = MovesTaken - _effectiveMoveLimit;
                 var damage = overflowDamageBase + (overCount - 1) * overflowDamageIncreasePerMove;
                 if (damage > 0)
                 {
@@ -190,13 +201,16 @@ public sealed class MapMovementManager : MonoBehaviour
                 RunManager.Instance.PersistAndLoadShopScene(_grid.Clone(), PlayerGridPosition, MovesTaken);
                 return;
             case MapEventType.Shrine:
-                if (shrineChoicePanel != null)
+                if (shrineChoicePanel == null)
                 {
-                    MarkCurrentTileConsumedAndRefresh();
-                    shrineChoicePanel.OpenPanel();
-                }
-                else
                     Debug.LogError("MapMovementManager: assign shrineChoicePanel for Shrine tiles.", this);
+                    return;
+                }
+
+                if (!shrineChoicePanel.TryOpenPanel())
+                    return;
+
+                MarkCurrentTileConsumedAndRefresh();
                 return;
             case MapEventType.Unknown:
             {
@@ -242,5 +256,30 @@ public sealed class MapMovementManager : MonoBehaviour
         if (cam != null)
             return cam.transform.position + cam.transform.forward * 8f;
         return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Map runs: <see cref="MapActDefinitionSO.gridWidth"/>, <see cref="MapActDefinitionSO.gridHeight"/>, <see cref="MapActDefinitionSO.moveLimit"/>.
+    /// Otherwise uses serialized defaults on this component.
+    /// </summary>
+    private void RefreshEffectiveMapLayoutFromActOrDefaults()
+    {
+        if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+        {
+            var act = RunManager.Instance.GetCurrentMapActDefinitionOrNull();
+                       if (act != null)
+            {
+                _effectiveGridWidth = Mathf.Max(1, act.gridWidth);
+                _effectiveGridHeight = Mathf.Max(1, act.gridHeight);
+                _effectiveMoveLimit = Mathf.Max(1, act.moveLimit);
+                return;
+            }
+
+            Debug.LogError("MapMovementManager: map-based run has no MapActDefinitionSO for current act — using inspector grid/move limit fallbacks.", this);
+        }
+
+        _effectiveGridWidth = Mathf.Max(1, gridWidth);
+        _effectiveGridHeight = Mathf.Max(1, gridHeight);
+        _effectiveMoveLimit = Mathf.Max(1, moveLimit);
     }
 }

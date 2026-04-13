@@ -36,8 +36,8 @@ public static class MapGridGenerator
         MapGenerationEventsParams mapEvents)
     {
         if (rng == null) throw new ArgumentNullException(nameof(rng));
-        if (width < 2 || height < 2)
-            throw new ArgumentOutOfRangeException(nameof(width), "Map must be at least 2×2 for start and boss.");
+        if (width < 1 || height < 1)
+            throw new ArgumentOutOfRangeException(nameof(width), "Map width and height must be at least 1.");
 
         var start = new Vector2Int(0, 0);
         var end = new Vector2Int(width - 1, height - 1);

@@ -18,6 +18,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e90e4b2912d70c2419b7be11cca5a37d, type: 2}
   possibleUnknownEvents:
   - {fileID: 11400000, guid: 7e1da11a59278e24199798074da7997d, type: 2}
+  gridWidth: 5
+  gridHeight: 2
+  moveLimit: 8
   eliteMinOnMap: 3
   eliteMaxOnMap: 4
   shopMinOnMap: 1
