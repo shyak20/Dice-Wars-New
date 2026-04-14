@@ -26,9 +26,17 @@ public class MapTreasurePackSO : ScriptableObject
     public string packTitle;
     [TextArea] public string packDescription;
     public List<TreasureRewardEntry> rewards = new List<TreasureRewardEntry>();
+    [Header("Chance-based bonus rewards")]
+    [Range(0f, 1f)] public float dieDropChance;
+    public DieLootTableSO dieDropLootTable;
+    [Range(0f, 1f)] public float relicDropChance;
+    public RelicLootTableSO relicDropLootTable;
 
     private void OnValidate()
     {
+        dieDropChance = Mathf.Clamp01(dieDropChance);
+        relicDropChance = Mathf.Clamp01(relicDropChance);
+
         if (rewards == null) return;
         for (var i = 0; i < rewards.Count; i++)
         {

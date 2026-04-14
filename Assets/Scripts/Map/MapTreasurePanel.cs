@@ -1,5 +1,4 @@
-using System.Text;
-using TMPro;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,20 +6,36 @@ using UnityEngine.UI;
 public sealed class MapTreasurePanel : MonoBehaviour
 {
     [SerializeField] private GameObject root;
-    [SerializeField] private TMP_Text titleText;
-    [SerializeField] private TMP_Text bodyText;
-    [SerializeField] private Button collectButton;
+    [Header("Rewards list")]
+    [SerializeField] private Transform rewardsLayout;
+    [SerializeField] private GameObject rewardItemPrefab;
+    [Header("Reward icons")]
+    [SerializeField] private Sprite goldRewardIcon;
     [SerializeField] private Button closeButton;
 
     private MapTreasurePackSO _currentPack;
+    private readonly List<RolledReward> _rolledRewards = new List<RolledReward>();
+
+    private enum RolledRewardKind
+    {
+        Gold,
+        Die,
+        Relic
+    }
+
+    private sealed class RolledReward
+    {
+        public RolledRewardKind Kind;
+        public int GoldAmount;
+        public DieAssetSO Die;
+        public RelicSO Relic;
+    }
 
     private void Awake()
     {
         if (root == null)
             root = gameObject;
         root.SetActive(false);
-        if (collectButton != null)
-            collectButton.onClick.AddListener(OnCollectClicked);
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
     }
@@ -46,103 +61,170 @@ public sealed class MapTreasurePanel : MonoBehaviour
         ActivateSelfAndAncestors(root.transform);
         root.SetActive(true);
 
-        if (titleText != null)
-            titleText.text = pack != null ? pack.packTitle : "Treasure";
-
-        if (bodyText != null)
-            bodyText.text = BuildBody(pack);
+        RollRewards(pack, _rolledRewards);
+        RebuildRewardsLayout(_rolledRewards);
 
         return true;
     }
 
-    static string BuildBody(MapTreasurePackSO pack)
+    private void RebuildRewardsLayout(List<RolledReward> rewards)
     {
+        if (rewardsLayout == null)
+        {
+            Debug.LogError("MapTreasurePanel: assign rewardsLayout.", this);
+            return;
+        }
+
+        for (var i = rewardsLayout.childCount - 1; i >= 0; i--)
+            Destroy(rewardsLayout.GetChild(i).gameObject);
+
+        if (rewards == null || rewards.Count == 0)
+            return;
+
+        foreach (var reward in rewards)
+        {
+            if (rewardItemPrefab == null)
+            {
+                Debug.LogError("MapTreasurePanel: assign rewardItemPrefab.", this);
+                return;
+            }
+
+            var go = Instantiate(rewardItemPrefab, rewardsLayout);
+            var item = go.GetComponent<MapTreasureRewardItemView>();
+            if (item == null)
+            {
+                Debug.LogError("MapTreasurePanel: rewardItemPrefab must have MapTreasureRewardItemView.", go);
+                Destroy(go);
+                continue;
+            }
+
+            item.Setup(IconForReward(reward), () => CollectReward(reward));
+        }
+    }
+
+    private Sprite IconForReward(RolledReward reward)
+    {
+        return reward.Kind switch
+        {
+            RolledRewardKind.Gold => goldRewardIcon,
+            RolledRewardKind.Die => reward.Die != null ? reward.Die.uiIcon : null,
+            RolledRewardKind.Relic => reward.Relic != null ? reward.Relic.icon : null,
+            _ => null
+        };
+    }
+
+    private static void RollRewards(MapTreasurePackSO pack, List<RolledReward> destination)
+    {
+        destination.Clear();
         if (pack == null)
-            return "No treasure packs are configured for this act. Nothing to collect.";
+            return;
 
-        var sb = new StringBuilder();
-        if (!string.IsNullOrEmpty(pack.packDescription))
+        if (pack.rewards != null)
         {
-            sb.AppendLine(pack.packDescription);
-            sb.AppendLine();
-        }
-
-        if (pack.rewards == null || pack.rewards.Count == 0)
-        {
-            sb.Append("This chest is empty.");
-            return sb.ToString();
-        }
-
-        sb.AppendLine("Contents:");
-        foreach (var e in pack.rewards)
-        {
-            switch (e.kind)
+            foreach (var e in pack.rewards)
             {
-                case TreasureRewardKind.Gold:
+                switch (e.kind)
                 {
-                    var lo = Mathf.Min(e.goldMin, e.goldMax);
-                    var hi = Mathf.Max(e.goldMin, e.goldMax);
-                    sb.AppendLine(lo == hi ? $"• {lo} gold" : $"• {lo}–{hi} gold (random)");
-                    break;
+                    case TreasureRewardKind.Gold:
+                    {
+                        var lo = Mathf.Min(e.goldMin, e.goldMax);
+                        var hi = Mathf.Max(e.goldMin, e.goldMax);
+                        var amount = Random.Range(lo, hi + 1);
+                        if (amount > 0)
+                        {
+                            destination.Add(new RolledReward
+                            {
+                                Kind = RolledRewardKind.Gold,
+                                GoldAmount = amount
+                            });
+                        }
+                        break;
+                    }
+                    case TreasureRewardKind.Die:
+                    {
+                        var die = e.dieLootTable != null ? e.dieLootTable.GetRandomDie() : null;
+                        if (die != null)
+                        {
+                            destination.Add(new RolledReward
+                            {
+                                Kind = RolledRewardKind.Die,
+                                Die = die
+                            });
+                        }
+                        break;
+                    }
+                    case TreasureRewardKind.Relic:
+                    {
+                        if (e.relicLootTable == null) break;
+                        var rolled = e.relicLootTable.GetRandomRelics(1);
+                        if (rolled.Count > 0 && rolled[0] != null)
+                        {
+                            destination.Add(new RolledReward
+                            {
+                                Kind = RolledRewardKind.Relic,
+                                Relic = rolled[0]
+                            });
+                        }
+                        break;
+                    }
                 }
-                case TreasureRewardKind.Die:
-                    sb.AppendLine(e.dieLootTable != null ? $"• Random die ({e.dieLootTable.name})" : "• (assign DieLootTableSO)");
-                    break;
-                case TreasureRewardKind.Relic:
-                    sb.AppendLine(e.relicLootTable != null ? $"• Random relic ({e.relicLootTable.name})" : "• (assign RelicLootTableSO)");
-                    break;
             }
         }
 
-        return sb.ToString();
-    }
-
-    private void OnCollectClicked()
-    {
-        if (_currentPack != null)
-            ApplyPack(_currentPack);
-        Close();
-    }
-
-    private static void ApplyPack(MapTreasurePackSO pack)
-    {
-        if (pack.rewards == null) return;
-
-        foreach (var e in pack.rewards)
+        if (pack.dieDropLootTable != null && Random.value <= pack.dieDropChance)
         {
-            switch (e.kind)
+            var die = pack.dieDropLootTable.GetRandomDie();
+            if (die != null)
             {
-                case TreasureRewardKind.Gold:
+                destination.Add(new RolledReward
                 {
-                    var lo = Mathf.Min(e.goldMin, e.goldMax);
-                    var hi = Mathf.Max(e.goldMin, e.goldMax);
-                    var amount = Random.Range(lo, hi + 1);
-                    if (amount > 0 && RunEconomyManager.Instance != null)
-                        RunEconomyManager.Instance.GrantGold(amount, null);
-                    break;
-                }
-                case TreasureRewardKind.Die:
-                {
-                    var die = e.dieLootTable != null ? e.dieLootTable.GetRandomDie() : null;
-                    if (die != null && PlayerDataContainer.Instance != null)
-                        PlayerDataContainer.Instance.AddDieToDeck(die);
-                    break;
-                }
-                case TreasureRewardKind.Relic:
-                {
-                    if (e.relicLootTable == null || RunManager.Instance == null) break;
-                    var rolled = e.relicLootTable.GetRandomRelics(1);
-                    if (rolled.Count > 0 && rolled[0] != null)
-                        RunManager.Instance.AddRunRelic(rolled[0]);
-                    break;
-                }
+                    Kind = RolledRewardKind.Die,
+                    Die = die
+                });
             }
         }
+
+        if (pack.relicDropLootTable != null && Random.value <= pack.relicDropChance)
+        {
+            var rolled = pack.relicDropLootTable.GetRandomRelics(1);
+            if (rolled.Count > 0 && rolled[0] != null)
+            {
+                destination.Add(new RolledReward
+                {
+                    Kind = RolledRewardKind.Relic,
+                    Relic = rolled[0]
+                });
+            }
+        }
+    }
+
+    private void CollectReward(RolledReward reward)
+    {
+        switch (reward.Kind)
+        {
+            case RolledRewardKind.Gold:
+                if (reward.GoldAmount > 0 && RunEconomyManager.Instance != null)
+                    RunEconomyManager.Instance.GrantGold(reward.GoldAmount, null);
+                break;
+            case RolledRewardKind.Die:
+                if (reward.Die != null && PlayerDataContainer.Instance != null)
+                    PlayerDataContainer.Instance.AddDieToDeck(reward.Die);
+                break;
+            case RolledRewardKind.Relic:
+                if (reward.Relic != null && RunManager.Instance != null)
+                    RunManager.Instance.AddRunRelic(reward.Relic);
+                break;
+        }
+
+        _rolledRewards.Remove(reward);
+        if (_rolledRewards.Count == 0)
+            Close();
     }
 
     private void Close()
     {
         _currentPack = null;
+        _rolledRewards.Clear();
         if (root != null)
             root.SetActive(false);
     }

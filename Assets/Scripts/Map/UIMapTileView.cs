@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>One map cell: background color, optional node label, event icon, exit arrows, click to move.</summary>
@@ -7,41 +8,50 @@ public class UIMapTileView : MonoBehaviour
 {
     [SerializeField] private Image backgroundImage;
     [SerializeField] private Button clickButton;
-    [Header("Arrows (one GameObject per direction; orient sprites in the prefab)")]
-    [SerializeField] private GameObject arrowTop;
-    [SerializeField] private GameObject arrowRight;
-    [SerializeField] private GameObject arrowBottom;
-    [SerializeField] private GameObject arrowLeft;
+    [Header("Exit arrows (one GameObject per direction; orient sprites in the prefab)")]
+    [FormerlySerializedAs("arrowTop")]
+    [SerializeField] private GameObject exitArrowTop;
+    [FormerlySerializedAs("arrowRight")]
+    [SerializeField] private GameObject exitArrowRight;
+    [FormerlySerializedAs("arrowBottom")]
+    [SerializeField] private GameObject exitArrowBottom;
+    [FormerlySerializedAs("arrowLeft")]
+    [SerializeField] private GameObject exitArrowLeft;
+    [Header("Incoming arrows (one GameObject per direction; optional)")]
+    [SerializeField] private GameObject incomingArrowTop;
+    [SerializeField] private GameObject incomingArrowRight;
+    [SerializeField] private GameObject incomingArrowBottom;
+    [SerializeField] private GameObject incomingArrowLeft;
     [Header("Arrow colors")]
     [SerializeField] private Color arrowColorCurrentTile = new Color(1f, 0.95f, 0.4f, 1f);
     [SerializeField] private Color arrowColorOtherTiles = new Color(0.55f, 0.55f, 0.6f, 0.9f);
-    [Header("Tile colors")]
-    [SerializeField] private Color startTileColor = new Color(0.2f, 0.85f, 0.25f, 1f);
-    [SerializeField] private Color bossTileColor = new Color(0.9f, 0.15f, 0.15f, 1f);
-    [SerializeField] private Color combatNormalColor = new Color(0.35f, 0.35f, 0.4f, 1f);
-    [SerializeField] private Color combatEliteColor = new Color(0.65f, 0.35f, 0.55f, 1f);
-    [SerializeField] private Color combatBossColor = new Color(0.55f, 0.1f, 0.1f, 1f);
-    [SerializeField] private Color shopColor = new Color(0.45f, 0.55f, 0.75f, 1f);
-    [SerializeField] private Color unknownColor = new Color(0.45f, 0.45f, 0.5f, 1f);
-    [SerializeField] private Color shrineColor = new Color(0.55f, 0.75f, 0.5f, 1f);
-    [SerializeField] private Color treasureColor = new Color(0.85f, 0.7f, 0.25f, 1f);
-    [SerializeField] private Color noneTileColor = new Color(0.32f, 0.34f, 0.38f, 1f);
+    [Header("Tile highlight")]
+    [SerializeField] private Color playerCurrentTileBackgroundColor = new Color(0.85f, 0.85f, 0.4f, 1f);
+    [Header("One-way exit arrow sizing")]
+    [Tooltip("Used when this tile has an exit in a direction and the adjacent tile does not have a return exit back.")]
+    [SerializeField, Min(1f)] private float oneWayExitArrowWidth = 60f;
     [Header("Optional")]
     [SerializeField] private TMP_Text nodeTypeLabel;
     [SerializeField] private Image eventIconImage;
     [Header("Visited tiles")]
-    [Tooltip("Shown when tile.eventConsumed (e.g. checkmark overlay). Wire a child object on the tile prefab; not from MapPresentationSO.")]
-    [SerializeField] private GameObject visitedMarker;
-    [Tooltip("Tint for the event icon after this tile's event was completed (sprite stays the normal event icon).")]
-    [SerializeField] private Color visitedEventIconColor = new Color(0.65f, 0.65f, 0.7f, 0.9f);
+    [Tooltip("Scale multiplier applied to background image when tile.eventConsumed is true.")]
+    [SerializeField, Min(0.01f)] private float visitedBackgroundScale = 0.9f;
     [Header("Boss tile")]
     [Tooltip("Uniform scale multiplier for the event icon on the boss / end cell only.")]
     [SerializeField, Min(0.01f)] private float bossTileEventIconScale = 1.2f;
 
     private Vector3 _eventIconBaseLocalScale = Vector3.one;
+    private Vector3 _backgroundBaseLocalScale = Vector3.one;
+    private Color _baseBackgroundColor = Color.white;
+    private float _exitArrowTopBaseWidth;
+    private float _exitArrowRightBaseWidth;
+    private float _exitArrowBottomBaseWidth;
+    private float _exitArrowLeftBaseWidth;
     private Vector2Int _cell;
     private MapMovementManager _manager;
     private int _lastExitMask;
+    private int _lastIncomingMask;
+    private int _lastOneWayExitMask;
     private bool _playerOnThisTile;
     /// <summary>Tile has an event icon sprite; hidden while <see cref="_playerOnThisTile"/>.</summary>
     private bool _eventIconActiveForTile;
@@ -51,12 +61,18 @@ public class UIMapTileView : MonoBehaviour
     {
         if (backgroundImage == null)
             Debug.LogError("UIMapTileView: assign backgroundImage.", this);
+        else
+            _baseBackgroundColor = backgroundImage.color;
         if (clickButton == null)
             Debug.LogError("UIMapTileView: assign clickButton.", this);
         if (eventIconImage != null)
             _eventIconBaseLocalScale = eventIconImage.transform.localScale;
-        if (visitedMarker != null)
-            visitedMarker.SetActive(false);
+        if (backgroundImage != null)
+            _backgroundBaseLocalScale = backgroundImage.transform.localScale;
+        _exitArrowTopBaseWidth = ReadArrowWidth(exitArrowTop);
+        _exitArrowRightBaseWidth = ReadArrowWidth(exitArrowRight);
+        _exitArrowBottomBaseWidth = ReadArrowWidth(exitArrowBottom);
+        _exitArrowLeftBaseWidth = ReadArrowWidth(exitArrowLeft);
     }
 
     public void Setup(Vector2Int cell, MapTile tile, bool isStart, bool isBoss, MapMovementManager manager,
@@ -72,20 +88,10 @@ public class UIMapTileView : MonoBehaviour
             clickButton.onClick.AddListener(OnClicked);
         }
 
-        if (backgroundImage != null)
-        {
-            if (isStart)
-                backgroundImage.color = startTileColor;
-            else if (isBoss)
-                backgroundImage.color = bossTileColor;
-            else
-                backgroundImage.color = ColorForEventType(tile.eventType);
-        }
-
         if (nodeTypeLabel != null)
         {
             if (tile.eventConsumed)
-                nodeTypeLabel.text = visitedMarker != null ? "" : "V";
+                nodeTypeLabel.text = "";
             else if (isStart)
                 nodeTypeLabel.text = "Start";
             else if (isBoss)
@@ -99,16 +105,7 @@ public class UIMapTileView : MonoBehaviour
         {
             if (tile.eventConsumed)
             {
-                Sprite sp = null;
-                if (presentation != null)
-                    sp = presentation.GetEventIcon(tile.eventType, isStart, isBoss);
-
-                if (sp != null)
-                {
-                    eventIconImage.sprite = sp;
-                    eventIconImage.color = visitedEventIconColor;
-                    _eventIconActiveForTile = true;
-                }
+                _eventIconActiveForTile = false;
             }
             else if (presentation != null)
             {
@@ -131,25 +128,35 @@ public class UIMapTileView : MonoBehaviour
         }
 
         _playerOnThisTile = manager != null && cell == manager.PlayerGridPosition;
+        ApplyBackgroundColorForStanding();
+        ApplyBackgroundScaleForVisited();
         ApplyEventIconVisibilityForStanding();
-        ApplyVisitedMarkerVisibility();
-        ApplyExitMask(tile.exitMask);
+        var incomingMask = 0;
+        var oneWayExitMask = 0;
+        var currentGrid = manager != null ? manager.Grid : null;
+        if (currentGrid != null && currentGrid.Contains(_cell))
+        {
+            incomingMask = BuildIncomingMask(currentGrid);
+            oneWayExitMask = BuildOneWayExitMask(currentGrid, tile.exitMask);
+        }
+        ApplyArrowMasks(tile.exitMask, incomingMask, oneWayExitMask);
     }
 
     /// <summary>Updates arrow tint for “standing here” vs other tiles (call when the player moves).</summary>
     public void SetPlayerStandingHere(bool standingHere)
     {
         _playerOnThisTile = standingHere;
+        ApplyBackgroundColorForStanding();
+        ApplyBackgroundScaleForVisited();
         ApplyEventIconVisibilityForStanding();
-        ApplyVisitedMarkerVisibility();
-        ApplyExitMask(_lastExitMask);
+        ApplyArrowMasks(_lastExitMask, _lastIncomingMask, _lastOneWayExitMask);
     }
 
-    private void ApplyVisitedMarkerVisibility()
+    private void ApplyBackgroundColorForStanding()
     {
-        if (visitedMarker == null)
+        if (backgroundImage == null)
             return;
-        visitedMarker.SetActive(_tileEventConsumed && !_playerOnThisTile);
+        backgroundImage.color = _playerOnThisTile ? playerCurrentTileBackgroundColor : _baseBackgroundColor;
     }
 
     private void ApplyEventIconVisibilityForStanding()
@@ -169,23 +176,76 @@ public class UIMapTileView : MonoBehaviour
     {
         if (grid == null || !grid.Contains(_cell))
             return;
-        ApplyExitMask(grid.Get(_cell.x, _cell.y).exitMask);
+        var exitMask = grid.Get(_cell.x, _cell.y).exitMask;
+        var incomingMask = BuildIncomingMask(grid);
+        var oneWayExitMask = BuildOneWayExitMask(grid, exitMask);
+        ApplyArrowMasks(exitMask, incomingMask, oneWayExitMask);
     }
 
-    private void ApplyExitMask(int exitMask)
+    private int BuildIncomingMask(MapGrid grid)
+    {
+        var mask = 0;
+        for (var i = 0; i < 4; i++)
+        {
+            var direction = (MapCardinalDirection)i;
+            var neighbor = _cell + direction.ToDelta();
+            if (grid.Contains(neighbor) && grid.HasExit(neighbor.x, neighbor.y, direction.Opposite()))
+                mask = mask.With(direction);
+        }
+
+        return mask;
+    }
+
+    private int BuildOneWayExitMask(MapGrid grid, int exitMask)
+    {
+        var mask = 0;
+        for (var i = 0; i < 4; i++)
+        {
+            var direction = (MapCardinalDirection)i;
+            if (!exitMask.Contains(direction))
+                continue;
+
+            var neighbor = _cell + direction.ToDelta();
+            if (!grid.Contains(neighbor))
+                continue;
+
+            if (!grid.HasExit(neighbor.x, neighbor.y, direction.Opposite()))
+                mask = mask.With(direction);
+        }
+
+        return mask;
+    }
+
+    private void ApplyArrowMasks(int exitMask, int incomingMask, int oneWayExitMask)
     {
         _lastExitMask = exitMask;
-        SetArrowVisual(arrowTop, MapCardinalDirection.Top);
-        SetArrowVisual(arrowRight, MapCardinalDirection.Right);
-        SetArrowVisual(arrowBottom, MapCardinalDirection.Bottom);
-        SetArrowVisual(arrowLeft, MapCardinalDirection.Left);
+        _lastIncomingMask = incomingMask;
+        _lastOneWayExitMask = oneWayExitMask;
+
+        SetArrowVisual(exitArrowTop, MapCardinalDirection.Top, _lastExitMask, _lastOneWayExitMask, _exitArrowTopBaseWidth, true);
+        SetArrowVisual(exitArrowRight, MapCardinalDirection.Right, _lastExitMask, _lastOneWayExitMask, _exitArrowRightBaseWidth, true);
+        SetArrowVisual(exitArrowBottom, MapCardinalDirection.Bottom, _lastExitMask, _lastOneWayExitMask, _exitArrowBottomBaseWidth, true);
+        SetArrowVisual(exitArrowLeft, MapCardinalDirection.Left, _lastExitMask, _lastOneWayExitMask, _exitArrowLeftBaseWidth, true);
+
+        SetArrowVisual(incomingArrowTop, MapCardinalDirection.Top, _lastIncomingMask, 0, 0f, false);
+        SetArrowVisual(incomingArrowRight, MapCardinalDirection.Right, _lastIncomingMask, 0, 0f, false);
+        SetArrowVisual(incomingArrowBottom, MapCardinalDirection.Bottom, _lastIncomingMask, 0, 0f, false);
+        SetArrowVisual(incomingArrowLeft, MapCardinalDirection.Left, _lastIncomingMask, 0, 0f, false);
     }
 
-    private void SetArrowVisual(GameObject arrowGo, MapCardinalDirection direction)
+    private void SetArrowVisual(
+        GameObject arrowGo,
+        MapCardinalDirection direction,
+        int arrowMask,
+        int oneWayMask,
+        float baseWidth,
+        bool applyWidthOverride)
     {
         if (arrowGo == null) return;
-        var show = _lastExitMask.Contains(direction);
+        var show = arrowMask.Contains(direction);
         arrowGo.SetActive(show);
+        if (applyWidthOverride)
+            ApplyArrowWidth(arrowGo, show && oneWayMask.Contains(direction), baseWidth);
         if (!show) return;
 
         var graphic = arrowGo.GetComponent<Graphic>() ?? arrowGo.GetComponentInChildren<Graphic>(true);
@@ -193,20 +253,32 @@ public class UIMapTileView : MonoBehaviour
             graphic.color = _playerOnThisTile ? arrowColorCurrentTile : arrowColorOtherTiles;
     }
 
-    private Color ColorForEventType(MapEventType t)
+    private float ReadArrowWidth(GameObject arrowGo)
     {
-        return t switch
-        {
-            MapEventType.CombatNormal => combatNormalColor,
-            MapEventType.CombatElite => combatEliteColor,
-            MapEventType.CombatBoss => combatBossColor,
-            MapEventType.Shop => shopColor,
-            MapEventType.Unknown => unknownColor,
-            MapEventType.Shrine => shrineColor,
-            MapEventType.Treasure => treasureColor,
-            MapEventType.None => noneTileColor,
-            _ => combatNormalColor
-        };
+        var rt = arrowGo != null ? arrowGo.transform as RectTransform : null;
+        return rt != null ? rt.sizeDelta.x : 0f;
+    }
+
+    private void ApplyArrowWidth(GameObject arrowGo, bool useOneWayWidth, float baseWidth)
+    {
+        var rt = arrowGo != null ? arrowGo.transform as RectTransform : null;
+        if (rt == null)
+            return;
+
+        var size = rt.sizeDelta;
+        size.x = useOneWayWidth ? oneWayExitArrowWidth : baseWidth;
+        rt.sizeDelta = size;
+    }
+
+    private void ApplyBackgroundScaleForVisited()
+    {
+        if (backgroundImage == null)
+            return;
+        backgroundImage.transform.localScale = _playerOnThisTile
+            ? Vector3.one
+            : _tileEventConsumed
+            ? _backgroundBaseLocalScale * visitedBackgroundScale
+            : _backgroundBaseLocalScale;
     }
 
     private void OnClicked()

@@ -59,8 +59,8 @@ public class UIMapGridView : MonoBehaviour
             }
         }
 
+        RefreshAllTileExits();
         RefreshPlayerIcon();
-        RefreshArrowHighlights();
     }
 
     /// <summary>Re-applies tile visuals after <see cref="MapTile.eventConsumed"/> changes.</summary>
