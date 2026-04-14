@@ -23,7 +23,7 @@ MonoBehaviour:
   gridWidth: 3
   gridHeight: 2
   moveLimit: 5
-  eliteMinOnMap: 3
-  eliteMaxOnMap: 4
+  eliteMinOnMap: 0
+  eliteMaxOnMap: 0
   shopMinOnMap: 1
   shopMaxOnMap: 2

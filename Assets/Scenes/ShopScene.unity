@@ -5377,6 +5377,7 @@ GameObject:
   - component: {fileID: 2125311789}
   - component: {fileID: 2125311788}
   - component: {fileID: 2125311787}
+  - component: {fileID: 2125311790}
   m_Layer: 0
   m_Name: Cheat
   m_TagString: Untagged
@@ -5486,6 +5487,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2125311785}
   m_CullTransparentMesh: 1
+--- !u!114 &2125311790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2125311785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b80214c94f82594f93a4093ac2ed285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CheatAddGoldButton
+  button: {fileID: 2125311787}
+  goldPerPress: 100
 --- !u!1 &2127162004
 GameObject:
   m_ObjectHideFlags: 0
