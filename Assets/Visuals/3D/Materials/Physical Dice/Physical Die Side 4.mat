@@ -8,20 +8,25 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Physical Die Side 4
-  m_Shader: {fileID: 4800000, guid: d12428961551799408aa97256fd770c3, type: 3}
+  m_Shader: {fileID: 4800000, guid: 6459b2db96a08ca41b0f9b39dc7ad59e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - N_F_DDMD_ON
+  - N_F_EAL_ON
   - N_F_GLOT_ON
   - N_F_O_ON
+  - N_F_RDC_ON
   - N_F_RELGI_ON
   - N_F_SL_ON
   - N_F_SS_ON
+  - N_F_TRANSAFFSHA_ON
+  - _UVSET_UV0
   m_InvalidKeywords:
   - L_F_O_ON
   - L_F_RELGI_ON
   - L_F_SS_ON
-  m_LightmapFlags: 1
+  m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -87,6 +92,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: fdf4d84fdc9b7424481735ecf9c89bd3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MaskTransparency:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -125,14 +134,21 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AAS: 0.0001
+    - _AlpToCov: 0
     - _AlphaBaseCutout: 1
+    - _BleModDest: 0
+    - _BleModSour: 1
     - _BumpScale: 1
     - _ClipAdju: 0
     - _Compa: 4
+    - _ComputeMeshIndex: 0
+    - _Culling: 2
     - _CustomLightDirectionFollowObjectRotation: 0
     - _CustomLightDirectionIntensity: 0
     - _Cutoff: 0.5
     - _Cutout: 0
+    - _DepthThreshold: 900
     - _DetailNormalMapScale: 1
     - _DirectionalLightIntensity: 0
     - _DoubleSided: 0
@@ -156,6 +172,7 @@ Material:
     - _GlossTextureSoftness: 0
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _Glow_Edge_Width: 1
     - _HighlightColorPower: 1
     - _LLI_Max: 1
     - _LLI_Min: 0
@@ -175,6 +192,7 @@ Material:
     - _L_F_SS: 1
     - _L_F_ST: 0
     - _L_F_UOAL: 0
+    - _LigIgnoYNorDir: 0
     - _LightAffectOutlineColor: 0
     - _LightAffectRimLightColor: 0
     - _LightAffectShadow: 0
@@ -184,12 +202,21 @@ Material:
     - _MCIALO: 0
     - _MCapIntensity: 1
     - _MVCOL: 0
+    - _MaiColPo: 0.8
+    - _MaxFadDistance: 2
     - _Metallic: 0
+    - _MinFadDistance: 0
     - _MixMainTexToOutline: 0
     - _Mode: 0
+    - _N_F_ANIS: 0
     - _N_F_CA: 0
     - _N_F_CLD: 0
     - _N_F_CO: 0
+    - _N_F_COEDGL: 0
+    - _N_F_DCS: 0
+    - _N_F_DDMD: 1
+    - _N_F_EAL: 1
+    - _N_F_ESSAO: 0
     - _N_F_FR: 0
     - _N_F_GLO: 0
     - _N_F_GLOT: 1
@@ -197,14 +224,21 @@ Material:
     - _N_F_HPSS: 0
     - _N_F_LLI: 0
     - _N_F_MC: 0
+    - _N_F_MSSOLTFO: 0
+    - _N_F_NFD: 0
     - _N_F_NLASOBF: 0
     - _N_F_NM: 0
     - _N_F_O: 1
+    - _N_F_OFLMB: 0
     - _N_F_PA: 0
     - _N_F_PT: 0
     - _N_F_R: 0
+    - _N_F_RDC: 1
     - _N_F_RL: 0
+    - _N_F_RLIS: 0
+    - _N_F_SCO: 0
     - _N_F_SCT: 0
+    - _N_F_SE: 0
     - _N_F_SL: 1
     - _N_F_SLMM: 0
     - _N_F_SON: 0
@@ -213,11 +247,20 @@ Material:
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_STSDFM: 0
+    - _N_F_TP: 0
+    - _NoiTexAffStraWidt: 0
+    - _NoisTexInten: 1
+    - _NoiseSize: 100
     - _NoisyOutlineIntensity: 0
+    - _NorMapAsDis: 0
     - _NormalMapIntensity: 1
     - _ObjePosiZCS: 0
     - _OcclusionStrength: 1
+    - _Opacity: 1
     - _Oper: 0
+    - _OutStenPass: 0
+    - _OutZTest: 4
+    - _OutZWrite: 1
     - _OutlineExtrudeMethod: 0
     - _OutlineWidth: 8.58
     - _OutlineWidthAffectedByViewDistance: 0
@@ -233,12 +276,15 @@ Material:
     - _PointSpotlightIntensity: 0.1
     - _PresAdju: 1
     - _RELG: 1
+    - _RQSO: 0
+    - _ReduSha: 0.5
     - _ReduceShadowPointLight: 0
     - _ReduceShadowSpotDirectionalLight: 10
     - _RefMetallic: 0
     - _RefVal: 0
     - _ReflectionIntensity: 0
     - _ReflectionRoughtness: 0
+    - _RimLigInt: 1
     - _RimLightColorPower: 10
     - _RimLightInLight: 1
     - _RimLightSoftness: 1
@@ -263,39 +309,63 @@ Material:
     - _ShadowTIntensity: 1
     - _ShadowTLightThreshold: 50
     - _ShadowTShadowThreshold: 0
+    - _ShifAnis: 0
     - _ShowInAmbientLightShadowIntensity: 1
     - _ShowInAmbientLightShadowThreshold: 0.4
     - _ShowNormal: 0
+    - _SimTrans: 0
+    - _SkinMatrixIndex: 0
     - _SmoothObjectNormal: 0
+    - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _StraWidt: 10
     - _TEXMCOLINT: 1.77
+    - _TRANSMODE: 0
+    - _TessellationFar: 1
+    - _TessellationNear: 1
+    - _TessellationSmoothness: 0.5
+    - _TessellationTransition: 0.8
     - _TexturePatternStyle: 0
+    - _TrailSize: 1.5
+    - _TransAffSha: 1
+    - _TransparentThreshold: 0
+    - _TriPlaBlend: 4
+    - _TriPlaTile: 1
     - _UVSec: 0
+    - _UVSet: 0
     - _UseSecondaryCutout: 0
+    - _UseTLB: 0
     - _VertexColorBlueAffectOutlineWitdh: 0
     - _VertexColorGreenControlSelfShadowThreshold: 0
     - _VertexColorRedControlSmoothObjectNormal: 0
     - _XYZHardness: 14
+    - _ZTest: 4
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CustomLightDirection: {r: 0, g: 0, b: 10, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
     - _MainColor: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 1}
+    - _ObjPosi: {r: 0, g: 0, b: 0, a: 0}
     - _ObjectForward: {r: 0, g: 0, b: 0, a: 0}
     - _ObjectRight: {r: 0, g: 0, b: 0, a: 0}
     - _OutResi: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
     - _OverallShadowColor: {r: 0, g: 0, b: 0, a: 1}
+    - _PTCol: {r: 0, g: 0, b: 0, a: 1}
+    - _PrevPosition: {r: 0, g: 0, b: 0, a: 0}
     - _RimLigPosi: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SSAOColor: {r: 0, g: 0, b: 0, a: 0}
     - _SelfLitColor: {r: 1, g: 1, b: 1, a: 1}
     - _SelfShadowRealTimeShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowTColor: {r: 1, g: 1, b: 1, a: 1}
     - _XYZPosition: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

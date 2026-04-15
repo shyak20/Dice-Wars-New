@@ -17,7 +17,7 @@ MonoBehaviour:
   descriptionLines: []
   value: 6
   type: 0
-  faceMaterial: {fileID: 2100000, guid: b5b4a2e96f7cbc04abc338635dd2354d, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 4e56169efc9c76a479f63ad4cdc0c46f, type: 2}
   rarity: 0
   damage: 6
   armor: 0
