@@ -7,11 +7,19 @@ public sealed class MapTreasureRewardItemView : MonoBehaviour
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private Button collectButton;
+    [Tooltip("Optional; usually on the icon Image. When set, relic rows show RelicTooltipUI on hover.")]
+    [SerializeField] private RelicTooltipTrigger relicTooltipTrigger;
 
-    public void Setup(Sprite icon, Action onCollect)
+    public void Setup(Sprite icon, RelicSO relicForTooltip, Action onCollect)
     {
         if (iconImage != null)
+        {
             iconImage.sprite = icon;
+            iconImage.raycastTarget = icon != null || relicForTooltip != null;
+        }
+
+        if (relicTooltipTrigger != null)
+            relicTooltipTrigger.SetRelic(relicForTooltip);
 
         if (collectButton == null)
         {

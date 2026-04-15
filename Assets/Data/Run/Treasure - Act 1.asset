@@ -20,17 +20,7 @@ MonoBehaviour:
     goldMax: 500
     dieLootTable: {fileID: 0}
     relicLootTable: {fileID: 0}
-  - kind: 1
-    goldMin: 0
-    goldMax: 0
-    dieLootTable: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
-    relicLootTable: {fileID: 0}
-  - kind: 2
-    goldMin: 0
-    goldMax: 0
-    dieLootTable: {fileID: 0}
-    relicLootTable: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
-  dieDropChance: 0.1
+  dieDropChance: 1
   dieDropLootTable: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
   relicDropChance: 1
   relicDropLootTable: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}

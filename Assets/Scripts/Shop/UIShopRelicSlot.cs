@@ -13,6 +13,8 @@ public sealed class UIShopRelicSlot : MonoBehaviour
     [SerializeField] private Color unaffordablePriceColor = new Color(1f, 0.35f, 0.35f);
     [SerializeField] private Button buyButton;
     [SerializeField] private GameObject soldOutStamp;
+    [Tooltip("Optional; put on the relic icon Image. Hover shows RelicTooltipUI.")]
+    [SerializeField] private RelicTooltipTrigger relicIconTooltip;
 
     private UIShopWindow _window;
     private ShopItem _item;
@@ -61,6 +63,8 @@ public sealed class UIShopRelicSlot : MonoBehaviour
                 iconImage.sprite = null;
                 iconImage.enabled = false;
             }
+            if (relicIconTooltip != null)
+                relicIconTooltip.SetRelic(null);
             return;
         }
 
@@ -73,7 +77,11 @@ public sealed class UIShopRelicSlot : MonoBehaviour
             iconImage.sprite = r.icon;
             iconImage.enabled = r.icon != null;
             iconImage.color = r.icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+            iconImage.raycastTarget = true;
         }
+
+        if (relicIconTooltip != null)
+            relicIconTooltip.SetRelic(r);
     }
 
     private void OnBuyClicked()

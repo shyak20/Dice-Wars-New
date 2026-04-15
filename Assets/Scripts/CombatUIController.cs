@@ -11,6 +11,8 @@ public class CombatUIController : MonoBehaviour
     [Header("Dice Tray (The Hand)")]
     public Transform diceButtonContainer;
     public CanvasGroup trayCanvasGroup;
+    [Tooltip("Shown while waiting to roll and no dice are selected in the tray.")]
+    [SerializeField] private GameObject noDiceSelectedIndicator;
 
     [Header("Dynamic Prefabs")]
     public GameObject damageButtonPrefab; // Renamed from attack
@@ -52,6 +54,7 @@ public class CombatUIController : MonoBehaviour
     private TMP_Text rollButtonText;
     private int rollsRemaining;
     private int maxRolls;
+    private CombatState _combatState = CombatState.WaitingForRoll;
 
     private void OnEnable()
     {
@@ -122,6 +125,8 @@ public class CombatUIController : MonoBehaviour
             diceButtons[die] = btn;
             btn.onClick.AddListener(() => ToggleSelection(die));
         }
+
+        UpdateNoDiceSelectedIndicator();
     }
 
     private void Update()
@@ -153,7 +158,16 @@ public class CombatUIController : MonoBehaviour
 
             ShowDieTooltip(die);
         }
-        rollButton.interactable = currentlySelected.Count > 0;
+        if (rollButton != null)
+            rollButton.interactable = currentlySelected.Count > 0;
+        UpdateNoDiceSelectedIndicator();
+    }
+
+    private void UpdateNoDiceSelectedIndicator()
+    {
+        if (noDiceSelectedIndicator == null)
+            return;
+        noDiceSelectedIndicator.SetActive(_combatState == CombatState.WaitingForRoll && currentlySelected.Count == 0);
     }
 
     private void ShowDieTooltip(DieAssetSO die)
@@ -394,6 +408,7 @@ public class CombatUIController : MonoBehaviour
 
     private void HandleStateChange(CombatState state)
     {
+        _combatState = state;
         bool isWaiting = (state == CombatState.WaitingForRoll);
         bool isRolling = (state == CombatState.Rolling);
 
@@ -409,5 +424,6 @@ public class CombatUIController : MonoBehaviour
             HideDieTooltip();
         if (rollButton != null) { rollButton.gameObject.SetActive(isWaiting); if (isWaiting) rollButton.interactable = currentlySelected.Count > 0; }
         if (endTurnButton != null) { bool showEndTurn = isWaiting && rollsRemaining > 0; endTurnButton.gameObject.SetActive(showEndTurn); endTurnButton.interactable = showEndTurn; }
+        UpdateNoDiceSelectedIndicator();
     }
 }

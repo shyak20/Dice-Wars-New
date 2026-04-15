@@ -98,7 +98,10 @@ public sealed class MapTreasurePanel : MonoBehaviour
                 continue;
             }
 
-            item.Setup(IconForReward(reward), () => CollectReward(reward));
+            item.Setup(
+                IconForReward(reward),
+                reward.Kind == RolledRewardKind.Relic ? reward.Relic : null,
+                () => CollectReward(reward));
         }
     }
 
