@@ -9752,6 +9752,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3055101068229274948, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3055101068229274948, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_SortingOrder
       value: 152
       objectReference: {fileID: 0}
@@ -9759,9 +9763,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: vfx_StylizedOrb_v2_purple
       objectReference: {fileID: 0}
+    - target: {fileID: 7006539078907736307, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.size
-      value: 2
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_PropertySheet.m_Vector2f.m_Array.Array.size
@@ -9780,12 +9788,36 @@ PrefabInstance:
       value: ParticlesFloatingRate
       objectReference: {fileID: 0}
     - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[2].m_Name
+      value: WavesRate
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[3].m_Name
+      value: FlaresRate
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[4].m_Name
+      value: FlareBrightSize
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Value
       value: 3000
       objectReference: {fileID: 0}
     - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[1].m_Value
       value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[2].m_Value
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[3].m_Value
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[4].m_Value
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_PropertySheet.m_Vector2f.m_Array.Array.data[0].m_Name
@@ -9810,6 +9842,18 @@ PrefabInstance:
     - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[1].m_Overridden
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[2].m_Overridden
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[3].m_Overridden
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[4].m_Overridden
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
       propertyPath: m_PropertySheet.m_NamedObject.m_Array.Array.data[0].m_Name
@@ -9929,7 +9973,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b8089bdaf9a4e3409c7756544d3ffd5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PowerReactiveEffectController
-  minScale: 0
+  powerToBlendCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.74782175
+      value: 0.30535385
+      inSlope: 1.0151527
+      outSlope: 1.0151527
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.34410265
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 5.1388307
+      outSlope: 5.1388307
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.086302236
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  minScale: 0.05
   maxScale: 0.2
   baseScaleTransitionTime: 2
   minPulseScale: 0.95
@@ -9945,7 +10022,24 @@ MonoBehaviour:
   spritePulseSpeedMax: 3
   spritePulseStrengthMin: 0
   spritePulseStrengthMax: 1
+  waveVisualEffect: {fileID: 1550666483}
+  waveRatePropertyName: WavesRate
+  waveRateMin: 1
+  waveRateMax: 5
+  applyFlareBrightSize: 1
+  flareBrightSizePropertyName: FlareBrightSize
+  flareBrightSizeMin: 2
+  flareBrightSizeMax: 7
+  applySphereTextureSpeed: 1
+  sphereTextureSpeedPropertyName: SphereTextureSpeed
+  sphereTextureSpeedMin: {x: 0.4, y: -0.2}
+  sphereTextureSpeedMax: {x: 1.5, y: 1}
   effectTransform: {fileID: 1550666480}
+--- !u!2083052967 &1550666483 stripped
+VisualEffect:
+  m_CorrespondingSourceObject: {fileID: 7642898767525451254, guid: 409bf97c60145334d9b0b6931054197f, type: 3}
+  m_PrefabInstance: {fileID: 1550666479}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1552920810 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2244053129416439957, guid: 6d049bfe97e675b409ac353f88306b5d, type: 3}

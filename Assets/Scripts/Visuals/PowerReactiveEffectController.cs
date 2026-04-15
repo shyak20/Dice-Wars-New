@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.VFX;
 
 /// <summary>
 /// Drives an effect object's scale and XY motion based on combat power progress.
@@ -6,6 +7,10 @@ using UnityEngine;
 /// </summary>
 public sealed class PowerReactiveEffectController : MonoBehaviour
 {
+    [Header("Power → blend (non-linear)")]
+    [Tooltip("Maps displayed normalized power (time/X, 0–1) to the blend factor (value/Y, typically 0–1) used for Min→Max lerps except Scale From Power (minScale→maxScale), which stays linear.")]
+    [SerializeField] private AnimationCurve powerToBlendCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
     [Header("Scale From Power")]
     [SerializeField, Min(0f)] private float minScale = 1f;
     [SerializeField, Min(0f)] private float maxScale = 2f;
@@ -30,13 +35,38 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float spritePulseStrengthMin = 0.25f;
     [SerializeField, Range(0f, 1f)] private float spritePulseStrengthMax = 1f;
 
+    [Header("Visual Effect — Wave Rate (Optional)")]
+    [Tooltip("VFX Graph component on the effect object. Expose a float named like Wave Rate on the blackboard.")]
+    [SerializeField] private VisualEffect waveVisualEffect;
+    [SerializeField] private string waveRatePropertyName = "Wave Rate";
+    [SerializeField] private float waveRateMin = 0f;
+    [SerializeField] private float waveRateMax = 1f;
+
+    [Header("Visual Effect — Flare Bright Size (Optional)")]
+    [Tooltip("When enabled, sets the exposed float (e.g. FlareBrightSize) from min at 0 power to max at full power.")]
+    [SerializeField] private bool applyFlareBrightSize;
+    [SerializeField] private string flareBrightSizePropertyName = "FlareBrightSize";
+    [SerializeField] private float flareBrightSizeMin = 0f;
+    [SerializeField] private float flareBrightSizeMax = 1f;
+
+    [Header("Visual Effect — Sphere Texture Speed (Optional)")]
+    [Tooltip("When enabled, sets the exposed Vector2 (e.g. SphereTextureSpeed) from min at 0 power to max at full power.")]
+    [SerializeField] private bool applySphereTextureSpeed;
+    [SerializeField] private string sphereTextureSpeedPropertyName = "SphereTextureSpeed";
+    [SerializeField] private Vector2 sphereTextureSpeedMin = Vector2.zero;
+    [SerializeField] private Vector2 sphereTextureSpeedMax = Vector2.one;
+
     [Header("Target")]
     [SerializeField] private Transform effectTransform;
 
     private Vector3 _baseLocalPosition;
+    private int _currentCombatPower;
     private float _targetNormalizedPower;
     private float _displayedNormalizedPower;
     private Color _baseSpriteColor = Color.white;
+    private int _waveRatePropertyId;
+    private int _flareBrightSizePropertyId;
+    private int _sphereTextureSpeedPropertyId;
 
     private void Awake()
     {
@@ -50,7 +80,44 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         if (pulseSpriteRenderer != null)
             _baseSpriteColor = pulseSpriteRenderer.color;
 
+        if (waveVisualEffect != null)
+        {
+            if (string.IsNullOrWhiteSpace(waveRatePropertyName))
+                throw new System.InvalidOperationException("PowerReactiveEffectController: waveRatePropertyName must be set when waveVisualEffect is assigned.");
+
+            _waveRatePropertyId = Shader.PropertyToID(waveRatePropertyName.Trim());
+            if (!waveVisualEffect.HasFloat(_waveRatePropertyId))
+                throw new System.InvalidOperationException(
+                    $"PowerReactiveEffectController: Visual Effect '{waveVisualEffect.name}' has no exposed float property '{waveRatePropertyName.Trim()}'. Check the VFX blackboard name matches exactly.");
+
+            if (applyFlareBrightSize)
+            {
+                if (string.IsNullOrWhiteSpace(flareBrightSizePropertyName))
+                    throw new System.InvalidOperationException("PowerReactiveEffectController: flareBrightSizePropertyName must be set when applyFlareBrightSize is enabled.");
+
+                _flareBrightSizePropertyId = Shader.PropertyToID(flareBrightSizePropertyName.Trim());
+                if (!waveVisualEffect.HasFloat(_flareBrightSizePropertyId))
+                    throw new System.InvalidOperationException(
+                        $"PowerReactiveEffectController: Visual Effect '{waveVisualEffect.name}' has no exposed float property '{flareBrightSizePropertyName.Trim()}'. Check the VFX blackboard name matches exactly.");
+            }
+
+            if (applySphereTextureSpeed)
+            {
+                if (string.IsNullOrWhiteSpace(sphereTextureSpeedPropertyName))
+                    throw new System.InvalidOperationException("PowerReactiveEffectController: sphereTextureSpeedPropertyName must be set when applySphereTextureSpeed is enabled.");
+
+                _sphereTextureSpeedPropertyId = Shader.PropertyToID(sphereTextureSpeedPropertyName.Trim());
+                if (!waveVisualEffect.HasVector2(_sphereTextureSpeedPropertyId))
+                    throw new System.InvalidOperationException(
+                        $"PowerReactiveEffectController: Visual Effect '{waveVisualEffect.name}' has no exposed Vector2 property '{sphereTextureSpeedPropertyName.Trim()}'. Check the VFX blackboard name matches exactly.");
+            }
+        }
+
+        if (powerToBlendCurve == null || powerToBlendCurve.length == 0)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: powerToBlendCurve must be assigned with at least one key.");
+
         ValidateRanges();
+        _currentCombatPower = 0;
         _targetNormalizedPower = 0f;
         _displayedNormalizedPower = 0f;
     }
@@ -69,32 +136,45 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     {
         _displayedNormalizedPower = StepDisplayedPowerTowardTarget(_displayedNormalizedPower, _targetNormalizedPower, baseScaleTransitionTime);
 
-        float pulseSpeed = Mathf.Lerp(scalePulseSpeedMin, scalePulseSpeedMax, _displayedNormalizedPower);
+        float powerBlend = EvaluatePowerBlend(_displayedNormalizedPower);
+
+        float pulseSpeed = Mathf.Lerp(scalePulseSpeedMin, scalePulseSpeedMax, powerBlend);
         float pulseT = Mathf.PingPong(Time.time * pulseSpeed, 1f);
         float pulseScale = Mathf.Lerp(minPulseScale, maxPulseScale, pulseT);
 
-        float baseWorldScale = Mathf.Lerp(minScale, maxScale, _displayedNormalizedPower);
-        float finalWorldScale = baseWorldScale * pulseScale;
+        float finalWorldScale = 0f;
+        if (_currentCombatPower > 0)
+        {
+            float baseWorldScale = Mathf.Lerp(minScale, maxScale, _displayedNormalizedPower);
+            finalWorldScale = baseWorldScale * pulseScale;
+        }
+
         SetUniformWorldScale(effectTransform, finalWorldScale);
 
-        float movementSpeed = Mathf.Lerp(movementSpeedMin, movementSpeedMax, _displayedNormalizedPower);
+        float movementSpeed = Mathf.Lerp(movementSpeedMin, movementSpeedMax, powerBlend);
         float movementPhase = Time.time * movementSpeed;
-        float xAmplitude = moveX * _displayedNormalizedPower;
-        float yAmplitude = moveY * _displayedNormalizedPower;
+        float xAmplitude = moveX * powerBlend;
+        float yAmplitude = moveY * powerBlend;
         float xOffset = Mathf.Sin(movementPhase) * xAmplitude;
         float yOffset = Mathf.Cos(movementPhase) * yAmplitude;
 
         effectTransform.localPosition = _baseLocalPosition + new Vector3(xOffset, yOffset, 0f);
-        ApplySpriteAlphaPulse();
+        ApplySpriteAlphaPulse(powerBlend);
+        ApplyWaveRate(powerBlend);
+        ApplyFlareBrightSize(powerBlend);
+        ApplySphereTextureSpeed(powerBlend);
     }
 
     private void HandlePowerChanged(int currentPower, int maxPower)
     {
         if (maxPower <= 0)
         {
+            _currentCombatPower = 0;
             _targetNormalizedPower = 0f;
             return;
         }
+
+        _currentCombatPower = currentPower;
 
         // Scaling depends on power ratio only, so 25/50 and 3000/6000 produce the same result.
         _targetNormalizedPower = Mathf.Clamp01((float)currentPower / maxPower);
@@ -119,21 +199,75 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
 
         if (spritePulseStrengthMax < spritePulseStrengthMin)
             throw new System.InvalidOperationException("PowerReactiveEffectController: spritePulseStrengthMax must be >= spritePulseStrengthMin.");
+
+        if (waveRateMax < waveRateMin)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: waveRateMax must be >= waveRateMin.");
+
+        if (applyFlareBrightSize)
+        {
+            if (waveVisualEffect == null)
+                throw new System.InvalidOperationException("PowerReactiveEffectController: waveVisualEffect must be assigned when applyFlareBrightSize is enabled.");
+
+            if (flareBrightSizeMax < flareBrightSizeMin)
+                throw new System.InvalidOperationException("PowerReactiveEffectController: flareBrightSizeMax must be >= flareBrightSizeMin.");
+        }
+
+        if (applySphereTextureSpeed)
+        {
+            if (waveVisualEffect == null)
+                throw new System.InvalidOperationException("PowerReactiveEffectController: waveVisualEffect must be assigned when applySphereTextureSpeed is enabled.");
+
+            if (sphereTextureSpeedMax.x < sphereTextureSpeedMin.x || sphereTextureSpeedMax.y < sphereTextureSpeedMin.y)
+                throw new System.InvalidOperationException("PowerReactiveEffectController: sphereTextureSpeedMax must be >= sphereTextureSpeedMin per component (x and y).");
+        }
     }
 
-    private void ApplySpriteAlphaPulse()
+    private void ApplySpriteAlphaPulse(float powerBlend)
     {
         if (pulseSpriteRenderer == null)
             return;
 
-        float spritePulseSpeed = Mathf.Lerp(spritePulseSpeedMin, spritePulseSpeedMax, _displayedNormalizedPower);
-        float spritePulseStrength = Mathf.Lerp(spritePulseStrengthMin, spritePulseStrengthMax, _displayedNormalizedPower);
+        float spritePulseSpeed = Mathf.Lerp(spritePulseSpeedMin, spritePulseSpeedMax, powerBlend);
+        float spritePulseStrength = Mathf.Lerp(spritePulseStrengthMin, spritePulseStrengthMax, powerBlend);
         float alphaT = Mathf.PingPong(Time.time * spritePulseSpeed, 1f);
         float alpha = Mathf.Lerp(0f, spritePulseStrength, alphaT);
 
         Color c = _baseSpriteColor;
         c.a = alpha;
         pulseSpriteRenderer.color = c;
+    }
+
+    private void ApplyWaveRate(float powerBlend)
+    {
+        if (waveVisualEffect == null)
+            return;
+
+        float waveRate = Mathf.Lerp(waveRateMin, waveRateMax, powerBlend);
+        waveVisualEffect.SetFloat(_waveRatePropertyId, waveRate);
+    }
+
+    private void ApplyFlareBrightSize(float powerBlend)
+    {
+        if (waveVisualEffect == null || !applyFlareBrightSize)
+            return;
+
+        float flareBrightSize = Mathf.Lerp(flareBrightSizeMin, flareBrightSizeMax, powerBlend);
+        waveVisualEffect.SetFloat(_flareBrightSizePropertyId, flareBrightSize);
+    }
+
+    private void ApplySphereTextureSpeed(float powerBlend)
+    {
+        if (waveVisualEffect == null || !applySphereTextureSpeed)
+            return;
+
+        Vector2 sphereTextureSpeed = Vector2.Lerp(sphereTextureSpeedMin, sphereTextureSpeedMax, powerBlend);
+        waveVisualEffect.SetVector2(_sphereTextureSpeedPropertyId, sphereTextureSpeed);
+    }
+
+    private float EvaluatePowerBlend(float displayedNormalizedPower)
+    {
+        float t = Mathf.Clamp01(displayedNormalizedPower);
+        return Mathf.Clamp01(powerToBlendCurve.Evaluate(t));
     }
 
     private static float StepDisplayedPowerTowardTarget(float current, float target, float fullRangeTime)
