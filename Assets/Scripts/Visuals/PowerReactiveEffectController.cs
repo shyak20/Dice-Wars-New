@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.VFX;
 
@@ -56,6 +57,12 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     [SerializeField] private Vector2 sphereTextureSpeedMin = Vector2.zero;
     [SerializeField] private Vector2 sphereTextureSpeedMax = Vector2.one;
 
+    [Header("Turn end — fly to enemy")]
+    [Tooltip("How long the orb takes to reach the enemy (seconds).")]
+    [SerializeField, Min(0.01f)] private float flyTime = 0.45f;
+    [Tooltip("X = normalized flight time (0–1). Y = blend along the path from start to the enemy anchor (0 = start, 1 = hit). Default is linear.")]
+    [SerializeField] private AnimationCurve flyCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
     [Header("Target")]
     [SerializeField] private Transform effectTransform;
 
@@ -64,6 +71,8 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     private float _targetNormalizedPower;
     private float _displayedNormalizedPower;
     private Color _baseSpriteColor = Color.white;
+    private bool _isFlyingToEnemy;
+    private bool _postHitHiddenAtEnemy;
     private int _waveRatePropertyId;
     private int _flareBrightSizePropertyId;
     private int _sphereTextureSpeedPropertyId;
@@ -116,6 +125,9 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         if (powerToBlendCurve == null || powerToBlendCurve.length == 0)
             throw new System.InvalidOperationException("PowerReactiveEffectController: powerToBlendCurve must be assigned with at least one key.");
 
+        if (flyCurve == null || flyCurve.length == 0)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: flyCurve must be assigned with at least one key.");
+
         ValidateRanges();
         _currentCombatPower = 0;
         _targetNormalizedPower = 0f;
@@ -125,15 +137,67 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     private void OnEnable()
     {
         CombatEvents.OnPowerChanged += HandlePowerChanged;
+        CombatEvents.OnPlayerTurnStarted += HandlePlayerTurnStarted;
     }
 
     private void OnDisable()
     {
         CombatEvents.OnPowerChanged -= HandlePowerChanged;
+        CombatEvents.OnPlayerTurnStarted -= HandlePlayerTurnStarted;
+    }
+
+    /// <summary>Used by <see cref="CombatManager"/> after turn resolution (perfect-strike presentation already finished when applicable).</summary>
+    public IEnumerator RunFlightToEnemyAndWait(EnemyController enemy)
+    {
+        if (enemy == null)
+            yield break;
+
+        if (_currentCombatPower <= 0)
+            yield break;
+
+        Transform anchor = enemy.GetPowerOrbHitAnchor();
+        if (anchor == null)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: enemy returned no power-orb hit anchor.");
+
+        _isFlyingToEnemy = true;
+        Vector3 flightStartWorld = effectTransform.position;
+        float duration = flyTime;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float u = Mathf.Clamp01(elapsed / duration);
+            float eased = Mathf.Clamp01(flyCurve.Evaluate(u));
+            effectTransform.position = Vector3.LerpUnclamped(flightStartWorld, anchor.position, eased);
+            yield return null;
+        }
+
+        effectTransform.position = anchor.position;
+        _isFlyingToEnemy = false;
+        SetUniformWorldScale(effectTransform, 0f);
+        _postHitHiddenAtEnemy = true;
+    }
+
+    private void HandlePlayerTurnStarted()
+    {
+        _isFlyingToEnemy = false;
+        _postHitHiddenAtEnemy = false;
+        effectTransform.localPosition = _baseLocalPosition;
+        _displayedNormalizedPower = _targetNormalizedPower;
     }
 
     private void Update()
     {
+        if (_postHitHiddenAtEnemy)
+        {
+            SetUniformWorldScale(effectTransform, 0f);
+            return;
+        }
+
+        if (_isFlyingToEnemy)
+            return;
+
         _displayedNormalizedPower = StepDisplayedPowerTowardTarget(_displayedNormalizedPower, _targetNormalizedPower, baseScaleTransitionTime);
 
         float powerBlend = EvaluatePowerBlend(_displayedNormalizedPower);
@@ -220,6 +284,9 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             if (sphereTextureSpeedMax.x < sphereTextureSpeedMin.x || sphereTextureSpeedMax.y < sphereTextureSpeedMin.y)
                 throw new System.InvalidOperationException("PowerReactiveEffectController: sphereTextureSpeedMax must be >= sphereTextureSpeedMin per component (x and y).");
         }
+
+        if (flyTime <= 0f)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: flyTime must be > 0.");
     }
 
     private void ApplySpriteAlphaPulse(float powerBlend)

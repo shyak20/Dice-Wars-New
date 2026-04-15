@@ -49,6 +49,14 @@ public class EnemyController : MonoBehaviour
     public int GetCurrentHealth() => currentHealth;
     public int GetCurrentArmor() => currentArmor;
 
+    /// <summary>World target for power orb FX flying from the player into this enemy.</summary>
+    public Transform GetPowerOrbHitAnchor()
+    {
+        if (damageNumberWorldAnchor != null) return damageNumberWorldAnchor;
+        if (enemySprite != null) return enemySprite.transform;
+        return transform;
+    }
+
     private void Awake()
     {
         StatusEffects = GetComponent<StatusEffectManager>();

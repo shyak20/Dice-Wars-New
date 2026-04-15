@@ -22,6 +22,9 @@ public class CombatManager : MonoBehaviour
     [Tooltip("Optional. When assigned, perfect strike waits for jackpot UI (overlay + ×multiplier on pools) before SubmitTurn.")]
     [SerializeField] private JackpotPresentationController jackpotPresentation;
 
+    [Tooltip("Optional. After turn resolution (and after perfect-strike presentation if any), this orb flies to the enemy; damage/armor apply only when it arrives.")]
+    [SerializeField] private PowerReactiveEffectController powerOrbVisual;
+
     [Header("Status Effect UI")]
     [SerializeField] private StatusEffectBarUI playerStatusBar;
     [SerializeField] private StatusEffectBarUI enemyStatusBar;
@@ -677,11 +680,26 @@ public class CombatManager : MonoBehaviour
         pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
 
+        if (powerOrbVisual != null && activeEnemy != null && currentPower > 0)
+            StartCoroutine(CoSubmitTurnAfterOrbFlight(pendingAttack, pendingDefense));
+        else
+            ApplyPlayerTurnCombatResults(pendingAttack, pendingDefense);
+    }
+
+    private IEnumerator CoSubmitTurnAfterOrbFlight(int pendingAttack, int pendingDefense)
+    {
+        yield return StartCoroutine(powerOrbVisual.RunFlightToEnemyAndWait(activeEnemy));
+        ApplyPlayerTurnCombatResults(pendingAttack, pendingDefense);
+    }
+
+    private void ApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
+    {
         if (pendingAttack > 0)
         {
             activeEnemy.TakeDamage(pendingAttack);
             if (CheckVictory()) return;
         }
+
         if (pendingDefense > 0) player.AddArmor(pendingDefense);
 
         StartCoroutine(EnemyTurnRoutine());
@@ -792,6 +810,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         CombatEvents.OnImmediateGameActionBarClear?.Invoke();
         CombatEvents.OnElementPoolRuntimeIconsClear?.Invoke();
+        CombatEvents.OnPlayerTurnStarted?.Invoke();
         ChangeState(CombatState.WaitingForRoll);
     }
 

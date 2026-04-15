@@ -3000,6 +3000,7 @@ MonoBehaviour:
   StartStrikeMultiplier: 2
   precisionPanel: {fileID: 872838670}
   jackpotPresentation: {fileID: 434058154}
+  powerOrbVisual: {fileID: 1550666482}
   playerStatusBar: {fileID: 1880349202053095173}
   enemyStatusBar: {fileID: 1793733565}
   testStartingFaces: {fileID: 11400000, guid: d56d5b91c5b92ed4aafaa3ef613c5a40, type: 2}
@@ -10034,6 +10035,40 @@ MonoBehaviour:
   sphereTextureSpeedPropertyName: SphereTextureSpeed
   sphereTextureSpeedMin: {x: 0.4, y: -0.2}
   sphereTextureSpeedMax: {x: 1.5, y: 1}
+  flyTime: 2
+  flyCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5440613
+      value: 0.11657867
+      inSlope: 0.5838408
+      outSlope: 0.5838408
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.24037942
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 4.691977
+      outSlope: 4.691977
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.040191546
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   effectTransform: {fileID: 1550666480}
 --- !u!2083052967 &1550666483 stripped
 VisualEffect:

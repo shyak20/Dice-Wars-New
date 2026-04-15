@@ -75,4 +75,7 @@ public static class CombatEvents
 
     // Game State
     public static Action<CombatState> OnStateChanged;
+
+    /// <summary>Fired when the player's turn begins again after the enemy turn (see <see cref="CombatManager"/> ResetTurn).</summary>
+    public static Action OnPlayerTurnStarted;
 }
