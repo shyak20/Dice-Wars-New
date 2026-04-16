@@ -238,10 +238,11 @@ public class EnemyController : MonoBehaviour
             }
         }
 
-        // 3. Health text (always shown; armor uses armor bar + armorText only)
+        // 3. Health text / Armor text toggle
+        // When armor is present we hide normal health text and show the armor value instead.
         if (healthText != null)
         {
-            healthText.gameObject.SetActive(true);
+            healthText.gameObject.SetActive(!hasArmor);
             if (enemyData != null)
                 healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
             else
@@ -251,6 +252,7 @@ public class EnemyController : MonoBehaviour
         // 4. Small Armor Icon/Amount Display
         if (armorText != null)
         {
+            armorText.gameObject.SetActive(hasArmor);
             armorText.text = hasArmor ? currentArmor.ToString() : "";
         }
         if (armorIcon != null)

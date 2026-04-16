@@ -63,6 +63,12 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     [Tooltip("X = normalized flight time (0–1). Y = blend along the path from start to the enemy anchor (0 = start, 1 = hit). Default is linear.")]
     [SerializeField] private AnimationCurve flyCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
+    [Header("Flight Arc")]
+    [Tooltip("Extra lateral offset added to the orb during flight (world-space X). Set 0 to disable. Use negative values to arc the other way.")]
+    [SerializeField] private float flightArcHeight = 0.2f;
+    [Tooltip("X = normalized flight time (0–1). Y = arc multiplier. Default peaks at mid and returns to 0 at the end.")]
+    [SerializeField] private AnimationCurve flightArcCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.5f, 1f), new Keyframe(1f, 0f));
+
     [Header("Target")]
     [SerializeField] private Transform effectTransform;
 
@@ -169,7 +175,15 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             elapsed += Time.deltaTime;
             float u = Mathf.Clamp01(elapsed / duration);
             float eased = Mathf.Clamp01(flyCurve.Evaluate(u));
-            effectTransform.position = Vector3.LerpUnclamped(flightStartWorld, anchor.position, eased);
+            Vector3 pos = Vector3.LerpUnclamped(flightStartWorld, anchor.position, eased);
+
+            if (flightArcHeight != 0f && flightArcCurve != null && flightArcCurve.length > 0)
+            {
+                float arcMult = Mathf.Clamp01(flightArcCurve.Evaluate(u));
+                pos.x += arcMult * flightArcHeight;
+            }
+
+            effectTransform.position = pos;
             yield return null;
         }
 
@@ -287,6 +301,9 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
 
         if (flyTime <= 0f)
             throw new System.InvalidOperationException("PowerReactiveEffectController: flyTime must be > 0.");
+
+        if (flightArcCurve == null || flightArcCurve.length == 0)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: flightArcCurve must be assigned with at least one key (or set Flight Arc Height to 0 to disable the arc).");
     }
 
     private void ApplySpriteAlphaPulse(float powerBlend)
