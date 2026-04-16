@@ -9,11 +9,13 @@ public sealed class BreathAnimationScript : MonoBehaviour
     [SerializeField] private float moveX = 0.1f;
     [SerializeField] private float moveY = 0.1f;
     [SerializeField, Min(0f)] private float movementSpeed = 1f;
+    [SerializeField] private bool randomizeStartVariation;
 
     [Header("Target")]
     [SerializeField] private Transform targetTransform;
 
     private Vector3 _baseLocalPosition;
+    private float _loopTimeOffset;
 
     private void Awake()
     {
@@ -24,11 +26,23 @@ public sealed class BreathAnimationScript : MonoBehaviour
             throw new System.InvalidOperationException("BreathAnimationScript requires an assigned targetTransform.");
 
         _baseLocalPosition = targetTransform.localPosition;
+        _loopTimeOffset = 0f;
+
+        if (randomizeStartVariation)
+        {
+            Vector3 randomStartOffset = new Vector3(
+                Random.Range(-moveX, moveX),
+                Random.Range(-moveY, moveY),
+                0f);
+
+            _baseLocalPosition += randomStartOffset;
+            _loopTimeOffset = Random.Range(0f, 1000f);
+        }
     }
 
     private void Update()
     {
-        float pingPong = Mathf.PingPong(Time.time * movementSpeed, 1f);
+        float pingPong = Mathf.PingPong((Time.time + _loopTimeOffset) * movementSpeed, 1f);
         float easedT = EaseInOutSine(pingPong);
 
         float x = Mathf.Lerp(-moveX, moveX, easedT);
