@@ -15,4 +15,5 @@ public enum ActionVisualId
     MaxHp = 11,
     FirstRollAction = 12,
     AddRolls = 13,
+    AddValueBasedOnRoll = 14,
 }

@@ -3,6 +3,9 @@ public static class RelicPhases
 {
     public const string CombatStart = "Relic_CombatStart";
 
+    /// <summary>After the enemy finishes their turn; next line is a new player turn (rolls reset). Used to re-apply per-turn relic watchers.</summary>
+    public const string AfterEnemyTurnPlayerTurnStart = "Relic_AfterEnemyTurnPlayerTurnStart";
+
     public const string QueryMaxPowerBonus = "Relic_QueryMaxPowerBonus";
     public const string QueryMapMoveBonus = "Relic_QueryMapMoveBonus";
     public const string QueryPerfectAtMaxMinusOne = "Relic_QueryPerfectAtMaxMinusOne";

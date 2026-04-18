@@ -3039,8 +3039,6 @@ MonoBehaviour:
   player: {fileID: 1528145352}
   activeEnemy: {fileID: 991764610}
   spawner: {fileID: 1048341406}
-  baseMaxPower: 12
-  StartStrikeMultiplier: 2
   precisionPanel: {fileID: 872838670}
   jackpotPresentation: {fileID: 434058154}
   powerOrbVisual: {fileID: 1550666482}
@@ -4520,7 +4518,7 @@ Light:
     m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 1
+    m_Strength: 0.75
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2

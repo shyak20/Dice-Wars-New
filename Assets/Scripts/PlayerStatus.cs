@@ -5,7 +5,8 @@ using TMPro;
 public class PlayerStatus : MonoBehaviour
 {
     [Header("Stats")]
-    public int maxHealth = 100;
+    [Tooltip("Set from PlayerDataSO.startingMaxHealth at combat init (or RunManager run vitality when active).")]
+    public int maxHealth { get; private set; }
     private int currentHealth;
     private int currentArmor = 0;
 
@@ -31,6 +32,20 @@ public class PlayerStatus : MonoBehaviour
         UpdateUI();
     }
 
+    /// <summary>Sets max/current HP from <see cref="PlayerDataSO.startingMaxHealth"/> when not using persisted run vitality.</summary>
+    public void ApplyStartingHealthFromPlayerData(PlayerDataSO data)
+    {
+        if (data == null)
+        {
+            Debug.LogError("PlayerStatus.ApplyStartingHealthFromPlayerData: PlayerDataSO is null.");
+            return;
+        }
+
+        maxHealth = Mathf.Max(1, data.startingMaxHealth);
+        currentHealth = maxHealth;
+        UpdateUI();
+    }
+
     public void Heal(int amount)
     {
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
@@ -40,7 +55,7 @@ public class PlayerStatus : MonoBehaviour
     
     public void AddMaxHP(int amount)
     {
-        maxHealth += amount;
+        maxHealth = maxHealth + amount;
         Debug.Log($"<color=green>Player ADD MAX HP {amount} . Current: {maxHealth}</color>");
         UpdateUI();
     }
@@ -51,7 +66,8 @@ public class PlayerStatus : MonoBehaviour
         if (StatusEffects == null)
             Debug.LogError("PlayerStatus: Missing StatusEffectManager component!");
 
-        currentHealth = maxHealth;
+        maxHealth = 1;
+        currentHealth = 1;
         UpdateUI();
     }
 

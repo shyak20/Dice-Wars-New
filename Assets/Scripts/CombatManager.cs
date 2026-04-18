@@ -13,10 +13,6 @@ public class CombatManager : MonoBehaviour
     [Header("Data & Physics")]
     public DiceSpawner spawner;
 
-    [Header("Balancing")]
-    public int baseMaxPower = 12;
-    [SerializeField] private int StartStrikeMultiplier = 2;
-
     [Header("UI Panels")]
     [SerializeField] private PrecisionPanel precisionPanel;
     [Tooltip("Optional. When assigned, perfect strike waits for jackpot UI (overlay + ×multiplier on pools) before SubmitTurn.")]
@@ -66,9 +62,17 @@ public class CombatManager : MonoBehaviour
     private RelicRuntimeState _relicRuntime;
 
     private readonly TurnRegistry _turnRegistry = new TurnRegistry();
+    private readonly List<ValueBasedRollWatcherEntry> _sameTurnValueWatchers = new List<ValueBasedRollWatcherEntry>();
+    private readonly List<ValueBasedRollWatcherEntry> _entireCombatValueWatchers = new List<ValueBasedRollWatcherEntry>();
+    private int _rollBatchId;
+    /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
+    private int _faceResolveSequence;
 
     /// <summary>Volatile turn blackboard (physical/armor/burn totals, Brute Force, Supernova).</summary>
     public TurnRegistry TurnRegistry => _turnRegistry;
+
+    /// <summary>Increments once per player roll command (batch). Used by <see cref="AddValueBasedOnRollDuration.SameTurn"/> / <see cref="AddValueBasedOnRollDuration.EntireCombat"/> watchers.</summary>
+    public int CurrentRollBatchId => _rollBatchId;
 
     // Updated summation logic to pull from FaceResult properties
     public int GetPendingAttack() => channeledFaces.Sum(f => f.Damage) + bonusDamageFromActions;
@@ -210,6 +214,8 @@ public class CombatManager : MonoBehaviour
         if (PlayerDataContainer.Instance == null) return;
         playerData = PlayerDataContainer.Instance.RuntimeData;
         ApplyTestStartingFaces();
+        if (player != null && playerData != null)
+            player.ApplyStartingHealthFromPlayerData(playerData);
         if (RunManager.Instance != null)
             RunManager.Instance.ApplyRunVitalityToPlayerIfAny(player);
         _relicRuntime = new RelicRuntimeState();
@@ -237,11 +243,15 @@ public class CombatManager : MonoBehaviour
     private void ResetStats()
     {
         _turnRegistry.ResetVolatile();
+        _entireCombatValueWatchers.Clear();
+        _rollBatchId = 0;
+        _faceResolveSequence = 0;
         selectedDice.Clear();
         channeledFaces.Clear();
         overchargeBonus = 0;
         var relicPerfectReset = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
-        appliedMultiplier = relicPerfectReset > 0 ? Mathf.Max(StartStrikeMultiplier, relicPerfectReset) : StartStrikeMultiplier;
+        var basePerfect = GetPerfectStrikeBaseMultiplier();
+        appliedMultiplier = relicPerfectReset > 0 ? Mathf.Max(basePerfect, relicPerfectReset) : basePerfect;
         bustProtected = false;
         immune = false;
         thorns = 0;
@@ -289,9 +299,28 @@ public class CombatManager : MonoBehaviour
 #endif
     }
 
+    private int GetPerfectStrikeBaseMultiplier()
+    {
+        if (playerData == null)
+        {
+            Debug.LogError("CombatManager.GetPerfectStrikeBaseMultiplier: playerData is null.");
+            return 2;
+        }
+
+        return Mathf.Max(1, playerData.perfectStrikeBaseMultiplier);
+    }
+
     private void CalculateMaxPower()
     {
-        maxPower = baseMaxPower;
+        if (playerData == null)
+        {
+            Debug.LogError("CombatManager.CalculateMaxPower: playerData is null.");
+            maxPower = 12;
+            CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
+            return;
+        }
+
+        maxPower = playerData.baseMaxPower;
         if (RunManager.Instance != null)
             maxPower += RunManager.Instance.RunShrineBonusMaxPower;
         if (playerData?.currentDeck != null)
@@ -319,6 +348,7 @@ public class CombatManager : MonoBehaviour
     private void ExecuteBatchRoll()
     {
         if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
+        _rollBatchId++;
         expectedDiceCount = selectedDice.Count;
         diceSettledCount = 0;
         pendingRollVisualSequences = 0;
@@ -331,6 +361,8 @@ public class CombatManager : MonoBehaviour
 
     public void ResolveRollResult(DieFaceSO face, Transform dieWorldSource = null)
     {
+        _faceResolveSequence++;
+
         bool kineticArmorThisRoll = kineticShieldActive;
         if (kineticArmorThisRoll) kineticShieldBonus++;
 
@@ -374,6 +406,8 @@ public class CombatManager : MonoBehaviour
         relicModifyCtx.MaxPower = maxPower;
         RelicActionRunner.ExecuteAllRelics(relicModifyCtx);
 
+        ApplyValueBasedRollWatchersArmorDamage(result);
+
         _turnRegistry.RecordResolvedFace(result);
 
         PopulateActionPoolContributions(result);
@@ -386,6 +420,8 @@ public class CombatManager : MonoBehaviour
         relicAfterPowerCtx.CurrentPower = currentPower;
         relicAfterPowerCtx.MaxPower = maxPower;
         RelicActionRunner.ExecuteAllRelics(relicAfterPowerCtx);
+
+        ApplyValueBasedRollWatchersBurn(result);
 
         // Immediate action execution (all actions on this face, in order)
         if (result.ActivateImmediately && result.Actions.Count > 0)
@@ -406,6 +442,8 @@ public class CombatManager : MonoBehaviour
             if (immediateIcons != null && immediateIcons.Count > 0)
                 CombatEvents.OnImmediateGameActionIconsShown?.Invoke(immediateIcons);
         }
+
+        CollectValueWatcherRegistrationsFromFace(result);
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         FirePoolsUpdated();
@@ -461,7 +499,142 @@ public class CombatManager : MonoBehaviour
             if (a is FaceResolveModifierBase) continue;
             if (a is ApplyStatusEffectAction apply)
                 apply.AppendPoolContributionIfAny(result, player);
+            if (a is AddValueBasedOnRollAction valueBonus)
+                valueBonus.AppendPoolContributionIfAny(result, player);
         }
+    }
+
+    /// <param name="fromRelicCombatStart">When true, the first player roll batch of the fight is skipped (watchers start from batch 2).</param>
+    public void RegisterValueBasedRollWatcher(int requiredFaceValue, RollBonusType bonusType, int amount, BurnEffectSO burnDefinition, AddValueBasedOnRollDuration duration, bool fromRelicCombatStart = false)
+    {
+        if (duration == AddValueBasedOnRollDuration.SameRoll)
+        {
+            Debug.LogError("CombatManager.RegisterValueBasedRollWatcher: SameRoll does not use watchers.");
+            return;
+        }
+
+        if (amount <= 0) return;
+        if (bonusType == RollBonusType.Burn && burnDefinition == null)
+        {
+            Debug.LogError("CombatManager.RegisterValueBasedRollWatcher: burnDefinition required when Bonus Type is Burn.");
+            return;
+        }
+
+        var firstBatch = fromRelicCombatStart
+            ? Mathf.Max(2, _rollBatchId + 2)
+            : Mathf.Max(1, _rollBatchId + 1);
+
+        var entry = new ValueBasedRollWatcherEntry
+        {
+            RequiredFaceValue = requiredFaceValue,
+            BonusType = bonusType,
+            Amount = amount,
+            BurnDefinition = burnDefinition,
+            FirstEligibleBatchId = firstBatch,
+            FirstEligibleResolveSequence = 0
+        };
+
+        if (duration == AddValueBasedOnRollDuration.SameTurn)
+            _sameTurnValueWatchers.Add(entry);
+        else
+            _entireCombatValueWatchers.Add(entry);
+    }
+
+    /// <summary>Registers a watcher when a die face with <see cref="AddValueBasedOnRollAction"/> resolves (Same Turn / Entire Combat from dice).</summary>
+    public void RegisterValueBasedRollWatcherFromDieResolution(int requiredFaceValue, RollBonusType bonusType, int amount, BurnEffectSO burnDefinition, AddValueBasedOnRollDuration duration)
+    {
+        if (duration == AddValueBasedOnRollDuration.SameRoll)
+        {
+            Debug.LogError("CombatManager.RegisterValueBasedRollWatcherFromDieResolution: SameRoll does not use watchers.");
+            return;
+        }
+
+        if (amount <= 0) return;
+        if (bonusType == RollBonusType.Burn && burnDefinition == null)
+        {
+            Debug.LogError("CombatManager.RegisterValueBasedRollWatcherFromDieResolution: burnDefinition required when Bonus Type is Burn.");
+            return;
+        }
+
+        var entry = new ValueBasedRollWatcherEntry
+        {
+            RequiredFaceValue = requiredFaceValue,
+            BonusType = bonusType,
+            Amount = amount,
+            BurnDefinition = burnDefinition,
+            FirstEligibleBatchId = 0,
+            FirstEligibleResolveSequence = _faceResolveSequence + 1
+        };
+
+        if (duration == AddValueBasedOnRollDuration.SameTurn)
+            _sameTurnValueWatchers.Add(entry);
+        else
+            _entireCombatValueWatchers.Add(entry);
+    }
+
+    private void CollectValueWatcherRegistrationsFromFace(FaceResult face)
+    {
+        if (face?.Actions == null) return;
+        foreach (var a in face.Actions)
+        {
+            if (a is FaceResolveModifierBase) continue;
+            if (a is AddValueBasedOnRollAction valueBonus)
+                valueBonus.RegisterWatcherIfNeeded(this);
+        }
+    }
+
+    private void ApplyValueBasedRollWatchersArmorDamage(FaceResult result)
+    {
+        if (result == null) return;
+        for (var i = 0; i < _sameTurnValueWatchers.Count; i++)
+            ApplyValueBasedRollWatcherArmorDamage(result, _sameTurnValueWatchers[i]);
+        for (var i = 0; i < _entireCombatValueWatchers.Count; i++)
+            ApplyValueBasedRollWatcherArmorDamage(result, _entireCombatValueWatchers[i]);
+    }
+
+    private bool ValueWatcherEligible(ValueBasedRollWatcherEntry w)
+    {
+        if (w.FirstEligibleBatchId > 0 && _rollBatchId < w.FirstEligibleBatchId)
+            return false;
+        if (w.FirstEligibleResolveSequence > 0 && _faceResolveSequence < w.FirstEligibleResolveSequence)
+            return false;
+        return true;
+    }
+
+    private void ApplyValueBasedRollWatcherArmorDamage(FaceResult result, ValueBasedRollWatcherEntry w)
+    {
+        if (!ValueWatcherEligible(w)) return;
+        if (result.Value != w.RequiredFaceValue) return;
+        if (w.Amount <= 0) return;
+        switch (w.BonusType)
+        {
+            case RollBonusType.Armor:
+                result.Armor += w.Amount;
+                break;
+            case RollBonusType.Damage:
+                result.Damage += w.Amount;
+                break;
+        }
+    }
+
+    private void ApplyValueBasedRollWatchersBurn(FaceResult result)
+    {
+        if (result == null || player == null) return;
+        var ctx = BuildContext(result);
+        for (var i = 0; i < _sameTurnValueWatchers.Count; i++)
+            ApplyValueBasedRollWatcherBurn(result, ctx, _sameTurnValueWatchers[i]);
+        for (var i = 0; i < _entireCombatValueWatchers.Count; i++)
+            ApplyValueBasedRollWatcherBurn(result, ctx, _entireCombatValueWatchers[i]);
+    }
+
+    private void ApplyValueBasedRollWatcherBurn(FaceResult result, GameActionContext ctx, ValueBasedRollWatcherEntry w)
+    {
+        if (!ValueWatcherEligible(w)) return;
+        if (result.Value != w.RequiredFaceValue) return;
+        if (w.BonusType != RollBonusType.Burn || w.Amount <= 0) return;
+
+        AddValueBasedOnRollAction.ApplyBurnToEnemyFromContext(ctx, w.Amount, w.BurnDefinition);
+        AddValueBasedOnRollAction.TryAppendBurnPoolLine(result, player, w.RequiredFaceValue, w.Amount, w.BurnDefinition);
     }
 
     private static void PushDeferredPoolIconHints(FaceResult result)
@@ -663,11 +836,12 @@ public class CombatManager : MonoBehaviour
         foreach (var face in channeledFaces)
         {
             if (face.ActivateImmediately || face.Actions == null || face.Actions.Count == 0) continue;
+            var faceCtx = BuildContext(face);
             foreach (var a in face.Actions)
             {
                 if (a is FaceResolveModifierBase) continue;
                 if (a != null)
-                    a.Execute(ctx);
+                    a.Execute(faceCtx);
             }
         }
 
@@ -791,12 +965,14 @@ public class CombatManager : MonoBehaviour
 
     private void ResetTurn()
     {
+        _sameTurnValueWatchers.Clear();
         _turnRegistry.ResetVolatile();
         channeledFaces.Clear();
         turnEndActions.Clear();
         overchargeBonus = 0;
         var relicPerfectTurn = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
-        appliedMultiplier = relicPerfectTurn > 0 ? Mathf.Max(StartStrikeMultiplier, relicPerfectTurn) : StartStrikeMultiplier;
+        var basePerfectTurn = GetPerfectStrikeBaseMultiplier();
+        appliedMultiplier = relicPerfectTurn > 0 ? Mathf.Max(basePerfectTurn, relicPerfectTurn) : basePerfectTurn;
         bustProtected = false; immune = false; thorns = 0;
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();
@@ -811,6 +987,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnImmediateGameActionBarClear?.Invoke();
         CombatEvents.OnElementPoolRuntimeIconsClear?.Invoke();
         CombatEvents.OnPlayerTurnStarted?.Invoke();
+        RelicActionRunner.RunPhase(this, RelicPhases.AfterEnemyTurnPlayerTurnStart);
         ChangeState(CombatState.WaitingForRoll);
     }
 

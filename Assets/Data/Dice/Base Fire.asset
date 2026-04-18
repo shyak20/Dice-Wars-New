@@ -23,4 +23,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c5917562e3d354844966d38d7f117908, type: 2}
   - {fileID: 11400000, guid: bb450c4943fe1774484fd832c96593ef, type: 2}
   - {fileID: 11400000, guid: c5917562e3d354844966d38d7f117908, type: 2}
-  maxPowerContribution: 6
+  maxPowerContribution: 0

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
+  m_Name: Iron Skin Legendary
+  m_EditorClassIdentifier: 
+  title: Iron Skin Legendary
+  description: 
+  descriptionLines:
+  - Gain <style=Shield>6</style>
+  - This turn, whenever you roll a 6 gain <style=Shield>6</style>
+  value: 6
+  type: 1
+  faceMaterial: {fileID: 2100000, guid: 3f7122d4f64a56341a40bc26b951971d, type: 2}
+  rarity: 0
+  damage: 0
+  armor: 4
+  uiIcon: {fileID: 21300000, guid: ee8a5f538c79db44493b373daa0529b1, type: 3}
+  activateImmediately: 0
+  actions:
+  - rid: 6494956272364552432
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956272364552432
+      type: {class: AddValueBasedOnRollAction, ns: , asm: Assembly-CSharp}
+      data:
+        requiredFaceValue: 6
+        bonusType: 0
+        amount: 6
+        burnDefinition: {fileID: 0}
+        duration: 1

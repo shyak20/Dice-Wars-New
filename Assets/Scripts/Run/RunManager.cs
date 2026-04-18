@@ -22,7 +22,6 @@ public class RunManager : MonoBehaviour
     [SerializeField, Min(0)] private int mapWeightShrine = 2;
     [SerializeField, Min(0)] private int mapWeightUnknown = 1;
     [SerializeField, Min(0)] private int mapWeightTreasure = 1;
-    [SerializeField, Min(1)] private int defaultRunMaxHp = 100;
 
     [Header("UI")]
     [Tooltip("Register once for shop/reward/menu scenes; combat can also assign on CombatManager.")]
@@ -119,6 +118,7 @@ public class RunManager : MonoBehaviour
             RunEconomyManager.Instance.ResetEconomyForNewRun();
 
         ClearRunRelics();
+        _runVitalityInitialized = false;
 
         if (useMapInsteadOfEncounterList)
         {
@@ -483,9 +483,19 @@ public class RunManager : MonoBehaviour
     {
         if (_runVitalityInitialized)
             return;
-        _runMaxHp = defaultRunMaxHp;
+        _runMaxHp = ReadStartingMaxHealthFromPlayerData();
         _runCurrentHp = _runMaxHp;
         _runVitalityInitialized = true;
+    }
+
+    static int ReadStartingMaxHealthFromPlayerData()
+    {
+        var pd = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+        if (pd != null)
+            return Mathf.Max(1, pd.startingMaxHealth);
+
+        Debug.LogError("RunManager: PlayerDataContainer.Instance or RuntimeData is null — cannot read startingMaxHealth. Using 100.");
+        return 100;
     }
 
     /// <summary>Act asset for the current map run act, or null if not in a map-based run.</summary>
