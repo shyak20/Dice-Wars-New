@@ -42,6 +42,8 @@ MonoBehaviour:
   statusEffectIcons:
   - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
     icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
+  - effect: {fileID: 11400000, guid: ebf544cc10a2325409bf6d6ef50a8f63, type: 2}
+    icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
   - effect: {fileID: 11400000, guid: c3b5f7e19d204a8b9f0e1234567890cd, type: 2}
     icon: {fileID: 21300000, guid: 9fd6635eef1e77942b0d437ca1a5cd0e, type: 3}
   - effect: {fileID: 11400000, guid: a8c9e0f1d2e34f5ab6c7d8e9f0123456, type: 2}

@@ -16,7 +16,7 @@ public abstract class StatusEffectSO : ScriptableObject
     public virtual void OnPerfectStrike(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual int ModifyDamageToOwner(StatusEffectInstance instance, StatusEffectContext ctx, int damage) => damage;
     public virtual int GetBonusAttack(StatusEffectInstance instance, StatusEffectContext ctx) => 0;
-    /// <summary>Added to <see cref="DieFaceSO.damage"/> each time the player resolves an attacking die (face.damage &gt; 0).</summary>
+    /// <summary>Added to <see cref="DieFaceSO.damage"/> when the player resolves an attacking die, and to each enemy physical strike base damage before <see cref="ModifyEnemyHitDamage"/> (e.g. Strength).</summary>
     public virtual int GetPerDieAttackDamageBonus(StatusEffectInstance instance, StatusEffectContext ctx) => 0;
     public virtual int ModifyFaceValue(StatusEffectInstance instance, StatusEffectContext ctx, int value) => value;
     public virtual bool ShouldRedirectAttackToSelf(StatusEffectInstance instance, StatusEffectContext ctx) => false;

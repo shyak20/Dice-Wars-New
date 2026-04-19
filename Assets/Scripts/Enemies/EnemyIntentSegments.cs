@@ -16,7 +16,9 @@ public static class EnemyIntentSegments
         }
     }
 
-    public static void BuildRows(EnemyActionSO intent, List<Row> into)
+    /// <param name="enemy">When set with <paramref name="combat"/>, physical strike text uses live damage (Strength, Chill, …).</param>
+    /// <param name="buffDamageColor">TMP rich-text color for the per-hit number when it differs from <see cref="EnemyActionSO.damage"/>.</param>
+    public static void BuildRows(EnemyActionSO intent, List<Row> into, EnemyController enemy = null, CombatManager combat = null, Color buffDamageColor = default)
     {
         into.Clear();
         if (intent == null)
@@ -25,7 +27,11 @@ public static class EnemyIntentSegments
         if (intent.damage > 0)
         {
             var hits = Mathf.Max(1, intent.numberOfAttacks);
-            var label = hits <= 1 ? intent.damage.ToString() : $"{intent.damage}x{hits}";
+            var basePer = intent.damage;
+            var computedPer = basePer;
+            if (enemy != null && combat != null)
+                computedPer = combat.PreviewEnemyPhysicalHitDamage(enemy, basePer);
+            var label = FormatPhysicalIntentLabel(basePer, computedPer, hits, buffDamageColor);
             into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Damage), label));
         }
 
@@ -66,5 +72,17 @@ public static class EnemyIntentSegments
             default:
                 return "";
         }
+    }
+
+    private static string FormatPhysicalIntentLabel(int basePerHit, int computedPerHit, int hits, Color buffDamageColor)
+    {
+        if (computedPerHit == basePerHit)
+            return hits <= 1 ? computedPerHit.ToString() : $"{computedPerHit}x{hits}";
+
+        var c = buffDamageColor.a > 0.001f ? buffDamageColor : new Color(1f, 0.55f, 0.35f, 1f);
+        var hex = ColorUtility.ToHtmlStringRGBA(c);
+        return hits <= 1
+            ? $"<color=#{hex}>{computedPerHit}</color>"
+            : $"<color=#{hex}>{computedPerHit}</color>x{hits}";
     }
 }

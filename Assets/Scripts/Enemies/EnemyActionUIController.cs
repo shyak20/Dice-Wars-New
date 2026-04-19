@@ -11,8 +11,12 @@ namespace Enemies
         [SerializeField] private EnemyIntentSegmentView segmentPrefab;
 
         [SerializeField] private EnemyController _enemyController;
+        [Header("Physical strike intent")]
+        [Tooltip("TMP rich-text color for the per-hit damage number when it differs from the action asset (e.g. Strength).")]
+        [SerializeField] private Color intentBuffDamageColor = new Color(1f, 0.55f, 0.35f, 1f);
 
         private readonly List<EnemyIntentSegments.Row> _rowsScratch = new List<EnemyIntentSegments.Row>();
+        private CombatManager _combatManager;
 
         private void Start()
         {
@@ -21,9 +25,25 @@ namespace Enemies
             if (_enemyController == null)
                 Debug.LogError("EnemyActionUIController: Assign enemy controller.");
 
+            _combatManager = FindObjectOfType<CombatManager>();
+            if (_enemyController.StatusEffects != null)
+                _enemyController.StatusEffects.OnEffectsChanged += OnEnemyStatusEffectsChanged;
+
             _enemyController.CurrentIntent
                 .Subscribe(OnCurrentIntentChanged)
                 .AddTo(this);
+        }
+
+        private void OnDestroy()
+        {
+            if (_enemyController != null && _enemyController.StatusEffects != null)
+                _enemyController.StatusEffects.OnEffectsChanged -= OnEnemyStatusEffectsChanged;
+        }
+
+        private void OnEnemyStatusEffectsChanged()
+        {
+            if (_enemyController != null)
+                OnCurrentIntentChanged(_enemyController.CurrentIntent.Value);
         }
 
         private void OnCurrentIntentChanged(EnemyActionSO intent)
@@ -33,7 +53,7 @@ namespace Enemies
             if (intent == null || segmentContainer == null || segmentPrefab == null)
                 return;
 
-            EnemyIntentSegments.BuildRows(intent, _rowsScratch);
+            EnemyIntentSegments.BuildRows(intent, _rowsScratch, _enemyController, _combatManager, intentBuffDamageColor);
             foreach (var row in _rowsScratch)
             {
                 var seg = Instantiate(segmentPrefab, segmentContainer);

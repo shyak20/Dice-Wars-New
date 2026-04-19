@@ -134,7 +134,7 @@ public class EnemyController : MonoBehaviour
             CombatEvents.OnEnemyDamageNumber?.Invoke(amount, GetDamageNumberWorldPosition(), this);
     }
 
-    private Vector3 GetDamageNumberWorldPosition()
+    public Vector3 GetDamageNumberWorldPosition()
     {
         if (damageNumberWorldAnchor != null) return damageNumberWorldAnchor.position;
         if (enemySprite != null) return enemySprite.transform.position;

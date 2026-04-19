@@ -927,6 +927,16 @@ public class CombatManager : MonoBehaviour
 
     private StatusEffectContext BuildStatusContext() => new StatusEffectContext { CombatManager = this, Player = player, Enemy = activeEnemy };
 
+    /// <summary>Per-hit physical damage for enemy intent UI; matches <see cref="EnemyTurnRoutine"/> (Strength bonus, then Chill/Shattered/etc.).</summary>
+    public int PreviewEnemyPhysicalHitDamage(EnemyController enemy, int intentBaseDamagePerHit)
+    {
+        if (enemy == null || intentBaseDamagePerHit <= 0)
+            return intentBaseDamagePerHit;
+        var ctx = new StatusEffectContext { CombatManager = this, Player = player, Enemy = enemy };
+        var boosted = intentBaseDamagePerHit + enemy.StatusEffects.GetTotalPerDieAttackDamageBonus(ctx);
+        return Mathf.Max(0, enemy.StatusEffects.ModifyEnemyHitDamage(ctx, boosted));
+    }
+
     /// <summary>Used by face resolve modifiers and status actions that need a status context.</summary>
     public StatusEffectContext BuildStatusContextForEffects() => BuildStatusContext();
 
@@ -1166,7 +1176,9 @@ public class CombatManager : MonoBehaviour
             var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
             if (retaliate > 0 && player != null)
             {
-                player.TakeDamage(retaliate);
+                // Floating numbers: bias toward player so it reads as player damage, with enemy anchor to help screen depth after orb FX.
+                var thornsPopupAnchor = Vector3.Lerp(player.GetDamageNumberWorldPosition(), activeEnemy.GetDamageNumberWorldPosition(), 0.25f);
+                player.TakeDamage(retaliate, PlayerDamageSource.ThornsRetaliation, thornsPopupAnchor);
                 if (CheckDefeat()) return;
             }
 
@@ -1206,14 +1218,15 @@ public class CombatManager : MonoBehaviour
             {
                 for (int i = 0; i < action.numberOfAttacks; i++)
                 {
-                    var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, action.damage);
+                    var boosted = action.damage + activeEnemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
+                    var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, boosted);
                     if (activeEnemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx)) activeEnemy.TakeDamage(damage);
                     else
                     {
                         var hadImmune = player.StatusEffects.GetStacks<ImmuneEffectSO>() > 0;
                         if (hadImmune)
                             damage = Mathf.Min(damage, 1);
-                        player.TakeDamage(damage);
+                        player.TakeDamage(damage, PlayerDamageSource.EnemyPhysicalAttack);
                         if (hadImmune)
                             player.StatusEffects.ConsumeImmuneStackAfterHit(statusCtx);
                         var thornsRetaliate = player.StatusEffects.GetThornsRetaliateStacks();

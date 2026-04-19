@@ -19,7 +19,10 @@ namespace Enemies
             }
 
             if (valueText != null)
+            {
+                valueText.richText = true;
                 valueText.text = value ?? "";
+            }
         }
     }
 }

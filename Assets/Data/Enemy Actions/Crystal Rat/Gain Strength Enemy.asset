@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
-  m_Name: Gain Strength
+  m_Name: Gain Strength Enemy
   m_EditorClassIdentifier: 
   actionName: 
   icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
@@ -25,6 +25,6 @@ MonoBehaviour:
     - rid: 6494956272364552443
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
-        statusEffect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
+        statusEffect: {fileID: 11400000, guid: ebf544cc10a2325409bf6d6ef50a8f63, type: 2}
         stacks: 2
         poolRowKeyOverride: 

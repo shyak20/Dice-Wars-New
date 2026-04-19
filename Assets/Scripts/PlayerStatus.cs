@@ -20,9 +20,20 @@ public class PlayerStatus : MonoBehaviour
     [Tooltip("World position used for damage popups; defaults to this transform.")]
     [SerializeField] private Transform damageNumberWorldAnchor;
 
+    [Header("Enemy physical hit juice")]
+    [Tooltip("Optional. Shakes camera, hit VFX, sprite flash when damage uses EnemyPhysicalAttack.")]
+    [SerializeField] private PlayerPhysicalHitFeedback physicalHitFeedback;
+
     public StatusEffectManager StatusEffects { get; private set; }
 
     public int GetCurrentHealth() => currentHealth;
+
+    public Vector3 GetDamageNumberWorldPosition()
+    {
+        if (damageNumberWorldAnchor != null)
+            return damageNumberWorldAnchor.position;
+        return transform.position;
+    }
 
     /// <summary>Applies persisted run HP after loading the combat scene (see <see cref="RunManager"/>).</summary>
     public void ApplyRunVitality(int hp, int maxHp)
@@ -80,6 +91,9 @@ public class PlayerStatus : MonoBehaviour
         if (StatusEffects == null)
             Debug.LogError("PlayerStatus: Missing StatusEffectManager component!");
 
+        if (physicalHitFeedback == null)
+            physicalHitFeedback = GetComponentInChildren<PlayerPhysicalHitFeedback>(true);
+
         maxHealth = 1;
         currentHealth = 1;
         UpdateUI();
@@ -98,8 +112,11 @@ public class PlayerStatus : MonoBehaviour
     /// <summary>
     /// Deducts damage from armor first, then health.
     /// </summary>
-    public void TakeDamage(int damage)
+    /// <param name="floatingDamageNumberWorldOverride">When set, used as the world anchor for <see cref="CombatEvents.OnPlayerDamageNumber"/> (e.g. enemy position for thorns popups).</param>
+    public void TakeDamage(int damage, PlayerDamageSource source = PlayerDamageSource.Generic, Vector3? floatingDamageNumberWorldOverride = null)
     {
+        var hpBefore = currentHealth;
+
         // 1. Armor absorbs damage first
         int damageRemaining = damage;
 
@@ -130,8 +147,14 @@ public class PlayerStatus : MonoBehaviour
 
         if (damage > 0)
         {
-            Vector3 w = damageNumberWorldAnchor != null ? damageNumberWorldAnchor.position : transform.position;
+            var w = floatingDamageNumberWorldOverride ?? GetDamageNumberWorldPosition();
             CombatEvents.OnPlayerDamageNumber?.Invoke(damage, w);
+        }
+
+        if (physicalHitFeedback != null && source == PlayerDamageSource.EnemyPhysicalAttack && damage > 0)
+        {
+            var hpLost = hpBefore - currentHealth;
+            physicalHitFeedback.OnEnemyPhysicalHit(damage, hpLost, maxHealth);
         }
 
         if (currentHealth <= 0)
