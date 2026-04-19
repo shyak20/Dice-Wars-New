@@ -31,12 +31,23 @@ public class ApplyStatusEffectAction : GameActionWithIcon
             Enemy = context.Enemy
         };
 
-        var applyStacks = stacks;
-        if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context.Player != null)
+        int applyStacks;
+        if (context.PendingApplyStackOverrides != null)
         {
-            var pyro = context.Player.StatusEffects.GetStacks<PyromaniacEffectSO>();
-            applyStacks += pyro;
+            if (!context.PendingApplyStackOverrides.TryGetValue(this, out applyStacks))
+                applyStacks = 0;
         }
+        else
+        {
+            applyStacks = stacks;
+            if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context.Player != null)
+            {
+                var pyro = context.Player.StatusEffects.GetStacks<PyromaniacEffectSO>();
+                applyStacks += pyro;
+            }
+        }
+
+        if (applyStacks <= 0) return;
 
         manager.ApplyStatus(statusEffect, applyStacks, ctx);
 
@@ -44,27 +55,38 @@ public class ApplyStatusEffectAction : GameActionWithIcon
             context.CombatManager.TurnRegistry?.RecordBurnApplied(applyStacks);
 
         if (GameActionDebug.Enabled)
-            Debug.Log($"[ApplyStatusEffect] Applied {stacks} stacks of {statusEffect.effectName} to {statusEffect.target}");
+            Debug.Log($"[ApplyStatusEffect] Applied {applyStacks} stacks of {statusEffect.effectName} to {statusEffect.target}");
     }
 
-    /// <summary>Registers a separate pool/flyout row (e.g. Burn → Fire) so it is not merged into physical damage.</summary>
-    public void AppendPoolContributionIfAny(FaceResult result, PlayerStatus player)
+    /// <summary>
+    /// Deferred faces: adds a pool row so the apply is visible until submit and can scale with Perfect Strike / bust.
+    /// Immediate faces skip the pool — <see cref="DieFaceSO.activateImmediately"/> applies status when the die settles.
+    /// </summary>
+    public void AppendPoolContributionIfAny(FaceResult result, PlayerStatus player, bool activateImmediately)
     {
+        if (activateImmediately) return;
         if (statusEffect == null || result == null || player == null) return;
 
         var applyStacks = stacks;
         if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy)
             applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
 
-        if (!statusEffect.TryGetRollFlyoutContribution(applyStacks, statusEffect.target, out var poolType, out var poolAmount))
-            return;
+        DieType poolType;
+        int poolAmount;
+        if (!statusEffect.TryGetRollFlyoutContribution(applyStacks, statusEffect.target, out poolType, out poolAmount))
+        {
+            poolType = statusEffect.ElementPoolDisplayRow;
+            poolAmount = applyStacks;
+        }
+
         if (poolAmount <= 0) return;
 
         result.ActionPoolContributions.Add(new FacePoolExtraContribution
         {
             PoolType = poolType,
             Amount = poolAmount,
-            Icon = ResolveStatusIcon()
+            Icon = ResolveStatusIcon(),
+            PoolSourceAction = this
         });
     }
 }

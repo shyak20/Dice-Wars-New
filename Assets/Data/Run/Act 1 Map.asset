@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Act 1 Map
   m_EditorClassIdentifier: 
   possibleEnemies:
-  - {fileID: 11400000, guid: 63d8c4fe53db29f47886bba395eaeaff, type: 2}
+  - {fileID: 11400000, guid: c5fda17c40a52a748b4c1d94cd9d5cf3, type: 2}
   - {fileID: 11400000, guid: 8f3e5f5a095a6524783b02c371e52eaa, type: 2}
   - {fileID: 11400000, guid: e90e4b2912d70c2419b7be11cca5a37d, type: 2}
   possibleUnknownEvents:

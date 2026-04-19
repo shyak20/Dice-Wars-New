@@ -24,8 +24,6 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 04af3842dc624e54b9b0a5ba199f4bf6, type: 3}
   - id: 3
     sprite: {fileID: 0}
-  - id: 4
-    sprite: {fileID: 0}
   - id: 5
     sprite: {fileID: 21300000, guid: 1a9b3b51a36f6b8419fb0fd7b44b5ddb, type: 3}
   - id: 6
@@ -39,9 +37,13 @@ MonoBehaviour:
   - id: 10
     sprite: {fileID: 0}
   - id: 11
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: cf961ca66e8819a4b8f97c6c5b76f212, type: 3}
   - id: 13
     sprite: {fileID: 0}
   statusEffectIcons:
   - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
     icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
+  - effect: {fileID: 11400000, guid: c3b5f7e19d204a8b9f0e1234567890cd, type: 2}
+    icon: {fileID: 21300000, guid: 9fd6635eef1e77942b0d437ca1a5cd0e, type: 3}
+  - effect: {fileID: 11400000, guid: a8c9e0f1d2e34f5ab6c7d8e9f0123456, type: 2}
+    icon: {fileID: 21300000, guid: 545fd21b1124cc741925dfa1962ad67b, type: 3}

@@ -6,6 +6,9 @@ public class DiceRoller : MonoBehaviour
     public float velocityThreshold = 0.2f;
     public float settleTime = 0.3f;
 
+    /// <summary>Set by <see cref="DiceSpawner"/> — order within the current roll batch.</summary>
+    public int BatchIndex { get; internal set; }
+
     private Rigidbody rb;
     private DieVisualizer visualizer;
     private CombatManager manager;
@@ -74,7 +77,7 @@ public class DiceRoller : MonoBehaviour
         {
             // Pick the SO from the matching index in our faces array
             DieFaceSO resultFace = visualizer.dieData.faces[closestIndex];
-            manager.ResolveRollResult(resultFace, transform);
+            manager.OnDiePhysicsSettled(BatchIndex, resultFace, transform);
         }
     }
 }

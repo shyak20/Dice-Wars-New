@@ -66,6 +66,7 @@ public class CombatUIController : MonoBehaviour
         CombatEvents.OnBustOccurred += ShowBustPanel;
         CombatEvents.OnStateChanged += HandleStateChange;
         CombatEvents.OnRollsRemainingChanged += UpdateRollsUI;
+        CombatEvents.OnRerollDieSelectionModeChanged += HandleRerollDieSelectionMode;
     }
 
     private void OnDisable()
@@ -75,6 +76,24 @@ public class CombatUIController : MonoBehaviour
         CombatEvents.OnBustOccurred -= ShowBustPanel;
         CombatEvents.OnStateChanged -= HandleStateChange;
         CombatEvents.OnRollsRemainingChanged -= UpdateRollsUI;
+        CombatEvents.OnRerollDieSelectionModeChanged -= HandleRerollDieSelectionMode;
+    }
+
+    private void HandleRerollDieSelectionMode(bool active)
+    {
+        if (trayCanvasGroup != null)
+        {
+            trayCanvasGroup.interactable = !active;
+            trayCanvasGroup.blocksRaycasts = true;
+        }
+
+        if (active)
+        {
+            if (rollButton != null) rollButton.interactable = false;
+            if (endTurnButton != null) endTurnButton.interactable = false;
+        }
+        else
+            HandleStateChange(_combatState);
     }
 
     private void Start()

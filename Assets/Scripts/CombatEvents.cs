@@ -78,4 +78,7 @@ public static class CombatEvents
 
     /// <summary>Fired when the player's turn begins again after the enemy turn (see <see cref="CombatManager"/> ResetTurn).</summary>
     public static Action OnPlayerTurnStarted;
+
+    /// <summary>True while the reroll-die picker is active (block tray / use physics pick on dice).</summary>
+    public static Action<bool> OnRerollDieSelectionModeChanged;
 }

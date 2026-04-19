@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8d2c91e4b6a405e9e7f1234567890ab, type: 3}
+  m_Name: Echo
+  m_EditorClassIdentifier: 
+  effectName: Echo
+  description: Your next roll batch does not add to the power meter. Extra stacks
+    queue additional free batches.
+  type: 0
+  target: 0
+  stackDecayPerTurn: 0

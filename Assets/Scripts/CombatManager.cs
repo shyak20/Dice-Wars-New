@@ -32,6 +32,10 @@ public class CombatManager : MonoBehaviour
     [Tooltip("Central icon index (also register on RunManager if combat is not the first scene).")]
     [SerializeField] private GameIconIndexSO gameIconIndex;
 
+    [Header("Reroll (RerollDie action)")]
+    [Tooltip("When a face has Reroll Die, after the batch settles the player may pick a die to rethrow (or skip).")]
+    [SerializeField] private RerollDieSelectionController rerollDieSelection;
+
     private CombatState currentState;
     private List<DieAssetSO> selectedDice = new List<DieAssetSO>();
 
@@ -42,7 +46,6 @@ public class CombatManager : MonoBehaviour
     private int bonusDamageFromActions;
     private int bonusArmorFromActions;
     private bool bustProtected;
-    private bool immune;
     private int thorns;
     private bool kineticShieldActive;
     private int kineticShieldBonus;
@@ -51,13 +54,20 @@ public class CombatManager : MonoBehaviour
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
     private Queue<int> pendingPrecisionChoices = new Queue<int>();
 
-    private int diceSettledCount = 0;
     private int expectedDiceCount = 0;
     private int pendingRollVisualSequences;
 
     private int rollsRemaining;
     private int maxRolls;
     private bool currentBatchIsFirstRollOfTurn;
+
+    /// <summary>Top face per die index for the current batch (physics); committed to combat after special-effects phase.</summary>
+    private DieFaceSO[] _pendingTopFaceByDieIndex;
+
+    private Transform[] _pendingDieSourceByIndex;
+    private bool _rollBatchPipelineRunning;
+
+    private int _pendingRerollGrants;
     private bool _appliedTestStartingFaces;
     private RelicRuntimeState _relicRuntime;
 
@@ -67,6 +77,7 @@ public class CombatManager : MonoBehaviour
     private int _rollBatchId;
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
     private int _faceResolveSequence;
+    private bool _echoSkipsPowerThisBatch;
 
     /// <summary>Volatile turn blackboard (physical/armor/burn totals, Brute Force, Supernova).</summary>
     public TurnRegistry TurnRegistry => _turnRegistry;
@@ -130,10 +141,8 @@ public class CombatManager : MonoBehaviour
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
-    public void SetImmune() => immune = true;
     public void AddThorns(int amount) => thorns += amount;
     public void ActivateKineticShield() => kineticShieldActive = true;
-    public void RefundPower(int amount) => currentPower -= amount;
     public void QueuePrecisionChoice(int amount) => pendingPrecisionChoices.Enqueue(amount);
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
     public bool IsResolvingFirstRollOfTurn() => currentBatchIsFirstRollOfTurn;
@@ -248,12 +257,13 @@ public class CombatManager : MonoBehaviour
         _faceResolveSequence = 0;
         selectedDice.Clear();
         channeledFaces.Clear();
+        _pendingRerollGrants = 0;
+        _rollBatchPipelineRunning = false;
+        _pendingTopFaceByDieIndex = null;
+        _pendingDieSourceByIndex = null;
         overchargeBonus = 0;
-        var relicPerfectReset = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
-        var basePerfect = GetPerfectStrikeBaseMultiplier();
-        appliedMultiplier = relicPerfectReset > 0 ? Mathf.Max(basePerfect, relicPerfectReset) : basePerfect;
+        appliedMultiplier = 1;
         bustProtected = false;
-        immune = false;
         thorns = 0;
         kineticShieldActive = false;
         kineticShieldBonus = 0;
@@ -349,9 +359,14 @@ public class CombatManager : MonoBehaviour
     {
         if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
         _rollBatchId++;
+        _pendingRerollGrants = 0;
+        _echoSkipsPowerThisBatch = player != null &&
+                                   player.StatusEffects.TryConsumeEchoPowerSkipForNextRollBatch(BuildStatusContext());
         expectedDiceCount = selectedDice.Count;
-        diceSettledCount = 0;
+        _pendingTopFaceByDieIndex = new DieFaceSO[expectedDiceCount];
+        _pendingDieSourceByIndex = new Transform[expectedDiceCount];
         pendingRollVisualSequences = 0;
+        _rollBatchPipelineRunning = false;
         currentBatchIsFirstRollOfTurn = (rollsRemaining == maxRolls);
         rollsRemaining--;
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
@@ -359,7 +374,142 @@ public class CombatManager : MonoBehaviour
         spawner.SpawnAndRollBatch(selectedDice);
     }
 
-    public void ResolveRollResult(DieFaceSO face, Transform dieWorldSource = null)
+    /// <summary>
+    /// Physics settled on a die (batch index order). Runs special-effects phase once all dice have a face, then gather commits.
+    /// </summary>
+    public void OnDiePhysicsSettled(int batchIndex, DieFaceSO face, Transform dieWorldSource)
+    {
+        if (face == null || expectedDiceCount <= 0) return;
+        if (batchIndex < 0 || batchIndex >= expectedDiceCount) return;
+        if (_pendingTopFaceByDieIndex == null || _pendingTopFaceByDieIndex.Length != expectedDiceCount) return;
+
+        _pendingTopFaceByDieIndex[batchIndex] = face;
+        _pendingDieSourceByIndex[batchIndex] = dieWorldSource;
+
+        if (_rollBatchPipelineRunning)
+            return;
+
+        if (AllPendingTopFacesFilled())
+            StartCoroutine(CoRollBatchPipeline());
+    }
+
+    private bool AllPendingTopFacesFilled()
+    {
+        if (_pendingTopFaceByDieIndex == null) return false;
+        for (var i = 0; i < expectedDiceCount; i++)
+        {
+            if (_pendingTopFaceByDieIndex[i] == null) return false;
+        }
+
+        return true;
+    }
+
+    private static int CountRerollGrantsOnFace(DieFaceSO face)
+    {
+        if (face?.actions == null) return 0;
+        var n = 0;
+        foreach (var a in face.actions)
+        {
+            if (a is RerollDieAction)
+                n++;
+        }
+
+        return n;
+    }
+
+    private IEnumerator CoRollBatchPipeline()
+    {
+        if (spawner == null)
+        {
+            _rollBatchPipelineRunning = false;
+            ProcessPrecisionQueue();
+            yield break;
+        }
+
+        _rollBatchPipelineRunning = true;
+
+        // --- Special effects (reroll, and later more) run before combat state receives the batch. ---
+        if (rerollDieSelection == null && CountRerollGrantsFromAllPendingFaces() > 0)
+            Debug.LogError("CombatManager: Reroll Die on a face but rerollDieSelection is not assigned.");
+
+        _pendingRerollGrants = CountRerollGrantsFromAllPendingFaces();
+        while (_pendingRerollGrants > 0 && rerollDieSelection != null)
+        {
+            var dice = spawner.GetActiveDiceSnapshot();
+            if (dice.Count == 0)
+            {
+                Debug.LogWarning("CombatManager: Reroll — no active dice; aborting remaining reroll offers.");
+                break;
+            }
+
+            var wait = true;
+            var skipped = false;
+            GameObject picked = null;
+            rerollDieSelection.BeginSelection(dice, (sk, go) =>
+            {
+                skipped = sk;
+                picked = go;
+                wait = false;
+            });
+            while (wait) yield return null;
+
+            _pendingRerollGrants = Mathf.Max(0, _pendingRerollGrants - 1);
+
+            if (!skipped && picked != null)
+            {
+                var idx = spawner.GetIndexOfActiveDie(picked);
+                if (idx < 0)
+                    Debug.LogWarning("CombatManager: Picked die is not in the active batch.");
+                else
+                {
+                    _pendingTopFaceByDieIndex[idx] = null;
+                    _pendingDieSourceByIndex[idx] = null;
+                    spawner.RerollDiePhysics(picked);
+                    yield return new WaitUntil(() => _pendingTopFaceByDieIndex[idx] != null);
+                    var newFace = _pendingTopFaceByDieIndex[idx];
+                    if (newFace != null)
+                        _pendingRerollGrants += CountRerollGrantsOnFace(newFace);
+                }
+            }
+        }
+
+        // --- Gather: apply resolved faces to combat (power, pools, watchers) in spawn order. ---
+        for (var i = 0; i < expectedDiceCount; i++)
+        {
+            var f = _pendingTopFaceByDieIndex[i];
+            var t = _pendingDieSourceByIndex[i];
+            if (f == null)
+            {
+                Debug.LogError($"CombatManager: Missing pending face at index {i} after special-effects phase.");
+                continue;
+            }
+
+            CommitResolvedRoll(f, t);
+        }
+
+        _rollBatchPipelineRunning = false;
+        _pendingTopFaceByDieIndex = null;
+        _pendingDieSourceByIndex = null;
+
+        yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
+        ProcessPrecisionQueue();
+    }
+
+    private int CountRerollGrantsFromAllPendingFaces()
+    {
+        if (_pendingTopFaceByDieIndex == null) return 0;
+        var n = 0;
+        for (var i = 0; i < _pendingTopFaceByDieIndex.Length; i++)
+        {
+            var f = _pendingTopFaceByDieIndex[i];
+            if (f == null) continue;
+            n += CountRerollGrantsOnFace(f);
+        }
+
+        return n;
+    }
+
+    private void CommitResolvedRoll(DieFaceSO face, Transform dieWorldSource)
     {
         _faceResolveSequence++;
 
@@ -372,7 +522,6 @@ public class CombatManager : MonoBehaviour
         if (rolledDamage > 0)
             rolledDamage += player.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
 
-        // Populate the expanded FaceResult
         var result = new FaceResult
         {
             Face = face,
@@ -388,6 +537,10 @@ public class CombatManager : MonoBehaviour
                 if (a != null)
                     result.Actions.Add(a);
         }
+
+        result.DieSource = dieWorldSource;
+        result.PowerContributionThisResolve = _echoSkipsPowerThisBatch ? 0 : modifiedValue;
+        result.KineticShieldBonusContribution = kineticArmorThisRoll ? 1 : 0;
 
         ApplyQueuedNextRollMultiplier(result, _turnRegistry);
 
@@ -413,7 +566,8 @@ public class CombatManager : MonoBehaviour
         PopulateActionPoolContributions(result);
 
         channeledFaces.Add(result);
-        currentPower += modifiedValue;
+        if (!_echoSkipsPowerThisBatch)
+            currentPower += modifiedValue;
 
         var relicAfterPowerCtx = BuildRelicContext(result);
         relicAfterPowerCtx.RelicPhase = RelicPhases.AfterPowerChangedFromRoll;
@@ -423,7 +577,6 @@ public class CombatManager : MonoBehaviour
 
         ApplyValueBasedRollWatchersBurn(result);
 
-        // Immediate action execution (all actions on this face, in order)
         if (result.ActivateImmediately && result.Actions.Count > 0)
         {
             var context = BuildContext(result);
@@ -431,6 +584,7 @@ public class CombatManager : MonoBehaviour
             foreach (var a in result.Actions)
             {
                 if (a is FaceResolveModifierBase) continue;
+                if (a is RerollDieAction) continue;
                 a.Execute(context);
                 var icon = GameActionIconUtility.GetDisplayIcon(a);
                 if (icon != null)
@@ -439,6 +593,7 @@ public class CombatManager : MonoBehaviour
                     immediateIcons.Add(icon);
                 }
             }
+
             if (immediateIcons != null && immediateIcons.Count > 0)
                 CombatEvents.OnImmediateGameActionIconsShown?.Invoke(immediateIcons);
         }
@@ -449,8 +604,6 @@ public class CombatManager : MonoBehaviour
         FirePoolsUpdated();
         if (!result.ActivateImmediately)
             PushDeferredPoolIconHints(result);
-
-        diceSettledCount++;
 
         if (dieWorldSource != null)
         {
@@ -467,8 +620,6 @@ public class CombatManager : MonoBehaviour
                 CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
             }
         }
-
-        TryAdvanceAfterDiceSettledAndRollVisuals();
     }
 
     private void OnRollVisualSequenceFinished()
@@ -479,15 +630,6 @@ public class CombatManager : MonoBehaviour
             Debug.LogError("CombatManager: pendingRollVisualSequences underflow — check DiceRollVisualPayload.ReportVisualFinished is called once per payload.");
             pendingRollVisualSequences = 0;
         }
-
-        TryAdvanceAfterDiceSettledAndRollVisuals();
-    }
-
-    private void TryAdvanceAfterDiceSettledAndRollVisuals()
-    {
-        if (diceSettledCount < expectedDiceCount) return;
-        if (pendingRollVisualSequences > 0) return;
-        ProcessPrecisionQueue();
     }
 
     private void PopulateActionPoolContributions(FaceResult result)
@@ -498,7 +640,9 @@ public class CombatManager : MonoBehaviour
         {
             if (a is FaceResolveModifierBase) continue;
             if (a is ApplyStatusEffectAction apply)
-                apply.AppendPoolContributionIfAny(result, player);
+                apply.AppendPoolContributionIfAny(result, player, result.ActivateImmediately);
+            if (a is MaxHpAction maxHp)
+                maxHp.AppendPoolContributionIfAny(result);
             if (a is AddValueBasedOnRollAction valueBonus)
                 valueBonus.AppendPoolContributionIfAny(result, player);
         }
@@ -751,6 +895,7 @@ public class CombatManager : MonoBehaviour
         if (perfectAtMax || perfectAtMaxMinusOne)
         {
             var poolsBefore = SnapshotPools();
+            appliedMultiplier = GetPerfectStrikeBaseMultiplier();
             var relicPerfect = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
             if (relicPerfect > 0)
                 appliedMultiplier = Mathf.Max(appliedMultiplier, relicPerfect);
@@ -761,6 +906,8 @@ public class CombatManager : MonoBehaviour
                 face.Damage *= appliedMultiplier;
                 face.Armor *= appliedMultiplier;
             }
+
+            MultiplyPendingStrikeScaledPoolContributions(channeledFaces, appliedMultiplier);
 
             kineticShieldBonus *= appliedMultiplier;
             bonusDamageFromActions *= appliedMultiplier;
@@ -823,8 +970,93 @@ public class CombatManager : MonoBehaviour
         }
         if (nullifyDamage) bonusDamageFromActions = 0;
         else { bonusArmorFromActions = 0; kineticShieldBonus = 0; }
+        ApplyBustToPendingApplyStatusPoolContributions(channeledFaces, nullifyDamage);
         NotifyAllPoolUI();
         SubmitTurn();
+    }
+
+    /// <summary>Status applies and Max HP rows in <see cref="FaceResult.ActionPoolContributions"/> scale with Perfect Strike (display + grant use same totals).</summary>
+    private static void MultiplyPendingStrikeScaledPoolContributions(List<FaceResult> faces, int multiplier)
+    {
+        if (faces == null || multiplier <= 1) return;
+        foreach (var face in faces)
+        {
+            for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+            {
+                var c = face.ActionPoolContributions[i];
+                if (c.PoolSourceAction == null && c.MaxHpPoolSource == null) continue;
+                c.Amount *= multiplier;
+                face.ActionPoolContributions[i] = c;
+            }
+        }
+    }
+
+    /// <summary>Final +max HP grant for a face action after pool lines may have been scaled by jackpot.</summary>
+    public int ResolveMaxHpPoolGrant(MaxHpAction action)
+    {
+        if (action == null || channeledFaces == null) return 0;
+        foreach (var face in channeledFaces)
+        {
+            foreach (var c in face.ActionPoolContributions)
+            {
+                if (c.MaxHpPoolSource != action) continue;
+                return Mathf.Max(0, c.Amount);
+            }
+        }
+
+        return Mathf.Max(0, action.Amount * Mathf.Max(1, appliedMultiplier));
+    }
+
+    /// <summary>Bust choice removes pending enemy-target applies with damage, or player-target applies with armor.</summary>
+    private static void ApplyBustToPendingApplyStatusPoolContributions(List<FaceResult> faces, bool nullifyDamage)
+    {
+        if (faces == null) return;
+        foreach (var face in faces)
+        {
+            for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+            {
+                var c = face.ActionPoolContributions[i];
+                var src = c.PoolSourceAction;
+                if (src?.StatusEffectDefinition == null) continue;
+                var target = src.StatusEffectDefinition.target;
+                var remove = nullifyDamage ? target == StatusEffectTarget.Enemy : target == StatusEffectTarget.Player;
+                if (!remove) continue;
+                c.Amount = 0;
+                face.ActionPoolContributions[i] = c;
+            }
+        }
+    }
+
+    private static Dictionary<ApplyStatusEffectAction, int> BuildPendingApplyStackOverrides(FaceResult face)
+    {
+        if (face?.Actions == null) return null;
+
+        var hasApplyStatus = false;
+        foreach (var a in face.Actions)
+        {
+            if (a is ApplyStatusEffectAction)
+            {
+                hasApplyStatus = true;
+                break;
+            }
+        }
+
+        if (!hasApplyStatus) return null;
+
+        var map = new Dictionary<ApplyStatusEffectAction, int>();
+        foreach (var c in face.ActionPoolContributions)
+        {
+            if (c.PoolSourceAction == null) continue;
+            map[c.PoolSourceAction] = c.Amount;
+        }
+
+        foreach (var a in face.Actions)
+        {
+            if (a is ApplyStatusEffectAction apply && !map.ContainsKey(apply))
+                map[apply] = 0;
+        }
+
+        return map;
     }
 
     private void SubmitTurn()
@@ -837,6 +1069,7 @@ public class CombatManager : MonoBehaviour
         {
             if (face.ActivateImmediately || face.Actions == null || face.Actions.Count == 0) continue;
             var faceCtx = BuildContext(face);
+            faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
             foreach (var a in face.Actions)
             {
                 if (a is FaceResolveModifierBase) continue;
@@ -909,7 +1142,16 @@ public class CombatManager : MonoBehaviour
                 {
                     var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, action.damage);
                     if (activeEnemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx)) activeEnemy.TakeDamage(damage);
-                    else { if (immune) damage = Mathf.Min(damage, 1); player.TakeDamage(damage); if (thorns > 0) activeEnemy.TakeDamage(thorns); }
+                    else
+                    {
+                        var hadImmune = player.StatusEffects.GetStacks<ImmuneEffectSO>() > 0;
+                        if (hadImmune)
+                            damage = Mathf.Min(damage, 1);
+                        player.TakeDamage(damage);
+                        if (hadImmune)
+                            player.StatusEffects.ConsumeImmuneStackAfterHit(statusCtx);
+                        if (thorns > 0) activeEnemy.TakeDamage(thorns);
+                    }
                     if (CheckDefeat()) yield break;
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
                 }
@@ -968,12 +1210,14 @@ public class CombatManager : MonoBehaviour
         _sameTurnValueWatchers.Clear();
         _turnRegistry.ResetVolatile();
         channeledFaces.Clear();
+        _pendingRerollGrants = 0;
+        _rollBatchPipelineRunning = false;
+        _pendingTopFaceByDieIndex = null;
+        _pendingDieSourceByIndex = null;
         turnEndActions.Clear();
         overchargeBonus = 0;
-        var relicPerfectTurn = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
-        var basePerfectTurn = GetPerfectStrikeBaseMultiplier();
-        appliedMultiplier = relicPerfectTurn > 0 ? Mathf.Max(basePerfectTurn, relicPerfectTurn) : basePerfectTurn;
-        bustProtected = false; immune = false; thorns = 0;
+        appliedMultiplier = 1;
+        bustProtected = false; thorns = 0;
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;

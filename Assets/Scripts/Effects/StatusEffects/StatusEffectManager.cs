@@ -302,6 +302,62 @@ public class StatusEffectManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// If the player has <see cref="EchoEffectSO"/> stacks, removes one: the current roll batch (all dice) will not add to power.
+    /// </summary>
+    public bool TryConsumeEchoPowerSkipForNextRollBatch(StatusEffectContext ctx)
+    {
+        for (var i = effects.Count - 1; i >= 0; i--)
+        {
+            if (!(effects[i].Definition is EchoEffectSO))
+                continue;
+            var inst = effects[i];
+            if (inst.Stacks <= 0)
+                continue;
+            inst.RemoveStacks(1);
+            if (inst.IsExpired)
+            {
+                inst.Definition.OnRemove(inst, ctx);
+                effects.RemoveAt(i);
+            }
+
+            if (GameActionDebug.Enabled)
+                Debug.Log("[Echo status] Consumed 1 stack — dice in this roll batch will not increase power.");
+
+            NotifyChanged();
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Removes one stack of <see cref="ImmuneEffectSO"/> after an enemy hit that used Immune capping.
+    /// </summary>
+    public void ConsumeImmuneStackAfterHit(StatusEffectContext ctx)
+    {
+        for (var i = effects.Count - 1; i >= 0; i--)
+        {
+            if (!(effects[i].Definition is ImmuneEffectSO))
+                continue;
+            var inst = effects[i];
+            if (inst.Stacks <= 0)
+                continue;
+            inst.RemoveStacks(1);
+            if (inst.IsExpired)
+            {
+                inst.Definition.OnRemove(inst, ctx);
+                effects.RemoveAt(i);
+            }
+
+            if (GameActionDebug.Enabled)
+                Debug.Log("[Immune status] Consumed 1 stack from the hit.");
+
+            NotifyChanged();
+            return;
+        }
+    }
+
     private StatusEffectInstance FindInstance(StatusEffectSO definition)
     {
         foreach (var effect in effects)

@@ -34,6 +34,29 @@ public class DiceSpawner : MonoBehaviour
     private List<GameObject> activeDiceModels = new List<GameObject>();
     private Coroutine _spawnRoutine;
 
+    /// <summary>Copy of spawned dice for this batch (reroll UI / physics).</summary>
+    public List<GameObject> GetActiveDiceSnapshot() => new List<GameObject>(activeDiceModels);
+
+    /// <summary>Spawn order index for the active batch (matches <see cref="DiceRoller.BatchIndex"/>).</summary>
+    public int GetIndexOfActiveDie(GameObject die)
+    {
+        if (die == null) return -1;
+        for (var i = 0; i < activeDiceModels.Count; i++)
+            if (activeDiceModels[i] == die)
+                return i;
+        return -1;
+    }
+
+    /// <summary>Apply a fresh throw and wait for settlement again (same die instance).</summary>
+    public void RerollDiePhysics(GameObject die)
+    {
+        if (die == null) return;
+        var rb = die.GetComponent<Rigidbody>();
+        var roller = die.GetComponent<DiceRoller>();
+        if (rb != null) ApplyForces(rb);
+        if (roller != null) roller.StartCheckingResult();
+    }
+
     public void ClearOldDice()
     {
         foreach (GameObject die in activeDiceModels)
@@ -90,7 +113,11 @@ public class DiceSpawner : MonoBehaviour
                 Rigidbody rb = die.GetComponent<Rigidbody>();
                 if (rb != null) ApplyForces(rb);
                 DiceRoller roller = die.GetComponent<DiceRoller>();
-                if (roller != null) roller.StartCheckingResult();
+                if (roller != null)
+                {
+                    roller.BatchIndex = i;
+                    roller.StartCheckingResult();
+                }
 
                 if (i < diceList.Count - 1 && delayBetweenDice > 0f)
                     yield return new WaitForSeconds(delayBetweenDice);

@@ -69,4 +69,22 @@ public class TurnRegistry
         if (result.Type != DieType.Damage && result.Type != DieType.Armor && result.Value > 0)
             OnValueAccumulated?.Invoke(ElementTypeExtensions.FromDieType(result.Type), result.Value);
     }
+
+    /// <summary>Reverts <see cref="RecordResolvedFace"/> physical/armor totals (element value events are not mirrored here).</summary>
+    public void UndoRecordResolvedFace(FaceResult result)
+    {
+        if (result == null) return;
+
+        if (result.Type == DieType.Damage && result.Damage > 0)
+        {
+            AccumulatedPhysicalDamage -= result.Damage;
+            if (AccumulatedPhysicalDamage < 0) AccumulatedPhysicalDamage = 0;
+        }
+
+        if (result.Armor > 0)
+        {
+            AccumulatedArmor -= result.Armor;
+            if (AccumulatedArmor < 0) AccumulatedArmor = 0;
+        }
+    }
 }

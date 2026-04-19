@@ -92,8 +92,7 @@ public sealed class RelicMaxHpOnPerfectAction : RelicGameActionBase
     {
         if (ctx.RelicPhase != RelicPhases.OnPerfectStrike || ctx.Player == null) return;
         if (maxHpGain <= 0) return;
-        ctx.Player.AddMaxHP(maxHpGain);
-        ctx.Player.Heal(maxHpGain);
+        ctx.Player.AddMaxHealthAndHeal(maxHpGain);
     }
 }
 

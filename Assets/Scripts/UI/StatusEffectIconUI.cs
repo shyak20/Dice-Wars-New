@@ -30,6 +30,10 @@ public class StatusEffectIconUI : MonoBehaviour
         var spr = GameIconCatalog.GetStatusIcon(effect.Definition);
         if (spr == null && effect.Definition is BurnEffectSO)
             spr = GameIconCatalog.GetElementIcon(DieType.Fire);
+        if (spr == null && effect.Definition is EchoEffectSO)
+            spr = GameIconCatalog.GetElementIcon(DieType.Armor);
+        if (spr == null && effect.Definition is ImmuneEffectSO)
+            spr = GameIconCatalog.GetElementIcon(DieType.Ice);
         if (iconImage != null)
         {
             iconImage.sprite = spr;

@@ -5,10 +5,12 @@ public enum ActionVisualId
     Heal = 1,
     Cleanse = 2,
     Overcharge = 3,
-    Echo = 4,
+    /// <summary>Reserved icon slot (was legacy Echo face action). Use <see cref="EchoEffectSO"/> + <see cref="ApplyStatusEffectAction"/> instead.</summary>
+    LegacyEchoActionIconSlot = 4,
     KineticShield = 5,
     Precision = 6,
-    Immune = 7,
+    /// <summary>Reserved icon slot (was legacy Immune face action). Use <see cref="ImmuneEffectSO"/> + <see cref="ApplyStatusEffectAction"/>.</summary>
+    LegacyImmuneActionIconSlot = 7,
     Broken = 8,
     SafetyNet = 9,
     Thorns = 10,
@@ -16,4 +18,5 @@ public enum ActionVisualId
     FirstRollAction = 12,
     AddRolls = 13,
     AddValueBasedOnRoll = 14,
+    RerollDie = 15,
 }

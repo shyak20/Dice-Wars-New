@@ -10,22 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Ariel Temp Status Test Face
+  m_Name: Clarity
   m_EditorClassIdentifier: 
-  title: 
+  title: Clarity
   description: 
+  descriptionLines:
+  - Gain <style=Shield>3</style>
+  - Gain Echo
   value: 3
-  type: 0
-  faceMaterial: {fileID: 2100000, guid: b24c54533aab7fd4faef57bdc6c1d149, type: 2}
+  type: 1
+  faceMaterial: {fileID: 2100000, guid: b79feab573e635f4dba618f242f94b3c, type: 2}
   rarity: 0
-  faceIcon: {fileID: 0}
-  action:
-    rid: 6710286049019166723
+  damage: 0
+  armor: 3
+  uiIcon: {fileID: 21300000, guid: d333fbbe67a0e0f47953e09df3120a95, type: 3}
+  activateImmediately: 1
+  actions:
+  - rid: 6494956272364552435
   references:
     version: 2
     RefIds:
-    - rid: 6710286049019166723
+    - rid: 6494956272364552435
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
-        statusEffect: {fileID: 11400000, guid: a6109525210e14e428f04e24e950f829, type: 2}
-        stacks: 3
+        statusEffect: {fileID: 11400000, guid: c3b5f7e19d204a8b9f0e1234567890cd, type: 2}
+        stacks: 1

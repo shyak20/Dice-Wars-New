@@ -16,7 +16,6 @@ MonoBehaviour:
   description: 
   descriptionLines:
   - Gain <style=Shield>6</style>
-  - Adds +1 Rolls this turn
   value: 6
   type: 1
   faceMaterial: {fileID: 2100000, guid: 3f7122d4f64a56341a40bc26b951971d, type: 2}
@@ -24,7 +23,7 @@ MonoBehaviour:
   damage: 0
   armor: 6
   uiIcon: {fileID: 21300000, guid: ee8a5f538c79db44493b373daa0529b1, type: 3}
-  activateImmediately: 1
+  activateImmediately: 0
   actions: []
   references:
     version: 2

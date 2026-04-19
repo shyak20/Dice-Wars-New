@@ -52,11 +52,25 @@ public class PlayerStatus : MonoBehaviour
         Debug.Log($"<color=green>Player healed {amount} HP. Current: {currentHealth}</color>");
         UpdateUI();
     }
-    
+
+    /// <summary>
+    /// Increases max HP and heals by the same amount (e.g. 10/20 and +3 → 13/23). Use for "Meditate" and similar.
+    /// </summary>
+    public void AddMaxHealthAndHeal(int amount)
+    {
+        if (amount <= 0) return;
+        maxHealth = Mathf.Max(1, maxHealth + amount);
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        Debug.Log($"<color=green>Player +{amount} max HP (max {maxHealth}) and healed; current {currentHealth}</color>");
+        UpdateUI();
+    }
+
+    /// <summary>Raises max HP only (no current-HP change). Prefer <see cref="AddMaxHealthAndHeal"/> for "gain max and heal" effects.</summary>
     public void AddMaxHP(int amount)
     {
-        maxHealth = maxHealth + amount;
-        Debug.Log($"<color=green>Player ADD MAX HP {amount} . Current: {maxHealth}</color>");
+        if (amount == 0) return;
+        maxHealth = Mathf.Max(1, maxHealth + amount);
+        Debug.Log($"<color=green>Player ADD MAX HP {amount} . Current max: {maxHealth}</color>");
         UpdateUI();
     }
 

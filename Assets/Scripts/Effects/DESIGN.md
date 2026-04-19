@@ -30,7 +30,7 @@ public class MyAction : IGameAction
     }
 }
 ```
-Examples: `OverchargeAction`, `SafetyNetAction`, `EchoAction`
+Examples: `OverchargeAction`, `SafetyNetAction`
 
 **Turn-end** — queues work for turn end via `QueueTurnEndAction`. The callback receives a `GameActionContext` so it can read final turn state. **Must multiply values by `GetAppliedMultiplier()`** to scale with Perfect Strike + Overcharge.
 ```csharp
@@ -95,10 +95,8 @@ Methods actions can call via `context.CombatManager`:
 | `GetAppliedMultiplier()` | Turn-end | Get Perfect Strike multiplier (1 normally, 2+ on strike) |
 | `AddOvercharge(int)` | Immediate | Add to Perfect Strike multiplier |
 | `SetBustProtected()` | Immediate | Prevent bust consequences this turn |
-| `SetImmune()` | Immediate | Cap all enemy damage to 1 this turn |
 | `AddThorns(int)` | Immediate | Add thorns — enemy takes N damage per attack this turn (stacks) |
 | `ActivateKineticShield()` | Immediate | +1 bonus armor per subsequent die settled this turn |
-| `RefundPower(int)` | Immediate | Subtract from current power |
 | `QueuePrecisionChoice(int)` | Player-prompt | Queue a power-add prompt |
 
 ## Turn Flow
@@ -131,9 +129,9 @@ GetPendingDefense() = channeledFaces.Where(Defense).Sum(Value)
 | `HealAction` | Turn-end | Heals player HP × appliedMultiplier |
 | `OverchargeAction` | Immediate | Adds to Perfect Strike multiplier |
 | `SafetyNetAction` | Immediate | Bust has no consequences this turn |
-| `EchoAction` | Immediate | Refunds this face's power cost |
+| `EchoEffectSO` (+ `ApplyStatusEffectAction`) | Immediate / status | Stacks = next roll batch(es) add no power (see `CombatManager` + `StatusEffectManager.TryConsumeEchoPowerSkipForNextRollBatch`) |
 | `PrecisionAction` | Player-prompt | Player chooses to add X power |
-| `ImmuneAction` | Immediate | Enemy attacks deal max 1 damage this turn |
+| `ImmuneEffectSO` (+ `ApplyStatusEffectAction`) | Status | Stacks: turns of protection — enemy hits capped at 1/player hit while stacks &gt; 0; decays 1/stack per player turn start (`stackDecayPerTurn` = 1) |
 | `ThornsAction` | Immediate | Enemy takes 1 damage per attack this turn (stacks) |
 | `KineticShieldAction` | Immediate | +1 bonus armor for every die that settles after this one, this turn |
 | `BrokenAction` | Turn-end | Strips all enemy armor before player attack |
@@ -149,8 +147,6 @@ Assets/Scripts/Effects/
 │   ├── HealAction.cs
 │   ├── OverchargeAction.cs
 │   ├── SafetyNetAction.cs
-│   ├── EchoAction.cs
-│   ├── ImmuneAction.cs
 │   ├── ThornsAction.cs
 │   ├── PrecisionAction.cs
 │   ├── KineticShieldAction.cs       — +1 armor per subsequent die this turn
@@ -168,6 +164,7 @@ Assets/Scripts/Effects/
 │       ├── PoisonEffectSO.cs
 │       ├── BleedEffectSO.cs
 │       ├── ChillEffectSO.cs
+│       ├── ImmuneEffectSO.cs
 │       ├── FrozenEffectSO.cs
 │       ├── ShatteredEffectSO.cs
 │       ├── ConfusionEffectSO.cs
@@ -184,7 +181,7 @@ Assets/Data/StatusEffects/       — SO assets for each effect
 
 ## Status Effect System
 
-Persistent cross-turn buffs/debuffs with stacking. Per-turn flags (immune, thorns, bustProtected) are NOT status effects — those stay on CombatManager.
+Persistent cross-turn buffs/debuffs with stacking. **Immune** is a status effect (`ImmuneEffectSO`); per-turn flags (thorns, bustProtected) stay on CombatManager.
 
 ### Architecture
 

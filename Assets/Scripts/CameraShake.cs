@@ -11,8 +11,20 @@ public class CameraShake : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (Instance != null && Instance != this)
+        {
+            // Must not destroy the whole GameObject: other cameras (e.g. URP overlay) also get this by accident.
+            Destroy(this);
+            return;
+        }
+
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void Start()

@@ -24,4 +24,9 @@ public class GameActionContext
     public int CurrentPower { get; set; }
 
     public int MaxPower { get; set; }
+
+    /// <summary>
+    /// Set during turn-end execution for deferred faces: stack counts resolved from the element pool (Perfect Strike / bust adjusted).
+    /// </summary>
+    public Dictionary<ApplyStatusEffectAction, int> PendingApplyStackOverrides { get; set; }
 }
