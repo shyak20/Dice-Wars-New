@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Runtime access to the active <see cref="GameIconIndexSO"/>. Registered from <see cref="RunManager"/> and/or <see cref="CombatManager"/>.
+/// Runtime access to the active <see cref="GameIconIndexSO"/> (base attack/defence sprites, actions, statuses).
+/// Registered from <see cref="RunManager"/> and/or <see cref="CombatManager"/>.
 /// </summary>
 public static class GameIconCatalog
 {

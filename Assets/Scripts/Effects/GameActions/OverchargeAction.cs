@@ -6,6 +6,8 @@ public class OverchargeAction : GameActionWithIcon
 {
     [SerializeField] private int amount = 1;
 
+    public int OverchargeAmount => amount;
+
     protected override ActionVisualId VisualKey => ActionVisualId.Overcharge;
 
     public override void Execute(GameActionContext context)

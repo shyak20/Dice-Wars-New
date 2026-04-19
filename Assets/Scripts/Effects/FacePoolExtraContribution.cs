@@ -1,11 +1,11 @@
 using UnityEngine;
 
 /// <summary>
-/// Extra element-pool row from a rolled face action (e.g. Burn stacks → Fire), separate from <see cref="FaceResult.Damage"/> / face value.
+/// Extra element-pool row from a rolled face action (Burn stacks, Thorns, Max HP, etc.), separate from <see cref="FaceResult.Damage"/> / face value.
 /// </summary>
 public struct FacePoolExtraContribution
 {
-    public DieType PoolType;
+    public PoolRowKey PoolKey;
     public int Amount;
     public Sprite Icon;
     /// <summary>If set, this row is a deferred <see cref="ApplyStatusEffectAction"/> pending until submit — scales with Perfect Strike and bust rules.</summary>

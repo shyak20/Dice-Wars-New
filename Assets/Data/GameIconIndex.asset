@@ -13,10 +13,7 @@ MonoBehaviour:
   m_Name: GameIconIndex
   m_EditorClassIdentifier: 
   attack: {fileID: 21300000, guid: edcfefc5b76fb4d4ea44a7de2a3392ea, type: 3}
-  defense: {fileID: 21300000, guid: 01e402055d774024b95da23142df863c, type: 3}
-  fire: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
-  ice: {fileID: 21300000, guid: 545fd21b1124cc741925dfa1962ad67b, type: 3}
-  nature: {fileID: 0}
+  defence: {fileID: 21300000, guid: 01e402055d774024b95da23142df863c, type: 3}
   actionIcons:
   - id: 1
     sprite: {fileID: 21300000, guid: 32f5865e231bd304d88711f7f7dc357c, type: 3}
@@ -35,10 +32,12 @@ MonoBehaviour:
   - id: 9
     sprite: {fileID: 0}
   - id: 10
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
   - id: 11
     sprite: {fileID: 21300000, guid: cf961ca66e8819a4b8f97c6c5b76f212, type: 3}
   - id: 13
+    sprite: {fileID: 0}
+  - id: 16
     sprite: {fileID: 0}
   statusEffectIcons:
   - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
@@ -47,3 +46,5 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 9fd6635eef1e77942b0d437ca1a5cd0e, type: 3}
   - effect: {fileID: 11400000, guid: a8c9e0f1d2e34f5ab6c7d8e9f0123456, type: 2}
     icon: {fileID: 21300000, guid: 545fd21b1124cc741925dfa1962ad67b, type: 3}
+  - effect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
+    icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}

@@ -9,6 +9,9 @@ public class GameActionContext
     public FaceResult TriggeringFace { get; set; }
     public PlayerDataSO PlayerData { get; set; }
 
+    /// <summary>Set when <see cref="IGameAction.Execute"/> runs from an <see cref="EnemyActionSO"/> during the enemy turn.</summary>
+    public EnemyActionSO SourceEnemyAction { get; set; }
+
     /// <summary>When running relic actions: which lifecycle hook is executing (see <see cref="RelicPhases"/>).</summary>
     public string RelicPhase { get; set; }
 

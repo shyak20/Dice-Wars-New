@@ -6,6 +6,8 @@ public class PrecisionAction : GameActionWithIcon
 {
     [SerializeField] private int powerAmount = 1;
 
+    public int PowerOfferAmount => powerAmount;
+
     protected override ActionVisualId VisualKey => ActionVisualId.Precision;
 
     public override void Execute(GameActionContext context)

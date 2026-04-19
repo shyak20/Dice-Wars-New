@@ -3257,7 +3257,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   jackpotPresentationRoot: {fileID: 1354844266}
-  elementPoolDisplay: {fileID: 2110974188}
+  storedActionsPoolDisplay: {fileID: 2110974188}
   holdSeconds: 1.5
 --- !u!4 &434058155
 Transform:
@@ -3905,7 +3905,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   canvas: {fileID: 1896576052}
   flyoutParent: {fileID: 634037715}
-  elementPoolDisplay: {fileID: 2110974188}
+  storedActionsPoolDisplay: {fileID: 2110974188}
   worldCamera: {fileID: 963194227}
   linePrefab: {fileID: 6282203067050408647, guid: 8c38c60e1dea21a458165192404f5a49, type: 3}
   worldOffsetAboveDie: 0.75
@@ -5607,6 +5607,8 @@ MonoBehaviour:
   promptText: {fileID: 1052487966}
   yesButton: {fileID: 583246224}
   noButton: {fileID: 2014201656}
+  yesButtonCaption: {fileID: 0}
+  noButtonCaption: {fileID: 0}
 --- !u!1 &905153280
 GameObject:
   m_ObjectHideFlags: 0
@@ -13198,7 +13200,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   incrementPoolIconsWithFlyouts: 1
   iconContainer: {fileID: 2110974186}
-  poolIconPrefab: {fileID: 5249868910516358313, guid: 55e910efd313c564d93632aeb9614d0e, type: 3}
+  rowIconPrefab: {fileID: 5249868910516358313, guid: 55e910efd313c564d93632aeb9614d0e, type: 3}
 --- !u!114 &2110974189
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13520,6 +13522,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c0411742813c80946a9c882b65ea7df4, type: 3}
     - target: {fileID: 3440934713375229664, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

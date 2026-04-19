@@ -46,13 +46,18 @@ public class CombatManager : MonoBehaviour
     private int bonusDamageFromActions;
     private int bonusArmorFromActions;
     private bool bustProtected;
-    private int thorns;
     private bool kineticShieldActive;
     private int kineticShieldBonus;
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
-    private Queue<int> pendingPrecisionChoices = new Queue<int>();
+    private struct PrecisionChoiceEntry
+    {
+        public int Amount;
+        public PrecisionPromptPresentation Presentation;
+    }
+
+    private readonly Queue<PrecisionChoiceEntry> pendingPrecisionChoices = new Queue<PrecisionChoiceEntry>();
 
     private int expectedDiceCount = 0;
     private int pendingRollVisualSequences;
@@ -91,59 +96,64 @@ public class CombatManager : MonoBehaviour
 
     public List<FaceResult> GetChanneledFaces() => channeledFaces;
 
-    private Dictionary<DieType, int> BuildElementPools()
+    /// <summary>Stored-actions bar: face attack/defense plus deferred <see cref="IGameAction"/> pool rows (status actions scale with Perfect Strike separately).</summary>
+    private Dictionary<PoolRowKey, int> BuildStoredActionsPool()
     {
-        var pools = new Dictionary<DieType, int>();
-        foreach (DieType type in Enum.GetValues(typeof(DieType)))
-            pools[type] = 0;
+        var pools = new Dictionary<PoolRowKey, int>();
 
-        // Sum values across all faces in the container
-        foreach (var face in channeledFaces)
+        void Add(PoolRowKey key, int v)
         {
-            pools[DieType.Damage] += face.Damage;
-            pools[DieType.Armor] += face.Armor;
-
-            // Only add extra elements if they aren't Damage/Armor to avoid double-counting
-            if (face.Type != DieType.Damage && face.Type != DieType.Armor)
-                pools[face.Type] += face.Value;
-
-            if (face.ActionPoolContributions != null)
-            {
-                foreach (var extra in face.ActionPoolContributions)
-                    pools[extra.PoolType] += extra.Amount;
-            }
+            if (v == 0) return;
+            pools.TryGetValue(key, out var cur);
+            pools[key] = cur + v;
         }
 
-        pools[DieType.Damage] += bonusDamageFromActions;
-        pools[DieType.Armor] += kineticShieldBonus;
-        pools[DieType.Armor] += bonusArmorFromActions;
+        foreach (var face in channeledFaces)
+        {
+            Add(PoolRowKey.FromDieType(DieType.Damage), face.Damage);
+            Add(PoolRowKey.FromDieType(DieType.Armor), face.Armor);
+
+            if (face.ActionPoolContributions == null) continue;
+            foreach (var extra in face.ActionPoolContributions)
+                Add(extra.PoolKey, extra.Amount);
+        }
+
+        Add(PoolRowKey.FromDieType(DieType.Damage), bonusDamageFromActions);
+        Add(PoolRowKey.FromDieType(DieType.Armor), kineticShieldBonus);
+        Add(PoolRowKey.FromDieType(DieType.Armor), bonusArmorFromActions);
         return pools;
     }
 
-    private Dictionary<DieType, int> SnapshotPools()
+    private Dictionary<PoolRowKey, int> SnapshotStoredActionsPool()
     {
-        var src = BuildElementPools();
-        var copy = new Dictionary<DieType, int>();
+        var src = BuildStoredActionsPool();
+        var copy = new Dictionary<PoolRowKey, int>();
         foreach (var kvp in src)
             copy[kvp.Key] = kvp.Value;
         return copy;
     }
 
-    private void FirePoolsUpdated() => CombatEvents.OnPoolsUpdated?.Invoke(BuildElementPools());
+    private void NotifyStoredActionsPoolUpdated() =>
+        CombatEvents.OnStoredActionsPoolUpdated?.Invoke(BuildStoredActionsPool());
 
-    private void NotifyAllPoolUI()
+    private void NotifyAllStoredActionsPoolUI()
     {
-        var pools = BuildElementPools();
-        CombatEvents.OnPoolsUpdated?.Invoke(pools);
-        CombatEvents.OnPoolIconsFullResync?.Invoke(pools);
+        var pools = BuildStoredActionsPool();
+        CombatEvents.OnStoredActionsPoolUpdated?.Invoke(pools);
+        CombatEvents.OnStoredActionsPoolIconsFullResync?.Invoke(pools);
     }
 
     public void AddOvercharge(int amount) => overchargeBonus += amount;
     public int GetAppliedMultiplier() => appliedMultiplier;
     public void SetBustProtected() => bustProtected = true;
-    public void AddThorns(int amount) => thorns += amount;
     public void ActivateKineticShield() => kineticShieldActive = true;
-    public void QueuePrecisionChoice(int amount) => pendingPrecisionChoices.Enqueue(amount);
+    public void QueuePrecisionChoice(int amount) =>
+        QueuePrecisionChoice(amount, PrecisionPromptPresentation.Default);
+
+    public void QueuePrecisionChoice(int amount, PrecisionPromptPresentation presentation)
+    {
+        pendingPrecisionChoices.Enqueue(new PrecisionChoiceEntry { Amount = amount, Presentation = presentation });
+    }
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
     public bool IsResolvingFirstRollOfTurn() => currentBatchIsFirstRollOfTurn;
     public void AddBonusDamageFromAction(int amount)
@@ -264,7 +274,6 @@ public class CombatManager : MonoBehaviour
         overchargeBonus = 0;
         appliedMultiplier = 1;
         bustProtected = false;
-        thorns = 0;
         kineticShieldActive = false;
         kineticShieldBonus = 0;
         bonusDamageFromActions = 0;
@@ -275,13 +284,13 @@ public class CombatManager : MonoBehaviour
         rollsRemaining = maxRolls;
         currentBatchIsFirstRollOfTurn = false;
         CalculateMaxPower();
-        NotifyAllPoolUI();
+        NotifyAllStoredActionsPoolUI();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
         BindStatusBars();
 
         CombatEvents.OnImmediateGameActionBarClear?.Invoke();
-        CombatEvents.OnElementPoolRuntimeIconsClear?.Invoke();
+        CombatEvents.OnStoredActionsPoolRuntimeIconsClear?.Invoke();
     }
 
     private void BindStatusBars()
@@ -474,6 +483,7 @@ public class CombatManager : MonoBehaviour
         }
 
         // --- Gather: apply resolved faces to combat (power, pools, watchers) in spawn order. ---
+        var batchGatherStart = channeledFaces.Count;
         for (var i = 0; i < expectedDiceCount; i++)
         {
             var f = _pendingTopFaceByDieIndex[i];
@@ -487,12 +497,35 @@ public class CombatManager : MonoBehaviour
             CommitResolvedRoll(f, t);
         }
 
+        QueueAddPowerChoicesAfterBatchGather(batchGatherStart, channeledFaces.Count);
+
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
         _pendingDieSourceByIndex = null;
 
         yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
         ProcessPrecisionQueue();
+    }
+
+    private void QueueAddPowerChoicesAfterBatchGather(int startInclusive, int endExclusive)
+    {
+        for (var i = startInclusive; i < endExclusive; i++)
+        {
+            if (i < 0 || i >= channeledFaces.Count) continue;
+            var fr = channeledFaces[i];
+            if (fr?.Actions == null) continue;
+            foreach (var a in fr.Actions)
+            {
+                if (a is AddPowerAction add)
+                {
+                    var n = add.PowerAmount;
+                    if (n <= 0) continue;
+                    QueuePrecisionChoice(n, PrecisionPromptPresentation.AddPowerAbility);
+                    if (GameActionDebug.Enabled)
+                        Debug.Log($"[AddPowerAction] After batch gather, queued optional +{n} power (face index {i})");
+                }
+            }
+        }
     }
 
     private int CountRerollGrantsFromAllPendingFaces()
@@ -585,6 +618,7 @@ public class CombatManager : MonoBehaviour
             {
                 if (a is FaceResolveModifierBase) continue;
                 if (a is RerollDieAction) continue;
+                if (a is AddPowerAction) continue;
                 a.Execute(context);
                 var icon = GameActionIconUtility.GetDisplayIcon(a);
                 if (icon != null)
@@ -601,7 +635,7 @@ public class CombatManager : MonoBehaviour
         CollectValueWatcherRegistrationsFromFace(result);
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
-        FirePoolsUpdated();
+        NotifyStoredActionsPoolUpdated();
         if (!result.ActivateImmediately)
             PushDeferredPoolIconHints(result);
 
@@ -645,6 +679,8 @@ public class CombatManager : MonoBehaviour
                 maxHp.AppendPoolContributionIfAny(result);
             if (a is AddValueBasedOnRollAction valueBonus)
                 valueBonus.AppendPoolContributionIfAny(result, player);
+            if (a is ThornsAction thorns)
+                thorns.AppendPoolContributionIfAny(result, result.ActivateImmediately);
         }
     }
 
@@ -785,47 +821,50 @@ public class CombatManager : MonoBehaviour
     {
         if (result.ActivateImmediately) return;
 
-        void Hint(DieType t, int amt, Sprite icon)
+        void Hint(PoolRowKey key, int amt, Sprite icon)
         {
             if (amt > 0 && icon != null)
-                CombatEvents.OnRuntimePoolIconForType?.Invoke(t, icon);
+                CombatEvents.OnRuntimePoolIconForRow?.Invoke(key, icon);
         }
 
-        Hint(DieType.Damage, result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
-        Hint(DieType.Armor, result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
-        if (result.Type != DieType.Damage && result.Type != DieType.Armor)
-            Hint(result.Type, result.Value, GameIconCatalog.GetElementIcon(result.Type));
+        Hint(PoolRowKey.FromDieType(DieType.Damage), result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
+        Hint(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
 
-        if (result.ActionPoolContributions != null)
-        {
-            foreach (var extra in result.ActionPoolContributions)
-                Hint(extra.PoolType, extra.Amount, extra.Icon);
-        }
+        if (result.ActionPoolContributions == null) return;
+        foreach (var extra in result.ActionPoolContributions)
+            Hint(extra.PoolKey, extra.Amount, extra.Icon);
     }
 
     private static List<RollOutcomeVisualLine> BuildRollVisualLines(FaceResult result, bool kineticArmorThisRoll)
     {
         var lines = new List<RollOutcomeVisualLine>();
 
-        void AddLine(DieType t, int amt, Sprite icon)
+        void AddLine(PoolRowKey key, int amt, Sprite icon)
         {
             if (amt <= 0) return;
-            lines.Add(new RollOutcomeVisualLine { Type = t, Amount = amt, IconOverride = icon });
+            lines.Add(new RollOutcomeVisualLine { RowKey = key, Amount = amt, IconOverride = icon });
         }
 
-        AddLine(DieType.Damage, result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
-        AddLine(DieType.Armor, result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
-        if (result.Type != DieType.Damage && result.Type != DieType.Armor)
-            AddLine(result.Type, result.Value, GameIconCatalog.GetElementIcon(result.Type));
+        AddLine(PoolRowKey.FromDieType(DieType.Damage), result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
+        AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
 
         if (result.ActionPoolContributions != null)
         {
             foreach (var extra in result.ActionPoolContributions)
-                AddLine(extra.PoolType, extra.Amount, extra.Icon);
+            {
+                if (extra.Amount <= 0) continue;
+                lines.Add(new RollOutcomeVisualLine
+                {
+                    RowKey = extra.PoolKey,
+                    Amount = extra.Amount,
+                    IconOverride = extra.Icon
+                });
+            }
         }
 
         if (kineticArmorThisRoll)
-            AddLine(DieType.Armor, 1, null);
+            AddLine(PoolRowKey.FromDieType(DieType.Armor), 1, GameIconCatalog.GetElementIcon(DieType.Armor));
+
         return lines;
     }
 
@@ -869,6 +908,23 @@ public class CombatManager : MonoBehaviour
         };
     }
 
+    private GameActionContext BuildEnemyActionContext(EnemyActionSO sourceIntent)
+    {
+        return new GameActionContext
+        {
+            CombatManager = this,
+            Player = player,
+            Enemy = activeEnemy,
+            ChanneledFaces = channeledFaces,
+            TriggeringFace = null,
+            PlayerData = playerData,
+            RelicRuntime = _relicRuntime,
+            CurrentPower = currentPower,
+            MaxPower = maxPower,
+            SourceEnemyAction = sourceIntent
+        };
+    }
+
     private StatusEffectContext BuildStatusContext() => new StatusEffectContext { CombatManager = this, Player = player, Enemy = activeEnemy };
 
     /// <summary>Used by face resolve modifiers and status actions that need a status context.</summary>
@@ -878,9 +934,10 @@ public class CombatManager : MonoBehaviour
     {
         if (pendingPrecisionChoices.Count > 0)
         {
-            var amount = pendingPrecisionChoices.Dequeue();
-            precisionPanel.Show(amount, accepted => {
-                if (accepted) { currentPower += amount; CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower); }
+            var entry = pendingPrecisionChoices.Dequeue();
+            precisionPanel.Show(entry.Amount, entry.Presentation, accepted =>
+            {
+                if (accepted) { currentPower += entry.Amount; CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower); }
                 ProcessPrecisionQueue();
             });
         }
@@ -894,7 +951,7 @@ public class CombatManager : MonoBehaviour
                                    RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this);
         if (perfectAtMax || perfectAtMaxMinusOne)
         {
-            var poolsBefore = SnapshotPools();
+            var poolsBefore = SnapshotStoredActionsPool();
             appliedMultiplier = GetPerfectStrikeBaseMultiplier();
             var relicPerfect = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);
             if (relicPerfect > 0)
@@ -914,10 +971,10 @@ public class CombatManager : MonoBehaviour
             bonusArmorFromActions *= appliedMultiplier;
             activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
             RelicActionRunner.RunPhase(this, RelicPhases.OnPerfectStrike);
-            var poolsAfter = SnapshotPools();
+            var poolsAfter = SnapshotStoredActionsPool();
             if (CheckVictory())
             {
-                NotifyAllPoolUI();
+                NotifyAllStoredActionsPoolUI();
                 return;
             }
 
@@ -925,7 +982,7 @@ public class CombatManager : MonoBehaviour
                 StartCoroutine(CoFinishJackpotAfterPresentation(jackpotMultiplier, poolsBefore, poolsAfter));
             else
             {
-                NotifyAllPoolUI();
+                NotifyAllStoredActionsPoolUI();
                 SubmitTurn();
             }
         }
@@ -971,7 +1028,7 @@ public class CombatManager : MonoBehaviour
         if (nullifyDamage) bonusDamageFromActions = 0;
         else { bonusArmorFromActions = 0; kineticShieldBonus = 0; }
         ApplyBustToPendingApplyStatusPoolContributions(channeledFaces, nullifyDamage);
-        NotifyAllPoolUI();
+        NotifyAllStoredActionsPoolUI();
         SubmitTurn();
     }
 
@@ -1073,6 +1130,7 @@ public class CombatManager : MonoBehaviour
             foreach (var a in face.Actions)
             {
                 if (a is FaceResolveModifierBase) continue;
+                if (a is AddPowerAction) continue;
                 if (a != null)
                     a.Execute(faceCtx);
             }
@@ -1104,6 +1162,14 @@ public class CombatManager : MonoBehaviour
         if (pendingAttack > 0)
         {
             activeEnemy.TakeDamage(pendingAttack);
+
+            var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
+            if (retaliate > 0 && player != null)
+            {
+                player.TakeDamage(retaliate);
+                if (CheckDefeat()) return;
+            }
+
             if (CheckVictory()) return;
         }
 
@@ -1112,11 +1178,11 @@ public class CombatManager : MonoBehaviour
         StartCoroutine(EnemyTurnRoutine());
     }
 
-    private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<DieType, int> poolsBefore, Dictionary<DieType, int> poolsAfter)
+    private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
     {
         // Unity does not reliably run a nested IEnumerator with "yield return routine()"; must use StartCoroutine.
         yield return StartCoroutine(jackpotPresentation.Run(multiplier, poolsBefore, poolsAfter));
-        NotifyAllPoolUI();
+        NotifyAllStoredActionsPoolUI();
         SubmitTurn();
     }
 
@@ -1150,13 +1216,28 @@ public class CombatManager : MonoBehaviour
                         player.TakeDamage(damage);
                         if (hadImmune)
                             player.StatusEffects.ConsumeImmuneStackAfterHit(statusCtx);
-                        if (thorns > 0) activeEnemy.TakeDamage(thorns);
+                        var thornsRetaliate = player.StatusEffects.GetThornsRetaliateStacks();
+                        if (thornsRetaliate > 0)
+                            activeEnemy.TakeDamage(thornsRetaliate);
                     }
+                    if (CheckVictory()) yield break;
                     if (CheckDefeat()) yield break;
                     if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
                 }
             }
             if (action.armor > 0) activeEnemy.AddArmor(action.armor);
+
+            if (action.actions != null && action.actions.Count > 0 && player != null)
+            {
+                var actionCtx = BuildEnemyActionContext(action);
+                foreach (var gameAction in action.actions)
+                {
+                    if (gameAction == null) continue;
+                    if (gameAction is FaceResolveModifierBase) continue;
+                    gameAction.Execute(actionCtx);
+                }
+            }
+
             activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
             player.StatusEffects.TickAfterEnemyTurn(statusCtx);
             if (CheckVictory()) yield break;
@@ -1217,7 +1298,7 @@ public class CombatManager : MonoBehaviour
         turnEndActions.Clear();
         overchargeBonus = 0;
         appliedMultiplier = 1;
-        bustProtected = false; thorns = 0;
+        bustProtected = false;
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
@@ -1225,11 +1306,11 @@ public class CombatManager : MonoBehaviour
         var statusCtx = BuildStatusContext();
         // Player turn starts here.
         player.StatusEffects.TickTurnStart(statusCtx);
-        NotifyAllPoolUI();
+        NotifyAllStoredActionsPoolUI();
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         CombatEvents.OnImmediateGameActionBarClear?.Invoke();
-        CombatEvents.OnElementPoolRuntimeIconsClear?.Invoke();
+        CombatEvents.OnStoredActionsPoolRuntimeIconsClear?.Invoke();
         CombatEvents.OnPlayerTurnStarted?.Invoke();
         RelicActionRunner.RunPhase(this, RelicPhases.AfterEnemyTurnPlayerTurnStart);
         ChangeState(CombatState.WaitingForRoll);

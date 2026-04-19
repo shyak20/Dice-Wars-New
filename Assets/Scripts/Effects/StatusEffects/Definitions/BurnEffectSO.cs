@@ -5,13 +5,6 @@ public class BurnEffectSO : StatusEffectSO
 {
     [SerializeField] private int damagePerStack = 2;
 
-    public override bool TryGetRollFlyoutContribution(int displayedStacks, StatusEffectTarget applyTarget, out DieType poolType, out int poolAmount)
-    {
-        poolType = DieType.Fire;
-        poolAmount = displayedStacks;
-        return applyTarget == StatusEffectTarget.Enemy && displayedStacks > 0;
-    }
-
     public override void OnTurnStart(StatusEffectInstance instance, StatusEffectContext ctx)
     {
         var damage = damagePerStack * instance.Stacks;

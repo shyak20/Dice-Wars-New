@@ -6,6 +6,8 @@ public class CleanseAction : GameActionWithIcon
 {
     [SerializeField] private int stacks = 1;
 
+    public int CleanseStacks => stacks;
+
     protected override ActionVisualId VisualKey => ActionVisualId.Cleanse;
 
     public override void Execute(GameActionContext context)

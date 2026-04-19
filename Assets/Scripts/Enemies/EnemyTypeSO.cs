@@ -13,6 +13,10 @@ public class EnemyTypeSO : ScriptableObject
 {
     public string enemyName;
 
+    [Header("Visual")]
+    [Tooltip("Optional. Applied to the combat SpriteRenderer when this enemy type loads.")]
+    public Sprite displaySprite;
+
     [Header("Classification")]
     public EnemyRank enemyRank = EnemyRank.Normal;
 

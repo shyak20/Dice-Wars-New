@@ -1,40 +1,51 @@
-﻿using TMPro;
+﻿using System.Collections.Generic;
 using UniRx;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Enemies
 {
+    /// <summary>One <see cref="EnemyIntentSegmentView"/> per damage, armor, and each <see cref="IGameAction"/> on the current <see cref="EnemyActionSO"/>.</summary>
     public class EnemyActionUIController : MonoBehaviour
     {
-        [SerializeField] private Image _actionIcon;
-        [SerializeField] private TMP_Text _actionValue;
+        [SerializeField] private Transform segmentContainer;
+        [SerializeField] private EnemyIntentSegmentView segmentPrefab;
 
         [SerializeField] private EnemyController _enemyController;
-        
-        void Start()
+
+        private readonly List<EnemyIntentSegments.Row> _rowsScratch = new List<EnemyIntentSegments.Row>();
+
+        private void Start()
         {
+            if (segmentContainer == null || segmentPrefab == null)
+                Debug.LogError("EnemyActionUIController: Assign segment Container (layout parent) and Segment Prefab.");
+            if (_enemyController == null)
+                Debug.LogError("EnemyActionUIController: Assign enemy controller.");
+
             _enemyController.CurrentIntent
-                .SkipWhile(action => action == null)
                 .Subscribe(OnCurrentIntentChanged)
                 .AddTo(this);
         }
 
         private void OnCurrentIntentChanged(EnemyActionSO intent)
         {
-            _actionIcon.sprite = intent.icon;
-            if (intent.armor > 0)
+            ClearSegments();
+
+            if (intent == null || segmentContainer == null || segmentPrefab == null)
+                return;
+
+            EnemyIntentSegments.BuildRows(intent, _rowsScratch);
+            foreach (var row in _rowsScratch)
             {
-                _actionValue.text = intent.armor.ToString();
-            } 
-            else if (intent.damage > 0)
-            {
-                _actionValue.text = intent.damage.ToString();
-                if (intent.numberOfAttacks > 0)
-                {
-                    _actionValue.text += $"x{intent.numberOfAttacks}";
-                }
+                var seg = Instantiate(segmentPrefab, segmentContainer);
+                seg.Bind(row.Icon, row.ValueText);
             }
+        }
+
+        private void ClearSegments()
+        {
+            if (segmentContainer == null) return;
+            for (var i = segmentContainer.childCount - 1; i >= 0; i--)
+                Destroy(segmentContainer.GetChild(i).gameObject);
         }
     }
 }

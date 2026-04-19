@@ -8,12 +8,6 @@ public abstract class StatusEffectSO : ScriptableObject
     public StatusEffectTarget target;
     public int stackDecayPerTurn;
 
-    [Header("Element pool (deferred applies)")]
-    [Tooltip("When TryGetRollFlyoutContribution does not define a row, deferred status applies still show in the element pool under this type.")]
-    [SerializeField] private DieType elementPoolDisplayRow = DieType.Ice;
-
-    public DieType ElementPoolDisplayRow => elementPoolDisplayRow;
-
     public virtual void OnApply(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual void OnTurnStart(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual void OnBeforeEnemyTurn(StatusEffectInstance instance, StatusEffectContext ctx) { }
@@ -27,16 +21,4 @@ public abstract class StatusEffectSO : ScriptableObject
     public virtual int ModifyFaceValue(StatusEffectInstance instance, StatusEffectContext ctx, int value) => value;
     public virtual bool ShouldRedirectAttackToSelf(StatusEffectInstance instance, StatusEffectContext ctx) => false;
     public virtual void OnRemove(StatusEffectInstance instance, StatusEffectContext ctx) { }
-
-    /// <summary>
-    /// When applied via <see cref="ApplyStatusEffectAction"/> on a rolled face, add a separate flyout / element-pool row
-    /// (e.g. Burn stacks on Fire), not merged into physical <see cref="FaceResult.Damage"/>.
-    /// </summary>
-    /// <param name="displayedStacks">Stacks after rules like Pyromaniac (caller computes).</param>
-    public virtual bool TryGetRollFlyoutContribution(int displayedStacks, StatusEffectTarget applyTarget, out DieType poolType, out int poolAmount)
-    {
-        poolType = default;
-        poolAmount = 0;
-        return false;
-    }
 }

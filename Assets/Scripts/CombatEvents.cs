@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>One row of text/icon shown above a die, then flown to the pool bar. Icon comes from <see cref="ElementPoolDisplay"/> for <see cref="Type"/>.</summary>
+/// <summary>One row of text/icon above a die, then flown to <see cref="StoredActionsPoolDisplay"/>.</summary>
 public struct RollOutcomeVisualLine
 {
-    public DieType Type;
+    public PoolRowKey RowKey;
     public int Amount;
-    /// <summary>From turn-end actions on this face; flyout + pool use when set, else <see cref="ElementPoolDisplay"/> default art.</summary>
+    /// <summary>Deferred action icon when set; otherwise catalog art from <see cref="PoolRowKey"/>.</summary>
     public Sprite IconOverride;
 }
 
-/// <summary>Spawned by CombatManager when a die settles; UI flies lines to <see cref="ElementPoolDisplay"/>.</summary>
+/// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>
 public class DiceRollVisualPayload
 {
     public Vector3 WorldAnchor;
@@ -36,9 +36,10 @@ public static class CombatEvents
 {
     // UI Updates
     public static Action<int, int> OnPowerChanged;
-    public static Action<Dictionary<DieType, int>> OnPoolsUpdated;
-    /// <summary>Forces element pool icons to match combat totals (bust, turn reset, overcharge). Not used per-die roll when flyout drives icons.</summary>
-    public static Action<Dictionary<DieType, int>> OnPoolIconsFullResync;
+    /// <summary>Totals for stored attack/defence plus deferred action rows (<see cref="FaceResult.ActionPoolContributions"/>).</summary>
+    public static Action<Dictionary<PoolRowKey, int>> OnStoredActionsPoolUpdated;
+    /// <summary>Force stored-actions pool UI to match combat (bust, reset). Skipped per roll when flyouts drive the bar.</summary>
+    public static Action<Dictionary<PoolRowKey, int>> OnStoredActionsPoolIconsFullResync;
     /// <summary>3D die position + outcome lines; optional if no listener.</summary>
     public static Action<DiceRollVisualPayload> OnDiceRollVisualFeedback;
 
@@ -46,10 +47,10 @@ public static class CombatEvents
     public static Action<IReadOnlyList<Sprite>> OnImmediateGameActionIconsShown;
     /// <summary>Clear <see cref="OnImmediateGameActionIconsShown"/> UI (new combat turn).</summary>
     public static Action OnImmediateGameActionBarClear;
-    /// <summary>Clear dynamic pool icons from turn-end actions; default element art is shown again.</summary>
-    public static Action OnElementPoolRuntimeIconsClear;
+    /// <summary>Clear runtime icon overrides on the stored-actions pool.</summary>
+    public static Action OnStoredActionsPoolRuntimeIconsClear;
     /// <summary>When a turn-end face resolves, set pool bar art for each element type that gained value (non-flyout mode).</summary>
-    public static Action<DieType, Sprite> OnRuntimePoolIconForType;
+    public static Action<PoolRowKey, Sprite> OnRuntimePoolIconForRow;
 
     // Interaction
     public static Action<DieAssetSO> OnDieToggled;

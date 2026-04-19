@@ -2,7 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class ElementPoolIcon : MonoBehaviour
+/// <summary>One icon + amount for a deferred dice action row in <see cref="StoredActionsPoolDisplay"/>.</summary>
+public class StoredActionsPoolIcon : MonoBehaviour
 {
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text valueText;
@@ -11,13 +12,11 @@ public class ElementPoolIcon : MonoBehaviour
     [SerializeField] private GameObject jackpotMultiplierRoot;
     [SerializeField] private TMP_Text jackpotMultiplierText;
     private HoverTooltipTargetUI hoverTooltipTarget;
-    private DieType configuredType;
+    private PoolRowKey configuredKey;
 
-    /// <summary>Rect used as the fly animation destination for this pool type.</summary>
     public RectTransform FlyTargetRect => (RectTransform)transform;
 
-    /// <summary>Current art on the pool icon (defaults + runtime overrides).</summary>
-    public Sprite PoolTypeSprite => icon != null ? icon.sprite : null;
+    public Sprite RowSprite => icon != null ? icon.sprite : null;
 
     public void SetPoolSprite(Sprite sprite)
     {
@@ -31,9 +30,9 @@ public class ElementPoolIcon : MonoBehaviour
         valueText.text = value.ToString();
     }
 
-    public void ConfigureType(DieType type)
+    public void Configure(PoolRowKey key)
     {
-        configuredType = type;
+        configuredKey = key;
         UpdateTooltipText();
     }
 
@@ -54,33 +53,38 @@ public class ElementPoolIcon : MonoBehaviour
     private void Awake()
     {
         if (icon == null)
-            Debug.LogError($"ElementPoolIcon on '{gameObject.name}': icon Image is not assigned!");
+            Debug.LogError($"StoredActionsPoolIcon on '{gameObject.name}': icon Image is not assigned!");
         if (valueText == null)
-            Debug.LogError($"ElementPoolIcon on '{gameObject.name}': valueText is not assigned!");
+            Debug.LogError($"StoredActionsPoolIcon on '{gameObject.name}': valueText is not assigned!");
         if (jackpotMultiplierRoot != null)
             jackpotMultiplierRoot.SetActive(false);
 
         var hoverTargetGo = icon != null ? icon.gameObject : gameObject;
         hoverTooltipTarget = hoverTargetGo.GetComponent<HoverTooltipTargetUI>() ?? hoverTargetGo.AddComponent<HoverTooltipTargetUI>();
-        UpdateTooltipText();
     }
 
     private void UpdateTooltipText()
     {
         if (hoverTooltipTarget == null) return;
-        hoverTooltipTarget.SetContent(configuredType.ToString(), GetElementDescription(configuredType));
+        var title = configuredKey.StableId.Length > 0 ? configuredKey.DisplayLabel : "Action";
+        hoverTooltipTarget.SetContent(title, GetRowDescription(configuredKey));
     }
 
-    private static string GetElementDescription(DieType type)
+    private static string GetRowDescription(PoolRowKey key)
     {
-        return type switch
+        if (PoolRowKey.TryGetDieType(key, out var dt))
         {
-            DieType.Damage => "Stored physical damage that will be dealt on turn end.",
-            DieType.Armor => "Stored armor gained for this turn.",
-            DieType.Fire => "Stored fire effect power from rolled actions.",
-            DieType.Ice => "Stored ice effect power from rolled actions.",
-            DieType.Nature => "Stored nature effect power from rolled actions.",
-            _ => "Stored element value from the current roll.",
-        };
+            return dt switch
+            {
+                DieType.Damage => "Deferred damage from this face — applied when you end the turn.",
+                DieType.Armor => "Deferred armor from this face — applied when you end the turn.",
+                DieType.Fire => "Deferred fire from this face — resolves to a status when the turn ends (if configured on the action).",
+                DieType.Ice => "Deferred ice from this face — resolves when the turn ends.",
+                DieType.Nature => "Deferred nature from this face — resolves when the turn ends.",
+                _ => "Deferred value from this face."
+            };
+        }
+
+        return "Deferred action from a die — runs when you end the turn; may become a status effect.";
     }
 }

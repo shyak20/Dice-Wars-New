@@ -62,7 +62,7 @@ public class CombatUIController : MonoBehaviour
             rollButtonText = rollButton.GetComponentInChildren<TMP_Text>();
 
         CombatEvents.OnPowerChanged += UpdatePowerUI;
-        CombatEvents.OnPoolsUpdated += UpdatePoolsUI;
+        CombatEvents.OnStoredActionsPoolUpdated += UpdateStoredActionsPoolSummaryText;
         CombatEvents.OnBustOccurred += ShowBustPanel;
         CombatEvents.OnStateChanged += HandleStateChange;
         CombatEvents.OnRollsRemainingChanged += UpdateRollsUI;
@@ -72,7 +72,7 @@ public class CombatUIController : MonoBehaviour
     private void OnDisable()
     {
         CombatEvents.OnPowerChanged -= UpdatePowerUI;
-        CombatEvents.OnPoolsUpdated -= UpdatePoolsUI;
+        CombatEvents.OnStoredActionsPoolUpdated -= UpdateStoredActionsPoolSummaryText;
         CombatEvents.OnBustOccurred -= ShowBustPanel;
         CombatEvents.OnStateChanged -= HandleStateChange;
         CombatEvents.OnRollsRemainingChanged -= UpdateRollsUI;
@@ -396,11 +396,25 @@ public class CombatUIController : MonoBehaviour
         if (powerText != null) powerText.text = $"{current} / {max}";
     }
 
-    private void UpdatePoolsUI(Dictionary<DieType, int> pools)
+    private void UpdateStoredActionsPoolSummaryText(Dictionary<PoolRowKey, int> pools)
     {
-        // UI updated for renamed types
-        if (poolText != null)
-            poolText.text = $"DMG: {pools[DieType.Damage]} | ARM: {pools[DieType.Armor]}";
+        if (poolText == null) return;
+        if (pools == null || pools.Count == 0)
+        {
+            poolText.text = "";
+            return;
+        }
+
+        var keys = new System.Collections.Generic.List<PoolRowKey>(pools.Keys);
+        keys.Sort((a, b) => PoolRowKey.Compare(a, b));
+        var parts = new System.Collections.Generic.List<string>();
+        foreach (var k in keys)
+        {
+            if (!pools.TryGetValue(k, out var n) || n < 1) continue;
+            parts.Add($"{k.DisplayLabel} {n}");
+        }
+
+        poolText.text = string.Join("  |  ", parts);
     }
 
     private void ShowBustPanel(int currentDmg, int currentArm)

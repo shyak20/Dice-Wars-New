@@ -6,14 +6,30 @@ public struct MapGenerationEventsParams
 {
     public int EliteMinCount;
     public int EliteMaxCount;
-    /// <summary>When both are 0, shop count comes only from <see cref="WeightShop"/> among non-elite fillers.</summary>
+
     public int ShopMinCount;
     public int ShopMaxCount;
+
+    public int ShrineMinCount;
+    public int ShrineMaxCount;
+
+    public int UnknownMinCount;
+    public int UnknownMaxCount;
+
+    public int TreasureMinCount;
+    public int TreasureMaxCount;
+
     public int WeightNormal;
     public int WeightShop;
     public int WeightShrine;
     public int WeightUnknown;
     public int WeightTreasure;
+
+    /// <summary>True when Shrine/Unknown/Treasure min+max are all zero — generator uses RunManager weights for fillers (legacy).</summary>
+    public bool UseLegacyWeightedFillers =>
+        ShrineMinCount == 0 && ShrineMaxCount == 0
+        && UnknownMinCount == 0 && UnknownMaxCount == 0
+        && TreasureMinCount == 0 && TreasureMaxCount == 0;
 
     public static MapGenerationEventsParams Default => new MapGenerationEventsParams
     {
@@ -21,6 +37,12 @@ public struct MapGenerationEventsParams
         EliteMaxCount = 2,
         ShopMinCount = 0,
         ShopMaxCount = 0,
+        ShrineMinCount = 0,
+        ShrineMaxCount = 0,
+        UnknownMinCount = 0,
+        UnknownMaxCount = 0,
+        TreasureMinCount = 0,
+        TreasureMaxCount = 0,
         WeightNormal = 4,
         WeightShop = 2,
         WeightShrine = 2,

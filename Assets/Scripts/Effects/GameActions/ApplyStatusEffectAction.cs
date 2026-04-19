@@ -7,10 +7,24 @@ public class ApplyStatusEffectAction : GameActionWithIcon
     [SerializeField] private StatusEffectSO statusEffect;
     [SerializeField] private int stacks = 1;
 
+    [Tooltip("Optional. Element pool row id (defaults to the status asset name). Same id merges rows across dice.")]
+    [SerializeField] private string poolRowKeyOverride;
+
+    public int ConfiguredStacks => stacks;
+
     public StatusEffectSO StatusEffectDefinition => statusEffect;
 
     public Sprite ResolveStatusIcon() =>
         GameIconCatalog.GetStatusIcon(statusEffect);
+
+    PoolRowKey ResolvePoolRowKey()
+    {
+        if (!string.IsNullOrWhiteSpace(poolRowKeyOverride))
+            return PoolRowKey.FromInspectorString(poolRowKeyOverride);
+        if (statusEffect != null)
+            return PoolRowKey.Custom(statusEffect.name);
+        return PoolRowKey.Custom("Status");
+    }
 
     public override void Execute(GameActionContext context)
     {
@@ -59,8 +73,7 @@ public class ApplyStatusEffectAction : GameActionWithIcon
     }
 
     /// <summary>
-    /// Deferred faces: adds a pool row so the apply is visible until submit and can scale with Perfect Strike / bust.
-    /// Immediate faces skip the pool — <see cref="DieFaceSO.activateImmediately"/> applies status when the die settles.
+    /// Deferred faces: pool row until submit (scales with Perfect Strike / bust). Immediate faces skip the pool.
     /// </summary>
     public void AppendPoolContributionIfAny(FaceResult result, PlayerStatus player, bool activateImmediately)
     {
@@ -71,20 +84,12 @@ public class ApplyStatusEffectAction : GameActionWithIcon
         if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy)
             applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
 
-        DieType poolType;
-        int poolAmount;
-        if (!statusEffect.TryGetRollFlyoutContribution(applyStacks, statusEffect.target, out poolType, out poolAmount))
-        {
-            poolType = statusEffect.ElementPoolDisplayRow;
-            poolAmount = applyStacks;
-        }
-
-        if (poolAmount <= 0) return;
+        if (applyStacks <= 0) return;
 
         result.ActionPoolContributions.Add(new FacePoolExtraContribution
         {
-            PoolType = poolType,
-            Amount = poolAmount,
+            PoolKey = ResolvePoolRowKey(),
+            Amount = applyStacks,
             Icon = ResolveStatusIcon(),
             PoolSourceAction = this
         });

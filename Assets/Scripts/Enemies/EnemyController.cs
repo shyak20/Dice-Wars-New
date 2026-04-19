@@ -13,6 +13,7 @@ public class EnemyController : MonoBehaviour
     public Slider healthSlider;
     public TMP_Text healthText;
     public Slider armorSlider;       // The "Armor Bar" slider
+    [Tooltip("Unused — enemy intent rows are built by EnemyActionUIController + EnemyIntentSegmentView.")]
     public TMP_Text intentText;
     public TMP_Text armorText;       // The text showing the actual armor amount
     public GameObject armorIcon;
@@ -84,6 +85,8 @@ public class EnemyController : MonoBehaviour
         currentCycleIndex = 0;
 
         if (nameText != null) nameText.text = data.enemyName;
+        if (enemySprite != null && data.displaySprite != null)
+            enemySprite.sprite = data.displaySprite;
         UpdateUI();
         PrepareNextAction();
     }

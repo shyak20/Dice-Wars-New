@@ -25,12 +25,23 @@ public class MapActDefinitionSO : ScriptableObject
     [Tooltip("Moves allowed before corruption / overflow damage (see MapMovementManager).")]
     [Min(1)] public int moveLimit = 8;
 
-    [Header("Map Events")]
+    [Header("Map Events (min/max per map, excluding start & boss)")]
+    [Tooltip("Elite combat tiles — not orthogonally adjacent to each other.")]
     [Min(0)] public int eliteMinOnMap = 1;
     [Min(0)] public int eliteMaxOnMap = 2;
-    [Tooltip("Forced shop tiles (count rolled between min and max). If both are 0, shop frequency uses only RunManager filler weights.")]
+
+    [Tooltip("Shop tiles. Min=max=0 disables shops for structured maps. If Shrine/Unknown/Treasure min/max are all 0, fillers use RunManager weights (legacy). Otherwise each type rolls in [min,max]; leftover fillers are normal combat.")]
     [Min(0)] public int shopMinOnMap;
     [Min(0)] public int shopMaxOnMap;
+
+    [Min(0)] public int shrineMinOnMap;
+    [Min(0)] public int shrineMaxOnMap;
+
+    [Min(0)] public int unknownMinOnMap;
+    [Min(0)] public int unknownMaxOnMap;
+
+    [Min(0)] public int treasureMinOnMap;
+    [Min(0)] public int treasureMaxOnMap;
 
     /// <summary>Non-allocating: clears <paramref name="into"/> then adds all non-null enemies matching <paramref name="rank"/>.</summary>
     public void CollectEnemiesForRank(EnemyRank rank, List<EnemyTypeSO> into)
@@ -52,6 +63,9 @@ public class MapActDefinitionSO : ScriptableObject
         moveLimit = Mathf.Max(1, moveLimit);
         eliteMaxOnMap = Mathf.Max(eliteMaxOnMap, eliteMinOnMap);
         shopMaxOnMap = Mathf.Max(shopMaxOnMap, shopMinOnMap);
+        shrineMaxOnMap = Mathf.Max(shrineMaxOnMap, shrineMinOnMap);
+        unknownMaxOnMap = Mathf.Max(unknownMaxOnMap, unknownMinOnMap);
+        treasureMaxOnMap = Mathf.Max(treasureMaxOnMap, treasureMinOnMap);
         WarnIfRankMissing(EnemyRank.Boss, "boss end tile");
         WarnIfRankMissing(EnemyRank.Normal, "normal combat tiles");
         WarnIfRankMissing(EnemyRank.Elite, "elite combat tiles");

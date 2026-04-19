@@ -34,6 +34,8 @@ public class StatusEffectIconUI : MonoBehaviour
             spr = GameIconCatalog.GetElementIcon(DieType.Armor);
         if (spr == null && effect.Definition is ImmuneEffectSO)
             spr = GameIconCatalog.GetElementIcon(DieType.Ice);
+        if (spr == null && effect.Definition is ThornsEffectSO)
+            spr = GameIconCatalog.GetActionIcon(ActionVisualId.Thorns);
         if (iconImage != null)
         {
             iconImage.sprite = spr;

@@ -23,6 +23,6 @@ public class FaceResult
     /// <summary>Copied from the rolled face; executed in order (immediate vs turn-end per <see cref="ActivateImmediately"/>).</summary>
     public List<IGameAction> Actions { get; set; } = new List<IGameAction>();
 
-    /// <summary>Per-action element pool rows (Burn→Fire, Poison→Nature, etc.); filled before <see cref="CombatManager"/> adds this to channeled faces.</summary>
+    /// <summary>Deferred-action rows for <see cref="StoredActionsPoolDisplay"/> (ApplyStatusEffect, Thorns, Max HP, etc.); filled before this face is added to channeled faces.</summary>
     public List<FacePoolExtraContribution> ActionPoolContributions { get; } = new List<FacePoolExtraContribution>();
 }

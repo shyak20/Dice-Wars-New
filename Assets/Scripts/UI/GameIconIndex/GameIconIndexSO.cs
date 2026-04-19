@@ -1,19 +1,21 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
-/// Single source of truth for combat UI icons: elements (attack/defense/fire/ice/nature), face actions, and status (buff/debuff) art.
+/// Combat UI icons: base actions (attack/defence), face <see cref="ActionVisualId"/>, and status effect art.
 /// </summary>
 [CreateAssetMenu(fileName = "GameIconIndex", menuName = "DiceGame/UI/Game Icon Index")]
 public class GameIconIndexSO : ScriptableObject
 {
-    [Header("Elements (pool / flyout rows by type)")]
+    [Header("Base Actions")]
+    [Tooltip("Icon for stored physical attack / damage rows.")]
     [SerializeField] private Sprite attack;
-    [SerializeField] private Sprite defense;
-    [SerializeField] private Sprite fire;
-    [SerializeField] private Sprite ice;
-    [SerializeField] private Sprite nature;
+
+    [Tooltip("Icon for stored armour / defence rows.")]
+    [FormerlySerializedAs("defense")]
+    [SerializeField] private Sprite defence;
 
     [Header("Actions (keys match ActionVisualId on each action class)")]
     [SerializeField] private List<ActionIconEntry> actionIcons = new List<ActionIconEntry>();
@@ -66,15 +68,13 @@ public class GameIconIndexSO : ScriptableObject
         }
     }
 
+    /// <summary>Icons for <see cref="DieType.Damage"/> and <see cref="DieType.Armor"/> rows only.</summary>
     public Sprite GetElementIcon(DieType type)
     {
         switch (type)
         {
             case DieType.Damage: return attack;
-            case DieType.Armor: return defense;
-            case DieType.Fire: return fire;
-            case DieType.Ice: return ice;
-            case DieType.Nature: return nature;
+            case DieType.Armor: return defence;
             default: return null;
         }
     }
@@ -96,18 +96,14 @@ public class GameIconIndexSO : ScriptableObject
     }
 
     /// <summary>
-    /// Export helper for editor tooling (atlas generation, audits). Keys are stable labels; sprite names
-    /// can still be used as display names in generated assets.
+    /// Export helper for editor tooling (atlas generation, audits).
     /// </summary>
     public List<NamedIconEntry> GetAllIconEntries()
     {
         var entries = new List<NamedIconEntry>
         {
-            new NamedIconEntry { key = "Element.Attack", sprite = attack },
-            new NamedIconEntry { key = "Element.Defense", sprite = defense },
-            new NamedIconEntry { key = "Element.Fire", sprite = fire },
-            new NamedIconEntry { key = "Element.Ice", sprite = ice },
-            new NamedIconEntry { key = "Element.Nature", sprite = nature },
+            new NamedIconEntry { key = "BaseAction.Attack", sprite = attack },
+            new NamedIconEntry { key = "BaseAction.Defence", sprite = defence },
         };
 
         foreach (var action in actionIcons)

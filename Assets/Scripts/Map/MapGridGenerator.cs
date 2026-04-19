@@ -433,32 +433,157 @@ public static class MapGridGenerator
 
         Shuffle(filler, rng);
 
-        var shopMin = Mathf.Max(0, p.ShopMinCount);
-        var shopMax = Mathf.Max(shopMin, p.ShopMaxCount);
-        var useFixedShopCount = shopMin > 0 || shopMax > 0;
-        var shopTarget = useFixedShopCount ? rng.Next(shopMin, shopMax + 1) : 0;
-        shopTarget = Mathf.Min(shopTarget, filler.Count);
-        if (useFixedShopCount && shopTarget < shopMin)
-            Debug.LogWarning(
-                $"MapGridGenerator: placed {shopTarget} shop tile(s) but shop min was {shopMin} (grid {grid.Width}×{grid.Height}).");
-
-        var shopCells = new HashSet<Vector2Int>();
-        for (var i = 0; i < shopTarget; i++)
-            shopCells.Add(filler[i]);
-
-        foreach (var c in candidates)
+        if (p.UseLegacyWeightedFillers)
         {
-            if (eliteCells.Contains(c))
-                continue;
-            var t = grid.Get(c.x, c.y);
-            if (shopCells.Contains(c))
-                t.eventType = MapEventType.Shop;
-            else if (useFixedShopCount)
-                t.eventType = PickNonShopFillerType(p, rng);
-            else
-                t.eventType = PickNonEliteEventType(p, rng);
-            grid.SetTile(c.x, c.y, t);
+            var shopMin = Mathf.Max(0, p.ShopMinCount);
+            var shopMax = Mathf.Max(shopMin, p.ShopMaxCount);
+            var useFixedShopCount = shopMin > 0 || shopMax > 0;
+            var shopTarget = useFixedShopCount ? rng.Next(shopMin, shopMax + 1) : 0;
+            shopTarget = Mathf.Min(shopTarget, filler.Count);
+            if (useFixedShopCount && shopTarget < shopMin)
+                Debug.LogWarning(
+                    $"MapGridGenerator: placed {shopTarget} shop tile(s) but shop min was {shopMin} (grid {grid.Width}×{grid.Height}).");
+
+            var shopCells = new HashSet<Vector2Int>();
+            for (var i = 0; i < shopTarget; i++)
+                shopCells.Add(filler[i]);
+
+            foreach (var c in candidates)
+            {
+                if (eliteCells.Contains(c))
+                    continue;
+                var t = grid.Get(c.x, c.y);
+                if (shopCells.Contains(c))
+                    t.eventType = MapEventType.Shop;
+                else if (useFixedShopCount)
+                    t.eventType = PickNonShopFillerType(p, rng);
+                else
+                    t.eventType = PickNonEliteEventType(p, rng);
+                grid.SetTile(c.x, c.y, t);
+            }
         }
+        else
+        {
+            var specialCounts = SampleSpecialFillerTypeCounts(filler.Count, p, rng);
+            AssignFillerWithNormalFallback(grid, filler, specialCounts);
+        }
+    }
+
+    private static readonly MapEventType[] SpecialFillerTypes =
+    {
+        MapEventType.Shop,
+        MapEventType.Shrine,
+        MapEventType.Unknown,
+        MapEventType.Treasure
+    };
+
+    /// <summary>Assigns Shop/Shrine/Unknown/Treasure counts, then fills any remaining shuffled cells with <see cref="MapEventType.CombatNormal"/>.</summary>
+    private static void AssignFillerWithNormalFallback(MapGrid grid, List<Vector2Int> fillerShuffled, int[] specialCounts)
+    {
+        var idx = 0;
+        for (var t = 0; t < SpecialFillerTypes.Length; t++)
+        {
+            for (var n = 0; n < specialCounts[t]; n++)
+            {
+                if (idx >= fillerShuffled.Count)
+                {
+                    Debug.LogError($"MapGridGenerator: filler overrun assigning {SpecialFillerTypes[t]}.");
+                    return;
+                }
+
+                var pos = fillerShuffled[idx++];
+                var tile = grid.Get(pos.x, pos.y);
+                tile.eventType = SpecialFillerTypes[t];
+                grid.SetTile(pos.x, pos.y, tile);
+            }
+        }
+
+        while (idx < fillerShuffled.Count)
+        {
+            var pos = fillerShuffled[idx++];
+            var tile = grid.Get(pos.x, pos.y);
+            tile.eventType = MapEventType.CombatNormal;
+            grid.SetTile(pos.x, pos.y, tile);
+        }
+    }
+
+    /// <summary>
+    /// Rolls a count for each special type independently in [min, max]. Min=max=0 disables that type.
+    /// If the sum exceeds available filler cells, reduces random counts (above mins) until it fits.
+    /// Any filler cells left unassigned become <see cref="MapEventType.CombatNormal"/>.
+    /// </summary>
+    private static int[] SampleSpecialFillerTypeCounts(int fillerTotal, MapGenerationEventsParams p, System.Random rng)
+    {
+        var mins = new[]
+        {
+            Mathf.Max(0, p.ShopMinCount),
+            Mathf.Max(0, p.ShrineMinCount),
+            Mathf.Max(0, p.UnknownMinCount),
+            Mathf.Max(0, p.TreasureMinCount)
+        };
+        var maxsRaw = new[]
+        {
+            Mathf.Max(0, p.ShopMaxCount),
+            Mathf.Max(0, p.ShrineMaxCount),
+            Mathf.Max(0, p.UnknownMaxCount),
+            Mathf.Max(0, p.TreasureMaxCount)
+        };
+
+        var counts = new int[4];
+        for (var i = 0; i < 4; i++)
+        {
+            // Both 0 => this event type is off; remaining tiles use normal combat fallback only.
+            if (mins[i] == 0 && maxsRaw[i] == 0)
+            {
+                counts[i] = 0;
+                continue;
+            }
+
+            var hi = maxsRaw[i] == 0 ? fillerTotal : Mathf.Min(maxsRaw[i], fillerTotal);
+            hi = Mathf.Max(hi, mins[i]);
+            hi = Mathf.Min(hi, fillerTotal);
+            if (mins[i] > hi)
+            {
+                Debug.LogWarning(
+                    $"MapGridGenerator: filler min exceeds available cells for special index {i} (min {mins[i]}, cap {fillerTotal}).");
+                counts[i] = Mathf.Min(mins[i], fillerTotal);
+            }
+            else
+                counts[i] = rng.Next(mins[i], hi + 1);
+        }
+
+        var sum = counts[0] + counts[1] + counts[2] + counts[3];
+        while (sum > fillerTotal)
+        {
+            var reducible = new List<int>();
+            for (var i = 0; i < 4; i++)
+            {
+                if (counts[i] > mins[i])
+                    reducible.Add(i);
+            }
+
+            if (reducible.Count == 0)
+            {
+                Debug.LogWarning(
+                    $"MapGridGenerator: special counts sum to {sum} but only {fillerTotal} filler tiles — trimming.");
+                for (var i = 3; i >= 0 && sum > fillerTotal; i--)
+                {
+                    while (counts[i] > 0 && sum > fillerTotal)
+                    {
+                        counts[i]--;
+                        sum--;
+                    }
+                }
+
+                break;
+            }
+
+            var pick = reducible[rng.Next(reducible.Count)];
+            counts[pick]--;
+            sum--;
+        }
+
+        return counts;
     }
 
     private static bool HasOrthogonalNeighborInSet(Vector2Int c, HashSet<Vector2Int> set)

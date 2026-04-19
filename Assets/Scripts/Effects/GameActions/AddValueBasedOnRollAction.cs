@@ -116,14 +116,12 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
         if (burnDefinition.target == StatusEffectTarget.Enemy)
             applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
 
-        if (!burnDefinition.TryGetRollFlyoutContribution(applyStacks, burnDefinition.target, out var poolType, out var poolAmount))
-            return;
-        if (poolAmount <= 0) return;
+        if (applyStacks <= 0) return;
 
         result.ActionPoolContributions.Add(new FacePoolExtraContribution
         {
-            PoolType = poolType,
-            Amount = poolAmount,
+            PoolKey = PoolRowKey.Custom(burnDefinition.name),
+            Amount = applyStacks,
             Icon = GameIconCatalog.GetStatusIcon(burnDefinition)
         });
     }

@@ -19,4 +19,6 @@ public enum ActionVisualId
     AddRolls = 13,
     AddValueBasedOnRoll = 14,
     RerollDie = 15,
+    /// <summary>Optional +X power prompt (<see cref="AddPowerAction"/>).</summary>
+    AddPower = 16,
 }

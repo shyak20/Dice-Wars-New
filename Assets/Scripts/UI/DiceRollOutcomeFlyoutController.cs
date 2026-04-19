@@ -1,16 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
-/// Spawns stacked outcome rows above a 3D die, waits, then flies each row along a curved path (bezier + ease curve) into <see cref="ElementPoolDisplay"/>.
+/// Spawns stacked outcome rows above a 3D die, then flies them into <see cref="StoredActionsPoolDisplay"/>.
 /// </summary>
 public class DiceRollOutcomeFlyoutController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Canvas canvas;
     [SerializeField] private RectTransform flyoutParent;
-    [SerializeField] private ElementPoolDisplay elementPoolDisplay;
+    [FormerlySerializedAs("elementPoolDisplay")]
+    [SerializeField] private StoredActionsPoolDisplay storedActionsPoolDisplay;
     [SerializeField] private Camera worldCamera;
 
     [Header("Prefab")]
@@ -36,8 +38,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             Debug.LogError($"DiceRollOutcomeFlyoutController on '{gameObject.name}': canvas is not assigned!");
         if (flyoutParent == null)
             Debug.LogError($"DiceRollOutcomeFlyoutController on '{gameObject.name}': flyoutParent is not assigned!");
-        if (elementPoolDisplay == null)
-            Debug.LogError($"DiceRollOutcomeFlyoutController on '{gameObject.name}': elementPoolDisplay is not assigned!");
+        if (storedActionsPoolDisplay == null)
+            Debug.LogError($"DiceRollOutcomeFlyoutController on '{gameObject.name}': storedActionsPoolDisplay is not assigned!");
         if (linePrefab == null)
             Debug.LogError($"DiceRollOutcomeFlyoutController on '{gameObject.name}': linePrefab is not assigned!");
         if (worldCamera == null)
@@ -68,13 +70,13 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             return;
         }
 
-        if (canvas == null || flyoutParent == null || elementPoolDisplay == null || linePrefab == null)
+        if (canvas == null || flyoutParent == null || storedActionsPoolDisplay == null || linePrefab == null)
         {
             payload.ReportVisualFinished();
             return;
         }
 
-        if (!elementPoolDisplay.UsesFlyoutIncrementMode)
+        if (!storedActionsPoolDisplay.UsesFlyoutIncrementMode)
         {
             payload.ReportVisualFinished();
             return;
@@ -112,7 +114,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 var view = row.GetComponent<RollOutcomeFlyoutLineView>();
                 if (view != null)
                 {
-                    var sprite = line.IconOverride != null ? line.IconOverride : elementPoolDisplay.GetPoolTypeSprite(line.Type);
+                    var sprite = line.IconOverride != null ? line.IconOverride : storedActionsPoolDisplay.GetPoolRowSprite(line.RowKey);
                     view.Setup(sprite, line.Amount);
                 }
                 else
@@ -132,7 +134,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             for (int i = 0; i < payload.Lines.Count && i < lineRects.Count; i++)
             {
                 var line = payload.Lines[i];
-                RectTransform target = elementPoolDisplay.GetFlyTargetRect(line.Type);
+                RectTransform target = storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey);
                 if (target == null)
                 {
                     Destroy(lineRects[i].gameObject);
@@ -176,7 +178,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
 
         rt.anchoredPosition = end;
-        elementPoolDisplay.ApplyPoolDelta(line.Type, line.Amount, line.IconOverride);
+        storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride);
         Destroy(rt.gameObject);
     }
 

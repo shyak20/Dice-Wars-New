@@ -82,6 +82,19 @@ public class StatusEffectManager : MonoBehaviour
         return 0;
     }
 
+    /// <summary>Sum of stacks from all <see cref="ThornsEffectSO"/> instances (retaliation damage).</summary>
+    public int GetThornsRetaliateStacks()
+    {
+        var total = 0;
+        foreach (var effect in effects)
+        {
+            if (effect.Definition is ThornsEffectSO)
+                total += effect.Stacks;
+        }
+
+        return total;
+    }
+
     public int GetStacks(StatusEffectSO definition)
     {
         var instance = FindInstance(definition);
