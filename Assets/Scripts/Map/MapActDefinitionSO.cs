@@ -43,6 +43,22 @@ public class MapActDefinitionSO : ScriptableObject
     [Min(0)] public int treasureMinOnMap;
     [Min(0)] public int treasureMaxOnMap;
 
+    [Header("Min path distance from start (directed steps)")]
+    [Tooltip("Elite tiles must be at least this many moves from the start along map exits (0 = no minimum).")]
+    [Min(0)] public int eliteMinStepsFromStart;
+
+    [Tooltip("Shop tiles minimum steps from start.")]
+    [Min(0)] public int shopMinStepsFromStart;
+
+    [Tooltip("Shrine tiles minimum steps from start.")]
+    [Min(0)] public int shrineMinStepsFromStart;
+
+    [Tooltip("Treasure tiles minimum steps from start.")]
+    [Min(0)] public int treasureMinStepsFromStart;
+
+    [Tooltip("Unknown tiles minimum steps from start.")]
+    [Min(0)] public int unknownMinStepsFromStart;
+
     /// <summary>Non-allocating: clears <paramref name="into"/> then adds all non-null enemies matching <paramref name="rank"/>.</summary>
     public void CollectEnemiesForRank(EnemyRank rank, List<EnemyTypeSO> into)
     {
@@ -66,6 +82,11 @@ public class MapActDefinitionSO : ScriptableObject
         shrineMaxOnMap = Mathf.Max(shrineMaxOnMap, shrineMinOnMap);
         unknownMaxOnMap = Mathf.Max(unknownMaxOnMap, unknownMinOnMap);
         treasureMaxOnMap = Mathf.Max(treasureMaxOnMap, treasureMinOnMap);
+        eliteMinStepsFromStart = Mathf.Max(0, eliteMinStepsFromStart);
+        shopMinStepsFromStart = Mathf.Max(0, shopMinStepsFromStart);
+        shrineMinStepsFromStart = Mathf.Max(0, shrineMinStepsFromStart);
+        treasureMinStepsFromStart = Mathf.Max(0, treasureMinStepsFromStart);
+        unknownMinStepsFromStart = Mathf.Max(0, unknownMinStepsFromStart);
         WarnIfRankMissing(EnemyRank.Boss, "boss end tile");
         WarnIfRankMissing(EnemyRank.Normal, "normal combat tiles");
         WarnIfRankMissing(EnemyRank.Elite, "elite combat tiles");

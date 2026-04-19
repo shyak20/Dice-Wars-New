@@ -97,4 +97,55 @@ public static class MapPathfinding
 
         return true;
     }
+
+    /// <summary>Directed BFS step count from <paramref name="start"/> along tile exits; unreachable cells stay -1.</summary>
+    public static int[] ComputeDirectedStepsFromStart(MapGrid grid, Vector2Int start)
+    {
+        var w = grid.Width;
+        var h = grid.Height;
+        var len = w * h;
+        var dist = new int[len];
+        for (var i = 0; i < len; i++)
+            dist[i] = -1;
+
+        if (grid == null || !grid.Contains(start))
+            return dist;
+
+        var q = new Queue<Vector2Int>();
+        dist[start.y * w + start.x] = 0;
+        q.Enqueue(start);
+
+        while (q.Count > 0)
+        {
+            var p = q.Dequeue();
+            var baseD = dist[p.y * w + p.x];
+            var tile = grid.Get(p.x, p.y);
+            for (var di = 0; di < 4; di++)
+            {
+                var dir = (MapCardinalDirection)di;
+                if (!tile.exitMask.Contains(dir))
+                    continue;
+                var n = p + dir.ToDelta();
+                if (!grid.Contains(n))
+                    continue;
+                var ni = n.y * w + n.x;
+                if (dist[ni] >= 0)
+                    continue;
+                dist[ni] = baseD + 1;
+                q.Enqueue(n);
+            }
+        }
+
+        return dist;
+    }
+
+    public static int GetDirectedSteps(int[] distFromStart, int width, Vector2Int pos)
+    {
+        if (distFromStart == null || width < 1 || pos.x < 0 || pos.y < 0)
+            return -1;
+        var i = pos.y * width + pos.x;
+        if (i < 0 || i >= distFromStart.Length)
+            return -1;
+        return distFromStart[i];
+    }
 }

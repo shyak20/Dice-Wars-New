@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
-  m_Name: Attack 2
+  m_Name: Attack 4x1
   m_EditorClassIdentifier: 
   actionName: 
   icon: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  damage: 2
+  damage: 4
   numberOfAttacks: 1
   armor: 0
   actions: []

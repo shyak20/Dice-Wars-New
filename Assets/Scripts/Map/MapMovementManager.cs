@@ -42,6 +42,8 @@ public sealed class MapMovementManager : MonoBehaviour
 
     public int MovesTaken { get; private set; }
     public int MoveLimit => _effectiveMoveLimit;
+    /// <summary>Inspector / act value: added to overflow damage for each move beyond the first over-limit step.</summary>
+    public int OverflowDamageIncreasePerMove => overflowDamageIncreasePerMove;
     public MapGrid Grid => _grid;
     public Vector2Int PlayerGridPosition { get; private set; }
 
@@ -265,6 +267,18 @@ public sealed class MapMovementManager : MonoBehaviour
     public bool IsBoss(Vector2Int cell) => cell == BossPosition;
 
     public bool IsStart(Vector2Int cell) => cell == StartPosition;
+
+    /// <summary>
+    /// Value for map move-counter tooltip <c>{0}</c>: while the next step would stay within <see cref="MoveLimit"/>, returns <see cref="overflowDamageBase"/> (first corruption hit). Once the next step would exceed the limit, returns the same total as <see cref="TryMoveTo"/> applies after that move.
+    /// </summary>
+    public int GetCorruptionDamageForNextStep()
+    {
+        var nextMoves = MovesTaken + 1;
+        if (nextMoves <= _effectiveMoveLimit)
+            return overflowDamageBase;
+        var overCount = nextMoves - _effectiveMoveLimit;
+        return overflowDamageBase + (overCount - 1) * overflowDamageIncreasePerMove;
+    }
 
     private static bool IsOrthogonalAdjacent(Vector2Int a, Vector2Int b)
     {

@@ -34,7 +34,7 @@ public class UIMapTileView : MonoBehaviour
     [SerializeField] private TMP_Text nodeTypeLabel;
     [SerializeField] private Image eventIconImage;
     [Header("Visited tiles")]
-    [Tooltip("Scale multiplier applied to background image when tile.eventConsumed is true.")]
+    [Tooltip("Scale multiplier applied to background image when tile.eventConsumed is true, or when this is the start cell and the player has moved elsewhere.")]
     [SerializeField, Min(0.01f)] private float visitedBackgroundScale = 0.9f;
     [Header("Boss tile")]
     [Tooltip("Uniform scale multiplier for the event icon on the boss / end cell only.")]
@@ -56,6 +56,7 @@ public class UIMapTileView : MonoBehaviour
     /// <summary>Tile has an event icon sprite; hidden while <see cref="_playerOnThisTile"/>.</summary>
     private bool _eventIconActiveForTile;
     private bool _tileEventConsumed;
+    private bool _isStartCell;
 
     private void Awake()
     {
@@ -81,6 +82,7 @@ public class UIMapTileView : MonoBehaviour
         _cell = cell;
         _manager = manager;
         _tileEventConsumed = tile.eventConsumed;
+        _isStartCell = isStart;
 
         if (clickButton != null)
         {
@@ -274,9 +276,11 @@ public class UIMapTileView : MonoBehaviour
     {
         if (backgroundImage == null)
             return;
+        var leftStartVisuallyVisited = _isStartCell && !_playerOnThisTile;
+        var useVisitedScale = _tileEventConsumed || leftStartVisuallyVisited;
         backgroundImage.transform.localScale = _playerOnThisTile
             ? Vector3.one
-            : _tileEventConsumed
+            : useVisitedScale
             ? _backgroundBaseLocalScale * visitedBackgroundScale
             : _backgroundBaseLocalScale;
     }

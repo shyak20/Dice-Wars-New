@@ -14,22 +14,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   possibleEnemies:
   - {fileID: 11400000, guid: 2dd5811f0a2c75b4790d046a18a4828f, type: 2}
+  - {fileID: 11400000, guid: 3033f0f7f31d33b4183ce2141d918cd2, type: 2}
   - {fileID: 11400000, guid: 8f3e5f5a095a6524783b02c371e52eaa, type: 2}
   - {fileID: 11400000, guid: e90e4b2912d70c2419b7be11cca5a37d, type: 2}
   possibleUnknownEvents:
   - {fileID: 11400000, guid: 7e1da11a59278e24199798074da7997d, type: 2}
   treasurePacks:
   - {fileID: 11400000, guid: 78ee3181637c4034a873ce0e5835a0d8, type: 2}
-  gridWidth: 6
-  gridHeight: 4
-  moveLimit: 5
+  gridWidth: 4
+  gridHeight: 3
+  moveLimit: 6
   eliteMinOnMap: 1
   eliteMaxOnMap: 2
   shopMinOnMap: 1
-  shopMaxOnMap: 2
+  shopMaxOnMap: 1
   shrineMinOnMap: 1
   shrineMaxOnMap: 1
   unknownMinOnMap: 1
   unknownMaxOnMap: 2
   treasureMinOnMap: 1
   treasureMaxOnMap: 1
+  eliteMinStepsFromStart: 2
+  shopMinStepsFromStart: 2
+  shrineMinStepsFromStart: 2
+  treasureMinStepsFromStart: 1
+  unknownMinStepsFromStart: 0

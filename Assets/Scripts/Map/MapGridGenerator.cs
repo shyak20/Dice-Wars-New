@@ -384,6 +384,8 @@ public static class MapGridGenerator
         tEnd.eventType = MapEventType.CombatBoss;
         grid.SetTile(end.x, end.y, tEnd);
 
+        var distFromStart = MapPathfinding.ComputeDirectedStepsFromStart(grid, start);
+
         var candidates = new List<Vector2Int>();
         for (var y = 0; y < grid.Height; y++)
         {
@@ -408,6 +410,13 @@ public static class MapGridGenerator
         {
             if (eliteCells.Count >= eliteTarget)
                 break;
+            if (p.MinStepsElite > 0)
+            {
+                var steps = MapPathfinding.GetDirectedSteps(distFromStart, grid.Width, c);
+                if (steps < p.MinStepsElite)
+                    continue;
+            }
+
             if (HasOrthogonalNeighborInSet(c, eliteCells))
                 continue;
             eliteCells.Add(c);
@@ -439,14 +448,28 @@ public static class MapGridGenerator
             var shopMax = Mathf.Max(shopMin, p.ShopMaxCount);
             var useFixedShopCount = shopMin > 0 || shopMax > 0;
             var shopTarget = useFixedShopCount ? rng.Next(shopMin, shopMax + 1) : 0;
-            shopTarget = Mathf.Min(shopTarget, filler.Count);
+            var shopPool = new List<Vector2Int>();
+            foreach (var c in filler)
+            {
+                if (p.MinStepsShop > 0)
+                {
+                    var st = MapPathfinding.GetDirectedSteps(distFromStart, grid.Width, c);
+                    if (st < p.MinStepsShop)
+                        continue;
+                }
+
+                shopPool.Add(c);
+            }
+
+            Shuffle(shopPool, rng);
+            shopTarget = Mathf.Min(shopTarget, shopPool.Count);
             if (useFixedShopCount && shopTarget < shopMin)
                 Debug.LogWarning(
                     $"MapGridGenerator: placed {shopTarget} shop tile(s) but shop min was {shopMin} (grid {grid.Width}×{grid.Height}).");
 
             var shopCells = new HashSet<Vector2Int>();
             for (var i = 0; i < shopTarget; i++)
-                shopCells.Add(filler[i]);
+                shopCells.Add(shopPool[i]);
 
             foreach (var c in candidates)
             {
@@ -456,16 +479,16 @@ public static class MapGridGenerator
                 if (shopCells.Contains(c))
                     t.eventType = MapEventType.Shop;
                 else if (useFixedShopCount)
-                    t.eventType = PickNonShopFillerType(p, rng);
+                    t.eventType = PickNonShopFillerTypeRespectingMinSteps(distFromStart, grid.Width, c, p, rng);
                 else
-                    t.eventType = PickNonEliteEventType(p, rng);
+                    t.eventType = PickNonEliteEventTypeRespectingMinSteps(distFromStart, grid.Width, c, p, rng);
                 grid.SetTile(c.x, c.y, t);
             }
         }
         else
         {
             var specialCounts = SampleSpecialFillerTypeCounts(filler.Count, p, rng);
-            AssignFillerWithNormalFallback(grid, filler, specialCounts);
+            AssignFillerWithNormalFallback(grid, filler, specialCounts, distFromStart, p, rng);
         }
     }
 
@@ -478,33 +501,94 @@ public static class MapGridGenerator
     };
 
     /// <summary>Assigns Shop/Shrine/Unknown/Treasure counts, then fills any remaining shuffled cells with <see cref="MapEventType.CombatNormal"/>.</summary>
-    private static void AssignFillerWithNormalFallback(MapGrid grid, List<Vector2Int> fillerShuffled, int[] specialCounts)
+    private static void AssignFillerWithNormalFallback(
+        MapGrid grid,
+        List<Vector2Int> fillerShuffled,
+        int[] specialCounts,
+        int[] distFromStart,
+        MapGenerationEventsParams p,
+        System.Random rng)
     {
-        var idx = 0;
+        var width = grid.Width;
+        var available = new List<Vector2Int>(fillerShuffled);
+        var minStepsBySpecialIndex = new[]
+        {
+            p.MinStepsShop,
+            p.MinStepsShrine,
+            p.MinStepsUnknown,
+            p.MinStepsTreasure
+        };
+
         for (var t = 0; t < SpecialFillerTypes.Length; t++)
         {
+            var minS = minStepsBySpecialIndex[t];
             for (var n = 0; n < specialCounts[t]; n++)
             {
-                if (idx >= fillerShuffled.Count)
+                if (!TryPickFillerCell(available, distFromStart, width, minS, rng, SpecialFillerTypes[t], out var pos))
                 {
-                    Debug.LogError($"MapGridGenerator: filler overrun assigning {SpecialFillerTypes[t]}.");
+                    Debug.LogError(
+                        $"MapGridGenerator: could not place {SpecialFillerTypes[t]} (min steps {minS}, remaining pool {available.Count}).");
                     return;
                 }
 
-                var pos = fillerShuffled[idx++];
                 var tile = grid.Get(pos.x, pos.y);
                 tile.eventType = SpecialFillerTypes[t];
                 grid.SetTile(pos.x, pos.y, tile);
             }
         }
 
-        while (idx < fillerShuffled.Count)
+        foreach (var pos in available)
         {
-            var pos = fillerShuffled[idx++];
             var tile = grid.Get(pos.x, pos.y);
             tile.eventType = MapEventType.CombatNormal;
             grid.SetTile(pos.x, pos.y, tile);
         }
+    }
+
+    /// <summary>Picks and removes one cell from <paramref name="pool"/> honoring <paramref name="minSteps"/> when &gt; 0.</summary>
+    private static bool TryPickFillerCell(
+        List<Vector2Int> pool,
+        int[] distFromStart,
+        int width,
+        int minSteps,
+        System.Random rng,
+        MapEventType forLog,
+        out Vector2Int pos)
+    {
+        pos = default;
+        if (pool.Count == 0)
+            return false;
+
+        if (minSteps <= 0)
+        {
+            var i = rng.Next(pool.Count);
+            pos = pool[i];
+            pool.RemoveAt(i);
+            return true;
+        }
+
+        var eligibleIdx = new List<int>();
+        for (var i = 0; i < pool.Count; i++)
+        {
+            var d = MapPathfinding.GetDirectedSteps(distFromStart, width, pool[i]);
+            if (d >= minSteps)
+                eligibleIdx.Add(i);
+        }
+
+        if (eligibleIdx.Count > 0)
+        {
+            var pick = eligibleIdx[rng.Next(eligibleIdx.Count)];
+            pos = pool[pick];
+            pool.RemoveAt(pick);
+            return true;
+        }
+
+        Debug.LogWarning(
+            $"MapGridGenerator: MinStepsFromStart for {forLog} not satisfiable with {pool.Count} tile(s); placing without distance.");
+        var j = rng.Next(pool.Count);
+        pos = pool[j];
+        pool.RemoveAt(j);
+        return true;
     }
 
     /// <summary>
@@ -592,6 +676,60 @@ public static class MapGridGenerator
                || set.Contains(c + new Vector2Int(-1, 0))
                || set.Contains(c + new Vector2Int(0, 1))
                || set.Contains(c + new Vector2Int(0, -1));
+    }
+
+    private static int MinStepsForMapEvent(MapEventType evt, MapGenerationEventsParams p)
+    {
+        return evt switch
+        {
+            MapEventType.Shop => p.MinStepsShop,
+            MapEventType.Shrine => p.MinStepsShrine,
+            MapEventType.Unknown => p.MinStepsUnknown,
+            MapEventType.Treasure => p.MinStepsTreasure,
+            _ => 0
+        };
+    }
+
+    private static bool CellMeetsMinStepsForType(int[] distFromStart, int width, Vector2Int cell, MapEventType evt, MapGenerationEventsParams p)
+    {
+        var min = MinStepsForMapEvent(evt, p);
+        if (min <= 0) return true;
+        var steps = MapPathfinding.GetDirectedSteps(distFromStart, width, cell);
+        return steps >= min;
+    }
+
+    private static MapEventType PickNonShopFillerTypeRespectingMinSteps(
+        int[] distFromStart,
+        int width,
+        Vector2Int cell,
+        MapGenerationEventsParams p,
+        System.Random rng)
+    {
+        for (var attempt = 0; attempt < 48; attempt++)
+        {
+            var pick = PickNonShopFillerType(p, rng);
+            if (CellMeetsMinStepsForType(distFromStart, width, cell, pick, p))
+                return pick;
+        }
+
+        return MapEventType.CombatNormal;
+    }
+
+    private static MapEventType PickNonEliteEventTypeRespectingMinSteps(
+        int[] distFromStart,
+        int width,
+        Vector2Int cell,
+        MapGenerationEventsParams p,
+        System.Random rng)
+    {
+        for (var attempt = 0; attempt < 48; attempt++)
+        {
+            var pick = PickNonEliteEventType(p, rng);
+            if (CellMeetsMinStepsForType(distFromStart, width, cell, pick, p))
+                return pick;
+        }
+
+        return MapEventType.CombatNormal;
     }
 
     private static MapEventType PickNonEliteEventType(MapGenerationEventsParams p, System.Random rng)

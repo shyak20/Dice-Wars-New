@@ -16,6 +16,14 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
         tooltipDescription = description ?? string.Empty;
     }
 
+    /// <summary>Optional panel wiring for runtime setup (e.g. <see cref="UIMapMoveCounterUI"/>).</summary>
+    public void Configure(HoverTooltipPanelUI panel, string title, string description)
+    {
+        if (panel != null)
+            tooltipPanel = panel;
+        SetContent(title, description);
+    }
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (string.IsNullOrWhiteSpace(tooltipTitle) && string.IsNullOrWhiteSpace(tooltipDescription))
