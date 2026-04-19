@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - N_F_CA_ON
   - N_F_DDMD_ON
   - N_F_EAL_ON
   - N_F_GLOT_ON
@@ -213,7 +214,7 @@ Material:
     - _MixMainTexToOutline: 0
     - _Mode: 0
     - _N_F_ANIS: 0
-    - _N_F_CA: 0
+    - _N_F_CA: 1
     - _N_F_CLD: 0
     - _N_F_CO: 0
     - _N_F_COEDGL: 0
@@ -300,7 +301,7 @@ Material:
     - _STIL: 0
     - _Saturation: 1
     - _SelfLitHighContrast: 1
-    - _SelfLitIntensity: 1
+    - _SelfLitIntensity: 0
     - _SelfLitPower: 0
     - _SelfShadowAffectedByLightShadowStrength: 0
     - _SelfShadowColorPower: 1
@@ -360,7 +361,7 @@ Material:
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
-    - _MainColor: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 1}
+    - _MainColor: {r: 0.078431375, g: 0.078431375, b: 0.078431375, a: 1}
     - _ObjPosi: {r: 0, g: 0, b: 0, a: 0}
     - _ObjectForward: {r: 0, g: 0, b: 0, a: 0}
     - _ObjectRight: {r: 0, g: 0, b: 0, a: 0}
