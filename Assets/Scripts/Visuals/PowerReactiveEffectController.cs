@@ -184,6 +184,12 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             }
 
             effectTransform.position = pos;
+            // Damage in CombatManager runs only after this coroutine ends. If flyCurve reaches 1 before
+            // normalized time u does, the orb already sits on the enemy but the loop would idle for the
+            // rest of flyTime — that reads as a gap before TakeDamage. Finish as soon as the path hits.
+            if (eased >= 1f)
+                break;
+
             yield return null;
         }
 

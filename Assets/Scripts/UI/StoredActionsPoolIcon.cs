@@ -13,6 +13,9 @@ public class StoredActionsPoolIcon : MonoBehaviour
     [SerializeField] private GameObject jackpotMultiplierRoot;
     [SerializeField] private TMP_Text jackpotMultiplierText;
 
+    [Tooltip("TMP format string; {0} is replaced by the jackpot multiply amount (integer).")]
+    [SerializeField] private string jackpotMultiplierTextFormat = "×{0}";
+
     [Header("Jackpot value bump (optional)")]
     [Tooltip("Background behind the amount text — scaled up, then the multiplied value is shown, then scale returns.")]
     [SerializeField] private Transform valueAmountBackgroundRoot;
@@ -63,7 +66,11 @@ public class StoredActionsPoolIcon : MonoBehaviour
     {
         if (jackpotMultiplierRoot == null) return;
         if (jackpotMultiplierText != null)
-            jackpotMultiplierText.text = $"×{multiplier}";
+        {
+            var fmt = string.IsNullOrWhiteSpace(jackpotMultiplierTextFormat) ? "×{0}" : jackpotMultiplierTextFormat;
+            jackpotMultiplierText.text = string.Format(fmt, multiplier);
+        }
+
         jackpotMultiplierRoot.SetActive(true);
     }
 
