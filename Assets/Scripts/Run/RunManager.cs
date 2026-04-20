@@ -15,6 +15,9 @@ public class RunManager : MonoBehaviour
     [Header("Map-based run")]
     [Tooltip("When true, StartRun() loads the map scene instead of the encounter list.")]
     [SerializeField] private bool useMapInsteadOfEncounterList;
+    [Tooltip("When map run is enabled, load this scene first so the player picks starting dice; then Continue loads the map.")]
+    [SerializeField] private bool loadDiceSelectBeforeMap = true;
+    [SerializeField] private string diceSelectSceneName = "DiceSelect";
     [SerializeField] private string mapSceneName = "MapScene";
     [SerializeField] private MapActDefinitionSO[] mapActDefinitionsByAct = new MapActDefinitionSO[3];
     [SerializeField, Min(0)] private int mapWeightNormal = 4;
@@ -167,6 +170,36 @@ public class RunManager : MonoBehaviour
         ClearMapPersistenceForNewAct();
         ClearMapEncounterDrawState();
         currentRoomIndex = 0;
+
+        if (loadDiceSelectBeforeMap)
+        {
+            if (string.IsNullOrEmpty(diceSelectSceneName))
+            {
+                Debug.LogError("RunManager: loadDiceSelectBeforeMap is true but diceSelectSceneName is empty.");
+                return;
+            }
+
+            SceneManager.LoadScene(diceSelectSceneName);
+            return;
+        }
+
+        SceneManager.LoadScene(mapSceneName);
+    }
+
+    /// <summary>Called from <see cref="DiceSelectSceneController"/> after starting dice are written to <see cref="PlayerDataContainer"/>.</summary>
+    public void LoadMapAfterDiceSelect()
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.LoadMapAfterDiceSelect: not in a map-based run.");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(mapSceneName))
+        {
+            Debug.LogError("RunManager.LoadMapAfterDiceSelect: mapSceneName is not assigned.");
+            return;
+        }
 
         SceneManager.LoadScene(mapSceneName);
     }

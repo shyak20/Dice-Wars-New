@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: 305473501ffe3be41bf422ea203a3459
   - enabled: 1
+    path: Assets/Scenes/DiceSelect.unity
+    guid: 35b863e3669284040a5132d69b236316
+  - enabled: 1
     path: Assets/Scenes/FightScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1

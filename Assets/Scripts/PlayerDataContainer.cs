@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerDataContainer : MonoBehaviour
@@ -55,6 +56,36 @@ public class PlayerDataContainer : MonoBehaviour
             var clonedDie = Instantiate(RuntimeData.currentDeck[d]);
             clonedDie.name = RuntimeData.currentDeck[d].name;
             RuntimeData.currentDeck[d] = clonedDie;
+        }
+    }
+
+    /// <summary>Replaces the run deck when the player confirms starting dice in <see cref="DiceSelectSceneController"/>.</summary>
+    public void ReplaceStartingDeck(IReadOnlyList<DieAssetSO> templates)
+    {
+        if (RuntimeData == null)
+        {
+            Debug.LogError("PlayerDataContainer.ReplaceStartingDeck: RuntimeData is null.");
+            return;
+        }
+
+        if (templates == null || templates.Count == 0)
+        {
+            Debug.LogError("PlayerDataContainer.ReplaceStartingDeck: templates is null or empty.");
+            return;
+        }
+
+        RuntimeData.currentDeck.Clear();
+        foreach (var template in templates)
+        {
+            if (template == null)
+            {
+                Debug.LogError("PlayerDataContainer.ReplaceStartingDeck: null entry in templates list.");
+                continue;
+            }
+
+            var clone = Instantiate(template);
+            clone.name = template.name;
+            RuntimeData.currentDeck.Add(clone);
         }
     }
 }
