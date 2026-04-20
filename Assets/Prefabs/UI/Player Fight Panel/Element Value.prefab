@@ -463,7 +463,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -540,6 +540,10 @@ MonoBehaviour:
   valueText: {fileID: 6763047682642631027}
   jackpotMultiplierRoot: {fileID: 2104101797452755886}
   jackpotMultiplierText: {fileID: 8409697836924403351}
+  valueAmountBackgroundRoot: {fileID: 5997970860646032216}
+  jackpotValueRevealBgScaleMultiplier: 1.2
+  jackpotValueRevealScaleUpDuration: 0.3
+  jackpotValueRevealScaleDownDuration: 0.3
 --- !u!1 &8736157719255305154
 GameObject:
   m_ObjectHideFlags: 0

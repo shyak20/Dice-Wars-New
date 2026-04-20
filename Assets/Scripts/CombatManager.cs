@@ -217,6 +217,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnBustResolved += ResolveBust;
         CombatEvents.OnEndTurnPressed += ManualEndTurn;
         CombatEvents.OnCheatWinPressed += CheatWinCombat;
+        CombatEvents.OnCheatPerfectStrikePressed += ForcePerfectStrikeCheat;
     }
 
     private void OnDisable()
@@ -226,6 +227,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnBustResolved -= ResolveBust;
         CombatEvents.OnEndTurnPressed -= ManualEndTurn;
         CombatEvents.OnCheatWinPressed -= CheatWinCombat;
+        CombatEvents.OnCheatPerfectStrikePressed -= ForcePerfectStrikeCheat;
     }
 
     private void InitializeCombat()
@@ -1027,6 +1029,19 @@ public class CombatManager : MonoBehaviour
     }
 
     private void ManualEndTurn() { if (currentState == CombatState.WaitingForRoll) SubmitTurn(); }
+
+    /// <summary>Cheat/debug: force current pooled faces through the Perfect Strike branch.</summary>
+    private void ForcePerfectStrikeCheat()
+    {
+        if (currentState != CombatState.WaitingForRoll)
+            return;
+        if (channeledFaces == null || channeledFaces.Count == 0)
+            return;
+
+        currentPower = maxPower;
+        CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
+        CheckBustStatus();
+    }
 
     private void ResolveBust(bool nullifyDamage)
     {

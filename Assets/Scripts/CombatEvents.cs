@@ -57,6 +57,7 @@ public static class CombatEvents
     public static Action OnRollCommand;
     public static Action OnEndTurnPressed;
     public static Action OnCheatWinPressed;
+    public static Action OnCheatPerfectStrikePressed;
 
     // Check Battle Outcome
     public static Action OnPlayerVictory;

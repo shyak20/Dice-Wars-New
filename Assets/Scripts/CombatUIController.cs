@@ -22,6 +22,7 @@ public class CombatUIController : MonoBehaviour
     public Button rollButton;
     public Button endTurnButton;
     public Button cheatWinButton;
+    public Button cheatPerfectStrikeButton;
 
     [Header("Status Displays")]
     public Slider powerSlider;
@@ -109,6 +110,7 @@ public class CombatUIController : MonoBehaviour
         }
         if (endTurnButton != null) endTurnButton.onClick.AddListener(() => CombatEvents.OnEndTurnPressed?.Invoke());
         if (cheatWinButton != null) cheatWinButton.onClick.AddListener(() => CombatEvents.OnCheatWinPressed?.Invoke());
+        if (cheatPerfectStrikeButton != null) cheatPerfectStrikeButton.onClick.AddListener(() => CombatEvents.OnCheatPerfectStrikePressed?.Invoke());
         Invoke(nameof(InitializeDiceButtons), 0.15f);
     }
 

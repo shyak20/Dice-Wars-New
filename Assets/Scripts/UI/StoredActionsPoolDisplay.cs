@@ -181,7 +181,8 @@ public class StoredActionsPoolDisplay : MonoBehaviour
             visible[i].icon.transform.SetSiblingIndex(i);
     }
 
-    public void BeginJackpotPresentation(int multiplier, Dictionary<PoolRowKey, int> valuesBefore)
+    /// <summary>Sync pool values and row order for perfect-strike presentation. Does not show jackpot UI per row — caller staggers that.</summary>
+    public void PrepareJackpotPresentation(Dictionary<PoolRowKey, int> valuesBefore)
     {
         if (valuesBefore == null || iconMap == null) return;
 
@@ -191,14 +192,26 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         foreach (var kvp in iconMap)
             RefreshIcon(kvp.Key);
 
-        foreach (var kvp in valuesBefore)
+        ReorderPoolIcons();
+    }
+
+    public RectTransform GetIconContainerRect() => iconContainer;
+
+    /// <summary>Visible rows in layout order (lowest sibling index first — top of a typical vertical stack).</summary>
+    public List<StoredActionsPoolIcon> GetVisiblePoolIconsTopToBottom()
+    {
+        var list = new List<StoredActionsPoolIcon>();
+        if (iconMap == null) return list;
+
+        foreach (var kvp in iconMap)
         {
-            if (kvp.Value < 1) continue;
-            if (!iconMap.TryGetValue(kvp.Key, out var icon) || icon == null) continue;
-            icon.ShowJackpotMultiplierBadge(multiplier);
+            var icon = kvp.Value;
+            if (icon == null || !icon.gameObject.activeSelf) continue;
+            list.Add(icon);
         }
 
-        ReorderPoolIcons();
+        list.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+        return list;
     }
 
     public void FinishJackpotPresentation(Dictionary<PoolRowKey, int> valuesAfter)
