@@ -1178,31 +1178,62 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator CoSubmitTurnAfterOrbFlight(int pendingAttack, int pendingDefense)
     {
-        yield return StartCoroutine(powerOrbVisual.RunFlightToEnemyAndWait(activeEnemy));
-        ApplyPlayerTurnCombatResults(pendingAttack, pendingDefense);
+        bool attackResolved = false;
+        bool continueCombat = true;
+
+        void OnOrbReachedEnemy()
+        {
+            if (attackResolved) return;
+            attackResolved = true;
+            continueCombat = ApplyPendingPlayerAttackFromTurn(pendingAttack);
+        }
+
+        // Drive the flight enumerator from this coroutine instead of StartCoroutine(inner). Nested
+        // StartCoroutine can defer the tail of the inner routine to a later scheduler tick, which
+        // separated orb hide / scale from TakeDamage by several frames in practice.
+        IEnumerator flight = powerOrbVisual.RunFlightToEnemyAndWait(activeEnemy, OnOrbReachedEnemy);
+        while (flight.MoveNext())
+            yield return flight.Current;
+
+        if (!attackResolved)
+            continueCombat = ApplyPendingPlayerAttackFromTurn(pendingAttack);
+        if (!continueCombat) yield break;
+
+        ApplyPendingPlayerDefenseAndStartEnemyTurn(pendingDefense);
+    }
+
+    /// <summary>Enemy damage and thorns from the player turn; does not apply armor or start the enemy turn.</summary>
+    /// <returns>False if defeat or victory ended combat.</returns>
+    private bool ApplyPendingPlayerAttackFromTurn(int pendingAttack)
+    {
+        if (pendingAttack <= 0) return true;
+        activeEnemy.TakeDamage(pendingAttack);
+
+        var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
+        if (retaliate > 0 && player != null)
+        {
+            // Floating numbers: bias toward player so it reads as player damage, with enemy anchor to help screen depth after orb FX.
+            var thornsPopupAnchor = Vector3.Lerp(player.GetDamageNumberWorldPosition(), activeEnemy.GetDamageNumberWorldPosition(), 0.25f);
+            player.TakeDamage(retaliate, PlayerDamageSource.ThornsRetaliation, thornsPopupAnchor);
+            if (CheckDefeat()) return false;
+        }
+
+        if (CheckVictory()) return false;
+        return true;
+    }
+
+    private void ApplyPendingPlayerDefenseAndStartEnemyTurn(int pendingDefense)
+    {
+        if (pendingDefense > 0) player.AddArmor(pendingDefense);
+
+        StartCoroutine(EnemyTurnRoutine());
     }
 
     private void ApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
     {
-        if (pendingAttack > 0)
-        {
-            activeEnemy.TakeDamage(pendingAttack);
+        if (!ApplyPendingPlayerAttackFromTurn(pendingAttack)) return;
 
-            var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
-            if (retaliate > 0 && player != null)
-            {
-                // Floating numbers: bias toward player so it reads as player damage, with enemy anchor to help screen depth after orb FX.
-                var thornsPopupAnchor = Vector3.Lerp(player.GetDamageNumberWorldPosition(), activeEnemy.GetDamageNumberWorldPosition(), 0.25f);
-                player.TakeDamage(retaliate, PlayerDamageSource.ThornsRetaliation, thornsPopupAnchor);
-                if (CheckDefeat()) return;
-            }
-
-            if (CheckVictory()) return;
-        }
-
-        if (pendingDefense > 0) player.AddArmor(pendingDefense);
-
-        StartCoroutine(EnemyTurnRoutine());
+        ApplyPendingPlayerDefenseAndStartEnemyTurn(pendingDefense);
     }
 
     private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)

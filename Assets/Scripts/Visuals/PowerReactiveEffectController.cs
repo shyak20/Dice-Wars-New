@@ -153,7 +153,8 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     }
 
     /// <summary>Used by <see cref="CombatManager"/> after turn resolution (perfect-strike presentation already finished when applicable).</summary>
-    public IEnumerator RunFlightToEnemyAndWait(EnemyController enemy)
+    /// <param name="onReachedEnemy">Invoked once when the orb snaps to the enemy anchor; run combat (e.g. damage) here, then the VFX is scaled to zero in the same block.</param>
+    public IEnumerator RunFlightToEnemyAndWait(EnemyController enemy, System.Action onReachedEnemy = null)
     {
         if (enemy == null)
             yield break;
@@ -184,9 +185,8 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             }
 
             effectTransform.position = pos;
-            // Damage in CombatManager runs only after this coroutine ends. If flyCurve reaches 1 before
-            // normalized time u does, the orb already sits on the enemy but the loop would idle for the
-            // rest of flyTime — that reads as a gap before TakeDamage. Finish as soon as the path hits.
+            // If flyCurve reaches 1 before normalized time u does, the orb already sits on the enemy but
+            // the loop would idle for the rest of flyTime — finish motion as soon as the path hits.
             if (eased >= 1f)
                 break;
 
@@ -194,6 +194,7 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         }
 
         effectTransform.position = anchor.position;
+        onReachedEnemy?.Invoke();
         _isFlyingToEnemy = false;
         SetUniformWorldScale(effectTransform, 0f);
         _postHitHiddenAtEnemy = true;
