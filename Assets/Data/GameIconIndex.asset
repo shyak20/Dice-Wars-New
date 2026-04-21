@@ -50,3 +50,5 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 545fd21b1124cc741925dfa1962ad67b, type: 3}
   - effect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
+  - effect: {fileID: 11400000, guid: c1d7c22239e0b6447a991d852bd36739, type: 2}
+    icon: {fileID: 21300000, guid: fa323de8d653a74479b3aaf109e51169, type: 3}

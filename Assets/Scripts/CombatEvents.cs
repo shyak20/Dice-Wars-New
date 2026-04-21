@@ -9,6 +9,8 @@ public struct RollOutcomeVisualLine
     public int Amount;
     /// <summary>Deferred action icon when set; otherwise catalog art from <see cref="PoolRowKey"/>.</summary>
     public Sprite IconOverride;
+    /// <summary>True for immediate status rows used only for flyout; triggers delayed stored-pool resync after landing.</summary>
+    public bool IsVisualFlyoutOnly;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>
@@ -16,6 +18,10 @@ public class DiceRollVisualPayload
 {
     public Vector3 WorldAnchor;
     public List<RollOutcomeVisualLine> Lines;
+    /// <summary>When true, <see cref="DiceRollOutcomeFlyoutController"/> runs <see cref="RequestFullStoredPoolResync"/> shortly after fly lines finish (clears flyout-only rows from the element bar).</summary>
+    public bool NeedsDelayedStoredPoolResync;
+    /// <summary>Optional. Invokes <see cref="CombatEvents.OnStoredActionsPoolIconsFullResync"/> with combat truth (assigned by <see cref="CombatManager"/>).</summary>
+    public Action RequestFullStoredPoolResync;
 
     Action _onVisualFinished;
     bool _visualFinishedReported;

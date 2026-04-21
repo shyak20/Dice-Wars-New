@@ -21,6 +21,9 @@ public class DieFaceSO : ScriptableObject
 
     [Header("Values")]
     public int damage; // New independent damage value
+    [Tooltip("For attack faces only: pending physical uses (final damage after Strength/modifiers) × this many hits. Ignored when type is not Damage.")]
+    [Min(1)]
+    public int damageAttackTimes = 1;
     public int armor;  // New independent armor value
 
     [Header("UI (card/picker/shop)")]

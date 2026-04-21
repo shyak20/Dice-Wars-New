@@ -9,12 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c60234fe17381843a40a8bf4c7bb08d, type: 3}
-  m_Name: Strength
-  m_EditorClassIdentifier: 
-  effectName: <style=Strength>Strength </style>
-  description: <style=Attack>Attacks </style> deal +1 Damage per stack
-  type: 0
-  target: 0
+  m_Script: {fileID: 11500000, guid: 103008cab46efa842aee48b25128b755, type: 3}
+  m_Name: Vulnerable
+  m_EditorClassIdentifier: Assembly-CSharp::VulnerableEffectSO
+  effectName: Vulnerable
+  description: Takes 10% more damage from <style=Attack>Physical</style> attacks
+  type: 1
+  target: 1
   stackDecayPerTurn: 0
   activateBeforePlayerPhysicalDamage: 1
+  extraDamagePercentPerStack: 10

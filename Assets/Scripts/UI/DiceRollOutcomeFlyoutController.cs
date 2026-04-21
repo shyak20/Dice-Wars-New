@@ -161,7 +161,15 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         finally
         {
             payload.ReportVisualFinished();
+            if (payload.NeedsDelayedStoredPoolResync && payload.RequestFullStoredPoolResync != null)
+                StartCoroutine(CoDelayedStoredPoolResync(payload));
         }
+    }
+
+    private static IEnumerator CoDelayedStoredPoolResync(DiceRollVisualPayload payload)
+    {
+        yield return new WaitForSeconds(0.18f);
+        payload.RequestFullStoredPoolResync?.Invoke();
     }
 
     private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line)

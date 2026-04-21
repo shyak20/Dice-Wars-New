@@ -18,3 +18,4 @@ MonoBehaviour:
   type: 0
   target: 0
   stackDecayPerTurn: 0
+  activateBeforePlayerPhysicalDamage: 1

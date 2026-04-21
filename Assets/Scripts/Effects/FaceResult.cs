@@ -17,7 +17,15 @@ public class FaceResult
     public int KineticShieldBonusContribution { get; set; }
 
     // New fields to track independent values and timing
+    /// <summary>Per-hit physical after Strength, watchers, relics, and face modifiers.</summary>
     public int Damage { get; set; }
+    /// <summary>For <see cref="DieType.Damage"/> faces: number of times <see cref="Damage"/> applies (default 1).</summary>
+    public int DamageAttackTimes { get; set; } = 1;
+    /// <summary>Total physical from this resolve: <see cref="Damage"/> × <see cref="DamageAttackTimes"/> when type is Damage and <see cref="Damage"/> &gt; 0.</summary>
+    public int TotalDamageContribution => Type == DieType.Damage && Damage > 0
+        ? Damage * Mathf.Max(1, DamageAttackTimes)
+        : 0;
+
     public int Armor { get; set; }
     public bool ActivateImmediately { get; set; }
     /// <summary>Copied from the rolled face; executed in order (immediate vs turn-end per <see cref="ActivateImmediately"/>).</summary>

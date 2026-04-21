@@ -12,4 +12,9 @@ public struct FacePoolExtraContribution
     public ApplyStatusEffectAction PoolSourceAction;
     /// <summary>If set, scales with Perfect Strike like status rows; grant uses final <see cref="Amount"/> at submit.</summary>
     public MaxHpAction MaxHpPoolSource;
+    /// <summary>
+    /// When true, this row exists only for die flyout visuals (e.g. immediate <see cref="ApplyStatusEffectAction"/>).
+    /// Omitted from <see cref="CombatManager.BuildStoredActionsPool"/> pending totals; use a short resync after flyout to clear display drift.
+    /// </summary>
+    public bool VisualFlyoutOnly;
 }

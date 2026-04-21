@@ -56,8 +56,9 @@ public class TurnRegistry
 
         if (result.Type == DieType.Damage && result.Damage > 0)
         {
-            AccumulatedPhysicalDamage += result.Damage;
-            OnValueAccumulated?.Invoke(ElementType.Physical, result.Damage);
+            var totalPhysical = result.Damage * Mathf.Max(1, result.DamageAttackTimes);
+            AccumulatedPhysicalDamage += totalPhysical;
+            OnValueAccumulated?.Invoke(ElementType.Physical, totalPhysical);
         }
 
         if (result.Armor > 0)
@@ -77,7 +78,8 @@ public class TurnRegistry
 
         if (result.Type == DieType.Damage && result.Damage > 0)
         {
-            AccumulatedPhysicalDamage -= result.Damage;
+            var totalPhysical = result.Damage * Mathf.Max(1, result.DamageAttackTimes);
+            AccumulatedPhysicalDamage -= totalPhysical;
             if (AccumulatedPhysicalDamage < 0) AccumulatedPhysicalDamage = 0;
         }
 

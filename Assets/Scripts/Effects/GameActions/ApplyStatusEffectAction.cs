@@ -73,11 +73,11 @@ public class ApplyStatusEffectAction : GameActionWithIcon
     }
 
     /// <summary>
-    /// Deferred faces: pool row until submit (scales with Perfect Strike / bust). Immediate faces skip the pool.
+    /// Deferred faces: pool row until submit (scales with Perfect Strike / bust).
+    /// Immediate faces: adds a flyout-only row (not in pending pool snapshot) so the status icon can arc to the element container.
     /// </summary>
     public void AppendPoolContributionIfAny(FaceResult result, PlayerStatus player, bool activateImmediately)
     {
-        if (activateImmediately) return;
         if (statusEffect == null || result == null || player == null) return;
 
         var applyStacks = stacks;
@@ -91,7 +91,8 @@ public class ApplyStatusEffectAction : GameActionWithIcon
             PoolKey = ResolvePoolRowKey(),
             Amount = applyStacks,
             Icon = ResolveStatusIcon(),
-            PoolSourceAction = this
+            PoolSourceAction = activateImmediately ? null : this,
+            VisualFlyoutOnly = activateImmediately
         });
     }
 }

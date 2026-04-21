@@ -21,5 +21,6 @@ MonoBehaviour:
   type: 1
   target: 1
   stackDecayPerTurn: 5
+  activateBeforePlayerPhysicalDamage: 1
   frozenThreshold: 10
   frozenEffect: {fileID: 11400000, guid: f1d2a6e1ecae403429396fcc0b7aa986, type: 2}

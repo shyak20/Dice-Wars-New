@@ -16,6 +16,11 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     [SerializeField, Min(1)] private int requiredStartingDiceCount = 3;
     [SerializeField] private string titleFormat = "{0}/{1} Starting dice";
 
+    [Header("Testing")]
+    [Tooltip("Optional. Wire a UI Button to fill the run deck with Test Starting Die Asset (Required Starting Dice Count copies) and continue — same as Continue, skipping manual picks.")]
+    [SerializeField] private Button testDiceButton;
+    [SerializeField] private DieAssetSO testStartingDieAsset;
+
     /// <summary>Last die clicked — its tooltip stays visible until another die is hovered.</summary>
     private DiceSelectDieSlot _pinnedTooltipSlot;
     /// <summary>While non-null, overrides pinned tooltip (hover takes priority).</summary>
@@ -25,6 +30,8 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     {
         if (continueButton != null)
             continueButton.onClick.AddListener(OnContinueClicked);
+        if (testDiceButton != null)
+            testDiceButton.onClick.AddListener(OnTestDiceButtonClicked);
     }
 
     private void Start()
@@ -94,6 +101,8 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     {
         if (continueButton != null)
             continueButton.onClick.RemoveListener(OnContinueClicked);
+        if (testDiceButton != null)
+            testDiceButton.onClick.RemoveListener(OnTestDiceButtonClicked);
     }
 
     public void RefreshSelectionUi()
@@ -148,6 +157,34 @@ public sealed class DiceSelectSceneController : MonoBehaviour
             return;
         }
 
+        RunManager.Instance.LoadMapAfterDiceSelect();
+    }
+
+    private void OnTestDiceButtonClicked()
+    {
+        if (testStartingDieAsset == null)
+        {
+            Debug.LogError("DiceSelectSceneController: assign Test Starting Die Asset to use the test dice button.", this);
+            return;
+        }
+
+        if (PlayerDataContainer.Instance == null || PlayerDataContainer.Instance.RuntimeData == null)
+        {
+            Debug.LogError("DiceSelectSceneController: PlayerDataContainer missing — ensure it exists (e.g. DontDestroyOnLoad from Main Menu).", this);
+            return;
+        }
+
+        if (RunManager.Instance == null)
+        {
+            Debug.LogError("DiceSelectSceneController: RunManager missing.", this);
+            return;
+        }
+
+        var picked = new List<DieAssetSO>(requiredStartingDiceCount);
+        for (var i = 0; i < requiredStartingDiceCount; i++)
+            picked.Add(testStartingDieAsset);
+
+        PlayerDataContainer.Instance.ReplaceStartingDeck(picked);
         RunManager.Instance.LoadMapAfterDiceSelect();
     }
 }

@@ -17,10 +17,10 @@ MonoBehaviour:
   uiIcon: {fileID: 21300000, guid: eca18e2cf14c282488edf3fe654b1805, type: 3}
   shopGoldPrice: 50
   faces:
-  - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
-  - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
-  - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
-  - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
-  - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
-  - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
+  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
+  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
+  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
+  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
+  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
+  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
   maxPowerContribution: 0

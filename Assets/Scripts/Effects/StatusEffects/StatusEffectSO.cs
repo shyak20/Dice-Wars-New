@@ -8,6 +8,14 @@ public abstract class StatusEffectSO : ScriptableObject
     public StatusEffectTarget target;
     public int stackDecayPerTurn;
 
+    [Header("Player turn timing")]
+    [InspectorName("Activate first")]
+    [Tooltip("When enabled, applications of this status run before the enemy receives this turn's player physical damage. When disabled, they run immediately after that damage (still before enemy turn-start ticks such as burn). Immediate faces: the apply is held until after damage when disabled.")]
+    [SerializeField] private bool activateBeforePlayerPhysicalDamage = true;
+
+    /// <summary>When true, <see cref="CombatManager"/> applies this status before player physical damage to the enemy; when false, after.</summary>
+    public bool ActivateBeforePlayerPhysicalDamage => activateBeforePlayerPhysicalDamage;
+
     public virtual void OnApply(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual void OnTurnStart(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual void OnBeforeEnemyTurn(StatusEffectInstance instance, StatusEffectContext ctx) { }

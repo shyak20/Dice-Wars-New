@@ -28,6 +28,9 @@ public class CombatManager : MonoBehaviour
     [SerializeField] private GameObject enemyTurnIntroRoot;
     [SerializeField, Min(0f)] private float enemyTurnIntroDurationSeconds = 2f;
 
+    [Tooltip("After physical damage (+ thorns) to the enemy, wait this long before the first turn-start status damage tick (e.g. burn). Also waits this long between each subsequent status tick when multiple effects use OnTurnStart. Stack decay still runs once after all ticks, same as instant TickTurnStart.")]
+    [SerializeField, Min(0f)] private float delaySecondsBetweenPhysicalAndEachEnemyStatusTick = 0f;
+
     [Header("Status Effect UI")]
     [SerializeField] private StatusEffectBarUI playerStatusBar;
     [SerializeField] private StatusEffectBarUI enemyStatusBar;
@@ -91,6 +94,15 @@ public class CombatManager : MonoBehaviour
     private int _faceResolveSequence;
     private bool _echoSkipsPowerThisBatch;
 
+    private struct PendingAfterPhysicalApplyStatus
+    {
+        public ApplyStatusEffectAction Action;
+        public FaceResult SourceFace;
+    }
+
+    private readonly List<PendingAfterPhysicalApplyStatus> _pendingAfterPhysicalApplyStatuses = new List<PendingAfterPhysicalApplyStatus>();
+    private bool _afterPhysicalDeferredStatusPhaseCompleted;
+
     /// <summary>Volatile turn blackboard (physical/armor/burn totals, Brute Force, Supernova).</summary>
     public TurnRegistry TurnRegistry => _turnRegistry;
 
@@ -98,7 +110,7 @@ public class CombatManager : MonoBehaviour
     public int CurrentRollBatchId => _rollBatchId;
 
     // Updated summation logic to pull from FaceResult properties
-    public int GetPendingAttack() => channeledFaces.Sum(f => f.Damage) + bonusDamageFromActions;
+    public int GetPendingAttack() => channeledFaces.Sum(f => f.TotalDamageContribution) + bonusDamageFromActions;
     public int GetPendingDefense() => channeledFaces.Sum(f => f.Armor) + kineticShieldBonus + bonusArmorFromActions;
 
     public List<FaceResult> GetChanneledFaces() => channeledFaces;
@@ -117,12 +129,15 @@ public class CombatManager : MonoBehaviour
 
         foreach (var face in channeledFaces)
         {
-            Add(PoolRowKey.FromDieType(DieType.Damage), face.Damage);
+            Add(PoolRowKey.FromDieType(DieType.Damage), face.TotalDamageContribution);
             Add(PoolRowKey.FromDieType(DieType.Armor), face.Armor);
 
             if (face.ActionPoolContributions == null) continue;
             foreach (var extra in face.ActionPoolContributions)
+            {
+                if (extra.VisualFlyoutOnly) continue;
                 Add(extra.PoolKey, extra.Amount);
+            }
         }
 
         Add(PoolRowKey.FromDieType(DieType.Damage), bonusDamageFromActions);
@@ -276,6 +291,8 @@ public class CombatManager : MonoBehaviour
         _faceResolveSequence = 0;
         selectedDice.Clear();
         channeledFaces.Clear();
+        _pendingAfterPhysicalApplyStatuses.Clear();
+        _afterPhysicalDeferredStatusPhaseCompleted = false;
         _pendingRerollGrants = 0;
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
@@ -570,6 +587,7 @@ public class CombatManager : MonoBehaviour
             Value = modifiedValue,
             Type = face.type,
             Damage = rolledDamage,
+            DamageAttackTimes = face.type == DieType.Damage ? Mathf.Max(1, face.damageAttackTimes) : 1,
             Armor = face.armor,
             ActivateImmediately = face.activateImmediately,
         };
@@ -628,6 +646,18 @@ public class CombatManager : MonoBehaviour
                 if (a is FaceResolveModifierBase) continue;
                 if (a is RerollDieAction) continue;
                 if (a is AddPowerAction) continue;
+                if (a is ApplyStatusEffectAction applyLate &&
+                    applyLate.StatusEffectDefinition != null &&
+                    !applyLate.StatusEffectDefinition.ActivateBeforePlayerPhysicalDamage)
+                {
+                    _pendingAfterPhysicalApplyStatuses.Add(new PendingAfterPhysicalApplyStatus
+                    {
+                        Action = applyLate,
+                        SourceFace = result
+                    });
+                    continue;
+                }
+
                 a.Execute(context);
                 var icon = GameActionIconUtility.GetDisplayIcon(a);
                 if (icon != null)
@@ -657,7 +687,10 @@ public class CombatManager : MonoBehaviour
                 var payload = new DiceRollVisualPayload
                 {
                     WorldAnchor = dieWorldSource.position,
-                    Lines = lines
+                    Lines = lines,
+                    NeedsDelayedStoredPoolResync = lines.Any(l => l.IsVisualFlyoutOnly),
+                    RequestFullStoredPoolResync = () =>
+                        CombatEvents.OnStoredActionsPoolIconsFullResync?.Invoke(BuildStoredActionsPool())
                 };
                 payload.BindVisualFinished(OnRollVisualSequenceFinished);
                 CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
@@ -836,7 +869,7 @@ public class CombatManager : MonoBehaviour
                 CombatEvents.OnRuntimePoolIconForRow?.Invoke(key, icon);
         }
 
-        Hint(PoolRowKey.FromDieType(DieType.Damage), result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
+        Hint(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage));
         Hint(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
 
         if (result.ActionPoolContributions == null) return;
@@ -854,7 +887,7 @@ public class CombatManager : MonoBehaviour
             lines.Add(new RollOutcomeVisualLine { RowKey = key, Amount = amt, IconOverride = icon });
         }
 
-        AddLine(PoolRowKey.FromDieType(DieType.Damage), result.Damage, GameIconCatalog.GetElementIcon(DieType.Damage));
+        AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage));
         AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
 
         if (result.ActionPoolContributions != null)
@@ -866,7 +899,8 @@ public class CombatManager : MonoBehaviour
                 {
                     RowKey = extra.PoolKey,
                     Amount = extra.Amount,
-                    IconOverride = extra.Icon
+                    IconOverride = extra.Icon,
+                    IsVisualFlyoutOnly = extra.VisualFlyoutOnly
                 });
             }
         }
@@ -1073,6 +1107,7 @@ public class CombatManager : MonoBehaviour
             for (var i = 0; i < face.ActionPoolContributions.Count; i++)
             {
                 var c = face.ActionPoolContributions[i];
+                if (c.VisualFlyoutOnly) continue;
                 if (c.PoolSourceAction == null && c.MaxHpPoolSource == null) continue;
                 c.Amount *= multiplier;
                 face.ActionPoolContributions[i] = c;
@@ -1150,23 +1185,11 @@ public class CombatManager : MonoBehaviour
 
     private void SubmitTurn()
     {
+        _afterPhysicalDeferredStatusPhaseCompleted = false;
         ChangeState(CombatState.TurnEnd);
         var ctx = BuildContext();
 
-        // Execution of stored/deferred actions (per face, in list order)
-        foreach (var face in channeledFaces)
-        {
-            if (face.ActivateImmediately || face.Actions == null || face.Actions.Count == 0) continue;
-            var faceCtx = BuildContext(face);
-            faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
-            foreach (var a in face.Actions)
-            {
-                if (a is FaceResolveModifierBase) continue;
-                if (a is AddPowerAction) continue;
-                if (a != null)
-                    a.Execute(faceCtx);
-            }
-        }
+        ExecuteDeferredTurnEndActionsForSubmitTurn(beforePlayerPhysicalDamage: true);
 
         foreach (var action in turnEndActions) action.Invoke(ctx);
         turnEndActions.Clear();
@@ -1239,10 +1262,7 @@ public class CombatManager : MonoBehaviour
             AnnounceOrbImpact();
             if (attackResolved) return;
             attackResolved = true;
-            if (pendingAttack > 0)
-                continueCombat = ApplyPendingPlayerAttackFromTurn(pendingAttack);
-            else
-                continueCombat = true;
+            continueCombat = RunPlayerPhysicalResolution(pendingAttack);
         }
 
         IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
@@ -1254,7 +1274,71 @@ public class CombatManager : MonoBehaviour
             OnOrbImpact();
         if (!continueCombat) yield break;
 
-        ResolveEnemyOpeningAndStartEnemyTurn();
+        yield return StartCoroutine(CoResolveEnemyOpeningAndStartEnemyTurn());
+    }
+
+    /// <summary>Physical damage + thorns when applicable, then deferred / queued status applies that must run after that damage.</summary>
+    private bool RunPlayerPhysicalResolution(int pendingAttack)
+    {
+        if (pendingAttack > 0 && !ApplyPendingPlayerAttackFromTurn(pendingAttack))
+            return false;
+        TryExecuteDeferredStatusAppliesAfterPlayerPhysical();
+        return true;
+    }
+
+    private void ExecuteDeferredTurnEndActionsForSubmitTurn(bool beforePlayerPhysicalDamage)
+    {
+        foreach (var face in channeledFaces)
+        {
+            if (face.ActivateImmediately || face.Actions == null || face.Actions.Count == 0) continue;
+            var faceCtx = BuildContext(face);
+            faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
+            foreach (var a in face.Actions)
+            {
+                if (a is FaceResolveModifierBase) continue;
+                if (a is AddPowerAction) continue;
+                if (a == null) continue;
+
+                if (a is ApplyStatusEffectAction apply)
+                {
+                    if (apply.StatusEffectDefinition == null)
+                    {
+                        Debug.LogError("CombatManager: ApplyStatusEffectAction has no status assigned on a deferred face.");
+                        continue;
+                    }
+
+                    if (apply.StatusEffectDefinition.ActivateBeforePlayerPhysicalDamage != beforePlayerPhysicalDamage)
+                        continue;
+                }
+                else if (!beforePlayerPhysicalDamage)
+                    continue;
+
+                a.Execute(faceCtx);
+            }
+        }
+    }
+
+    private void TryExecuteDeferredStatusAppliesAfterPlayerPhysical()
+    {
+        if (_afterPhysicalDeferredStatusPhaseCompleted) return;
+        if (currentState == CombatState.Victory || currentState == CombatState.Defeat)
+            return;
+
+        _afterPhysicalDeferredStatusPhaseCompleted = true;
+
+        for (var i = 0; i < _pendingAfterPhysicalApplyStatuses.Count; i++)
+        {
+            var p = _pendingAfterPhysicalApplyStatuses[i];
+            var faceCtx = BuildContext(p.SourceFace);
+            faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(p.SourceFace);
+            p.Action.Execute(faceCtx);
+        }
+
+        _pendingAfterPhysicalApplyStatuses.Clear();
+
+        ExecuteDeferredTurnEndActionsForSubmitTurn(beforePlayerPhysicalDamage: false);
+
+        NotifyStoredActionsPoolUpdated();
     }
 
     /// <summary>Enemy damage and thorns from the player turn; does not apply armor or start the enemy turn.</summary>
@@ -1278,16 +1362,19 @@ public class CombatManager : MonoBehaviour
     }
 
     /// <summary>
-    /// After all player-turn damage to the enemy: <see cref="StatusEffectManager.TickTurnStart"/> (burn, decay, etc.) first,
+    /// After all player-turn damage to the enemy: stepped <see cref="StatusEffectManager.TickTurnStartStepped"/> (optional delays),
     /// then <see cref="EnemyController.ResetArmor"/> before the enemy-turn coroutine.
     /// </summary>
-    private void ResolveEnemyOpeningAndStartEnemyTurn()
+    private IEnumerator CoResolveEnemyOpeningAndStartEnemyTurn()
     {
         if (activeEnemy != null && player != null)
         {
             var openingCtx = BuildStatusContext();
-            activeEnemy.StatusEffects.TickTurnStart(openingCtx);
-            if (CheckVictory()) return;
+            yield return StartCoroutine(activeEnemy.StatusEffects.TickTurnStartStepped(
+                openingCtx,
+                delaySecondsBetweenPhysicalAndEachEnemyStatusTick,
+                delaySecondsBetweenPhysicalAndEachEnemyStatusTick));
+            if (CheckVictory()) yield break;
             activeEnemy.ResetArmor();
         }
 
@@ -1296,12 +1383,17 @@ public class CombatManager : MonoBehaviour
 
     private void ApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
     {
+        StartCoroutine(CoApplyPlayerTurnCombatResults(pendingAttack, pendingDefense));
+    }
+
+    private IEnumerator CoApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
+    {
         if (pendingDefense > 0 && player != null)
             player.AddArmor(pendingDefense);
 
-        if (!ApplyPendingPlayerAttackFromTurn(pendingAttack)) return;
+        if (!RunPlayerPhysicalResolution(pendingAttack)) yield break;
 
-        ResolveEnemyOpeningAndStartEnemyTurn();
+        yield return StartCoroutine(CoResolveEnemyOpeningAndStartEnemyTurn());
     }
 
     private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
@@ -1435,6 +1527,8 @@ public class CombatManager : MonoBehaviour
         _sameTurnValueWatchers.Clear();
         _turnRegistry.ResetVolatile();
         channeledFaces.Clear();
+        _pendingAfterPhysicalApplyStatuses.Clear();
+        _afterPhysicalDeferredStatusPhaseCompleted = false;
         _pendingRerollGrants = 0;
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -213,6 +214,75 @@ public class StatusEffectManager : MonoBehaviour
             effects[i].Definition.OnRemove(effects[i], ctx);
         }
         effects.Clear();
+        NotifyChanged();
+    }
+
+    /// <summary>
+    /// Same resolution as <see cref="TickTurnStart"/> but waits between each <see cref="StatusEffectSO.OnTurnStart"/> (damage tick) so presentation can stagger.
+    /// All <see cref="StatusEffectSO.OnTurnStart"/> calls still run before any stack decay, matching <see cref="TickTurnStart"/> ordering.
+    /// </summary>
+    public IEnumerator TickTurnStartStepped(
+        StatusEffectContext ctx,
+        float delaySecondsBeforeFirstOnTurnStart,
+        float delaySecondsBetweenOnTurnStarts)
+    {
+        for (var i = effects.Count - 1; i >= 0; i--)
+        {
+            var instance = effects[i];
+
+            if (instance.IsExpired)
+            {
+                instance.Definition.OnRemove(instance, ctx);
+                effects.RemoveAt(i);
+                if (GameActionDebug.Enabled)
+                    Debug.Log($"[StatusEffect] {instance.Definition.effectName} expired (stacks reached 0)");
+            }
+        }
+
+        var onTurnOrder = new List<StatusEffectInstance>();
+        for (var i = effects.Count - 1; i >= 0; i--)
+        {
+            if (!effects[i].IsExpired)
+                onTurnOrder.Add(effects[i]);
+        }
+
+        for (var j = 0; j < onTurnOrder.Count; j++)
+        {
+            var instance = onTurnOrder[j];
+            if (!effects.Contains(instance) || instance.IsExpired)
+                continue;
+
+            if (j == 0)
+            {
+                if (delaySecondsBeforeFirstOnTurnStart > 0f)
+                    yield return new WaitForSeconds(delaySecondsBeforeFirstOnTurnStart);
+            }
+            else if (delaySecondsBetweenOnTurnStarts > 0f)
+            {
+                yield return new WaitForSeconds(delaySecondsBetweenOnTurnStarts);
+            }
+
+            if (!effects.Contains(instance) || instance.IsExpired)
+                continue;
+
+            instance.Definition.OnTurnStart(instance, ctx);
+        }
+
+        for (var i = effects.Count - 1; i >= 0; i--)
+        {
+            var instance = effects[i];
+
+            if (instance.Definition.stackDecayPerTurn > 0)
+                instance.RemoveStacks(instance.Definition.stackDecayPerTurn);
+
+            if (!instance.IsExpired) continue;
+
+            instance.Definition.OnRemove(instance, ctx);
+            effects.RemoveAt(i);
+            if (GameActionDebug.Enabled)
+                Debug.Log($"[StatusEffect] {instance.Definition.effectName} expired after stack decay (stacks reached 0)");
+        }
+
         NotifyChanged();
     }
 
