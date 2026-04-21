@@ -21,6 +21,13 @@ public class CombatManager : MonoBehaviour
     [Tooltip("Optional. After turn resolution (and perfect-strike presentation if any), the orb flies to the enemy if the turn has attack/burn to the enemy; otherwise to the player's support anchor (armor-only etc.). Physical damage applies on arrival; burn ticks stay on their own timing but use Burn presentation.")]
     [SerializeField] private PowerReactiveEffectController powerOrbVisual;
 
+    [Header("Enemy turn intro")]
+    [Tooltip("Sequence: player armor → orb VFX + physical (+ thorns) → TickTurnStart (burn, etc.) → enemy armor reset → this delay → Enemy Turn banner (optional) → Enemy Turn + pause → TickBeforeEnemyTurn → attacks.\nWaits after all damage to the enemy from the player round and related FX.")]
+    [SerializeField, Min(0f)] private float enemyTurnIntroDelayAfterPlayerDamageSeconds = 0.35f;
+    [Tooltip("Optional. Enabled for Enemy Turn Intro Duration Seconds after the delay above, then disabled before enemy actions.")]
+    [SerializeField] private GameObject enemyTurnIntroRoot;
+    [SerializeField, Min(0f)] private float enemyTurnIntroDurationSeconds = 2f;
+
     [Header("Status Effect UI")]
     [SerializeField] private StatusEffectBarUI playerStatusBar;
     [SerializeField] private StatusEffectBarUI enemyStatusBar;
@@ -1210,6 +1217,9 @@ public class CombatManager : MonoBehaviour
         bool allowZeroCombatPower,
         bool forceStartingVisibleScale)
     {
+        if (pendingDefense > 0 && player != null)
+            player.AddArmor(pendingDefense);
+
         bool impactAnnounced = false;
         bool attackResolved = false;
         bool continueCombat = true;
@@ -1244,7 +1254,7 @@ public class CombatManager : MonoBehaviour
             OnOrbImpact();
         if (!continueCombat) yield break;
 
-        ApplyPendingPlayerDefenseAndStartEnemyTurn(pendingDefense);
+        ResolveEnemyOpeningAndStartEnemyTurn();
     }
 
     /// <summary>Enemy damage and thorns from the player turn; does not apply armor or start the enemy turn.</summary>
@@ -1267,18 +1277,31 @@ public class CombatManager : MonoBehaviour
         return true;
     }
 
-    private void ApplyPendingPlayerDefenseAndStartEnemyTurn(int pendingDefense)
+    /// <summary>
+    /// After all player-turn damage to the enemy: <see cref="StatusEffectManager.TickTurnStart"/> (burn, decay, etc.) first,
+    /// then <see cref="EnemyController.ResetArmor"/> before the enemy-turn coroutine.
+    /// </summary>
+    private void ResolveEnemyOpeningAndStartEnemyTurn()
     {
-        if (pendingDefense > 0) player.AddArmor(pendingDefense);
+        if (activeEnemy != null && player != null)
+        {
+            var openingCtx = BuildStatusContext();
+            activeEnemy.StatusEffects.TickTurnStart(openingCtx);
+            if (CheckVictory()) return;
+            activeEnemy.ResetArmor();
+        }
 
         StartCoroutine(EnemyTurnRoutine());
     }
 
     private void ApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
     {
+        if (pendingDefense > 0 && player != null)
+            player.AddArmor(pendingDefense);
+
         if (!ApplyPendingPlayerAttackFromTurn(pendingAttack)) return;
 
-        ApplyPendingPlayerDefenseAndStartEnemyTurn(pendingDefense);
+        ResolveEnemyOpeningAndStartEnemyTurn();
     }
 
     private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
@@ -1291,16 +1314,22 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator EnemyTurnRoutine()
     {
-        ChangeState(CombatState.EnemyTurn);
         _turnRegistry.ResetVolatile();
+
+        if (enemyTurnIntroDelayAfterPlayerDamageSeconds > 0f)
+            yield return new WaitForSeconds(enemyTurnIntroDelayAfterPlayerDamageSeconds);
+
+        if (enemyTurnIntroRoot != null)
+        {
+            ChangeState(CombatState.EnemyTurnIntro);
+            yield return CoEnemyTurnIntroPresentation();
+        }
+
+        ChangeState(CombatState.EnemyTurn);
         yield return new WaitForSeconds(1.0f);
         if (activeEnemy != null && player != null)
         {
-            activeEnemy.ResetArmor();
             var statusCtx = BuildStatusContext();
-            // Enemy turn starts here.
-            activeEnemy.StatusEffects.TickTurnStart(statusCtx);
-            if (CheckVictory()) yield break;
             activeEnemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
             if (CheckVictory()) yield break;
 
@@ -1349,6 +1378,17 @@ public class CombatManager : MonoBehaviour
         }
         yield return new WaitForSeconds(1.0f);
         ResetTurn();
+    }
+
+    private IEnumerator CoEnemyTurnIntroPresentation()
+    {
+        if (enemyTurnIntroRoot == null)
+            yield break;
+
+        enemyTurnIntroRoot.SetActive(true);
+        if (enemyTurnIntroDurationSeconds > 0f)
+            yield return new WaitForSeconds(enemyTurnIntroDurationSeconds);
+        enemyTurnIntroRoot.SetActive(false);
     }
 
     private bool CheckVictory()

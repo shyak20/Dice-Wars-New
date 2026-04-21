@@ -1,20 +1,25 @@
 using UnityEngine;
 
+/// <summary>
+/// Each turn start: deals damage equal to current stacks (1 damage per stack). Stack removal is only from
+/// <see cref="StatusEffectSO.stackDecayPerTurn"/>, applied in <see cref="StatusEffectManager.TickTurnStart"/> after this runs.
+/// </summary>
 [CreateAssetMenu(fileName = "Bleed", menuName = "DiceGame/StatusEffects/Bleed")]
 public class BurnEffectSO : StatusEffectSO
 {
-    [SerializeField] private int damagePerStack = 2;
-
     public override void OnTurnStart(StatusEffectInstance instance, StatusEffectContext ctx)
     {
-        var damage = damagePerStack * instance.Stacks;
+        int stacks = instance.Stacks;
+        if (stacks <= 0) return;
+
+        int damage = stacks;
         if (target == StatusEffectTarget.Enemy)
             ctx.Enemy.TakeDamage(damage, EnemyDamagePresentationKind.Burn);
         else
             ctx.Player.TakeDamage(damage);
 
         if (GameActionDebug.Enabled)
-            Debug.Log($"[Burn] Turn-start tick: dealt {damage} burn damage to {target} ({damagePerStack}×{instance.Stacks} stacks)");
+            Debug.Log($"[Burn] Turn-start tick: dealt {damage} (1 per stack) on {target}; stacks before decay: {stacks}");
     }
 
     public override void OnPerfectStrike(StatusEffectInstance instance, StatusEffectContext ctx)

@@ -216,14 +216,14 @@ public class StatusEffectManager : MonoBehaviour
         NotifyChanged();
     }
 
+    /// <summary>
+    /// Per effect with stacks: <see cref="StatusEffectSO.OnTurnStart"/> runs at full stack count, then <see cref="StatusEffectSO.stackDecayPerTurn"/> is applied (e.g. burn damage = stacks, then decay).
+    /// </summary>
     public void TickTurnStart(StatusEffectContext ctx)
     {
         for (var i = effects.Count - 1; i >= 0; i--)
         {
             var instance = effects[i];
-
-            if (instance.Definition.stackDecayPerTurn > 0)
-                instance.RemoveStacks(instance.Definition.stackDecayPerTurn);
 
             if (instance.IsExpired)
             {
@@ -235,6 +235,21 @@ public class StatusEffectManager : MonoBehaviour
             }
 
             instance.Definition.OnTurnStart(instance, ctx);
+        }
+
+        for (var i = effects.Count - 1; i >= 0; i--)
+        {
+            var instance = effects[i];
+
+            if (instance.Definition.stackDecayPerTurn > 0)
+                instance.RemoveStacks(instance.Definition.stackDecayPerTurn);
+
+            if (!instance.IsExpired) continue;
+
+            instance.Definition.OnRemove(instance, ctx);
+            effects.RemoveAt(i);
+            if (GameActionDebug.Enabled)
+                Debug.Log($"[StatusEffect] {instance.Definition.effectName} expired after stack decay (stacks reached 0)");
         }
 
         NotifyChanged();

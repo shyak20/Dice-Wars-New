@@ -779,7 +779,7 @@ MonoBehaviour:
   segmentContainer: {fileID: 8365422450391847375}
   segmentPrefab: {fileID: 5120536954588284356, guid: 008e6dc716bc27a40b351b96702b8699, type: 3}
   _enemyController: {fileID: -483311588170614091}
-  intentBuffDamageColor: {r: 1, g: 0.55, b: 0.35, a: 1}
+  intentBuffDamageColor: {r: 1, g: 0.717929, b: 0.34901965, a: 1}
 --- !u!114 &2184287337653457536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1860,6 +1860,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 2d96c6dec5a9da645a6f6cbe018e7480, type: 3}
+    - target: {fileID: 7206115334883055204, guid: 008e6dc716bc27a40b351b96702b8699, type: 3}
+      propertyPath: m_fontSize
+      value: 25.15
+      objectReference: {fileID: 0}
     - target: {fileID: 8628419183183905116, guid: 008e6dc716bc27a40b351b96702b8699, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
