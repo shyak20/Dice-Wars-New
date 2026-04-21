@@ -65,8 +65,10 @@ public static class CombatEvents
 
     /// <summary>Floating damage UI: amount hit for, world anchor (e.g. player).</summary>
     public static Action<int, Vector3> OnPlayerDamageNumber;
-    /// <summary>Floating damage UI: amount, world anchor, which enemy was hit (so only that prefab's UI spawns).</summary>
-    public static Action<int, Vector3, EnemyController> OnEnemyDamageNumber;
+    /// <summary>Floating damage UI: amount, world anchor, which enemy was hit, and presentation channel (physical vs burn).</summary>
+    public static Action<int, Vector3, EnemyController, EnemyDamagePresentationKind> OnEnemyDamagePresentation;
+    /// <summary>Power orb reached enemy hit point or player support (HP) anchor; fires before turn physical damage from <see cref="CombatManager"/> applies.</summary>
+    public static Action<PowerOrbImpactPayload> OnPowerOrbImpact;
 
     // Bust Logic
     public static Action<int, int> OnBustOccurred;

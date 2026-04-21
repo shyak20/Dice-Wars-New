@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Place on the enemy prefab (or its UI child). Spawns floating damage for <see cref="CombatEvents.OnEnemyDamageNumber"/>.
+/// Place on the enemy prefab (or its UI child). Spawns floating damage for <see cref="CombatEvents.OnEnemyDamagePresentation"/>.
 /// Assign the enemy's damage-number canvas and parent rect (can be scene objects outside the prefab).
 /// </summary>
 public class EnemyFloatingDamageNumberController : MonoBehaviour
@@ -13,6 +13,8 @@ public class EnemyFloatingDamageNumberController : MonoBehaviour
 
     [Header("Style")]
     [SerializeField] private FloatingDamageNumberStyle style = new FloatingDamageNumberStyle();
+    [Tooltip("Optional. When set with a prefab, burn damage uses this style; otherwise physical style is reused.")]
+    [SerializeField] private FloatingDamageNumberStyle burnStyle = new FloatingDamageNumberStyle();
 
     private EnemyController _ownerEnemy;
 
@@ -32,17 +34,18 @@ public class EnemyFloatingDamageNumberController : MonoBehaviour
 
     private void OnEnable()
     {
-        CombatEvents.OnEnemyDamageNumber += HandleEnemyDamage;
+        CombatEvents.OnEnemyDamagePresentation += HandleEnemyDamage;
     }
 
     private void OnDisable()
     {
-        CombatEvents.OnEnemyDamageNumber -= HandleEnemyDamage;
+        CombatEvents.OnEnemyDamagePresentation -= HandleEnemyDamage;
     }
 
-    private void HandleEnemyDamage(int amount, Vector3 worldPosition, EnemyController damagedEnemy)
+    private void HandleEnemyDamage(int amount, Vector3 worldPosition, EnemyController damagedEnemy, EnemyDamagePresentationKind kind)
     {
         if (_ownerEnemy == null || damagedEnemy != _ownerEnemy) return;
-        FloatingDamageNumberSpawner.Spawn(this, amount, worldPosition, canvas, spawnParent, worldCamera, style);
+        var resolvedStyle = kind == EnemyDamagePresentationKind.Burn && burnStyle.prefab != null ? burnStyle : style;
+        FloatingDamageNumberSpawner.Spawn(this, amount, worldPosition, canvas, spawnParent, worldCamera, resolvedStyle);
     }
 }

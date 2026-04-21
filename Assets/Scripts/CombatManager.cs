@@ -18,7 +18,7 @@ public class CombatManager : MonoBehaviour
     [Tooltip("Optional. When assigned, perfect strike waits for jackpot UI (overlay + ×multiplier on pools) before SubmitTurn.")]
     [SerializeField] private JackpotPresentationController jackpotPresentation;
 
-    [Tooltip("Optional. After turn resolution (and after perfect-strike presentation if any), this orb flies to the enemy; damage/armor apply only when it arrives.")]
+    [Tooltip("Optional. After turn resolution (and perfect-strike presentation if any), the orb flies to the enemy if the turn has attack/burn to the enemy; otherwise to the player's support anchor (armor-only etc.). Physical damage applies on arrival; burn ticks stay on their own timing but use Burn presentation.")]
     [SerializeField] private PowerReactiveEffectController powerOrbVisual;
 
     [Header("Status Effect UI")]
@@ -1170,33 +1170,78 @@ public class CombatManager : MonoBehaviour
         pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
 
-        if (powerOrbVisual != null && activeEnemy != null && currentPower > 0)
-            StartCoroutine(CoSubmitTurnAfterOrbFlight(pendingAttack, pendingDefense));
-        else
+        bool enemyDamageLine = pendingAttack > 0 || _turnRegistry.BurnAppliedThisTurn > 0;
+        bool usePowerOrb = powerOrbVisual != null && activeEnemy != null && player != null &&
+                           (currentPower > 0 || pendingDefense > 0 || enemyDamageLine);
+
+        if (!usePowerOrb)
             ApplyPlayerTurnCombatResults(pendingAttack, pendingDefense);
+        else
+        {
+            bool flyOrbToEnemy = enemyDamageLine;
+            Transform orbAnchor = flyOrbToEnemy
+                ? activeEnemy.GetPowerOrbHitAnchor()
+                : player.GetPowerOrbSupportAnchor();
+            if (orbAnchor == null)
+            {
+                Debug.LogError("CombatManager.SubmitTurn: power orb anchor is null. Assign PlayerStatus powerOrbSupportWorldAnchor or enemy hit anchor.");
+                ApplyPlayerTurnCombatResults(pendingAttack, pendingDefense);
+            }
+            else
+            {
+                bool allowZeroCombatPower = !flyOrbToEnemy || (currentPower <= 0 && enemyDamageLine);
+                bool forceStartingVisibleScale = currentPower <= 0;
+                StartCoroutine(CoSubmitTurnAfterOrbFlight(
+                    pendingAttack,
+                    pendingDefense,
+                    orbAnchor,
+                    flyOrbToEnemy,
+                    allowZeroCombatPower,
+                    forceStartingVisibleScale));
+            }
+        }
     }
 
-    private IEnumerator CoSubmitTurnAfterOrbFlight(int pendingAttack, int pendingDefense)
+    private IEnumerator CoSubmitTurnAfterOrbFlight(
+        int pendingAttack,
+        int pendingDefense,
+        Transform orbAnchor,
+        bool flyOrbToEnemy,
+        bool allowZeroCombatPower,
+        bool forceStartingVisibleScale)
     {
+        bool impactAnnounced = false;
         bool attackResolved = false;
         bool continueCombat = true;
 
-        void OnOrbReachedEnemy()
+        void AnnounceOrbImpact()
         {
-            if (attackResolved) return;
-            attackResolved = true;
-            continueCombat = ApplyPendingPlayerAttackFromTurn(pendingAttack);
+            if (impactAnnounced) return;
+            impactAnnounced = true;
+            CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
+                flyOrbToEnemy ? PowerOrbImpactTarget.Enemy : PowerOrbImpactTarget.PlayerSupport,
+                orbAnchor.position,
+                flyOrbToEnemy ? activeEnemy : null));
         }
 
-        // Drive the flight enumerator from this coroutine instead of StartCoroutine(inner). Nested
-        // StartCoroutine can defer the tail of the inner routine to a later scheduler tick, which
-        // separated orb hide / scale from TakeDamage by several frames in practice.
-        IEnumerator flight = powerOrbVisual.RunFlightToEnemyAndWait(activeEnemy, OnOrbReachedEnemy);
+        void OnOrbImpact()
+        {
+            AnnounceOrbImpact();
+            if (attackResolved) return;
+            attackResolved = true;
+            if (pendingAttack > 0)
+                continueCombat = ApplyPendingPlayerAttackFromTurn(pendingAttack);
+            else
+                continueCombat = true;
+        }
+
+        IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
+            orbAnchor, allowZeroCombatPower, forceStartingVisibleScale, OnOrbImpact);
         while (flight.MoveNext())
             yield return flight.Current;
 
         if (!attackResolved)
-            continueCombat = ApplyPendingPlayerAttackFromTurn(pendingAttack);
+            OnOrbImpact();
         if (!continueCombat) yield break;
 
         ApplyPendingPlayerDefenseAndStartEnemyTurn(pendingDefense);
@@ -1207,7 +1252,7 @@ public class CombatManager : MonoBehaviour
     private bool ApplyPendingPlayerAttackFromTurn(int pendingAttack)
     {
         if (pendingAttack <= 0) return true;
-        activeEnemy.TakeDamage(pendingAttack);
+        activeEnemy.TakeDamage(pendingAttack, EnemyDamagePresentationKind.Physical);
 
         var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
         if (retaliate > 0 && player != null)

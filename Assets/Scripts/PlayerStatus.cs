@@ -20,6 +20,10 @@ public class PlayerStatus : MonoBehaviour
     [Tooltip("World position used for damage popups; defaults to this transform.")]
     [SerializeField] private Transform damageNumberWorldAnchor;
 
+    [Header("Power orb (support flight)")]
+    [Tooltip("World-space target when the turn has no enemy damage (armor/support): orb flies here instead of to the enemy. Prefer an empty above the HP bar in world space.")]
+    [SerializeField] private Transform powerOrbSupportWorldAnchor;
+
     [Header("Enemy physical hit juice")]
     [Tooltip("Optional. Shakes camera, hit VFX, sprite flash when damage uses EnemyPhysicalAttack.")]
     [SerializeField] private PlayerPhysicalHitFeedback physicalHitFeedback;
@@ -33,6 +37,16 @@ public class PlayerStatus : MonoBehaviour
         if (damageNumberWorldAnchor != null)
             return damageNumberWorldAnchor.position;
         return transform.position;
+    }
+
+    /// <summary>Target for power orb when the player turn deals no immediate enemy damage (e.g. armor only).</summary>
+    public Transform GetPowerOrbSupportAnchor()
+    {
+        if (powerOrbSupportWorldAnchor != null)
+            return powerOrbSupportWorldAnchor;
+        if (healthSlider != null)
+            return healthSlider.transform;
+        return damageNumberWorldAnchor != null ? damageNumberWorldAnchor : transform;
     }
 
     /// <summary>Applies persisted run HP after loading the combat scene (see <see cref="RunManager"/>).</summary>

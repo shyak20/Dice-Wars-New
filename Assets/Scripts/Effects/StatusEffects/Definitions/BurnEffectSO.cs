@@ -9,7 +9,7 @@ public class BurnEffectSO : StatusEffectSO
     {
         var damage = damagePerStack * instance.Stacks;
         if (target == StatusEffectTarget.Enemy)
-            ctx.Enemy.TakeDamage(damage);
+            ctx.Enemy.TakeDamage(damage, EnemyDamagePresentationKind.Burn);
         else
             ctx.Player.TakeDamage(damage);
 
@@ -22,7 +22,7 @@ public class BurnEffectSO : StatusEffectSO
         if (target != StatusEffectTarget.Enemy) return;
 
         var damage = instance.Stacks;
-        ctx.Enemy.TakeDamage(damage);
+        ctx.Enemy.TakeDamage(damage, EnemyDamagePresentationKind.Burn);
 
         if (GameActionDebug.Enabled)
             Debug.Log($"[Burn] Perfect Strike! Dealt {damage} damage to enemy (stacks kept)");

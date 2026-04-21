@@ -58,10 +58,14 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     [SerializeField] private Vector2 sphereTextureSpeedMax = Vector2.one;
 
     [Header("Turn end — fly to enemy")]
-    [Tooltip("How long the orb takes to reach the enemy (seconds).")]
+    [Tooltip("How long the orb takes to reach the enemy (seconds). Uses scaled time (Time.deltaTime) so it matches combat time scale.")]
     [SerializeField, Min(0.01f)] private float flyTime = 0.45f;
     [Tooltip("X = normalized flight time (0–1). Y = blend along the path from start to the enemy anchor (0 = start, 1 = hit). Default is linear.")]
     [SerializeField] private AnimationCurve flyCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+    [Tooltip("When > 0, a hit is registered as soon as the orb is within this world distance of the anchor (after Hit Proximity Min Normalized Time). Fixes VFX that visually impacts before flyCurve reaches 1.")]
+    [SerializeField, Min(0f)] private float hitCloseDistanceWorld = 0.12f;
+    [Tooltip("Proximity hit only after this fraction of flyTime has elapsed (0–1). Avoids early hits on arced paths.")]
+    [SerializeField, Range(0f, 1f)] private float hitProximityMinNormalizedTime = 0.82f;
 
     [Header("Flight Arc")]
     [Tooltip("Extra lateral offset added to the orb during flight (world-space X). Set 0 to disable. Use negative values to arc the other way.")]
@@ -152,31 +156,34 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         CombatEvents.OnPlayerTurnStarted -= HandlePlayerTurnStarted;
     }
 
-    /// <summary>Used by <see cref="CombatManager"/> after turn resolution (perfect-strike presentation already finished when applicable).</summary>
-    /// <param name="onReachedEnemy">Invoked once when the orb snaps to the enemy anchor; run combat (e.g. damage) here, then the VFX is scaled to zero in the same block.</param>
-    public IEnumerator RunFlightToEnemyAndWait(EnemyController enemy, System.Action onReachedEnemy = null)
+    /// <summary>Flies the orb to a world anchor (enemy hit point or player support UI). Used by <see cref="CombatManager"/> after turn resolution.</summary>
+    /// <param name="allowWhenCombatPowerZero">When true, flight runs even if displayed combat power is 0 (burn-only / support paths).</param>
+    /// <param name="forceStartingVisibleScale">When true, orb is scaled up at flight start so it is visible if power-driven scale is 0.</param>
+    public IEnumerator RunFlightToWorldAnchor(Transform anchor, bool allowWhenCombatPowerZero, bool forceStartingVisibleScale, System.Action onArrived = null)
     {
-        if (enemy == null)
-            yield break;
-
-        if (_currentCombatPower <= 0)
-            yield break;
-
-        Transform anchor = enemy.GetPowerOrbHitAnchor();
         if (anchor == null)
-            throw new System.InvalidOperationException("PowerReactiveEffectController: enemy returned no power-orb hit anchor.");
+            throw new System.InvalidOperationException("PowerReactiveEffectController.RunFlightToWorldAnchor: anchor is null.");
+
+        if (!allowWhenCombatPowerZero && _currentCombatPower <= 0)
+            yield break;
 
         _isFlyingToEnemy = true;
+        if (forceStartingVisibleScale)
+            SetUniformWorldScale(effectTransform, Mathf.Max(minScale, 1f));
+
         Vector3 flightStartWorld = effectTransform.position;
         float duration = flyTime;
         float elapsed = 0f;
+
+        float hitSqr = hitCloseDistanceWorld > 0f ? hitCloseDistanceWorld * hitCloseDistanceWorld : -1f;
 
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float u = Mathf.Clamp01(elapsed / duration);
             float eased = Mathf.Clamp01(flyCurve.Evaluate(u));
-            Vector3 pos = Vector3.LerpUnclamped(flightStartWorld, anchor.position, eased);
+            Vector3 anchorPos = anchor.position;
+            Vector3 pos = Vector3.LerpUnclamped(flightStartWorld, anchorPos, eased);
 
             if (flightArcHeight != 0f && flightArcCurve != null && flightArcCurve.length > 0)
             {
@@ -185,19 +192,37 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             }
 
             effectTransform.position = pos;
-            // If flyCurve reaches 1 before normalized time u does, the orb already sits on the enemy but
-            // the loop would idle for the rest of flyTime — finish motion as soon as the path hits.
-            if (eased >= 1f)
+
+            bool curveComplete = eased >= 1f;
+            bool proximityHit = hitSqr > 0f
+                && u >= hitProximityMinNormalizedTime
+                && (pos - anchorPos).sqrMagnitude <= hitSqr;
+
+            if (curveComplete || proximityHit)
                 break;
 
             yield return null;
         }
 
         effectTransform.position = anchor.position;
-        onReachedEnemy?.Invoke();
+        onArrived?.Invoke();
         _isFlyingToEnemy = false;
         SetUniformWorldScale(effectTransform, 0f);
         _postHitHiddenAtEnemy = true;
+    }
+
+    /// <summary>Convenience: flies to <paramref name="enemy"/>'s power-orb anchor; requires combat power &gt; 0 unless you use <see cref="RunFlightToWorldAnchor"/>.</summary>
+    public IEnumerator RunFlightToEnemyAndWait(EnemyController enemy, System.Action onReachedEnemy = null)
+    {
+        if (enemy == null)
+            yield break;
+        var anchor = enemy.GetPowerOrbHitAnchor();
+        if (anchor == null)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: enemy returned no power-orb hit anchor.");
+
+        IEnumerator core = RunFlightToWorldAnchor(anchor, false, false, onReachedEnemy);
+        while (core.MoveNext())
+            yield return core.Current;
     }
 
     private void HandlePlayerTurnStarted()

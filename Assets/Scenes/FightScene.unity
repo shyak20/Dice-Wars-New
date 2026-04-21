@@ -9728,7 +9728,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 85.78, y: -36.67}
+  m_AnchoredPosition: {x: 85.78003, y: -36.669983}
   m_SizeDelta: {x: 171.57, y: 73.33}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1286891664
@@ -10268,7 +10268,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 33.9}
+  m_AnchoredPosition: {x: -61.2, y: -4.8}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &1420824967
@@ -11345,6 +11345,7 @@ GameObject:
   - component: {fileID: 1528145353}
   - component: {fileID: 1528145354}
   - component: {fileID: 1528145355}
+  - component: {fileID: 1528145356}
   m_Layer: 0
   m_Name: Player Stats
   m_TagString: Untagged
@@ -11392,6 +11393,7 @@ MonoBehaviour:
   armorText: {fileID: 737174316}
   armorIcon: {fileID: 1043486573}
   damageNumberWorldAnchor: {fileID: 1528145351}
+  powerOrbSupportWorldAnchor: {fileID: 1397663496}
   physicalHitFeedback: {fileID: 0}
 --- !u!114 &1528145353
 MonoBehaviour:
@@ -11524,6 +11526,20 @@ MonoBehaviour:
   hitSpriteTargets:
   - {fileID: 2095214660}
   - {fileID: 1240178110}
+--- !u!114 &1528145356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1528145350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e2747124b626d04fa137475d164f78c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPowerOrbImpactPresentation
+  orbImpactIndicator: {fileID: 0}
+  displaySeconds: 0.12
 --- !u!1001 &1550666479
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11901,6 +11917,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  hitCloseDistanceWorld: 0.12
+  hitProximityMinNormalizedTime: 0.75
   flightArcHeight: -1
   flightArcCurve:
     serializedVersion: 2
@@ -14871,26 +14889,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2381953430321072480, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2381953430321072480, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2381953430321072480, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2381953430321072480, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: c0411742813c80946a9c882b65ea7df4, type: 3}
     - target: {fileID: 3440934713375229664, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -14942,10 +14940,6 @@ PrefabInstance:
     - target: {fileID: 5097662787921497377, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6566401687646285443, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

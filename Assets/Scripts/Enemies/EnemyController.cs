@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections;
 using UniRx;
 
 public class EnemyController : MonoBehaviour
@@ -22,28 +21,12 @@ public class EnemyController : MonoBehaviour
     [Tooltip("World position for damage popups; defaults to enemy sprite or this transform.")]
     [SerializeField] private Transform damageNumberWorldAnchor;
 
-    [Header("Visual Effects (Sprite Overlay)")]
-    public SpriteRenderer enemySprite;
-    public GameObject hitEffectObject;
-    public float hitEffectDuration = 0.5f;
-    public float flashDuration = 0.15f;
-    public Color flashColor = Color.white;
-
-    [Header("Juice (Camera Shake)")]
-    [Range(0.01f, 0.5f)] public float damageShakeDuration = 0.1f;
-    [Range(0.01f, 1f)] public float damageShakeMagnitude = 0.2f;
-
-    private static readonly int FlashAmountID = Shader.PropertyToID("_FlashAmount");
-    private static readonly int FlashColorID = Shader.PropertyToID("_FlashColor");
+    private EnemyCombatPresentationController _presentation;
 
     private int currentHealth;
     private int currentArmor;
     private int currentCycleIndex = 0;
     public ReactiveProperty<EnemyActionSO> CurrentIntent = new();
-
-    private Coroutine flashRoutine;
-    private Coroutine effectRoutine;
-    private Material enemyMaterial;
 
     public StatusEffectManager StatusEffects { get; private set; }
 
@@ -54,7 +37,8 @@ public class EnemyController : MonoBehaviour
     public Transform GetPowerOrbHitAnchor()
     {
         if (damageNumberWorldAnchor != null) return damageNumberWorldAnchor;
-        if (enemySprite != null) return enemySprite.transform;
+        var spr = _presentation != null ? _presentation.EnemySprite : null;
+        if (spr != null) return spr.transform;
         return transform;
     }
 
@@ -63,18 +47,8 @@ public class EnemyController : MonoBehaviour
         StatusEffects = GetComponent<StatusEffectManager>();
         if (StatusEffects == null)
             Debug.LogError("EnemyController: Missing StatusEffectManager component!");
-    }
 
-    private void Start()
-    {
-        if (hitEffectObject != null) hitEffectObject.SetActive(false);
-
-        if (enemySprite != null)
-        {
-            enemyMaterial = enemySprite.material;
-            enemyMaterial.SetColor(FlashColorID, flashColor);
-            enemyMaterial.SetFloat(FlashAmountID, 0f);
-        }
+        _presentation = GetComponentInChildren<EnemyCombatPresentationController>(true);
     }
 
     public void Initialize(EnemyTypeSO data)
@@ -85,13 +59,20 @@ public class EnemyController : MonoBehaviour
         currentCycleIndex = 0;
 
         if (nameText != null) nameText.text = data.enemyName;
-        if (enemySprite != null && data.displaySprite != null)
-            enemySprite.sprite = data.displaySprite;
+
+        if (data.displaySprite != null)
+        {
+            if (_presentation != null)
+                _presentation.ApplyDisplaySprite(data.displaySprite);
+            else
+                Debug.LogError($"EnemyController on '{name}': assign {nameof(EnemyCombatPresentationController)} with enemy sprite for display art.");
+        }
+
         UpdateUI();
         PrepareNextAction();
     }
 
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount, EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical)
     {
         var damageRemaining = amount;
         var armorDamage = 0;
@@ -123,7 +104,6 @@ public class EnemyController : MonoBehaviour
         Debug.Log($"{enemyData.enemyName} hit for {amount} — Armor absorbed: {armorDamage}, HP damage: {healthDamage}");
 
         UpdateUI();
-        TriggerHitJuice();
 
         if (currentHealth <= 0)
         {
@@ -131,22 +111,22 @@ public class EnemyController : MonoBehaviour
         }
 
         if (amount > 0)
-            CombatEvents.OnEnemyDamageNumber?.Invoke(amount, GetDamageNumberWorldPosition(), this);
+            CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
     }
 
     public Vector3 GetDamageNumberWorldPosition()
     {
         if (damageNumberWorldAnchor != null) return damageNumberWorldAnchor.position;
-        if (enemySprite != null) return enemySprite.transform.position;
+        var spr = _presentation != null ? _presentation.EnemySprite : null;
+        if (spr != null) return spr.transform.position;
         return transform.position;
     }
 
-    public void TakeTrueDamage(int amount)
+    public void TakeTrueDamage(int amount, EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical)
     {
         currentHealth -= amount;
         currentHealth = Mathf.Max(0, currentHealth);
         UpdateUI();
-        TriggerHitJuice();
 
         if (currentHealth <= 0)
         {
@@ -154,7 +134,7 @@ public class EnemyController : MonoBehaviour
         }
 
         if (amount > 0)
-            CombatEvents.OnEnemyDamageNumber?.Invoke(amount, GetDamageNumberWorldPosition(), this);
+            CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
     }
 
     public void AddArmor(int amount)
@@ -167,39 +147,6 @@ public class EnemyController : MonoBehaviour
     {
         currentArmor = 0;
         UpdateUI();
-    }
-
-    private void TriggerHitJuice()
-    {
-        if (CameraShake.Instance != null)
-            CameraShake.Instance.Shake(damageShakeDuration, damageShakeMagnitude);
-
-        if (hitEffectObject != null)
-        {
-            if (effectRoutine != null) StopCoroutine(effectRoutine);
-            effectRoutine = StartCoroutine(HitEffectSequence());
-        }
-
-        if (enemyMaterial != null)
-        {
-            if (flashRoutine != null) StopCoroutine(flashRoutine);
-            flashRoutine = StartCoroutine(SolidFlashSequence());
-        }
-    }
-
-    private IEnumerator HitEffectSequence()
-    {
-        hitEffectObject.SetActive(true);
-        yield return new WaitForSeconds(hitEffectDuration);
-        hitEffectObject.SetActive(false);
-    }
-
-    private IEnumerator SolidFlashSequence()
-    {
-        enemyMaterial.SetFloat(FlashAmountID, 1f);
-        yield return new WaitForSeconds(flashDuration);
-        enemyMaterial.SetFloat(FlashAmountID, 0f);
-        flashRoutine = null;
     }
 
     public void PrepareNextAction()
@@ -230,7 +177,7 @@ public class EnemyController : MonoBehaviour
 
         bool hasArmor = currentArmor > 0;
 
-        // 2. Armor Bar Slider (The blue bar)
+        // 2. Armor Bar Slider (The "Armor Bar" slider)
         if (armorSlider != null)
         {
             armorSlider.gameObject.SetActive(hasArmor);

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
+  m_Name: Stronger
+  m_EditorClassIdentifier: 
+  title: Stronger
+  description: Harness 1 Damage \nHarness +1 Strength
+  descriptionLines:
+  - Deal <style=Attack>4</style>
+  - Deal 5 Damage for every <style=Strength>Strength</style> you have
+  value: 4
+  type: 0
+  faceMaterial: {fileID: 2100000, guid: e7f2e895d671c5343bdd66a43248d860, type: 2}
+  rarity: 0
+  damage: 4
+  armor: 0
+  uiIcon: {fileID: 21300000, guid: fdf4d84fdc9b7424481735ecf9c89bd3, type: 3}
+  activateImmediately: 1
+  actions:
+  - rid: 6494956392264499284
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956392264499284
+      type: {class: StrengthDamagePerStackOverrideModifier, ns: , asm: Assembly-CSharp}
+      data:
+        damagePerStrength: 5

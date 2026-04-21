@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-/// <summary>Sets face damage to damagePerStrength × current Strength stacks (e.g. BulBul / Overpower style).</summary>
+/// <summary>Sets face damage to damagePerStrength × current Strength stacks only (replaces base pip damage and the usual +1/stack Strength bonus). To keep face damage and only change 1/stack → X/stack, use <see cref="StrengthDamagePerStackOverrideModifier"/>.</summary>
 [Serializable]
 public class ScalingDamageFromStrengthModifier : FaceResolveModifierBase
 {
