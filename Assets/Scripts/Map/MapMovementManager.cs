@@ -33,6 +33,7 @@ public sealed class MapMovementManager : MonoBehaviour
     [SerializeField] private MapPresentationSO mapPresentation;
     [SerializeField] private MapShrineChoicePanel shrineChoicePanel;
     [SerializeField] private MapTreasurePanel treasurePanel;
+    [SerializeField] private MapUnknownEventPanel unknownEventPanel;
 
     private MapGrid _grid;
     private System.Random _rng;
@@ -251,12 +252,17 @@ public sealed class MapMovementManager : MonoBehaviour
                 return;
             case MapEventType.Unknown:
             {
-                MarkCurrentTileConsumedAndRefresh();
                 var unknown = RunManager.Instance.DrawUnknownMapEvent();
-                if (unknown != null)
-                    Debug.Log($"Unknown tile: {unknown.DisplayLabel}" + (string.IsNullOrEmpty(unknown.description) ? "" : $" — {unknown.description}"));
-                else
-                    Debug.Log("Unknown tile: no possibleUnknownEvents configured for this act.");
+                if (unknownEventPanel == null)
+                {
+                    Debug.LogError("MapMovementManager: assign unknownEventPanel for Unknown tiles.", this);
+                    return;
+                }
+
+                if (!unknownEventPanel.TryOpenPanel(unknown))
+                    return;
+
+                MarkCurrentTileConsumedAndRefresh();
                 return;
             }
             default:

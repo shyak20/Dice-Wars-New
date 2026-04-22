@@ -17,6 +17,8 @@ MonoBehaviour:
   damage: 2
   numberOfAttacks: 2
   armor: 0
+  actionAnimatorStateName: Attack
+  actionAnimationLeadInSeconds: 0.2
   actions: []
   references:
     version: 2

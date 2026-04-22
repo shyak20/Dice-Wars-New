@@ -2,7 +2,8 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Fight feedback for an enemy: orb impact, physical vs burn indicator pulses, per-hit-type sprite flash tint, and camera shake on damage.
+/// Fight feedback for an enemy: orb impact, physical vs burn indicator pulses, per-hit-type sprite flash tint, camera shake on damage,
+/// and optional <see cref="Animator"/> driven by <see cref="EnemyTypeSO.combatAnimatorController"/> plus per-intent states on <see cref="EnemyActionSO"/>.
 /// Physical indicator replaces the legacy hit-effect object. Wire the enemy's <see cref="SpriteRenderer"/> here.
 /// </summary>
 public sealed class EnemyCombatPresentationController : MonoBehaviour
@@ -12,6 +13,10 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
 
     [Header("Enemy sprite (shader flash)")]
     [SerializeField] private SpriteRenderer enemySprite;
+
+    [Header("Enemy animator (optional)")]
+    [Tooltip("Animator on the enemy presentation hierarchy. Runtime controller and idle come from EnemyTypeSO.")]
+    [SerializeField] private Animator combatAnimator;
     [SerializeField] private Color orbSpriteFlashColor = new Color(1f, 0.95f, 0.6f);
     [SerializeField] private Color physicalSpriteFlashColor = Color.white;
     [SerializeField] private Color burnSpriteFlashColor = new Color(1f, 0.45f, 0.15f);
@@ -63,6 +68,64 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
     {
         if (enemySprite != null && sprite != null)
             enemySprite.sprite = sprite;
+    }
+
+    /// <summary>Assigns <see cref="EnemyTypeSO.combatAnimatorController"/> and snaps to idle when configured.</summary>
+    public void SetupCombatAnimatorFromEnemyType(EnemyTypeSO data)
+    {
+        if (data == null) return;
+
+        if (data.combatAnimatorController != null && combatAnimator == null)
+        {
+            Debug.LogError(
+                $"{nameof(EnemyCombatPresentationController)} on '{name}': EnemyTypeSO '{data.name}' sets a combat animator controller but {nameof(combatAnimator)} is not assigned.",
+                this);
+            return;
+        }
+
+        if (combatAnimator == null)
+            return;
+
+        combatAnimator.runtimeAnimatorController = data.combatAnimatorController;
+        if (data.combatAnimatorController == null)
+            return;
+
+        combatAnimator.Rebind();
+        combatAnimator.Update(0f);
+
+        if (!string.IsNullOrWhiteSpace(data.idleAnimatorStateName))
+            combatAnimator.Play(data.idleAnimatorStateName, 0, 0f);
+        else
+            combatAnimator.Play(0, 0, 0f);
+    }
+
+    /// <summary>Cross-fades to the intent's action state (if any) then waits <see cref="EnemyActionSO.actionAnimationLeadInSeconds"/>.</summary>
+    public IEnumerator CoPresentEnemyTurnActionIntro(EnemyActionSO action)
+    {
+        if (action == null || combatAnimator == null || _enemy == null || _enemy.enemyData == null)
+            yield break;
+        if (_enemy.enemyData.combatAnimatorController == null)
+            yield break;
+
+        if (!string.IsNullOrWhiteSpace(action.actionAnimatorStateName))
+            combatAnimator.CrossFade(action.actionAnimatorStateName, 0.1f, 0, 0f);
+
+        if (action.actionAnimationLeadInSeconds > 0f)
+            yield return new WaitForSeconds(action.actionAnimationLeadInSeconds);
+    }
+
+    /// <summary>Returns to the enemy type's idle state after the intent resolves.</summary>
+    public IEnumerator CoPresentEnemyTurnActionOutro()
+    {
+        if (combatAnimator == null || _enemy == null || _enemy.enemyData == null)
+            yield break;
+        if (_enemy.enemyData.combatAnimatorController == null)
+            yield break;
+
+        if (!string.IsNullOrWhiteSpace(_enemy.enemyData.idleAnimatorStateName))
+            combatAnimator.CrossFade(_enemy.enemyData.idleAnimatorStateName, 0.12f, 0, 0f);
+
+        yield break;
     }
 
     private void OnEnable()

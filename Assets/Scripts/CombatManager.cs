@@ -1426,6 +1426,8 @@ public class CombatManager : MonoBehaviour
             if (CheckVictory()) yield break;
 
             EnemyActionSO action = activeEnemy.GetCurrentAction();
+            yield return activeEnemy.CoPresentEnemyTurnActionIntro(action);
+
             if (action.damage > 0)
             {
                 for (int i = 0; i < action.numberOfAttacks; i++)
@@ -1462,6 +1464,8 @@ public class CombatManager : MonoBehaviour
                     gameAction.Execute(actionCtx);
                 }
             }
+
+            yield return activeEnemy.CoPresentEnemyTurnActionOutro();
 
             activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
             player.StatusEffects.TickAfterEnemyTurn(statusCtx);

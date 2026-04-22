@@ -13,6 +13,13 @@ public class EnemyActionSO : ScriptableObject
     public int numberOfAttacks = 1; // Default to 1 hit
     public int armor;
 
+    [Header("Combat animator")]
+    [Tooltip("State name on this enemy type's RuntimeAnimatorController (e.g. Attack or Base Layer.Swing). Empty keeps current pose (usually idle) for this intent.")]
+    public string actionAnimatorStateName;
+
+    [Tooltip("After starting the action state, wait this long before applying damage, armor, and game actions.")]
+    [Min(0f)] public float actionAnimationLeadInSeconds = 0.2f;
+
     [Header("Game actions (same system as dice faces)")]
     [Tooltip("Optional. Executed after this intent's attacks and armor gain (same order as on a die face). Face-only modifiers are skipped.")]
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();

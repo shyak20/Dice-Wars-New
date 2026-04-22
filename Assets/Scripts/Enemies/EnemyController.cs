@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -60,16 +61,43 @@ public class EnemyController : MonoBehaviour
 
         if (nameText != null) nameText.text = data.enemyName;
 
-        if (data.displaySprite != null)
+        var hasSprite = data.displaySprite != null;
+        var hasAnimatorController = data.combatAnimatorController != null;
+        if (!hasSprite && !hasAnimatorController)
+            Debug.LogError(
+                $"EnemyController on '{name}': EnemyTypeSO '{data.name}' should set {nameof(EnemyTypeSO.displaySprite)} and/or {nameof(EnemyTypeSO.combatAnimatorController)} for combat presentation.",
+                this);
+
+        if (_presentation == null)
         {
-            if (_presentation != null)
+            if (hasSprite || hasAnimatorController)
+                Debug.LogError(
+                    $"EnemyController on '{name}': assign {nameof(EnemyCombatPresentationController)} in children when using display art or a combat animator.",
+                    this);
+        }
+        else
+        {
+            if (hasSprite)
                 _presentation.ApplyDisplaySprite(data.displaySprite);
-            else
-                Debug.LogError($"EnemyController on '{name}': assign {nameof(EnemyCombatPresentationController)} with enemy sprite for display art.");
+            _presentation.SetupCombatAnimatorFromEnemyType(data);
         }
 
         UpdateUI();
         PrepareNextAction();
+    }
+
+    /// <summary>Wind-up before enemy damage/armor/game actions (see <see cref="EnemyActionSO.actionAnimationLeadInSeconds"/>).</summary>
+    public IEnumerator CoPresentEnemyTurnActionIntro(EnemyActionSO action)
+    {
+        if (_presentation != null)
+            yield return _presentation.CoPresentEnemyTurnActionIntro(action);
+    }
+
+    /// <summary>Return to idle after the intent's combat effects.</summary>
+    public IEnumerator CoPresentEnemyTurnActionOutro()
+    {
+        if (_presentation != null)
+            yield return _presentation.CoPresentEnemyTurnActionOutro();
     }
 
     public void TakeDamage(int amount, EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical)

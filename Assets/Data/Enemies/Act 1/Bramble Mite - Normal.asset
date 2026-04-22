@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyName: Bramble Mite
   displaySprite: {fileID: 21300000, guid: c0411742813c80946a9c882b65ea7df4, type: 3}
+  combatAnimatorController: {fileID: 9100000, guid: 7ea95e0b0bdb425449d786d1a63097cc, type: 2}
+  idleAnimatorStateName: Idle
   enemyRank: 0
   maxHealth: 12
   startArmor: 0
