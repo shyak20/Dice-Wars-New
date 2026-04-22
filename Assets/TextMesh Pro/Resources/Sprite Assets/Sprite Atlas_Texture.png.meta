@@ -137,10 +137,10 @@ TextureImporter:
       name: Attack Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 523
-        width: 182
-        height: 191
+        x: 827
+        y: 0
+        width: 191
+        height: 200
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -159,7 +159,7 @@ TextureImporter:
       name: Shield Icon
       rect:
         serializedVersion: 2
-        x: 386
+        x: 393
         y: 320
         width: 141
         height: 171
@@ -181,8 +181,8 @@ TextureImporter:
       name: Heal Icon
       rect:
         serializedVersion: 2
-        x: 189
-        y: 848
+        x: 196
+        y: 844
         width: 157
         height: 165
       alignment: 0
@@ -225,8 +225,8 @@ TextureImporter:
       name: Kinetic Shield Icon
       rect:
         serializedVersion: 2
-        x: 189
-        y: 505
+        x: 0
+        y: 720
         width: 192
         height: 177
       alignment: 0
@@ -247,7 +247,7 @@ TextureImporter:
       name: Thorns Icon
       rect:
         serializedVersion: 2
-        x: 189
+        x: 196
         y: 320
         width: 195
         height: 183
@@ -270,7 +270,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 320
+        y: 517
         width: 187
         height: 201
       alignment: 0
@@ -291,8 +291,8 @@ TextureImporter:
       name: Strength Icon
       rect:
         serializedVersion: 2
-        x: 189
-        y: 684
+        x: 196
+        y: 680
         width: 160
         height: 162
       alignment: 0
@@ -335,8 +335,8 @@ TextureImporter:
       name: Freeze Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 716
+        x: 196
+        y: 505
         width: 171
         height: 173
       alignment: 0
@@ -357,8 +357,8 @@ TextureImporter:
       name: Burn Icon
       rect:
         serializedVersion: 2
-        x: 827
-        y: 0
+        x: 0
+        y: 320
         width: 194
         height: 195
       alignment: 0

@@ -101,16 +101,16 @@ MonoBehaviour:
   m_GlyphTable:
   - m_Index: 0
     m_Metrics:
-      m_Width: 182
-      m_Height: 191
+      m_Width: 191
+      m_Height: 200
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 191
-      m_HorizontalAdvance: 182
+      m_HorizontalBearingY: 200
+      m_HorizontalAdvance: 191
     m_GlyphRect:
-      m_X: 0
-      m_Y: 523
-      m_Width: 182
-      m_Height: 191
+      m_X: 827
+      m_Y: 0
+      m_Width: 191
+      m_Height: 200
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
@@ -123,8 +123,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 195
       m_HorizontalAdvance: 194
     m_GlyphRect:
-      m_X: 827
-      m_Y: 0
+      m_X: 0
+      m_Y: 320
       m_Width: 194
       m_Height: 195
     m_Scale: 1
@@ -155,8 +155,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 173
       m_HorizontalAdvance: 171
     m_GlyphRect:
-      m_X: 0
-      m_Y: 716
+      m_X: 196
+      m_Y: 505
       m_Width: 171
       m_Height: 173
     m_Scale: 1
@@ -171,8 +171,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 165
       m_HorizontalAdvance: 157
     m_GlyphRect:
-      m_X: 189
-      m_Y: 848
+      m_X: 196
+      m_Y: 844
       m_Width: 157
       m_Height: 165
     m_Scale: 1
@@ -187,8 +187,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 177
       m_HorizontalAdvance: 192
     m_GlyphRect:
-      m_X: 189
-      m_Y: 505
+      m_X: 0
+      m_Y: 720
       m_Width: 192
       m_Height: 177
     m_Scale: 1
@@ -204,7 +204,7 @@ MonoBehaviour:
       m_HorizontalAdvance: 187
     m_GlyphRect:
       m_X: 0
-      m_Y: 320
+      m_Y: 517
       m_Width: 187
       m_Height: 201
     m_Scale: 1
@@ -219,7 +219,7 @@ MonoBehaviour:
       m_HorizontalBearingY: 171
       m_HorizontalAdvance: 141
     m_GlyphRect:
-      m_X: 386
+      m_X: 393
       m_Y: 320
       m_Width: 141
       m_Height: 171
@@ -235,8 +235,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 162
       m_HorizontalAdvance: 160
     m_GlyphRect:
-      m_X: 189
-      m_Y: 684
+      m_X: 196
+      m_Y: 680
       m_Width: 160
       m_Height: 162
     m_Scale: 1
@@ -251,7 +251,7 @@ MonoBehaviour:
       m_HorizontalBearingY: 183
       m_HorizontalAdvance: 195
     m_GlyphRect:
-      m_X: 189
+      m_X: 196
       m_Y: 320
       m_Width: 195
       m_Height: 183
@@ -293,22 +293,22 @@ MonoBehaviour:
     sprite: {fileID: 6494035533245625250, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   spriteInfoList:
   - id: 0
-    x: 0
-    y: 523
-    width: 182
-    height: 191
+    x: 827
+    y: 0
+    width: 191
+    height: 200
     xOffset: 0
-    yOffset: 191
-    xAdvance: 182
+    yOffset: 200
+    xAdvance: 191
     scale: 1
     name: Attack Icon
     hashCode: 502227619
     unicode: 57344
-    pivot: {x: 91, y: 95.5}
+    pivot: {x: 95.5, y: 100}
     sprite: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 1
-    x: 827
-    y: 0
+    x: 0
+    y: 320
     width: 194
     height: 195
     xOffset: 0
@@ -335,8 +335,8 @@ MonoBehaviour:
     pivot: {x: 103, y: 95}
     sprite: {fileID: -5647151390834640249, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 3
-    x: 0
-    y: 716
+    x: 196
+    y: 505
     width: 171
     height: 173
     xOffset: 0
@@ -349,8 +349,8 @@ MonoBehaviour:
     pivot: {x: 85.5, y: 86.5}
     sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 4
-    x: 189
-    y: 848
+    x: 196
+    y: 844
     width: 157
     height: 165
     xOffset: 0
@@ -363,8 +363,8 @@ MonoBehaviour:
     pivot: {x: 78.5, y: 82.5}
     sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 5
-    x: 189
-    y: 505
+    x: 0
+    y: 720
     width: 192
     height: 177
     xOffset: 0
@@ -378,7 +378,7 @@ MonoBehaviour:
     sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 6
     x: 0
-    y: 320
+    y: 517
     width: 187
     height: 201
     xOffset: 0
@@ -391,7 +391,7 @@ MonoBehaviour:
     pivot: {x: 93.5, y: 100.5}
     sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 7
-    x: 386
+    x: 393
     y: 320
     width: 141
     height: 171
@@ -405,8 +405,8 @@ MonoBehaviour:
     pivot: {x: 70.5, y: 85.5}
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 8
-    x: 189
-    y: 684
+    x: 196
+    y: 680
     width: 160
     height: 162
     xOffset: 0
@@ -419,7 +419,7 @@ MonoBehaviour:
     pivot: {x: 80, y: 81}
     sprite: {fileID: -8130133584056446798, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 9
-    x: 189
+    x: 196
     y: 320
     width: 195
     height: 183
