@@ -3207,7 +3207,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "Gain<style=Shield> Shield 4</style>\nGain <style=Shield>4</style> \nDeal
-    <style=Attack>5</style>\nGain <style=Strength>5</style>\nGain <style=Burn>5</style>"
+    <style=Attack>5</style>\nGain <style=Strength>5</style>\nGain <style=Burn>5</style>\nGain
+    <style=Heal>5</style>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}
@@ -7069,7 +7070,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1001816083
 RectTransform:
   m_ObjectHideFlags: 0

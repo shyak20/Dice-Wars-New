@@ -14,6 +14,18 @@ TextureImporter:
   - first:
       213: -8130133584056446798
     second: Strength Icon
+  - first:
+      213: 5248542921010066017
+    second: Thorns Icon
+  - first:
+      213: 7705429973175227790
+    second: Max HP Icon
+  - first:
+      213: 6494035533245625250
+    second: Water_Splash_16_07
+  - first:
+      213: 7052443852177249881
+    second: Vulnerable Icon
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -125,10 +137,10 @@ TextureImporter:
       name: Attack Icon
       rect:
         serializedVersion: 2
-        x: 684
-        y: 341
-        width: 325
-        height: 341
+        x: 0
+        y: 523
+        width: 182
+        height: 191
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -147,10 +159,10 @@ TextureImporter:
       name: Shield Icon
       rect:
         serializedVersion: 2
-        x: 348
-        y: 701
-        width: 252
-        height: 306
+        x: 386
+        y: 320
+        width: 141
+        height: 171
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -166,13 +178,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Burn Icon
+      name: Heal Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 341
-        width: 346
-        height: 348
+        x: 189
+        y: 848
+        width: 157
+        height: 165
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -181,8 +193,140 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c1181b3f1f8b0bf90800000000000000
-      internalID: -6939843676462808804
+      spriteID: 0ce1b36a50b1ec110800000000000000
+      internalID: 1282992654924848832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cleanse Icon
+      rect:
+        serializedVersion: 2
+        x: 619
+        y: 0
+        width: 206
+        height: 190
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78ab27cdab941a1b0800000000000000
+      internalID: -5647151390834640249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kinetic Shield Icon
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 505
+        width: 192
+        height: 177
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eee1c1abcb6954bb0800000000000000
+      internalID: -4952386477903569170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thorns Icon
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 320
+        width: 195
+        height: 183
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 162323b8af196d840800000000000000
+      internalID: 5248542921010066017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Max HP Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 320
+        width: 187
+        height: 201
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e85d1c84cbf2fea60800000000000000
+      internalID: 7705429973175227790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Strength Icon
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 684
+        width: 160
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b097d1a496fb2f80800000000000000
+      internalID: -8130133584056446798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water_Splash_16_07
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 371
+        height: 318
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a3bedd19e27f1a50800000000000000
+      internalID: 6494035533245625250
       vertices: []
       indices: 
       edges: []
@@ -191,10 +335,10 @@ TextureImporter:
       name: Freeze Icon
       rect:
         serializedVersion: 2
-        x: 713
-        y: 0
-        width: 304
-        height: 309
+        x: 0
+        y: 716
+        width: 171
+        height: 173
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -210,35 +354,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Heal Icon
+      name: Burn Icon
       rect:
         serializedVersion: 2
-        x: 348
-        y: 341
-        width: 334
-        height: 358
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 00000000000000000800000000000000
-      internalID: 1282992654924848832
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cleanse Icon
-      rect:
-        serializedVersion: 2
-        x: 0
+        x: 827
         y: 0
-        width: 367
-        height: 339
+        width: 194
+        height: 195
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -247,20 +369,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 00000000000000000800000000000000
-      internalID: -5647151390834640249
+      spriteID: c1181b3f1f8b0bf90800000000000000
+      internalID: -6939843676462808804
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Kinetic Shield Icon
+      name: Vulnerable Icon
       rect:
         serializedVersion: 2
-        x: 369
+        x: 373
         y: 0
-        width: 342
-        height: 315
+        width: 244
+        height: 237
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -269,30 +391,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 00000000000000000800000000000000
-      internalID: -4952386477903569170
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Strength Icon
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 691
-        width: 286
-        height: 289
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 00000000000000000800000000000000
-      internalID: -8130133584056446798
+      spriteID: 956996f61505fd160800000000000000
+      internalID: 7052443852177249881
       vertices: []
       indices: 
       edges: []
@@ -317,8 +417,12 @@ TextureImporter:
       Freeze Icon: -2081690915641676523
       Heal Icon: 1282992654924848832
       Kinetic Shield Icon: -4952386477903569170
+      Max HP Icon: 7705429973175227790
       Shield Icon: -5171152565747068557
       Strength Icon: -8130133584056446798
+      Thorns Icon: 5248542921010066017
+      Vulnerable Icon: 7052443852177249881
+      Water_Splash_16_07: 6494035533245625250
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

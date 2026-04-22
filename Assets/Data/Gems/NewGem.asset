@@ -18,9 +18,8 @@ MonoBehaviour:
   rarity: 0
   shopGoldPrice: 0
   level: 1
-  matchMode: 0
-  matchFaceValues: 
-  effect: 0
-  intParamA: 0
-  intParamB: 0
-  burnDefinition: {fileID: 0}
+  matchFaceValues: 02000000
+  effects:
+  - kind: 0
+    param: 2
+    burnDefinition: {fileID: 0}
