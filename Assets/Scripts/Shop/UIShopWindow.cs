@@ -10,6 +10,7 @@ public class UIShopWindow : MonoBehaviour
 {
     [SerializeField] private ShopGenerator shopGenerator;
     [SerializeField] private ShopFaceSocketFlow socketFlow;
+    [SerializeField] private ShopGemSocketFlow gemSocketFlow;
     [SerializeField] private TMP_Text goldHeaderText;
     [Header("Layouts (required)")]
     [Tooltip("RectTransform that has a Horizontal/Vertical/Grid Layout Group for face offer rows.")]
@@ -18,6 +19,8 @@ public class UIShopWindow : MonoBehaviour
     [SerializeField] private Transform diceSlotsContainer;
     [Tooltip("RectTransform that has a Layout Group for relic offers.")]
     [SerializeField] private Transform relicSlotsContainer;
+    [Tooltip("RectTransform that has a Layout Group for gem offers.")]
+    [SerializeField] private Transform gemSlotsContainer;
     [Tooltip("Face offers prefab root must have a UIShopSlot component.")]
     [SerializeField] private UIShopSlot slotPrefab;
     [Tooltip("Optional full-die offers prefab root. If null, falls back to Slot Prefab.")]
@@ -31,6 +34,7 @@ public class UIShopWindow : MonoBehaviour
 
     private readonly List<UIShopSlot> _slots = new List<UIShopSlot>();
     private readonly List<UIShopRelicSlot> _relicSlots = new List<UIShopRelicSlot>();
+    private readonly List<UIShopSlot> _gemSlots = new List<UIShopSlot>();
 
     private void Start()
     {
@@ -78,6 +82,12 @@ public class UIShopWindow : MonoBehaviour
             if (s != null)
                 s.Refresh();
         }
+
+        foreach (var s in _gemSlots)
+        {
+            if (s != null)
+                s.Refresh();
+        }
     }
 
     private void RebuildSlots()
@@ -115,6 +125,14 @@ public class UIShopWindow : MonoBehaviour
 
         _relicSlots.Clear();
 
+        foreach (var s in _gemSlots)
+        {
+            if (s != null && s.gameObject != null)
+                Destroy(s.gameObject);
+        }
+
+        _gemSlots.Clear();
+
         foreach (var item in shopGenerator.FaceOffers)
             AddSlot(faceSlotsContainer, item, slotPrefab);
 
@@ -129,7 +147,45 @@ public class UIShopWindow : MonoBehaviour
         else if (shopGenerator.RelicOffers.Count > 0)
             Debug.LogWarning("UIShopWindow: assign relicSlotsContainer to show relic offers.", this);
 
+        if (gemSlotsContainer != null)
+        {
+            foreach (var item in shopGenerator.GemOffers)
+                AddGemSlot(gemSlotsContainer, item, diceSlotPrefab != null ? diceSlotPrefab : slotPrefab);
+        }
+        else if (shopGenerator.GemOffers.Count > 0)
+            Debug.LogWarning("UIShopWindow: assign gemSlotsContainer to show gem offers.", this);
+
         RefreshShopDiceTray();
+    }
+
+    private void AddGemSlot(Transform parent, ShopItem item, UIShopSlot prefab) =>
+        AddSlotToList(parent, item, prefab, _gemSlots);
+
+    private void AddSlotToList(Transform parent, ShopItem item, UIShopSlot prefab, List<UIShopSlot> into)
+    {
+        if (parent == null)
+        {
+            Debug.LogError("UIShopWindow: gem (or other) slots container is not assigned — shop items cannot be instantiated.");
+            return;
+        }
+
+        if (prefab == null)
+        {
+            Debug.LogError("UIShopWindow: slot prefab is not assigned for this section.");
+            return;
+        }
+
+        var go = Instantiate(prefab, parent);
+        var slot = go.GetComponent<UIShopSlot>();
+        if (slot == null)
+        {
+            Debug.LogError("UIShopWindow: assigned slot prefab needs UIShopSlot.");
+            Destroy(go);
+            return;
+        }
+
+        slot.Bind(this, item);
+        into.Add(slot);
     }
 
     private void AddSlot(Transform parent, ShopItem item, UIShopSlot prefab)
@@ -206,6 +262,16 @@ public class UIShopWindow : MonoBehaviour
             }
         }
 
+        if (item.ItemKind == ShopItem.Kind.Gem && item.Gem != null)
+        {
+            var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+            if (data == null || !PlayerInventory.HasDieWithEmptyGemSocket(data))
+            {
+                Debug.LogWarning("UIShopWindow: Gem purchase blocked — no die has an empty gem socket.");
+                return;
+            }
+        }
+
         if (!shopGenerator.PurchaseItem(item))
         {
             Debug.LogWarning($"UIShopWindow: Purchase failed (gold={RunEconomyManager.Instance.CurrentGold}, price={item.CalculatedPrice}).", this);
@@ -239,6 +305,19 @@ public class UIShopWindow : MonoBehaviour
 
             socketFlow.BeginInstallFace(item.Face, item, shopGenerator, RefreshSlotsAfterSocket);
         }
+
+        if (item.ItemKind == ShopItem.Kind.Gem)
+        {
+            if (gemSocketFlow == null)
+            {
+                Debug.LogError("UIShopWindow: assign ShopGemSocketFlow for gem purchases.");
+                shopGenerator.RefundAndRestock(item);
+                RefreshAllSlots();
+                return;
+            }
+
+            gemSocketFlow.BeginSocketGem(item.Gem, item, shopGenerator, RefreshSlotsAfterSocket);
+        }
     }
 
     private void RefreshSlotsAfterSocket()
@@ -255,6 +334,12 @@ public class UIShopWindow : MonoBehaviour
         }
 
         foreach (var s in _relicSlots)
+        {
+            if (s != null)
+                s.Refresh();
+        }
+
+        foreach (var s in _gemSlots)
         {
             if (s != null)
                 s.Refresh();

@@ -89,6 +89,9 @@ public class CombatManager : MonoBehaviour
     private readonly TurnRegistry _turnRegistry = new TurnRegistry();
     private readonly List<ValueBasedRollWatcherEntry> _sameTurnValueWatchers = new List<ValueBasedRollWatcherEntry>();
     private readonly List<ValueBasedRollWatcherEntry> _entireCombatValueWatchers = new List<ValueBasedRollWatcherEntry>();
+    private List<DieAssetSO> _pendingBatchDiceAssets;
+    private readonly Dictionary<DieAssetSO, int> _gemFreeRollChargesByDie = new Dictionary<DieAssetSO, int>();
+    private int _gemBonusRollChainActivationsThisTurn;
     private int _rollBatchId;
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
     private int _faceResolveSequence;
@@ -187,6 +190,43 @@ public class CombatManager : MonoBehaviour
     {
         if (amount <= 0) return;
         bonusArmorFromActions += amount;
+    }
+
+    /// <summary>Player power meter (Resonance): additive, can exceed max toward bust.</summary>
+    public void AddResonancePower(int delta)
+    {
+        if (delta == 0) return;
+        currentPower += delta;
+        CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
+    }
+
+    /// <summary>
+    /// Legendary roll-chain gem: grant extra rolls this turn, at most <paramref name="maxActivationsPerTurn"/> times per player turn.
+    /// </summary>
+    public bool TryApplyGemBonusRollChain(int grantRolls, int maxActivationsPerTurn)
+    {
+        if (grantRolls <= 0) return false;
+        var cap = maxActivationsPerTurn > 0 ? maxActivationsPerTurn : 3;
+        if (_gemBonusRollChainActivationsThisTurn >= cap) return false;
+        _gemBonusRollChainActivationsThisTurn++;
+        AddRollsRemaining(grantRolls);
+        return true;
+    }
+
+    public GameActionContext BuildGameActionContextForFace(FaceResult triggeringFace)
+    {
+        return new GameActionContext
+        {
+            CombatManager = this,
+            Player = player,
+            Enemy = activeEnemy,
+            ChanneledFaces = channeledFaces,
+            TriggeringFace = triggeringFace,
+            PlayerData = playerData,
+            RelicRuntime = _relicRuntime,
+            CurrentPower = currentPower,
+            MaxPower = maxPower
+        };
     }
 
     private PlayerDataSO playerData;
@@ -313,6 +353,20 @@ public class CombatManager : MonoBehaviour
         NotifyAllStoredActionsPoolUI();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
+        _gemFreeRollChargesByDie.Clear();
+        if (playerData?.currentDeck != null)
+        {
+            foreach (var die in playerData.currentDeck)
+            {
+                if (die == null) continue;
+                var n = die.SumGemFreeRollCombatCharges();
+                if (n > 0)
+                    _gemFreeRollChargesByDie[die] = n;
+            }
+        }
+
+        _gemBonusRollChainActivationsThisTurn = 0;
+
         BindStatusBars();
 
         CombatEvents.OnImmediateGameActionBarClear?.Invoke();
@@ -402,8 +456,22 @@ public class CombatManager : MonoBehaviour
         _pendingDieSourceByIndex = new Transform[expectedDiceCount];
         pendingRollVisualSequences = 0;
         _rollBatchPipelineRunning = false;
+        _pendingBatchDiceAssets = new List<DieAssetSO>(selectedDice);
         currentBatchIsFirstRollOfTurn = (rollsRemaining == maxRolls);
         rollsRemaining--;
+        if (selectedDice != null && _gemFreeRollChargesByDie.Count > 0)
+        {
+            foreach (var d in selectedDice)
+            {
+                if (d == null) continue;
+                if (_gemFreeRollChargesByDie.TryGetValue(d, out var left) && left > 0)
+                {
+                    _gemFreeRollChargesByDie[d] = left - 1;
+                    rollsRemaining++;
+                }
+            }
+        }
+
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.Rolling);
         spawner.SpawnAndRollBatch(selectedDice);
@@ -520,7 +588,10 @@ public class CombatManager : MonoBehaviour
                 continue;
             }
 
-            CommitResolvedRoll(f, t);
+            var dieAsset = _pendingBatchDiceAssets != null && i < _pendingBatchDiceAssets.Count
+                ? _pendingBatchDiceAssets[i]
+                : null;
+            CommitResolvedRoll(f, t, dieAsset);
         }
 
         QueueAddPowerChoicesAfterBatchGather(batchGatherStart, channeledFaces.Count);
@@ -528,6 +599,7 @@ public class CombatManager : MonoBehaviour
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
         _pendingDieSourceByIndex = null;
+        _pendingBatchDiceAssets = null;
 
         yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
         ProcessPrecisionQueue();
@@ -568,7 +640,7 @@ public class CombatManager : MonoBehaviour
         return n;
     }
 
-    private void CommitResolvedRoll(DieFaceSO face, Transform dieWorldSource)
+    private void CommitResolvedRoll(DieFaceSO face, Transform dieWorldSource, DieAssetSO sourceDieAsset)
     {
         _faceResolveSequence++;
 
@@ -618,6 +690,9 @@ public class CombatManager : MonoBehaviour
         relicModifyCtx.CurrentPower = currentPower;
         relicModifyCtx.MaxPower = maxPower;
         RelicActionRunner.ExecuteAllRelics(relicModifyCtx);
+
+        if (sourceDieAsset != null)
+            GemCombatResolver.ApplySocketedGems(sourceDieAsset, result, this);
 
         ApplyValueBasedRollWatchersArmorDamage(result);
 
@@ -1544,6 +1619,7 @@ public class CombatManager : MonoBehaviour
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
+        _gemBonusRollChainActivationsThisTurn = 0;
         player.ResetArmor();
         var statusCtx = BuildStatusContext();
         // Player turn starts here.

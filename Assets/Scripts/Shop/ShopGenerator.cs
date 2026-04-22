@@ -8,6 +8,7 @@ public class ShopGenerator : MonoBehaviour
     [SerializeField] private FaceLootTableSO faceLootTable;
     [SerializeField] private DieLootTableSO dieLootTable;
     [SerializeField] private RelicLootTableSO relicLootTable;
+    [SerializeField] private GemLootTableSO gemLootTable;
     [SerializeField] private int defaultFullDiePrice = 100;
     [SerializeField, Range(0f, 1f)] private float preferredElementWeight = 0.7f;
 
@@ -15,16 +16,19 @@ public class ShopGenerator : MonoBehaviour
     [SerializeField, Min(0)] private int faceOfferCount = 4;
     [SerializeField, Min(0)] private int diceOfferCount = 1;
     [SerializeField, Min(0)] private int relicOfferCount = 2;
+    [SerializeField, Min(0)] private int gemOfferCount = 2;
     [Tooltip("If true, the same die asset cannot appear twice in one shop refresh.")]
     [SerializeField] private bool uniqueDicePerShopRefresh = true;
 
     public IReadOnlyList<ShopItem> FaceOffers => _faceItems;
     public IReadOnlyList<ShopItem> DiceOffers => _diceItems;
     public IReadOnlyList<ShopItem> RelicOffers => _relicItems;
+    public IReadOnlyList<ShopItem> GemOffers => _gemItems;
 
     private readonly List<ShopItem> _faceItems = new List<ShopItem>();
     private readonly List<ShopItem> _diceItems = new List<ShopItem>();
     private readonly List<ShopItem> _relicItems = new List<ShopItem>();
+    private readonly List<ShopItem> _gemItems = new List<ShopItem>();
 
     public static event Action InventoryChanged;
 
@@ -41,6 +45,7 @@ public class ShopGenerator : MonoBehaviour
         _faceItems.Clear();
         _diceItems.Clear();
         _relicItems.Clear();
+        _gemItems.Clear();
 
         var preferredTypes = BuildPreferredDieTypes();
 
@@ -93,12 +98,27 @@ public class ShopGenerator : MonoBehaviour
         else if (relicOfferCount > 0 && relicLootTable == null)
             Debug.LogWarning("ShopGenerator: relicLootTable is not assigned but relic offers requested.");
 
+        if (gemLootTable != null && gemOfferCount > 0)
+        {
+            var gems = gemLootTable.GetRandomGems(gemOfferCount);
+            foreach (var g in gems)
+            {
+                if (g == null) continue;
+                _gemItems.Add(ShopItem.CreateGem(g, GemPriceUtility.GetGemGoldPrice(g)));
+            }
+
+            if (_gemItems.Count == 0 && gemOfferCount > 0)
+                Debug.LogWarning("ShopGenerator: no gem offers. Check GemLootTableSO allPossibleGems.");
+        }
+        else if (gemOfferCount > 0 && gemLootTable == null)
+            Debug.LogWarning("ShopGenerator: gemLootTable is not assigned but gem offers requested.");
+
         if (_faceItems.Count == 0 && faceOfferCount > 0)
             Debug.LogWarning("ShopGenerator: no face offers generated. Check FaceLootTableSO (faces list + Rarity Config) on the assigned asset.");
         if (_diceItems.Count == 0 && diceOfferCount > 0)
             Debug.LogWarning("ShopGenerator: no die offers. Check DieLootTableSO has at least one DieAssetSO and Dice Offer Count > 0.");
 
-        Debug.Log($"[ShopGenerator] Generated shop: {_faceItems.Count} face, {_diceItems.Count} die, {_relicItems.Count} relic offer(s).", this);
+        Debug.Log($"[ShopGenerator] Generated shop: {_faceItems.Count} face, {_diceItems.Count} die, {_relicItems.Count} relic, {_gemItems.Count} gem offer(s).", this);
 
         InventoryChanged?.Invoke();
     }

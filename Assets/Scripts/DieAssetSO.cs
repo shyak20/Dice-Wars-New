@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewDie", menuName = "DiceGame/DieAsset")]
 public class DieAssetSO : ScriptableObject
 {
+    public const int GemSocketCount = 2;
+
     public string dieName;
     public DieType dieType;
 
@@ -22,11 +25,80 @@ public class DieAssetSO : ScriptableObject
     [Tooltip("The 6 Face SOs that define this die. Materials will be pulled from here.")]
     public DieFaceSO[] faces = new DieFaceSO[6];
 
+    [Header("Gems (runtime deck instances)")]
+    [Tooltip("Up to two permanent gems; null slots are empty. Filled via shop purchase flow only.")]
+    [SerializeField] private GemSO[] socketedGems = new GemSO[GemSocketCount];
+
     [Header("Combat — Max Power")]
     [Tooltip("How much max power increases when this die sits in the 3rd deck slot or later. The first two slots only use CombatManager base max power.")]
     [SerializeField] private int maxPowerContribution = 6;
 
     public int MaxPowerContribution => maxPowerContribution;
+
+    /// <summary>Non-null socketed gems in order (iteration only).</summary>
+    public IEnumerable<GemSO> GetSocketedGems()
+    {
+        if (socketedGems == null)
+            yield break;
+        foreach (var g in socketedGems)
+        {
+            if (g != null)
+                yield return g;
+        }
+    }
+
+    public int GetEmptyGemSocketCount()
+    {
+        EnsureGemSocketArray();
+        var n = 0;
+        for (var i = 0; i < GemSocketCount; i++)
+        {
+            if (socketedGems[i] == null)
+                n++;
+        }
+
+        return n;
+    }
+
+    /// <summary>Permanent — first empty socket only.</summary>
+    public bool TrySocketGem(GemSO gem)
+    {
+        if (gem == null)
+            return false;
+        EnsureGemSocketArray();
+        for (var i = 0; i < GemSocketCount; i++)
+        {
+            if (socketedGems[i] != null)
+                continue;
+            socketedGems[i] = gem;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Total free-roll charges from socketed gems for one combat (sum of <see cref="GemEffectEntry.param"/> on FreePlayerRollsForThisDie rows).</summary>
+    public int SumGemFreeRollCombatCharges()
+    {
+        var s = 0;
+        foreach (var g in GetSocketedGems())
+        {
+            if (g?.effects == null) continue;
+            foreach (var e in g.effects)
+            {
+                if (e != null && e.kind == GemEffectKind.FreePlayerRollsForThisDie)
+                    s += Mathf.Max(0, e.param);
+            }
+        }
+
+        return s;
+    }
+
+    private void EnsureGemSocketArray()
+    {
+        if (socketedGems == null || socketedGems.Length != GemSocketCount)
+            socketedGems = new GemSO[GemSocketCount];
+    }
 
     public bool CanAttachFace(DieFaceSO face)
     {

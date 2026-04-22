@@ -60,17 +60,26 @@ public class UIShopSlot : MonoBehaviour
                                !PlayerInventory.HasDieSupportingFace(data, _item.Face);
         if (_item.ItemKind == ShopItem.Kind.Face && (data == null || _item.Face == null))
             faceSocketLocked = true;
+        var gemSocketLocked = _item.ItemKind == ShopItem.Kind.Gem && _item.Gem != null && data != null &&
+                              !PlayerInventory.HasDieWithEmptyGemSocket(data);
+        if (_item.ItemKind == ShopItem.Kind.Gem && (data == null || _item.Gem == null))
+            gemSocketLocked = true;
         if (_item.ItemKind == ShopItem.Kind.Relic)
+        {
             faceSocketLocked = false;
+            gemSocketLocked = false;
+        }
+
+        var offerBlocked = faceSocketLocked || gemSocketLocked;
 
         if (lockedOverlay != null)
-            lockedOverlay.SetActive(!sold && faceSocketLocked);
-        if (lockedLabel != null && faceSocketLocked)
-            lockedLabel.text = lockedMessage;
+            lockedOverlay.SetActive(!sold && offerBlocked);
+        if (lockedLabel != null && offerBlocked)
+            lockedLabel.text = gemSocketLocked ? "No free gem sockets" : lockedMessage;
 
         if (soldOutStamp != null) soldOutStamp.SetActive(sold);
         if (buyButton != null)
-            buyButton.interactable = !sold && !faceSocketLocked && (economyMissing || canAffordGold);
+            buyButton.interactable = !sold && !offerBlocked && (economyMissing || canAffordGold);
 
         if (priceText != null)
         {
@@ -110,6 +119,21 @@ public class UIShopSlot : MonoBehaviour
             }
 
             RebuildDieFacesUi(d);
+        }
+        else if (_item.ItemKind == ShopItem.Kind.Gem)
+        {
+            ClearDieFacesUi();
+            var g = _item.Gem;
+            if (g == null) return;
+            if (nameText != null) nameText.text = g.DisplayLabel;
+            if (statsText != null)
+                statsText.text = string.IsNullOrEmpty(g.description) ? $"Lv {g.level} · {g.rarity}" : g.description;
+            if (iconImage != null)
+            {
+                iconImage.sprite = g.icon;
+                iconImage.enabled = g.icon != null;
+                iconImage.color = g.icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+            }
         }
         else
         {
