@@ -12,17 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
   m_Name: Burn_Level3
   m_EditorClassIdentifier: 
-  displayName: "Burn Lv.3"
-  description: "If this die rolls 1, 3, or 5, apply +6 Burn."
-  icon: {fileID: 0}
+  displayName: Burn Lv.3
+  description: If this die rolls 1, 3, or 5, apply +6 Burn.
+  icon: {fileID: 21300000, guid: 662f209d8d136874cba9d13573abd0fe, type: 3}
   rarity: 1
   shopGoldPrice: 0
   level: 3
-  matchFaceValues:
-  - 1
-  - 3
-  - 5
+  matchFaceValues: 010000000300000005000000
   effects:
   - kind: 2
     param: 6
+    activateImmediately: 0
     burnDefinition: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}

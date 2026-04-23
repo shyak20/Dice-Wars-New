@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
   m_Name: Armor_Level1
   m_EditorClassIdentifier: 
-  displayName: "Armor Lv.1"
-  description: "If this die rolls 1, +4 armor on this resolve."
-  icon: {fileID: 0}
+  displayName: Armor Lv.1
+  description: If this die rolls 1, +4 armor on this resolve.
+  icon: {fileID: 21300000, guid: 421805786045e1144bfd8f26ff4f493f, type: 3}
   rarity: 0
   shopGoldPrice: 0
   level: 1
-  matchFaceValues:
-  - 1
+  matchFaceValues: 01000000
   effects:
   - kind: 8
     param: 4
+    activateImmediately: 0
     burnDefinition: {fileID: 0}

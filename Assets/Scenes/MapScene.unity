@@ -1604,7 +1604,7 @@ MonoBehaviour:
   mapPresentation: {fileID: 11400000, guid: 238a49579a84c7249a153f8e06e6d3dd, type: 2}
   shrineChoicePanel: {fileID: 2034626119}
   treasurePanel: {fileID: 1677661261}
-  unknownEventPanel: {fileID: 0}
+  unknownEventPanel: {fileID: 502440729}
 --- !u!4 &755979337
 Transform:
   m_ObjectHideFlags: 0

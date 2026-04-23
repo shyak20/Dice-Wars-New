@@ -12,17 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
   m_Name: Cleanse_Level1
   m_EditorClassIdentifier: 
-  displayName: "Cleanse Lv.1"
-  description: "If this die rolls an even number, cleanse 5 (random debuff stacks at turn end)."
-  icon: {fileID: 0}
+  displayName: Cleanse Lv.1
+  description: If this die rolls an even number, cleanse 5 (random debuff stacks
+    at turn end).
+  icon: {fileID: 21300000, guid: f57155c3bd5c62142bab5236e56fb89a, type: 3}
   rarity: 0
   shopGoldPrice: 0
   level: 1
-  matchFaceValues:
-  - 2
-  - 4
-  - 6
+  matchFaceValues: 020000000400000006000000
   effects:
   - kind: 5
     param: 5
+    activateImmediately: 1
     burnDefinition: {fileID: 0}

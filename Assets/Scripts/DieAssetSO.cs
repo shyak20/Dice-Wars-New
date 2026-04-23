@@ -47,6 +47,15 @@ public class DieAssetSO : ScriptableObject
         }
     }
 
+    /// <summary>Gem in a specific socket (0..GemSocketCount-1), or null when empty.</summary>
+    public GemSO GetSocketedGemAt(int index)
+    {
+        EnsureGemSocketArray();
+        if (index < 0 || index >= GemSocketCount)
+            throw new ArgumentOutOfRangeException(nameof(index), index, $"Gem socket index must be 0..{GemSocketCount - 1}.");
+        return socketedGems[index];
+    }
+
     public int GetEmptyGemSocketCount()
     {
         EnsureGemSocketArray();

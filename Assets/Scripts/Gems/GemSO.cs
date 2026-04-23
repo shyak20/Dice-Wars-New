@@ -11,6 +11,9 @@ public class GemEffectEntry
     [Tooltip("Interpretation depends on Kind (heal amount, burn stacks, power delta, damage multiplier, etc.).")]
     public int param;
 
+    [Tooltip("Same behavior as die-face actions: true = run now; false = queue for turn end and show in stored element bar.")]
+    public bool activateImmediately = true;
+
     [Tooltip("Required when Kind is ApplyBurnToEnemy.")]
     public BurnEffectSO burnDefinition;
 }

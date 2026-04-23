@@ -12,18 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
   m_Name: BurnAndResonance_Level3
   m_EditorClassIdentifier: 
-  displayName: "Burn + Resonance Lv.3"
-  description: "If this die rolls 6, apply 12 Burn to the enemy and add 2 to the power meter."
-  icon: {fileID: 0}
+  displayName: Burn + Resonance Lv.3
+  description: If this die rolls 6, apply 10 Burn to the enemy and add 4 to the power
+    meter.
+  icon: {fileID: 21300000, guid: 433a4015476626c4d9776bb27fb57ea0, type: 3}
   rarity: 1
   shopGoldPrice: 0
   level: 3
-  matchFaceValues:
-  - 6
+  matchFaceValues: 06000000
   effects:
   - kind: 2
-    param: 12
+    param: 10
+    activateImmediately: 0
     burnDefinition: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
   - kind: 3
-    param: 2
+    param: 4
+    activateImmediately: 1
     burnDefinition: {fileID: 0}

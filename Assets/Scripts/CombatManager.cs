@@ -785,7 +785,6 @@ public class CombatManager : MonoBehaviour
 
     private void PopulateActionPoolContributions(FaceResult result)
     {
-        result.ActionPoolContributions.Clear();
         if (result.Actions == null || player == null) return;
         foreach (var a in result.Actions)
         {
@@ -1183,7 +1182,7 @@ public class CombatManager : MonoBehaviour
             {
                 var c = face.ActionPoolContributions[i];
                 if (c.VisualFlyoutOnly) continue;
-                if (c.PoolSourceAction == null && c.MaxHpPoolSource == null) continue;
+                if (c.PoolSourceAction == null && c.MaxHpPoolSource == null && !c.PerfectStrikeScales) continue;
                 c.Amount *= multiplier;
                 face.ActionPoolContributions[i] = c;
             }

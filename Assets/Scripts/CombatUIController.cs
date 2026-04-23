@@ -38,6 +38,9 @@ public class CombatUIController : MonoBehaviour
     [SerializeField] private GameObject dieTooltipPanel;
     [SerializeField] private Transform dieTooltipSlotContainer;
     [SerializeField] private GameObject dieTooltipSlotPrefab; // Should use UIRewardSlot prefab.
+    [Header("Gem slots in die tooltip (optional)")]
+    [SerializeField] private Transform dieTooltipGemIconContainer;
+    [SerializeField] private DieTooltipGemSlotView dieTooltipGemSlotPrefab;
     [SerializeField] private GameObject faceHoverTooltipPanel;
     [SerializeField] private TMP_Text faceHoverTitleText;
     [SerializeField] private TMP_Text faceHoverDescriptionText;
@@ -233,6 +236,24 @@ public class CombatUIController : MonoBehaviour
             slot.Bind(face, null);
             slot.SetInteractable(false);
             RegisterFaceHover(slot, face);
+        }
+
+        RebuildTooltipGemIcons(die);
+    }
+
+    private void RebuildTooltipGemIcons(DieAssetSO die)
+    {
+        if (dieTooltipGemIconContainer == null || dieTooltipGemSlotPrefab == null || die == null)
+            return;
+
+        foreach (Transform child in dieTooltipGemIconContainer)
+            Destroy(child.gameObject);
+
+        for (var i = 0; i < DieAssetSO.GemSocketCount; i++)
+        {
+            var view = Instantiate(dieTooltipGemSlotPrefab, dieTooltipGemIconContainer);
+            view.Bind(die.GetSocketedGemAt(i));
+            view.transform.localScale = Vector3.one;
         }
     }
 
