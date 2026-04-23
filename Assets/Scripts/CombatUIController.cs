@@ -54,6 +54,8 @@ public class CombatUIController : MonoBehaviour
     private Dictionary<DieAssetSO, Button> diceButtons = new Dictionary<DieAssetSO, Button>();
     private List<DieAssetSO> currentlySelected = new List<DieAssetSO>();
     private DieAssetSO tooltipShownForDie;
+    private DieAssetSO pinnedTooltipDie;
+    private DieAssetSO hoveredTooltipDie;
 
     private TMP_Text rollButtonText;
     private int rollsRemaining;
@@ -124,6 +126,8 @@ public class CombatUIController : MonoBehaviour
         diceButtonViews.Clear();
         diceButtons.Clear();
         currentlySelected.Clear();
+        pinnedTooltipDie = null;
+        hoveredTooltipDie = null;
         HideDieTooltip();
 
         foreach (DieAssetSO die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
@@ -148,6 +152,7 @@ public class CombatUIController : MonoBehaviour
             Button btn = btnObj.GetComponent<Button>();
             diceButtons[die] = btn;
             btn.onClick.AddListener(() => ToggleSelection(die));
+            RegisterTrayHover(btn, die);
         }
 
         UpdateNoDiceSelectedIndicator();
@@ -159,6 +164,8 @@ public class CombatUIController : MonoBehaviour
         if (!Input.GetMouseButtonDown(0)) return;
         if (ClickShouldKeepTooltipOpen()) return;
 
+        pinnedTooltipDie = null;
+        hoveredTooltipDie = null;
         HideDieTooltip();
     }
 
@@ -170,21 +177,50 @@ public class CombatUIController : MonoBehaviour
             currentlySelected.Remove(die);
             if (diceButtonViews.TryGetValue(die, out var view))
                 view.SetSelected(false);
-
-            if (tooltipShownForDie == die)
-                HideDieTooltip();
         }
         else
         {
             currentlySelected.Add(die);
             if (diceButtonViews.TryGetValue(die, out var view))
                 view.SetSelected(true);
-
-            ShowDieTooltip(die);
         }
+        PinTooltipToDie(die);
         if (rollButton != null)
             rollButton.interactable = currentlySelected.Count > 0;
         UpdateNoDiceSelectedIndicator();
+    }
+
+    private void RegisterTrayHover(Button btn, DieAssetSO die)
+    {
+        if (btn == null || die == null) return;
+        var go = btn.gameObject;
+        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
+
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ =>
+        {
+            hoveredTooltipDie = die;
+            ShowDieTooltip(die);
+        });
+        et.triggers.Add(enter);
+
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ =>
+        {
+            if (hoveredTooltipDie == die)
+                hoveredTooltipDie = null;
+            if (pinnedTooltipDie != null)
+                ShowDieTooltip(pinnedTooltipDie);
+            else
+                HideDieTooltip();
+        });
+        et.triggers.Add(exit);
+    }
+
+    private void PinTooltipToDie(DieAssetSO die)
+    {
+        pinnedTooltipDie = die;
+        ShowDieTooltip(die);
     }
 
     private void UpdateNoDiceSelectedIndicator()
@@ -251,9 +287,11 @@ public class CombatUIController : MonoBehaviour
 
         for (var i = 0; i < DieAssetSO.GemSocketCount; i++)
         {
+            var gem = die.GetSocketedGemAt(i);
             var view = Instantiate(dieTooltipGemSlotPrefab, dieTooltipGemIconContainer);
-            view.Bind(die.GetSocketedGemAt(i));
+            view.Bind(gem);
             view.transform.localScale = Vector3.one;
+            RegisterGemHover(view, gem);
         }
     }
 
@@ -284,6 +322,35 @@ public class CombatUIController : MonoBehaviour
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);
         HideFaceHoverTooltip();
+        HideStatusHoverTooltip();
+    }
+
+    private void RegisterGemHover(DieTooltipGemSlotView slotView, GemSO gem)
+    {
+        if (slotView == null || gem == null) return;
+
+        var go = slotView.GetHoverTarget();
+        if (go == null) return;
+
+        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
+
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => ShowGemHoverTooltip(gem));
+        et.triggers.Add(enter);
+
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => HideFaceHoverTooltip());
+        et.triggers.Add(exit);
+    }
+
+    private void ShowGemHoverTooltip(GemSO gem)
+    {
+        if (faceHoverTooltipPanel == null) return;
+        if (faceHoverTitleText != null)
+            faceHoverTitleText.text = gem != null ? gem.DisplayLabel : "";
+        if (faceHoverDescriptionText != null)
+            faceHoverDescriptionText.text = gem != null ? gem.description : "";
+        faceHoverTooltipPanel.SetActive(true);
         HideStatusHoverTooltip();
     }
 
@@ -397,9 +464,7 @@ public class CombatUIController : MonoBehaviour
 
         var tooltipTransform = dieTooltipPanel != null ? dieTooltipPanel.transform : null;
         var statusTooltipTransform = statusHoverTooltipPanel != null ? statusHoverTooltipPanel.transform : null;
-        Transform selectedButtonTransform = null;
-        if (tooltipShownForDie != null && diceButtons.TryGetValue(tooltipShownForDie, out var btn) && btn != null)
-            selectedButtonTransform = btn.transform;
+        var trayTransform = diceButtonContainer;
 
         for (var i = 0; i < hits.Count; i++)
         {
@@ -407,7 +472,7 @@ public class CombatUIController : MonoBehaviour
             if (hitTransform == null) continue;
             if (tooltipTransform != null && hitTransform.IsChildOf(tooltipTransform)) return true;
             if (statusTooltipTransform != null && hitTransform.IsChildOf(statusTooltipTransform)) return true;
-            if (selectedButtonTransform != null && hitTransform.IsChildOf(selectedButtonTransform)) return true;
+            if (trayTransform != null && hitTransform.IsChildOf(trayTransform)) return true;
         }
 
         return false;
@@ -477,7 +542,11 @@ public class CombatUIController : MonoBehaviour
             trayCanvasGroup.alpha = isWaiting ? 1f : 0.5f;
         }
         if (!isWaiting)
+        {
+            pinnedTooltipDie = null;
+            hoveredTooltipDie = null;
             HideDieTooltip();
+        }
         if (rollButton != null) { rollButton.gameObject.SetActive(isWaiting); if (isWaiting) rollButton.interactable = currentlySelected.Count > 0; }
         if (endTurnButton != null) { bool showEndTurn = isWaiting && rollsRemaining > 0; endTurnButton.gameObject.SetActive(showEndTurn); endTurnButton.interactable = showEndTurn; }
         UpdateNoDiceSelectedIndicator();

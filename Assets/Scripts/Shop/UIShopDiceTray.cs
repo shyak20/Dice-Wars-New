@@ -36,6 +36,8 @@ public class UIShopDiceTray : MonoBehaviour
     private readonly Dictionary<DieAssetSO, DiceTrayButtonView> _diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
     private readonly Dictionary<DieAssetSO, Button> _diceButtons = new Dictionary<DieAssetSO, Button>();
     private DieAssetSO _tooltipShownForDie;
+    private DieAssetSO _pinnedTooltipDie;
+    private DieAssetSO _hoveredTooltipDie;
 
     private void Awake()
     {
@@ -52,6 +54,8 @@ public class UIShopDiceTray : MonoBehaviour
         if (ClickShouldKeepTooltipOpen()) return;
 
         ClearTraySelectionVisuals();
+        _pinnedTooltipDie = null;
+        _hoveredTooltipDie = null;
         HideDieTooltip();
     }
 
@@ -69,6 +73,8 @@ public class UIShopDiceTray : MonoBehaviour
             Destroy(child.gameObject);
         _diceButtonViews.Clear();
         _diceButtons.Clear();
+        _pinnedTooltipDie = null;
+        _hoveredTooltipDie = null;
         ClearTraySelectionVisuals();
         HideDieTooltip();
 
@@ -103,6 +109,7 @@ public class UIShopDiceTray : MonoBehaviour
             _diceButtons[die] = btn;
             var captured = die;
             btn.onClick.AddListener(() => OnTrayDieClicked(captured));
+            RegisterTrayHover(btn, captured);
         }
     }
 
@@ -110,17 +117,38 @@ public class UIShopDiceTray : MonoBehaviour
     {
         if (die == null) return;
 
-        if (_tooltipShownForDie == die && dieTooltipPanel != null && dieTooltipPanel.activeSelf)
-        {
-            if (_diceButtonViews.TryGetValue(die, out var v)) v.SetSelected(false);
-            HideDieTooltip();
-            return;
-        }
-
         foreach (var kv in _diceButtonViews)
             kv.Value.SetSelected(kv.Key == die);
 
+        _pinnedTooltipDie = die;
         ShowDieTooltip(die);
+    }
+
+    private void RegisterTrayHover(Button btn, DieAssetSO die)
+    {
+        if (btn == null || die == null) return;
+        var go = btn.gameObject;
+        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
+
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ =>
+        {
+            _hoveredTooltipDie = die;
+            ShowDieTooltip(die);
+        });
+        et.triggers.Add(enter);
+
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ =>
+        {
+            if (_hoveredTooltipDie == die)
+                _hoveredTooltipDie = null;
+            if (_pinnedTooltipDie != null)
+                ShowDieTooltip(_pinnedTooltipDie);
+            else
+                HideDieTooltip();
+        });
+        et.triggers.Add(exit);
     }
 
     private void ClearTraySelectionVisuals()
@@ -186,9 +214,11 @@ public class UIShopDiceTray : MonoBehaviour
 
         for (var i = 0; i < DieAssetSO.GemSocketCount; i++)
         {
+            var gem = die.GetSocketedGemAt(i);
             var view = Instantiate(dieTooltipGemSlotPrefab, dieTooltipGemIconContainer);
-            view.Bind(die.GetSocketedGemAt(i));
+            view.Bind(gem);
             view.transform.localScale = Vector3.one;
+            RegisterGemHover(view, gem);
         }
     }
 
@@ -219,6 +249,35 @@ public class UIShopDiceTray : MonoBehaviour
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);
         HideFaceHoverTooltip();
+        HideStatusHoverTooltip();
+    }
+
+    private void RegisterGemHover(DieTooltipGemSlotView slotView, GemSO gem)
+    {
+        if (slotView == null || gem == null) return;
+
+        var go = slotView.GetHoverTarget();
+        if (go == null) return;
+
+        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
+
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => ShowGemHoverTooltip(gem));
+        et.triggers.Add(enter);
+
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => HideFaceHoverTooltip());
+        et.triggers.Add(exit);
+    }
+
+    private void ShowGemHoverTooltip(GemSO gem)
+    {
+        if (faceHoverTooltipPanel == null) return;
+        if (faceHoverTitleText != null)
+            faceHoverTitleText.text = gem != null ? gem.DisplayLabel : "";
+        if (faceHoverDescriptionText != null)
+            faceHoverDescriptionText.text = gem != null ? gem.description : "";
+        faceHoverTooltipPanel.SetActive(true);
         HideStatusHoverTooltip();
     }
 
@@ -332,9 +391,7 @@ public class UIShopDiceTray : MonoBehaviour
 
         var tooltipTransform = dieTooltipPanel != null ? dieTooltipPanel.transform : null;
         var statusTooltipTransform = statusHoverTooltipPanel != null ? statusHoverTooltipPanel.transform : null;
-        Transform selectedButtonTransform = null;
-        if (_tooltipShownForDie != null && _diceButtons.TryGetValue(_tooltipShownForDie, out var btn) && btn != null)
-            selectedButtonTransform = btn.transform;
+        var trayTransform = diceButtonContainer;
 
         for (var i = 0; i < hits.Count; i++)
         {
@@ -342,7 +399,7 @@ public class UIShopDiceTray : MonoBehaviour
             if (hitTransform == null) continue;
             if (tooltipTransform != null && hitTransform.IsChildOf(tooltipTransform)) return true;
             if (statusTooltipTransform != null && hitTransform.IsChildOf(statusTooltipTransform)) return true;
-            if (selectedButtonTransform != null && hitTransform.IsChildOf(selectedButtonTransform)) return true;
+            if (trayTransform != null && hitTransform.IsChildOf(trayTransform)) return true;
         }
 
         return false;

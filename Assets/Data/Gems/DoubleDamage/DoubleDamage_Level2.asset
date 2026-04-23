@@ -12,16 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
   m_Name: DoubleDamage_Level2
   m_EditorClassIdentifier: 
-  displayName: "Double Damage Lv.2"
-  description: "If this die rolls 2 or 4, double physical damage on this resolve."
-  icon: {fileID: 0}
+  displayName: Double Damage Lv.2
+  description: If this die rolls 2 or 4, double physical damage on this resolve.
+  icon: {fileID: 21300000, guid: e2f8185f8d46f7246b39ded962447bed, type: 3}
   rarity: 2
   shopGoldPrice: 0
   level: 2
-  matchFaceValues:
-  - 2
-  - 4
+  matchFaceValues: 0200000004000000
   effects:
   - kind: 10
     param: 2
+    activateImmediately: 0
     burnDefinition: {fileID: 0}

@@ -27,4 +27,11 @@ public sealed class DieTooltipGemSlotView : MonoBehaviour
             emptySlotIconImage.gameObject.SetActive(!hasGem);
         }
     }
+
+    public GameObject GetHoverTarget()
+    {
+        if (gemIconImage != null)
+            return gemIconImage.gameObject;
+        return gameObject;
+    }
 }

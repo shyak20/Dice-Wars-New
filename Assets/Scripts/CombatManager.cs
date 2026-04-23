@@ -1205,6 +1205,22 @@ public class CombatManager : MonoBehaviour
         return Mathf.Max(0, action.Amount * Mathf.Max(1, appliedMultiplier));
     }
 
+    /// <summary>Final amount for one deferred gem row after pool scaling/bust edits.</summary>
+    public int ResolveGemDeferredPoolAmount(int handleId)
+    {
+        if (handleId <= 0 || channeledFaces == null) return 0;
+        foreach (var face in channeledFaces)
+        {
+            foreach (var c in face.ActionPoolContributions)
+            {
+                if (c.GemDeferredHandleId != handleId) continue;
+                return Mathf.Max(0, c.Amount);
+            }
+        }
+
+        return 0;
+    }
+
     /// <summary>Bust choice removes pending enemy-target applies with damage, or player-target applies with armor.</summary>
     private static void ApplyBustToPendingApplyStatusPoolContributions(List<FaceResult> faces, bool nullifyDamage)
     {
@@ -1215,9 +1231,17 @@ public class CombatManager : MonoBehaviour
             {
                 var c = face.ActionPoolContributions[i];
                 var src = c.PoolSourceAction;
-                if (src?.StatusEffectDefinition == null) continue;
-                var target = src.StatusEffectDefinition.target;
-                var remove = nullifyDamage ? target == StatusEffectTarget.Enemy : target == StatusEffectTarget.Player;
+                var remove = false;
+                if (src?.StatusEffectDefinition != null)
+                {
+                    var target = src.StatusEffectDefinition.target;
+                    remove = nullifyDamage ? target == StatusEffectTarget.Enemy : target == StatusEffectTarget.Player;
+                }
+
+                if (nullifyDamage && c.CancelOnBustNullifyDamage)
+                    remove = true;
+                if (!nullifyDamage && c.CancelOnBustNullifyArmor)
+                    remove = true;
                 if (!remove) continue;
                 c.Amount = 0;
                 face.ActionPoolContributions[i] = c;

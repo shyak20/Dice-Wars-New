@@ -14,6 +14,12 @@ public struct FacePoolExtraContribution
     public MaxHpAction MaxHpPoolSource;
     /// <summary>Generic switch for deferred rows (e.g. gem stacks) that should scale with Perfect Strike.</summary>
     public bool PerfectStrikeScales;
+    /// <summary>When non-zero, this row belongs to one deferred gem effect execution and can be resolved exactly at turn-end.</summary>
+    public int GemDeferredHandleId;
+    /// <summary>If true, this row is nulled when bust chooses Nullify Damage.</summary>
+    public bool CancelOnBustNullifyDamage;
+    /// <summary>If true, this row is nulled when bust chooses Nullify Armor.</summary>
+    public bool CancelOnBustNullifyArmor;
     /// <summary>
     /// When true, this row exists only for die flyout visuals (e.g. immediate <see cref="ApplyStatusEffectAction"/>).
     /// Omitted from <see cref="CombatManager.BuildStoredActionsPool"/> pending totals; use a short resync after flyout to clear display drift.

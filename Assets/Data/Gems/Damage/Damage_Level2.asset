@@ -12,16 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
   m_Name: Damage_Level2
   m_EditorClassIdentifier: 
-  displayName: "Damage Lv.2"
-  description: "If this die rolls 2 or 4, +6 damage."
-  icon: {fileID: 0}
+  displayName: Damage Lv.2
+  description: If this die rolls 2 or 4, +6 damage.
+  icon: {fileID: 21300000, guid: 9b12e6abbed577b428c497798292eb56, type: 3}
   rarity: 0
   shopGoldPrice: 0
   level: 2
-  matchFaceValues:
-  - 2
-  - 4
+  matchFaceValues: 0200000004000000
   effects:
   - kind: 9
     param: 6
+    activateImmediately: 0
     burnDefinition: {fileID: 0}
