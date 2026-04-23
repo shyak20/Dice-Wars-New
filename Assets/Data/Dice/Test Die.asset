@@ -17,13 +17,13 @@ MonoBehaviour:
   uiIcon: {fileID: 21300000, guid: eca18e2cf14c282488edf3fe654b1805, type: 3}
   shopGoldPrice: 50
   faces:
-  - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
-  - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
-  - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
-  - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
-  - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
-  - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
+  - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
+  - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
+  - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
+  - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
+  - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
+  - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
   socketedGems:
   - {fileID: 11400000, guid: 8180057d98b156b4b9eaf68dd983dd59, type: 2}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: f76fce3d46429004ea5f502d4a8ae07f, type: 2}
   maxPowerContribution: 0

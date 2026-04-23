@@ -14,22 +14,31 @@ public static class GemCombatResolver
 
     private static int NextDeferredHandleId() => _nextDeferredHandleId++;
 
+    sealed class GemResolveState
+    {
+        public int AddedDamageBonusSoFar;
+        public int PendingDamageMultiplier = 1;
+    }
+
     public static void ApplySocketedGems(DieAssetSO die, FaceResult result, CombatManager combat)
     {
         if (die == null || result == null || combat == null)
             return;
 
+        var state = new GemResolveState();
         foreach (var gem in die.GetSocketedGems())
         {
             if (gem == null)
                 continue;
             if (!gem.MatchesRolledValue(result.Value))
                 continue;
-            ApplyGemEffects(gem, result, combat);
+            ApplyGemEffects(die, gem, result, combat, state);
         }
+
+        FinalizePendingDamageMultiplier(result, combat, state);
     }
 
-    private static void ApplyGemEffects(GemSO gem, FaceResult result, CombatManager combat)
+    private static void ApplyGemEffects(DieAssetSO sourceDie, GemSO gem, FaceResult result, CombatManager combat, GemResolveState state)
     {
         if (gem.effects == null || gem.effects.Count == 0)
             return;
@@ -41,18 +50,46 @@ public static class GemCombatResolver
             if (entry == null)
                 continue;
             if (entry.activateImmediately)
-                ApplyImmediateGemEffectEntry(entry, gem, result, combat, ctx);
+                ApplyImmediateGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state);
             else
-                ApplyDeferredGemEffectEntry(entry, gem, result, combat, ctx);
+                ApplyDeferredGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state);
+        }
+    }
+
+    private static void FinalizePendingDamageMultiplier(FaceResult result, CombatManager combat, GemResolveState state)
+    {
+        if (state == null) return;
+        if (state.PendingDamageMultiplier <= 1) return;
+
+        var mult = state.PendingDamageMultiplier;
+
+        if (result.Type == DieType.Damage && result.Damage > 0)
+            result.Damage *= mult;
+
+        if (state.AddedDamageBonusSoFar > 0)
+        {
+            var extraFromMultiplier = state.AddedDamageBonusSoFar * (mult - 1);
+            combat.AddBonusDamageFromAction(extraFromMultiplier);
+
+            // Visual-only line so flyout mode reflects multiplied gem-added pending damage.
+            result.ActionPoolContributions.Add(new FacePoolExtraContribution
+            {
+                PoolKey = PoolRowKey.FromDieType(DieType.Damage),
+                Amount = extraFromMultiplier,
+                Icon = GameIconCatalog.GetElementIcon(DieType.Damage),
+                VisualFlyoutOnly = true
+            });
         }
     }
 
     private static void ApplyImmediateGemEffectEntry(
+        DieAssetSO sourceDie,
         GemEffectEntry entry,
         GemSO gem,
         FaceResult result,
         CombatManager combat,
-        GameActionContext ctx)
+        GameActionContext ctx,
+        GemResolveState state)
     {
         switch (entry.kind)
         {
@@ -62,7 +99,7 @@ public static class GemCombatResolver
                 break;
 
             case GemEffectKind.GrantExtraRollsThisTurn:
-                combat.AddRollsRemaining(Mathf.Max(0, entry.param));
+                combat.TryApplyGemExtraRollsPerDie(sourceDie, Mathf.Max(0, entry.param), 2);
                 break;
 
             case GemEffectKind.ApplyBurnToEnemy:
@@ -117,28 +154,45 @@ public static class GemCombatResolver
                 break;
 
             case GemEffectKind.AddDamageToThisFace:
-                if (result.Type == DieType.Damage)
-                    result.Damage += Mathf.Max(0, entry.param);
+            {
+                var amount = Mathf.Max(0, entry.param);
+                if (amount <= 0) break;
+                // Real pending damage source of truth (works for all die types).
+                combat.AddBonusDamageFromAction(amount);
+                state.AddedDamageBonusSoFar += amount;
+                // Flyout-only line so flyout-increment UI shows the gain immediately, then resyncs to combat truth.
+                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                {
+                    PoolKey = PoolRowKey.FromDieType(DieType.Damage),
+                    Amount = amount,
+                    Icon = GameIconCatalog.GetElementIcon(DieType.Damage),
+                    VisualFlyoutOnly = true
+                });
                 break;
+            }
 
             case GemEffectKind.MultiplyPhysicalDamageThisFace:
-                if (result.Type != DieType.Damage || result.Damage <= 0)
-                    break;
+            {
                 var mult = entry.param < 2 ? 2 : entry.param;
-                result.Damage *= mult;
+                state.PendingDamageMultiplier *= mult;
                 break;
+            }
 
-            case GemEffectKind.FreePlayerRollsForThisDie:
+            case GemEffectKind.FreeFirstRollForThisDie:
+                if (sourceDie != null && combat.TryConsumeGemNoPowerOnMatchCharge(sourceDie))
+                    result.PowerContributionThisResolve = 0;
                 break;
         }
     }
 
     private static void ApplyDeferredGemEffectEntry(
+        DieAssetSO sourceDie,
         GemEffectEntry entry,
         GemSO gem,
         FaceResult result,
         CombatManager combat,
-        GameActionContext ctx)
+        GameActionContext ctx,
+        GemResolveState state)
     {
         switch (entry.kind)
         {
@@ -297,7 +351,6 @@ public static class GemCombatResolver
             }
             case GemEffectKind.AddDamageToThisFace:
             {
-                if (result.Type != DieType.Damage) break;
                 var baseAmount = Mathf.Max(0, entry.param);
                 if (baseAmount <= 0) break;
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
@@ -309,15 +362,16 @@ public static class GemCombatResolver
                     VisualFlyoutOnly = true
                 });
                 combat.AddBonusDamageFromAction(baseAmount);
+                state.AddedDamageBonusSoFar += baseAmount;
                 break;
             }
             case GemEffectKind.GrantExtraRollsThisTurn:
             case GemEffectKind.BonusRollsThisTurnCapped:
-            case GemEffectKind.FreePlayerRollsForThisDie:
+            case GemEffectKind.FreeFirstRollForThisDie:
             case GemEffectKind.MultiplyPhysicalDamageThisFace:
                 // These effects alter roll pipeline behavior and cannot be safely deferred to turn-end.
                 Debug.LogWarning($"Gem '{gem.name}': '{entry.kind}' cannot be deferred; applying immediately.");
-                ApplyImmediateGemEffectEntry(entry, gem, result, combat, ctx);
+                ApplyImmediateGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state);
                 break;
         }
     }

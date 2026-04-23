@@ -10,16 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
-  m_Name: NewGem
-  m_EditorClassIdentifier: Assembly-CSharp::GemSO
-  displayName: 
-  description: 
-  icon: {fileID: 0}
-  rarity: 0
+  m_Name: No Cost Roll Level2
+  m_EditorClassIdentifier: 
+  displayName: No Cost Roll Lv.2
+  description: The first 2 times each combat this die rolls a 6,5, or 4 do not add
+    anything to the Power Pool
+  icon: {fileID: 21300000, guid: 5f30b0e1cbb9632488859d84970e6f4d, type: 3}
+  rarity: 1
   shopGoldPrice: 0
-  level: 1
-  matchFaceValues: 02000000
+  level: 2
+  matchFaceValues: 0600000005000000
   effects:
-  - kind: 0
+  - kind: 11
     param: 2
+    activateImmediately: 1
     burnDefinition: {fileID: 0}

@@ -22,5 +22,5 @@ MonoBehaviour:
   effects:
   - kind: 10
     param: 2
-    activateImmediately: 0
+    activateImmediately: 1
     burnDefinition: {fileID: 0}

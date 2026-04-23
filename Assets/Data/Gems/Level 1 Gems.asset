@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c328c6152c02c8c4798ae70eef877a0a, type: 3}
+  m_Name: Level 1 Gems
+  m_EditorClassIdentifier: Assembly-CSharp::GemLootTableSO
+  rarityConfig: {fileID: 0}
+  allPossibleGems:
+  - {fileID: 11400000, guid: 2c27c280ac039164c9365fbd79a68d1a, type: 2}
+  - {fileID: 11400000, guid: 7ffb880e4d910694682b80034caba86d, type: 2}
+  - {fileID: 11400000, guid: a5704dd8a40d96a48a6e6aecbacafbe7, type: 2}
+  - {fileID: 11400000, guid: d841099fae092cf47acf2bd0b092d338, type: 2}
+  - {fileID: 11400000, guid: 41147f6369dc0e94f8181a6c1d9e5905, type: 2}
+  - {fileID: 11400000, guid: eee52c63cad94bc4e939f7b1a17cda4c, type: 2}
+  - {fileID: 11400000, guid: 3e0d97e299aa8e649b1f991c4d6d641f, type: 2}
+  - {fileID: 11400000, guid: 79d86e30bb967d6448c78dd3d9af0eb6, type: 2}
+  - {fileID: 11400000, guid: e50550c7dc7c1a24982043033fe68fd8, type: 2}
+  - {fileID: 11400000, guid: c0a5bb205a926144bbe8757a9451145b, type: 2}
+  - {fileID: 11400000, guid: 75200b5876be4e9418b4affe1bd5b54e, type: 2}
+  - {fileID: 11400000, guid: d7dcdc1e906562a448a1420da69d4533, type: 2}

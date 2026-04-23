@@ -90,7 +90,8 @@ public class CombatManager : MonoBehaviour
     private readonly List<ValueBasedRollWatcherEntry> _sameTurnValueWatchers = new List<ValueBasedRollWatcherEntry>();
     private readonly List<ValueBasedRollWatcherEntry> _entireCombatValueWatchers = new List<ValueBasedRollWatcherEntry>();
     private List<DieAssetSO> _pendingBatchDiceAssets;
-    private readonly Dictionary<DieAssetSO, int> _gemFreeRollChargesByDie = new Dictionary<DieAssetSO, int>();
+    private readonly Dictionary<DieAssetSO, int> _gemNoPowerOnMatchChargesRemainingByDie = new Dictionary<DieAssetSO, int>();
+    private readonly Dictionary<DieAssetSO, int> _gemExtraRollGrantsThisTurnByDie = new Dictionary<DieAssetSO, int>();
     private int _gemBonusRollChainActivationsThisTurn;
     private int _rollBatchId;
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
@@ -210,6 +211,29 @@ public class CombatManager : MonoBehaviour
         if (_gemBonusRollChainActivationsThisTurn >= cap) return false;
         _gemBonusRollChainActivationsThisTurn++;
         AddRollsRemaining(grantRolls);
+        return true;
+    }
+
+    /// <summary>GrantExtraRollsThisTurn gem: each die can grant at most <paramref name="maxGrantsPerTurnPerDie"/> times per player turn.</summary>
+    public bool TryApplyGemExtraRollsPerDie(DieAssetSO die, int grantRolls, int maxGrantsPerTurnPerDie = 2)
+    {
+        if (die == null || grantRolls <= 0) return false;
+        var cap = Mathf.Max(1, maxGrantsPerTurnPerDie);
+        _gemExtraRollGrantsThisTurnByDie.TryGetValue(die, out var used);
+        if (used >= cap) return false;
+
+        _gemExtraRollGrantsThisTurnByDie[die] = used + 1;
+        AddRollsRemaining(grantRolls);
+        return true;
+    }
+
+    /// <summary>Consumes one "no power on match" charge for this die when available.</summary>
+    public bool TryConsumeGemNoPowerOnMatchCharge(DieAssetSO die)
+    {
+        if (die == null) return false;
+        if (!_gemNoPowerOnMatchChargesRemainingByDie.TryGetValue(die, out var left) || left <= 0)
+            return false;
+        _gemNoPowerOnMatchChargesRemainingByDie[die] = left - 1;
         return true;
     }
 
@@ -353,19 +377,20 @@ public class CombatManager : MonoBehaviour
         NotifyAllStoredActionsPoolUI();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
-        _gemFreeRollChargesByDie.Clear();
+        _gemNoPowerOnMatchChargesRemainingByDie.Clear();
         if (playerData?.currentDeck != null)
         {
             foreach (var die in playerData.currentDeck)
             {
                 if (die == null) continue;
-                var n = die.SumGemFreeRollCombatCharges();
-                if (n > 0)
-                    _gemFreeRollChargesByDie[die] = n;
+                var charges = die.SumGemNoPowerOnMatchCharges();
+                if (charges > 0)
+                    _gemNoPowerOnMatchChargesRemainingByDie[die] = charges;
             }
         }
 
         _gemBonusRollChainActivationsThisTurn = 0;
+        _gemExtraRollGrantsThisTurnByDie.Clear();
 
         BindStatusBars();
 
@@ -459,18 +484,6 @@ public class CombatManager : MonoBehaviour
         _pendingBatchDiceAssets = new List<DieAssetSO>(selectedDice);
         currentBatchIsFirstRollOfTurn = (rollsRemaining == maxRolls);
         rollsRemaining--;
-        if (selectedDice != null && _gemFreeRollChargesByDie.Count > 0)
-        {
-            foreach (var d in selectedDice)
-            {
-                if (d == null) continue;
-                if (_gemFreeRollChargesByDie.TryGetValue(d, out var left) && left > 0)
-                {
-                    _gemFreeRollChargesByDie[d] = left - 1;
-                    rollsRemaining++;
-                }
-            }
-        }
 
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.Rolling);
@@ -702,7 +715,7 @@ public class CombatManager : MonoBehaviour
 
         channeledFaces.Add(result);
         if (!_echoSkipsPowerThisBatch)
-            currentPower += modifiedValue;
+            currentPower += result.PowerContributionThisResolve;
 
         var relicAfterPowerCtx = BuildRelicContext(result);
         relicAfterPowerCtx.RelicPhase = RelicPhases.AfterPowerChangedFromRoll;
@@ -1596,7 +1609,10 @@ public class CombatManager : MonoBehaviour
 
         VictoryRewardBuffer.PendingGold = 0;
         if (activeEnemy != null && activeEnemy.enemyData != null)
+        {
             VictoryRewardBuffer.PendingGold = Mathf.Max(0, activeEnemy.enemyData.goldReward);
+            EnemyBonusRewardResolver.RollAndGrant(activeEnemy.enemyData);
+        }
 
         CombatEvents.OnPlayerVictory?.Invoke();
         return true;
@@ -1643,6 +1659,7 @@ public class CombatManager : MonoBehaviour
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
         _gemBonusRollChainActivationsThisTurn = 0;
+        _gemExtraRollGrantsThisTurnByDie.Clear();
         player.ResetArmor();
         var statusCtx = BuildStatusContext();
         // Player turn starts here.

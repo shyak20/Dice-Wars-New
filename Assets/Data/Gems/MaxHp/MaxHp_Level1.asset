@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
   m_Name: MaxHp_Level1
   m_EditorClassIdentifier: 
-  displayName: "Max HP Lv.1"
-  description: "If this die rolls 1, gain +1 max HP."
-  icon: {fileID: 0}
+  displayName: Max HP Lv.1
+  description: If this die rolls 1, gain +1 max HP.
+  icon: {fileID: 21300000, guid: f970bf50aa1c0394eb8a943e26bea9b8, type: 3}
   rarity: 2
   shopGoldPrice: 0
   level: 1
-  matchFaceValues:
-  - 1
+  matchFaceValues: 01000000
   effects:
   - kind: 7
     param: 1
+    activateImmediately: 0
     burnDefinition: {fileID: 0}

@@ -10,16 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
-  m_Name: FreeRoll_Level3
+  m_Name: No Cost Roll Level3
   m_EditorClassIdentifier: 
-  displayName: "Free Roll Lv.3"
-  description: "First three rolls including this die refund spent roll charges (3 charges per combat)."
-  icon: {fileID: 0}
+  displayName: No Cost Roll Lv.3
+  description: The first 3 times each combat this die rolls a 6,5, or 4 do not add
+    anything to the Power Pool
+  icon: {fileID: 21300000, guid: 0ed336c68aa6de347b595160bf19e7e8, type: 3}
   rarity: 1
   shopGoldPrice: 0
   level: 3
-  matchFaceValues: []
+  matchFaceValues: 060000000500000004000000
   effects:
   - kind: 11
     param: 3
+    activateImmediately: 1
     burnDefinition: {fileID: 0}

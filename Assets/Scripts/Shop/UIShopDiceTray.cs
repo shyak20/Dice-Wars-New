@@ -117,6 +117,18 @@ public class UIShopDiceTray : MonoBehaviour
     {
         if (die == null) return;
 
+        if (_pinnedTooltipDie == die)
+        {
+            _pinnedTooltipDie = null;
+            if (_diceButtonViews.TryGetValue(die, out var selectedView))
+                selectedView.SetSelected(false);
+            if (_hoveredTooltipDie != null)
+                ShowDieTooltip(_hoveredTooltipDie);
+            else
+                HideDieTooltip();
+            return;
+        }
+
         foreach (var kv in _diceButtonViews)
             kv.Value.SetSelected(kv.Key == die);
 

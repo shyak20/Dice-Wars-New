@@ -188,7 +188,7 @@ MonoBehaviour:
       m_HorizontalAdvance: 192
     m_GlyphRect:
       m_X: 0
-      m_Y: 720
+      m_Y: 517
       m_Width: 192
       m_Height: 177
     m_Scale: 1
@@ -197,16 +197,16 @@ MonoBehaviour:
     sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - m_Index: 6
     m_Metrics:
-      m_Width: 187
-      m_Height: 201
+      m_Width: 186
+      m_Height: 170
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 201
-      m_HorizontalAdvance: 187
+      m_HorizontalBearingY: 170
+      m_HorizontalAdvance: 186
     m_GlyphRect:
       m_X: 0
-      m_Y: 517
-      m_Width: 187
-      m_Height: 201
+      m_Y: 696
+      m_Width: 186
+      m_Height: 170
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
@@ -364,7 +364,7 @@ MonoBehaviour:
     sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 5
     x: 0
-    y: 720
+    y: 517
     width: 192
     height: 177
     xOffset: 0
@@ -378,17 +378,17 @@ MonoBehaviour:
     sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 6
     x: 0
-    y: 517
-    width: 187
-    height: 201
+    y: 696
+    width: 186
+    height: 170
     xOffset: 0
-    yOffset: 201
-    xAdvance: 187
+    yOffset: 170
+    xAdvance: 186
     scale: 1
     name: Max HP Icon
     hashCode: -91572025
     unicode: 57350
-    pivot: {x: 93.5, y: 100.5}
+    pivot: {x: 93, y: 85}
     sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 7
     x: 393

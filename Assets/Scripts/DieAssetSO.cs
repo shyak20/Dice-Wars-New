@@ -86,21 +86,20 @@ public class DieAssetSO : ScriptableObject
         return false;
     }
 
-    /// <summary>Total free-roll charges from socketed gems for one combat (sum of <see cref="GemEffectEntry.param"/> on FreePlayerRollsForThisDie rows).</summary>
-    public int SumGemFreeRollCombatCharges()
+    /// <summary>Total charges where a matching roll contributes 0 power (sum of FreeFirstRollForThisDie params across socketed gems).</summary>
+    public int SumGemNoPowerOnMatchCharges()
     {
-        var s = 0;
+        var total = 0;
         foreach (var g in GetSocketedGems())
         {
             if (g?.effects == null) continue;
             foreach (var e in g.effects)
             {
-                if (e != null && e.kind == GemEffectKind.FreePlayerRollsForThisDie)
-                    s += Mathf.Max(0, e.param);
+                if (e != null && e.kind == GemEffectKind.FreeFirstRollForThisDie)
+                    total += Mathf.Max(0, e.param);
             }
         }
-
-        return s;
+        return total;
     }
 
     private void EnsureGemSocketArray()

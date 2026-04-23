@@ -20,6 +20,11 @@ MonoBehaviour:
   maxHealth: 12
   startArmor: 0
   goldReward: 50
+  additionalRewardDrops: []
+  faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
+  dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
+  relicRewardPool: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
+  gemRewardPool: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
   isSequential: 1
   actionCycle:
   - {fileID: 11400000, guid: b0db59302412e6c4a894f589f7afc276, type: 2}

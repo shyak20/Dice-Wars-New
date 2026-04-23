@@ -177,14 +177,25 @@ public class CombatUIController : MonoBehaviour
             currentlySelected.Remove(die);
             if (diceButtonViews.TryGetValue(die, out var view))
                 view.SetSelected(false);
+            if (pinnedTooltipDie == die)
+                pinnedTooltipDie = null;
+            if (hoveredTooltipDie != null)
+                ShowDieTooltip(hoveredTooltipDie);
+            else if (currentlySelected.Count > 0)
+            {
+                pinnedTooltipDie = currentlySelected[currentlySelected.Count - 1];
+                ShowDieTooltip(pinnedTooltipDie);
+            }
+            else
+                HideDieTooltip();
         }
         else
         {
             currentlySelected.Add(die);
             if (diceButtonViews.TryGetValue(die, out var view))
                 view.SetSelected(true);
+            PinTooltipToDie(die);
         }
-        PinTooltipToDie(die);
         if (rollButton != null)
             rollButton.interactable = currentlySelected.Count > 0;
         UpdateNoDiceSelectedIndicator();

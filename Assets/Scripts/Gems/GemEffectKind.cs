@@ -16,6 +16,6 @@ public enum GemEffectKind
     AddDamageToThisFace,
     /// <summary>param = damage multiplier for this resolve (2 = double, 3 = triple).</summary>
     MultiplyPhysicalDamageThisFace,
-    /// <summary>param = number of combat-wide free roll refunds when this die is in a batch (see combat).</summary>
-    FreePlayerRollsForThisDie
+    /// <summary>On matching rolls only: consume one charge and contribute 0 power to the power pool. Param = charges.</summary>
+    FreeFirstRollForThisDie
 }

@@ -10,16 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3a999ab79a646745b06f6c2530addf4, type: 3}
-  m_Name: FreeRoll_Level1
+  m_Name: No Cost Roll Level1
   m_EditorClassIdentifier: 
-  displayName: "Free Roll Lv.1"
-  description: "First roll including this die refunds one spent roll charge (1 charge per combat from this gem)."
-  icon: {fileID: 0}
+  displayName: No Cost Roll Lv.1
+  description: The first time each combat this die rolls a 6,5, or 4 do not add anything
+    to the Power Pool
+  icon: {fileID: 21300000, guid: a13da468118bf7b4e8058205bfe10171, type: 3}
   rarity: 1
   shopGoldPrice: 0
   level: 1
-  matchFaceValues: []
+  matchFaceValues: 06000000
   effects:
   - kind: 11
     param: 1
+    activateImmediately: 1
     burnDefinition: {fileID: 0}
