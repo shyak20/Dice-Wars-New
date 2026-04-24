@@ -101,6 +101,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
             item.Setup(
                 IconForReward(reward),
                 reward.Kind == RolledRewardKind.Relic ? reward.Relic : null,
+                reward.Kind == RolledRewardKind.Gold ? reward.GoldAmount : 0,
                 () => CollectReward(reward));
         }
     }

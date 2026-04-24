@@ -17,5 +17,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
   startingMaxHealth: 30
   maxRollsPerTurn: 3
-  baseMaxPower: 30
+  baseMaxPower: 10
   perfectStrikeBaseMultiplier: 2
