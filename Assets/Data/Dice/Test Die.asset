@@ -25,5 +25,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
   socketedGems:
   - {fileID: 11400000, guid: 8180057d98b156b4b9eaf68dd983dd59, type: 2}
-  - {fileID: 11400000, guid: f76fce3d46429004ea5f502d4a8ae07f, type: 2}
+  - {fileID: 11400000, guid: 02c156175f71c1040a4c9e8d22f1d21a, type: 2}
   maxPowerContribution: 0

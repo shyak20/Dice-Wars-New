@@ -403,10 +403,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   shopGenerator: {fileID: 308379230}
   socketFlow: {fileID: 308379232}
+  gemSocketFlow: {fileID: 0}
   goldHeaderText: {fileID: 1957574316}
   faceSlotsContainer: {fileID: 2127162005}
   diceSlotsContainer: {fileID: 2028850145}
   relicSlotsContainer: {fileID: 1032492668}
+  gemSlotsContainer: {fileID: 0}
   slotPrefab: {fileID: 5065443335808142068, guid: 6a810b911bc01f9408e88bb95f6a0e34, type: 3}
   diceSlotPrefab: {fileID: 2292063834858338779, guid: f48674db220172d409ab2473351d1917, type: 3}
   relicSlotPrefab: {fileID: 7245338440117619034, guid: 106fe02643bb0d4458cfb1b8e0f7cb93, type: 3}
@@ -806,11 +808,13 @@ MonoBehaviour:
   faceLootTable: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
   dieLootTable: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
   relicLootTable: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
+  gemLootTable: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
   defaultFullDiePrice: 100
   preferredElementWeight: 0.7
   faceOfferCount: 3
   diceOfferCount: 2
   relicOfferCount: 2
+  gemOfferCount: 2
   uniqueDicePerShopRefresh: 1
 --- !u!4 &308379231
 Transform:
@@ -2692,6 +2696,8 @@ MonoBehaviour:
   dieTooltipPanel: {fileID: 390486027}
   dieTooltipSlotContainer: {fileID: 66433184}
   dieTooltipSlotPrefab: {fileID: 1861012277056834169, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
+  dieTooltipGemIconContainer: {fileID: 0}
+  dieTooltipGemSlotPrefab: {fileID: 0}
   faceHoverTooltipPanel: {fileID: 812227015}
   faceHoverTitleText: {fileID: 1499482200}
   faceHoverDescriptionText: {fileID: 2099105128}
