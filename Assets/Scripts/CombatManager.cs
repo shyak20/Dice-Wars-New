@@ -56,6 +56,7 @@ public class CombatManager : MonoBehaviour
     private int bonusDamageFromActions;
     private int bonusArmorFromActions;
     private bool bustProtected;
+    private bool _skipPowerOrbFlightForNextSubmitTurn;
     private bool kineticShieldActive;
     private int kineticShieldBonus;
 
@@ -1270,17 +1271,27 @@ public class CombatManager : MonoBehaviour
         CheckBustStatus();
     }
 
-    private void ResolveBust(bool nullifyDamage)
+    private void ResolveBust()
     {
         foreach (var face in channeledFaces)
         {
-            if (nullifyDamage) face.Damage = 0;
-            else face.Armor = 0;
+            face.Damage = 0;
+            face.Armor = 0;
+            if (face.ActionPoolContributions == null) continue;
+            for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+            {
+                var c = face.ActionPoolContributions[i];
+                c.Amount = 0;
+                face.ActionPoolContributions[i] = c;
+            }
         }
-        if (nullifyDamage) bonusDamageFromActions = 0;
-        else { bonusArmorFromActions = 0; kineticShieldBonus = 0; }
-        ApplyBustToPendingApplyStatusPoolContributions(channeledFaces, nullifyDamage);
+
+        bonusDamageFromActions = 0;
+        bonusArmorFromActions = 0;
+        kineticShieldBonus = 0;
+
         NotifyAllStoredActionsPoolUI();
+        _skipPowerOrbFlightForNextSubmitTurn = true;
         SubmitTurn();
     }
 
@@ -1333,34 +1344,6 @@ public class CombatManager : MonoBehaviour
         return 0;
     }
 
-    /// <summary>Bust choice removes pending enemy-target applies with damage, or player-target applies with armor.</summary>
-    private static void ApplyBustToPendingApplyStatusPoolContributions(List<FaceResult> faces, bool nullifyDamage)
-    {
-        if (faces == null) return;
-        foreach (var face in faces)
-        {
-            for (var i = 0; i < face.ActionPoolContributions.Count; i++)
-            {
-                var c = face.ActionPoolContributions[i];
-                var src = c.PoolSourceAction;
-                var remove = false;
-                if (src?.StatusEffectDefinition != null)
-                {
-                    var target = src.StatusEffectDefinition.target;
-                    remove = nullifyDamage ? target == StatusEffectTarget.Enemy : target == StatusEffectTarget.Player;
-                }
-
-                if (nullifyDamage && c.CancelOnBustNullifyDamage)
-                    remove = true;
-                if (!nullifyDamage && c.CancelOnBustNullifyArmor)
-                    remove = true;
-                if (!remove) continue;
-                c.Amount = 0;
-                face.ActionPoolContributions[i] = c;
-            }
-        }
-    }
-
     private static Dictionary<ApplyStatusEffectAction, int> BuildPendingApplyStackOverrides(FaceResult face)
     {
         if (face?.Actions == null) return null;
@@ -1411,11 +1394,19 @@ public class CombatManager : MonoBehaviour
         int pendingDefense = GetPendingDefense();
 
         bool enemyDamageLine = pendingAttack > 0 || _turnRegistry.BurnAppliedThisTurn > 0;
+        bool skipOrbFlightThisSubmit = _skipPowerOrbFlightForNextSubmitTurn;
+        _skipPowerOrbFlightForNextSubmitTurn = false;
+
         bool usePowerOrb = powerOrbVisual != null && activeEnemy != null && player != null &&
-                           (currentPower > 0 || pendingDefense > 0 || enemyDamageLine);
+                           (currentPower > 0 || pendingDefense > 0 || enemyDamageLine) &&
+                           !skipOrbFlightThisSubmit;
 
         if (!usePowerOrb)
+        {
+            if (skipOrbFlightThisSubmit && powerOrbVisual != null)
+                powerOrbVisual.NotifyBustTurnResolutionWithoutOrbFlight();
             ApplyPlayerTurnCombatResults(pendingAttack, pendingDefense);
+        }
         else
         {
             bool flyOrbToEnemy = enemyDamageLine;

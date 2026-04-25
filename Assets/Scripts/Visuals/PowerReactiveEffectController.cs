@@ -76,6 +76,10 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     [Header("Target")]
     [SerializeField] private Transform effectTransform;
 
+    [Header("Bust presentation (optional)")]
+    [Tooltip("Shown while the bust panel is up; turned off when bust resolves. Idle orb motion and wave VFX stay suppressed until the turn-end orb fly finishes (or the next player turn if no fly runs).")]
+    [SerializeField] private GameObject bustAlternateEffectRoot;
+
     private Vector3 _baseLocalPosition;
     private int _currentCombatPower;
     private float _targetNormalizedPower;
@@ -83,6 +87,10 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     private Color _baseSpriteColor = Color.white;
     private bool _isFlyingToEnemy;
     private bool _postHitHiddenAtEnemy;
+    /// <summary>Hides idle power-driven motion (not during <see cref="RunFlightToWorldAnchor"/>). Set on bust, cleared when flight ends or player turn restarts.</summary>
+    private bool _idlePowerVisualSuppressedAfterBust;
+    private bool _bustAlternatePresentationActive;
+    private bool _bustAlternateWasActiveBefore;
     private int _waveRatePropertyId;
     private int _flareBrightSizePropertyId;
     private int _sphereTextureSpeedPropertyId;
@@ -148,12 +156,18 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     {
         CombatEvents.OnPowerChanged += HandlePowerChanged;
         CombatEvents.OnPlayerTurnStarted += HandlePlayerTurnStarted;
+        CombatEvents.OnBustOccurred += HandleBustOccurred;
+        CombatEvents.OnBustResolved += HandleBustResolved;
     }
 
     private void OnDisable()
     {
         CombatEvents.OnPowerChanged -= HandlePowerChanged;
         CombatEvents.OnPlayerTurnStarted -= HandlePlayerTurnStarted;
+        CombatEvents.OnBustOccurred -= HandleBustOccurred;
+        CombatEvents.OnBustResolved -= HandleBustResolved;
+        RestoreBustAlternateIfOverridden();
+        _idlePowerVisualSuppressedAfterBust = false;
     }
 
     /// <summary>Flies the orb to a world anchor (enemy hit point or player support UI). Used by <see cref="CombatManager"/> after turn resolution.</summary>
@@ -165,7 +179,10 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             throw new System.InvalidOperationException("PowerReactiveEffectController.RunFlightToWorldAnchor: anchor is null.");
 
         if (!allowWhenCombatPowerZero && _currentCombatPower <= 0)
+        {
+            ClearIdlePowerVisualSuppressionAfterBustFlow();
             yield break;
+        }
 
         _isFlyingToEnemy = true;
         if (forceStartingVisibleScale)
@@ -209,6 +226,7 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         _isFlyingToEnemy = false;
         SetUniformWorldScale(effectTransform, 0f);
         _postHitHiddenAtEnemy = true;
+        ClearIdlePowerVisualSuppressionAfterBustFlow();
     }
 
     /// <summary>Convenience: flies to <paramref name="enemy"/>'s power-orb anchor; requires combat power &gt; 0 unless you use <see cref="RunFlightToWorldAnchor"/>.</summary>
@@ -229,8 +247,50 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     {
         _isFlyingToEnemy = false;
         _postHitHiddenAtEnemy = false;
+        _idlePowerVisualSuppressedAfterBust = false;
         effectTransform.localPosition = _baseLocalPosition;
         _displayedNormalizedPower = _targetNormalizedPower;
+    }
+
+    private void HandleBustOccurred(int currentDmg, int currentArm)
+    {
+        _idlePowerVisualSuppressedAfterBust = true;
+        if (bustAlternateEffectRoot == null)
+            return;
+        _bustAlternateWasActiveBefore = bustAlternateEffectRoot.activeSelf;
+        bustAlternateEffectRoot.SetActive(true);
+        _bustAlternatePresentationActive = true;
+    }
+
+    private void HandleBustResolved()
+    {
+        RestoreBustAlternateIfOverridden();
+    }
+
+    private void RestoreBustAlternateIfOverridden()
+    {
+        if (!_bustAlternatePresentationActive || bustAlternateEffectRoot == null)
+            return;
+        bustAlternateEffectRoot.SetActive(_bustAlternateWasActiveBefore);
+        _bustAlternatePresentationActive = false;
+    }
+
+    private void ClearIdlePowerVisualSuppressionAfterBustFlow()
+    {
+        _idlePowerVisualSuppressedAfterBust = false;
+    }
+
+    /// <summary>
+    /// Called when the player bust is resolved and <see cref="CombatManager"/> skips the orb flight for that submit.
+    /// Matches the visual end-state after <see cref="RunFlightToWorldAnchor"/> without running the fly curve.
+    /// </summary>
+    public void NotifyBustTurnResolutionWithoutOrbFlight()
+    {
+        _isFlyingToEnemy = false;
+        ClearIdlePowerVisualSuppressionAfterBustFlow();
+        effectTransform.localPosition = _baseLocalPosition;
+        SetUniformWorldScale(effectTransform, 0f);
+        _postHitHiddenAtEnemy = true;
     }
 
     private void Update()
@@ -243,6 +303,19 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
 
         if (_isFlyingToEnemy)
             return;
+
+        if (_idlePowerVisualSuppressedAfterBust)
+        {
+            effectTransform.localPosition = _baseLocalPosition;
+            SetUniformWorldScale(effectTransform, 0f);
+            if (pulseSpriteRenderer != null)
+            {
+                var c = _baseSpriteColor;
+                c.a = 0f;
+                pulseSpriteRenderer.color = c;
+            }
+            return;
+        }
 
         _displayedNormalizedPower = StepDisplayedPowerTowardTarget(_displayedNormalizedPower, _targetNormalizedPower, baseScaleTransitionTime);
 

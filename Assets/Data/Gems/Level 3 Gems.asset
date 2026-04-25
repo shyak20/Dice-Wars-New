@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c328c6152c02c8c4798ae70eef877a0a, type: 3}
   m_Name: Level 3 Gems
   m_EditorClassIdentifier: Assembly-CSharp::GemLootTableSO
-  rarityConfig: {fileID: 0}
+  rarityConfig: {fileID: 11400000, guid: 5cc7f86d596871f409d01b2530a907f1, type: 2}
   allPossibleGems:
   - {fileID: 11400000, guid: 2c27c280ac039164c9365fbd79a68d1a, type: 2}
   - {fileID: 11400000, guid: 7ffb880e4d910694682b80034caba86d, type: 2}

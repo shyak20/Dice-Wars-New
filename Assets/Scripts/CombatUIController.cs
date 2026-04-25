@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -30,9 +31,11 @@ public class CombatUIController : MonoBehaviour
     public TMP_Text poolText;
 
     [Header("Bust Panel")]
+    [Tooltip("Shown when the player busts; stays visible for bustResolveAfterSeconds, then bust clears automatically.")]
     public GameObject bustPanel;
-    public Button nullifyDamageButton; // Renamed from attack
-    public Button nullifyArmorButton;  // Renamed from defense
+    [SerializeField] [Min(0f)] private float bustResolveAfterSeconds = 2f;
+
+    private Coroutine _bustResolveRoutine;
 
     [Header("Die Tooltip (Fight Scene)")]
     [SerializeField] private GameObject dieTooltipPanel;
@@ -79,6 +82,7 @@ public class CombatUIController : MonoBehaviour
 
     private void OnDisable()
     {
+        StopBustResolveRoutine();
         CombatEvents.OnPowerChanged -= UpdatePowerUI;
         CombatEvents.OnStoredActionsPoolUpdated -= UpdateStoredActionsPoolSummaryText;
         CombatEvents.OnBustOccurred -= ShowBustPanel;
@@ -534,17 +538,35 @@ public class CombatUIController : MonoBehaviour
 
     private void ShowBustPanel(int currentDmg, int currentArm)
     {
-        if (bustPanel == null) return;
-        bustPanel.SetActive(true);
+        StopBustResolveRoutine();
+        _bustResolveRoutine = StartCoroutine(CoBustDisplayThenResolve());
+    }
 
-        nullifyDamageButton.gameObject.SetActive(currentDmg > 0);
-        nullifyArmorButton.gameObject.SetActive(currentArm > 0);
+    private void StopBustResolveRoutine()
+    {
+        if (_bustResolveRoutine != null)
+        {
+            StopCoroutine(_bustResolveRoutine);
+            _bustResolveRoutine = null;
+        }
+        if (bustPanel != null)
+            bustPanel.SetActive(false);
+    }
 
-        nullifyDamageButton.onClick.RemoveAllListeners();
-        nullifyArmorButton.onClick.RemoveAllListeners();
+    private IEnumerator CoBustDisplayThenResolve()
+    {
+        if (bustPanel != null)
+            bustPanel.SetActive(true);
 
-        nullifyDamageButton.onClick.AddListener(() => { CombatEvents.OnBustResolved?.Invoke(true); bustPanel.SetActive(false); });
-        nullifyArmorButton.onClick.AddListener(() => { CombatEvents.OnBustResolved?.Invoke(false); bustPanel.SetActive(false); });
+        if (bustResolveAfterSeconds > 0f)
+            yield return new WaitForSeconds(bustResolveAfterSeconds);
+
+        CombatEvents.OnBustResolved?.Invoke();
+
+        if (bustPanel != null)
+            bustPanel.SetActive(false);
+
+        _bustResolveRoutine = null;
     }
 
     private void UpdateRollsUI(int remaining, int max)

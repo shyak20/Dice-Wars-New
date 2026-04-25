@@ -81,7 +81,8 @@ public static class CombatEvents
 
     // Bust Logic
     public static Action<int, int> OnBustOccurred;
-    public static Action<bool> OnBustResolved;
+    /// <summary>Player confirmed bust resolution: all channeled element pool rows are cleared, then turn submits.</summary>
+    public static Action OnBustResolved;
 
     // Rolls
     public static Action<int, int> OnRollsRemainingChanged; // (remaining, max)
