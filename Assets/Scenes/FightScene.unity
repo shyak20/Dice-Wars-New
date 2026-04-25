@@ -4613,9 +4613,9 @@ MonoBehaviour:
   waitBeforeFlySeconds: 1.5
   flyDurationSeconds: 1.2
   delayBetweenDiceActivationsSeconds: 0.5
-  selfLitPulseDurationSeconds: 0.5
-  shakeDurationSeconds: 0.5
-  shakeAmplitude: 0.1
+  selfLitPulseDurationSeconds: 1.5
+  shakeDurationSeconds: 1.5
+  shakeAmplitude: 0
   flyEase:
     serializedVersion: 2
     m_Curve:
