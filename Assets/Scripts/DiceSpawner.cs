@@ -37,6 +37,14 @@ public class DiceSpawner : MonoBehaviour
     /// <summary>Copy of spawned dice for this batch (reroll UI / physics).</summary>
     public List<GameObject> GetActiveDiceSnapshot() => new List<GameObject>(activeDiceModels);
 
+    /// <summary>Physical instance for this batch index (same order as <see cref="DiceRoller.BatchIndex"/>).</summary>
+    public GameObject GetActiveDieGameObject(int batchIndex)
+    {
+        if (batchIndex < 0 || batchIndex >= activeDiceModels.Count)
+            return null;
+        return activeDiceModels[batchIndex];
+    }
+
     /// <summary>Spawn order index for the active batch (matches <see cref="DiceRoller.BatchIndex"/>).</summary>
     public int GetIndexOfActiveDie(GameObject die)
     {

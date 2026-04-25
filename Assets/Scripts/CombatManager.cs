@@ -92,7 +92,11 @@ public class CombatManager : MonoBehaviour
     private List<DieAssetSO> _pendingBatchDiceAssets;
     private readonly Dictionary<DieAssetSO, int> _gemNoPowerOnMatchChargesRemainingByDie = new Dictionary<DieAssetSO, int>();
     private readonly Dictionary<DieAssetSO, int> _gemExtraRollGrantsThisTurnByDie = new Dictionary<DieAssetSO, int>();
-    private int _gemBonusRollChainActivationsThisTurn;
+    /// <summary>Per die: how many times <see cref="TryScheduleGemBatchRandomRerollsSkipPower"/> succeeded this roll batch (cleared when a new batch starts).</summary>
+    private readonly Dictionary<DieAssetSO, int> _gemBonusRollChainActivationsByDieThisBatch = new Dictionary<DieAssetSO, int>();
+    private readonly HashSet<int> _gemScheduledBatchRerollIndices = new HashSet<int>();
+    private readonly HashSet<int> _noPowerOnNextGatherCommit = new HashSet<int>();
+    private readonly HashSet<int> _gemBatchRerollIndicesInFlight = new HashSet<int>();
     private int _rollBatchId;
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
     private int _faceResolveSequence;
@@ -202,15 +206,49 @@ public class CombatManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Legendary roll-chain gem: grant extra rolls this turn, at most <paramref name="maxActivationsPerTurn"/> times per player turn.
+    /// Gem: pick up to <paramref name="otherDiceCount"/> random dice later in this batch's gather order, rethrow them for free,
+    /// and their next committed face contributes 0 power. Each <paramref name="triggerDie"/> can proc at most
+    /// <paramref name="maxActivationsPerRoll"/> times per roll batch. Rerolls run during gather before those indices commit.
     /// </summary>
-    public bool TryApplyGemBonusRollChain(int grantRolls, int maxActivationsPerTurn)
+    public bool TryScheduleGemBatchRandomRerollsSkipPower(
+        DieAssetSO triggerDie,
+        int gatherIndex,
+        int otherDiceCount,
+        int maxActivationsPerRoll = 3)
     {
-        if (grantRolls <= 0) return false;
-        var cap = maxActivationsPerTurn > 0 ? maxActivationsPerTurn : 3;
-        if (_gemBonusRollChainActivationsThisTurn >= cap) return false;
-        _gemBonusRollChainActivationsThisTurn++;
-        AddRollsRemaining(grantRolls);
+        if (triggerDie == null || spawner == null) return false;
+        if (otherDiceCount <= 0) return false;
+        if (expectedDiceCount <= 0 || gatherIndex < 0 || gatherIndex >= expectedDiceCount) return false;
+
+        var cap = maxActivationsPerRoll > 0 ? maxActivationsPerRoll : 3;
+        _gemBonusRollChainActivationsByDieThisBatch.TryGetValue(triggerDie, out var used);
+        if (used >= cap) return false;
+
+        var candidates = new List<int>();
+        for (var j = gatherIndex + 1; j < expectedDiceCount; j++)
+        {
+            if (!_gemBatchRerollIndicesInFlight.Contains(j))
+                candidates.Add(j);
+        }
+
+        if (candidates.Count == 0) return false;
+
+        _gemBonusRollChainActivationsByDieThisBatch[triggerDie] = used + 1;
+
+        var pick = Mathf.Min(otherDiceCount, candidates.Count);
+        for (var s = 0; s < pick; s++)
+        {
+            var r = UnityEngine.Random.Range(s, candidates.Count);
+            (candidates[s], candidates[r]) = (candidates[r], candidates[s]);
+        }
+
+        for (var k = 0; k < pick; k++)
+        {
+            var idx = candidates[k];
+            _gemScheduledBatchRerollIndices.Add(idx);
+            _gemBatchRerollIndicesInFlight.Add(idx);
+        }
+
         return true;
     }
 
@@ -389,7 +427,10 @@ public class CombatManager : MonoBehaviour
             }
         }
 
-        _gemBonusRollChainActivationsThisTurn = 0;
+        _gemBonusRollChainActivationsByDieThisBatch.Clear();
+        _gemScheduledBatchRerollIndices.Clear();
+        _noPowerOnNextGatherCommit.Clear();
+        _gemBatchRerollIndicesInFlight.Clear();
         _gemExtraRollGrantsThisTurnByDie.Clear();
 
         BindStatusBars();
@@ -473,6 +514,10 @@ public class CombatManager : MonoBehaviour
     {
         if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
         _rollBatchId++;
+        _gemBonusRollChainActivationsByDieThisBatch.Clear();
+        _gemScheduledBatchRerollIndices.Clear();
+        _noPowerOnNextGatherCommit.Clear();
+        _gemBatchRerollIndicesInFlight.Clear();
         _pendingRerollGrants = 0;
         _echoSkipsPowerThisBatch = player != null &&
                                    player.StatusEffects.TryConsumeEchoPowerSkipForNextRollBatch(BuildStatusContext());
@@ -593,6 +638,8 @@ public class CombatManager : MonoBehaviour
         var batchGatherStart = channeledFaces.Count;
         for (var i = 0; i < expectedDiceCount; i++)
         {
+            yield return CoDrainGemScheduledRerolls();
+
             var f = _pendingTopFaceByDieIndex[i];
             var t = _pendingDieSourceByIndex[i];
             if (f == null)
@@ -604,7 +651,9 @@ public class CombatManager : MonoBehaviour
             var dieAsset = _pendingBatchDiceAssets != null && i < _pendingBatchDiceAssets.Count
                 ? _pendingBatchDiceAssets[i]
                 : null;
-            CommitResolvedRoll(f, t, dieAsset);
+            var skipPower = _noPowerOnNextGatherCommit.Remove(i);
+            CommitResolvedRoll(f, t, dieAsset, i, skipPower);
+            yield return CoDrainGemScheduledRerolls();
         }
 
         QueueAddPowerChoicesAfterBatchGather(batchGatherStart, channeledFaces.Count);
@@ -653,8 +702,49 @@ public class CombatManager : MonoBehaviour
         return n;
     }
 
-    private void CommitResolvedRoll(DieFaceSO face, Transform dieWorldSource, DieAssetSO sourceDieAsset)
+    private IEnumerator CoDrainGemScheduledRerolls()
     {
+        while (_gemScheduledBatchRerollIndices.Count > 0)
+        {
+            var batch = new List<int>(_gemScheduledBatchRerollIndices);
+            _gemScheduledBatchRerollIndices.Clear();
+
+            foreach (var j in batch)
+            {
+                if (j < 0 || j >= expectedDiceCount) continue;
+                if (_pendingTopFaceByDieIndex == null || j >= _pendingTopFaceByDieIndex.Length) continue;
+
+                var go = spawner != null ? spawner.GetActiveDieGameObject(j) : null;
+                if (go == null)
+                {
+                    Debug.LogError($"CombatManager: Gem batch reroll — no active die GameObject for batch index {j}.");
+                    _gemBatchRerollIndicesInFlight.Remove(j);
+                    continue;
+                }
+
+                _pendingTopFaceByDieIndex[j] = null;
+                _pendingDieSourceByIndex[j] = null;
+                _noPowerOnNextGatherCommit.Add(j);
+                spawner.RerollDiePhysics(go);
+            }
+
+            yield return new WaitUntil(() =>
+            {
+                if (_pendingTopFaceByDieIndex == null) return true;
+                foreach (var j in batch)
+                {
+                    if (j < 0 || j >= _pendingTopFaceByDieIndex.Length) continue;
+                    if (_pendingTopFaceByDieIndex[j] == null) return false;
+                }
+
+                return true;
+            });
+        }
+    }
+
+    private void CommitResolvedRoll(DieFaceSO face, Transform dieWorldSource, DieAssetSO sourceDieAsset, int batchGatherIndex, bool skipPowerContribution)
+    {
+        _gemBatchRerollIndicesInFlight.Remove(batchGatherIndex);
         _faceResolveSequence++;
 
         bool kineticArmorThisRoll = kineticShieldActive;
@@ -684,7 +774,8 @@ public class CombatManager : MonoBehaviour
         }
 
         result.DieSource = dieWorldSource;
-        result.PowerContributionThisResolve = _echoSkipsPowerThisBatch ? 0 : modifiedValue;
+        result.PowerContributionThisResolve =
+            (_echoSkipsPowerThisBatch || skipPowerContribution) ? 0 : modifiedValue;
         result.KineticShieldBonusContribution = kineticArmorThisRoll ? 1 : 0;
 
         ApplyQueuedNextRollMultiplier(result, _turnRegistry);
@@ -705,7 +796,7 @@ public class CombatManager : MonoBehaviour
         RelicActionRunner.ExecuteAllRelics(relicModifyCtx);
 
         if (sourceDieAsset != null)
-            GemCombatResolver.ApplySocketedGems(sourceDieAsset, result, this);
+            GemCombatResolver.ApplySocketedGems(sourceDieAsset, result, this, batchGatherIndex);
 
         ApplyValueBasedRollWatchersArmorDamage(result);
 
@@ -1658,7 +1749,10 @@ public class CombatManager : MonoBehaviour
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
-        _gemBonusRollChainActivationsThisTurn = 0;
+        _gemBonusRollChainActivationsByDieThisBatch.Clear();
+        _gemScheduledBatchRerollIndices.Clear();
+        _noPowerOnNextGatherCommit.Clear();
+        _gemBatchRerollIndicesInFlight.Clear();
         _gemExtraRollGrantsThisTurnByDie.Clear();
         player.ResetArmor();
         var statusCtx = BuildStatusContext();

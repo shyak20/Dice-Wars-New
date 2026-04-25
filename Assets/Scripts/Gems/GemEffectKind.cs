@@ -7,8 +7,8 @@ public enum GemEffectKind
     ApplyBurnToEnemy,
     /// <summary>Add to the power meter (can exceed max toward bust).</summary>
     IncreasePowerMeter,
-    /// <summary>+param rolls this turn; at most 3 activations per player turn (legendary chain cap).</summary>
-    BonusRollsThisTurnCapped,
+    /// <summary>param = count of other dice (later in batch gather order) to throw again for free; their new face adds no power. Max 3 procs per die per roll batch.</summary>
+    RandomBatchRerollOtherDiceNoPower,
     CleanseRandomDebuff,
     GrantGold,
     AddMaxHpOnly,

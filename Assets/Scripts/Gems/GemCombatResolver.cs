@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Applies socketed <see cref="GemSO"/> when a die resolves a face.</summary>
 public static class GemCombatResolver
 {
-    const int DefaultBonusRollChainCapPerTurn = 3;
+    const int DefaultGemBatchRerollProcCapPerRoll = 3;
     const string GemPoolRowBurn = "Gem Burn";
     const string GemPoolRowHeal = "Gem Heal";
     const string GemPoolRowCleanse = "Gem Cleanse";
@@ -20,7 +20,7 @@ public static class GemCombatResolver
         public int PendingDamageMultiplier = 1;
     }
 
-    public static void ApplySocketedGems(DieAssetSO die, FaceResult result, CombatManager combat)
+    public static void ApplySocketedGems(DieAssetSO die, FaceResult result, CombatManager combat, int batchGatherIndex)
     {
         if (die == null || result == null || combat == null)
             return;
@@ -32,13 +32,13 @@ public static class GemCombatResolver
                 continue;
             if (!gem.MatchesRolledValue(result.Value))
                 continue;
-            ApplyGemEffects(die, gem, result, combat, state);
+            ApplyGemEffects(die, gem, result, combat, state, batchGatherIndex);
         }
 
         FinalizePendingDamageMultiplier(result, combat, state);
     }
 
-    private static void ApplyGemEffects(DieAssetSO sourceDie, GemSO gem, FaceResult result, CombatManager combat, GemResolveState state)
+    private static void ApplyGemEffects(DieAssetSO sourceDie, GemSO gem, FaceResult result, CombatManager combat, GemResolveState state, int batchGatherIndex)
     {
         if (gem.effects == null || gem.effects.Count == 0)
             return;
@@ -50,9 +50,9 @@ public static class GemCombatResolver
             if (entry == null)
                 continue;
             if (entry.activateImmediately)
-                ApplyImmediateGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state);
+                ApplyImmediateGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state, batchGatherIndex);
             else
-                ApplyDeferredGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state);
+                ApplyDeferredGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state, batchGatherIndex);
         }
     }
 
@@ -89,7 +89,8 @@ public static class GemCombatResolver
         FaceResult result,
         CombatManager combat,
         GameActionContext ctx,
-        GemResolveState state)
+        GemResolveState state,
+        int batchGatherIndex)
     {
         switch (entry.kind)
         {
@@ -118,8 +119,12 @@ public static class GemCombatResolver
                 combat.AddResonancePower(entry.param);
                 break;
 
-            case GemEffectKind.BonusRollsThisTurnCapped:
-                combat.TryApplyGemBonusRollChain(Mathf.Max(0, entry.param), DefaultBonusRollChainCapPerTurn);
+            case GemEffectKind.RandomBatchRerollOtherDiceNoPower:
+                combat.TryScheduleGemBatchRandomRerollsSkipPower(
+                    sourceDie,
+                    batchGatherIndex,
+                    Mathf.Max(0, entry.param),
+                    DefaultGemBatchRerollProcCapPerRoll);
                 break;
 
             case GemEffectKind.CleanseRandomDebuff:
@@ -192,7 +197,8 @@ public static class GemCombatResolver
         FaceResult result,
         CombatManager combat,
         GameActionContext ctx,
-        GemResolveState state)
+        GemResolveState state,
+        int batchGatherIndex)
     {
         switch (entry.kind)
         {
@@ -366,12 +372,12 @@ public static class GemCombatResolver
                 break;
             }
             case GemEffectKind.GrantExtraRollsThisTurn:
-            case GemEffectKind.BonusRollsThisTurnCapped:
+            case GemEffectKind.RandomBatchRerollOtherDiceNoPower:
             case GemEffectKind.FreeFirstRollForThisDie:
             case GemEffectKind.MultiplyPhysicalDamageThisFace:
                 // These effects alter roll pipeline behavior and cannot be safely deferred to turn-end.
                 Debug.LogWarning($"Gem '{gem.name}': '{entry.kind}' cannot be deferred; applying immediately.");
-                ApplyImmediateGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state);
+                ApplyImmediateGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state, batchGatherIndex);
                 break;
         }
     }
