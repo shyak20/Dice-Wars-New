@@ -24,14 +24,14 @@ MonoBehaviour:
   gridWidth: 5
   gridHeight: 3
   moveLimit: 10
-  eliteMinOnMap: 1
+  eliteMinOnMap: 2
   eliteMaxOnMap: 2
   shopMinOnMap: 1
-  shopMaxOnMap: 1
-  shrineMinOnMap: 1
-  shrineMaxOnMap: 1
+  shopMaxOnMap: 2
+  shrineMinOnMap: 2
+  shrineMaxOnMap: 2
   unknownMinOnMap: 1
-  unknownMaxOnMap: 2
+  unknownMaxOnMap: 1
   treasureMinOnMap: 1
   treasureMaxOnMap: 1
   eliteMinStepsFromStart: 2
