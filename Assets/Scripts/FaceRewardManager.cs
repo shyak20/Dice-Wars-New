@@ -5,11 +5,11 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// Orchestrates reward flow: face picker → die disambiguation (if needed) → face swap overlay.
+/// Orchestrates reward flow: single-screen picker + deck tooltip-based face replacement.
 /// </summary>
 public class FaceRewardManager : MonoBehaviour
 {
-    [Header("Views (Phases 2–4)")]
+    [Header("Views")]
     [SerializeField] private FacePickerView facePickerView;
     [SerializeField] private DieDisambiguationView dieDisambiguationView;
     [SerializeField] private FaceSwapOverlayView faceSwapOverlayView;
@@ -26,8 +26,8 @@ public class FaceRewardManager : MonoBehaviour
 
     private void Awake()
     {
-        if (facePickerView == null || dieDisambiguationView == null || faceSwapOverlayView == null || lootTable == null)
-            Debug.LogError("FaceRewardManager: Missing references (FacePicker, DieDisambiguation, FaceSwapOverlay, loot table).");
+        if (facePickerView == null || lootTable == null)
+            Debug.LogError("FaceRewardManager: Missing references (FacePicker, loot table).");
     }
 
     public void StartFaceReward()
@@ -41,7 +41,7 @@ public class FaceRewardManager : MonoBehaviour
         var preferredTypes = new HashSet<DieType>(
             PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
         var options = lootTable.GetRandomRewards(3, preferredTypes);
-        facePickerView.Show(options, OnFaceChosen);
+        facePickerView.Show(options, OnFaceChosen, OnReplacementSlotChosen);
         gameObject.SetActive(true);
     }
 
@@ -67,6 +67,7 @@ public class FaceRewardManager : MonoBehaviour
         facePickerView.Show(
             options,
             OnFaceChosen,
+            OnReplacementSlotChosen,
             () =>
             {
                 gameObject.SetActive(false);
@@ -84,37 +85,37 @@ public class FaceRewardManager : MonoBehaviour
     {
         chosenFace = face;
         var matchingDice = PlayerInventory.GetDiceMatchingFace(PlayerDataContainer.Instance.RuntimeData, face);
-
         if (matchingDice.Count == 0)
         {
-            Debug.LogWarning(
-                "FaceRewardManager: No dice in the current deck match this face's element; closing reward flow without swapping.");
+            Debug.LogWarning("FaceRewardManager: No dice match the selected face element; closing reward flow.");
             StartCoroutine(CloseAfterDelay());
-            return;
         }
-        if (matchingDice.Count == 1)
-        {
-            OnDieChosen(matchingDice[0]);
-            return;
-        }
-
-        dieDisambiguationView.Show(matchingDice, OnDieChosen);
     }
 
-    private void OnDieChosen(DieAssetSO die)
+    private void OnReplacementSlotChosen(DieAssetSO die, int slotIndex)
     {
+        if (die == null || chosenFace == null)
+            return;
         chosenDie = die;
-        if (!faceSwapOverlayView.Show(die, chosenFace, OnSwapCommitted))
-            StartCoroutine(CloseAfterDelay());
-    }
 
-    private void OnSwapCommitted()
-    {
+        try
+        {
+            chosenDie.SwapFace(slotIndex, chosenFace);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            return;
+        }
+
         StartCoroutine(CloseAfterDelay());
     }
 
     private IEnumerator CloseAfterDelay()
     {
+        if (facePickerView != null)
+            facePickerView.Hide();
+
         if (closeDelay > 0f)
             yield return new WaitForSeconds(closeDelay);
 

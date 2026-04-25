@@ -49,6 +49,8 @@ public class CombatUIController : MonoBehaviour
     [SerializeField] private GameObject statusHoverTooltipPanel;
     [SerializeField] private TMP_Text statusHoverTitleText;
     [SerializeField] private TMP_Text statusHoverDescriptionText;
+    [Header("Generic Tooltip Presenter (preferred)")]
+    [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
 
     private Dictionary<DieAssetSO, DiceTrayButtonView> diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
     private Dictionary<DieAssetSO, Button> diceButtons = new Dictionary<DieAssetSO, Button>();
@@ -243,6 +245,13 @@ public class CombatUIController : MonoBehaviour
 
     private void ShowDieTooltip(DieAssetSO die)
     {
+        if (dieTooltipOverlay != null)
+        {
+            tooltipShownForDie = die;
+            dieTooltipOverlay.ShowDie(die, false);
+            return;
+        }
+
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
 
@@ -329,6 +338,13 @@ public class CombatUIController : MonoBehaviour
 
     private void HideDieTooltip()
     {
+        if (dieTooltipOverlay != null)
+        {
+            tooltipShownForDie = null;
+            dieTooltipOverlay.Hide();
+            return;
+        }
+
         tooltipShownForDie = null;
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);

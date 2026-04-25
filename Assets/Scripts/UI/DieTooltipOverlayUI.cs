@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -5,185 +6,40 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// Read-only dice tray for the shop: same tray prefabs and die/face tooltip behavior as <see cref="CombatUIController"/>.
-/// Wire the same tooltip panel hierarchy as the fight scene (or a shop copy). Refresh is driven by <see cref="UIShopWindow"/>.
+/// Generic die tooltip presenter (faces grid + gem sockets + face/gem/status hover texts).
+/// Reusable across fight, shop, rewards, and other screens.
 /// </summary>
-public class UIShopDiceTray : MonoBehaviour
+public sealed class DieTooltipOverlayUI : MonoBehaviour
 {
     private static readonly int[] DieTooltipGridTemplate = { -1, 0, -1, -1, 1, 2, 3, 4, -1, 5 };
 
-    [Header("Dice Tray")]
-    [SerializeField] private Transform diceButtonContainer;
-    [SerializeField] private GameObject damageButtonPrefab;
-    [SerializeField] private GameObject armorButtonPrefab;
-
-    [Header("Die Tooltip (match Fight scene)")]
+    [Header("Die Tooltip")]
     [SerializeField] private GameObject dieTooltipPanel;
     [SerializeField] private Transform dieTooltipSlotContainer;
     [SerializeField] private GameObject dieTooltipSlotPrefab;
-    [Header("Gem slots in die tooltip (optional)")]
+
+    [Header("Gem slots (optional)")]
     [SerializeField] private Transform dieTooltipGemIconContainer;
     [SerializeField] private DieTooltipGemSlotView dieTooltipGemSlotPrefab;
+
+    [Header("Face/Gem hover")]
     [SerializeField] private GameObject faceHoverTooltipPanel;
     [SerializeField] private TMP_Text faceHoverTitleText;
     [SerializeField] private TMP_Text faceHoverDescriptionText;
 
-    [Header("Status hover (face has Apply Status action)")]
+    [Header("Status hover (from face actions)")]
     [SerializeField] private GameObject statusHoverTooltipPanel;
     [SerializeField] private TMP_Text statusHoverTitleText;
     [SerializeField] private TMP_Text statusHoverDescriptionText;
-    [Header("Generic Tooltip Presenter (preferred)")]
-    [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
 
-    private readonly Dictionary<DieAssetSO, DiceTrayButtonView> _diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
-    private readonly Dictionary<DieAssetSO, Button> _diceButtons = new Dictionary<DieAssetSO, Button>();
-    private DieAssetSO _tooltipShownForDie;
-    private DieAssetSO _pinnedTooltipDie;
-    private DieAssetSO _hoveredTooltipDie;
+    public DieAssetSO CurrentDie { get; private set; }
 
-    private void Awake()
+    public void ShowDie(DieAssetSO die, bool facesInteractable, Action<int, DieFaceSO> onFaceClicked = null)
     {
-        if (diceButtonContainer == null)
-            Debug.LogError("UIShopDiceTray: assign diceButtonContainer.", this);
-        if (damageButtonPrefab == null || armorButtonPrefab == null)
-            Debug.LogError("UIShopDiceTray: assign damage and armor button prefabs (same as CombatUIController).", this);
-    }
-
-    private void Update()
-    {
-        if (dieTooltipPanel == null || !dieTooltipPanel.activeSelf) return;
-        if (!Input.GetMouseButtonDown(0)) return;
-        if (ClickShouldKeepTooltipOpen()) return;
-
-        ClearTraySelectionVisuals();
-        _pinnedTooltipDie = null;
-        _hoveredTooltipDie = null;
-        HideDieTooltip();
-    }
-
-    /// <summary>Rebuilds tray from <see cref="PlayerDataSO.currentDeck"/>.</summary>
-    public void RebuildFromDeck()
-    {
-        if (diceButtonContainer == null) return;
-        if (PlayerDataContainer.Instance == null || PlayerDataContainer.Instance.RuntimeData == null)
-        {
-            Debug.LogError("UIShopDiceTray: PlayerDataContainer or RuntimeData missing.", this);
-            return;
-        }
-
-        foreach (Transform child in diceButtonContainer)
-            Destroy(child.gameObject);
-        _diceButtonViews.Clear();
-        _diceButtons.Clear();
-        _pinnedTooltipDie = null;
-        _hoveredTooltipDie = null;
-        ClearTraySelectionVisuals();
-        HideDieTooltip();
-
-        foreach (var die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
-        {
-            if (die == null) continue;
-
-            var prefab = die.dieType == DieType.Damage ? damageButtonPrefab : armorButtonPrefab;
-            if (prefab == null) continue;
-
-            var btnObj = Instantiate(prefab, diceButtonContainer);
-            var txt = btnObj.GetComponentInChildren<TMP_Text>();
-            if (txt != null) txt.text = die.dieName;
-
-            var trayView = btnObj.GetComponent<DiceTrayButtonView>();
-            if (trayView != null)
-            {
-                trayView.SetIcon(die.uiIcon);
-                trayView.SetSelectedIconShakeEnabled(false);
-                _diceButtonViews[die] = trayView;
-            }
-            else
-                Debug.LogError($"UIShopDiceTray: prefab '{prefab.name}' needs DiceTrayButtonView.", btnObj);
-
-            var btn = btnObj.GetComponent<Button>();
-            if (btn == null)
-            {
-                Debug.LogError($"UIShopDiceTray: prefab '{prefab.name}' needs a Button.", btnObj);
-                continue;
-            }
-
-            _diceButtons[die] = btn;
-            var captured = die;
-            btn.onClick.AddListener(() => OnTrayDieClicked(captured));
-            RegisterTrayHover(btn, captured);
-        }
-    }
-
-    private void OnTrayDieClicked(DieAssetSO die)
-    {
-        if (die == null) return;
-
-        if (_pinnedTooltipDie == die)
-        {
-            _pinnedTooltipDie = null;
-            if (_diceButtonViews.TryGetValue(die, out var selectedView))
-                selectedView.SetSelected(false);
-            if (_hoveredTooltipDie != null)
-                ShowDieTooltip(_hoveredTooltipDie);
-            else
-                HideDieTooltip();
-            return;
-        }
-
-        foreach (var kv in _diceButtonViews)
-            kv.Value.SetSelected(kv.Key == die);
-
-        _pinnedTooltipDie = die;
-        ShowDieTooltip(die);
-    }
-
-    private void RegisterTrayHover(Button btn, DieAssetSO die)
-    {
-        if (btn == null || die == null) return;
-        var go = btn.gameObject;
-        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
-
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ =>
-        {
-            _hoveredTooltipDie = die;
-            ShowDieTooltip(die);
-        });
-        et.triggers.Add(enter);
-
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ =>
-        {
-            if (_hoveredTooltipDie == die)
-                _hoveredTooltipDie = null;
-            if (_pinnedTooltipDie != null)
-                ShowDieTooltip(_pinnedTooltipDie);
-            else
-                HideDieTooltip();
-        });
-        et.triggers.Add(exit);
-    }
-
-    private void ClearTraySelectionVisuals()
-    {
-        foreach (var kv in _diceButtonViews)
-            kv.Value.SetSelected(false);
-    }
-
-    private void ShowDieTooltip(DieAssetSO die)
-    {
-        if (dieTooltipOverlay != null)
-        {
-            _tooltipShownForDie = die;
-            dieTooltipOverlay.ShowDie(die, false);
-            return;
-        }
-
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
 
-        _tooltipShownForDie = die;
+        CurrentDie = die;
         dieTooltipPanel.SetActive(true);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
@@ -212,17 +68,30 @@ public class UIShopDiceTray : MonoBehaviour
             var slot = go.GetComponent<UIRewardSlot>();
             if (slot == null)
             {
-                Debug.LogError("UIShopDiceTray: dieTooltipSlotPrefab must include UIRewardSlot.", this);
+                Debug.LogError("DieTooltipOverlayUI: dieTooltipSlotPrefab must include UIRewardSlot.", this);
                 Destroy(go);
                 continue;
             }
 
-            slot.Bind(face, null);
-            slot.SetInteractable(false);
+            if (facesInteractable && onFaceClicked != null)
+                slot.Bind(face, _ => onFaceClicked.Invoke(faceIndex, face));
+            else
+                slot.Bind(face, null);
+
+            slot.SetInteractable(facesInteractable && onFaceClicked != null);
             RegisterFaceHover(slot, face);
         }
 
         RebuildTooltipGemIcons(die);
+    }
+
+    public void Hide()
+    {
+        CurrentDie = null;
+        if (dieTooltipPanel != null)
+            dieTooltipPanel.SetActive(false);
+        HideFaceHoverTooltip();
+        HideStatusHoverTooltip();
     }
 
     private void RebuildTooltipGemIcons(DieAssetSO die)
@@ -262,22 +131,6 @@ public class UIShopDiceTray : MonoBehaviour
 
         if (spacerRect != null)
             spacerRect.localScale = Vector3.one;
-    }
-
-    private void HideDieTooltip()
-    {
-        if (dieTooltipOverlay != null)
-        {
-            _tooltipShownForDie = null;
-            dieTooltipOverlay.Hide();
-            return;
-        }
-
-        _tooltipShownForDie = null;
-        if (dieTooltipPanel != null)
-            dieTooltipPanel.SetActive(false);
-        HideFaceHoverTooltip();
-        HideStatusHoverTooltip();
     }
 
     private void RegisterGemHover(DieTooltipGemSlotView slotView, GemSO gem)
@@ -402,34 +255,5 @@ public class UIShopDiceTray : MonoBehaviour
         }
 
         return result;
-    }
-
-    private bool ClickShouldKeepTooltipOpen()
-    {
-        if (EventSystem.current == null) return false;
-
-        var pointer = new PointerEventData(EventSystem.current)
-        {
-            position = Input.mousePosition
-        };
-
-        var hits = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(pointer, hits);
-        if (hits.Count == 0) return false;
-
-        var tooltipTransform = dieTooltipPanel != null ? dieTooltipPanel.transform : null;
-        var statusTooltipTransform = statusHoverTooltipPanel != null ? statusHoverTooltipPanel.transform : null;
-        var trayTransform = diceButtonContainer;
-
-        for (var i = 0; i < hits.Count; i++)
-        {
-            var hitTransform = hits[i].gameObject != null ? hits[i].gameObject.transform : null;
-            if (hitTransform == null) continue;
-            if (tooltipTransform != null && hitTransform.IsChildOf(tooltipTransform)) return true;
-            if (statusTooltipTransform != null && hitTransform.IsChildOf(statusTooltipTransform)) return true;
-            if (trayTransform != null && hitTransform.IsChildOf(trayTransform)) return true;
-        }
-
-        return false;
     }
 }

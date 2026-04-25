@@ -28,6 +28,7 @@ public class WinStageFlowController : MonoBehaviour
     private Coroutine _flowRoutine;
     /// <summary>True after the post-victory intro (delay + first layout) has run for this fight.</summary>
     private bool _victoryIntroCompletedForCurrentFight;
+    public bool IsWinStageVisible => winStagePanel != null && winStagePanel.activeInHierarchy;
 
     private void OnDisable()
     {

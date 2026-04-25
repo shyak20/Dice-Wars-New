@@ -19,6 +19,7 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private HoverTooltipTargetUI statusHoverTooltipTarget;
 
     private DieFaceSO _face;
+    public DieFaceSO Face => _face;
 
     private void Awake()
     {
