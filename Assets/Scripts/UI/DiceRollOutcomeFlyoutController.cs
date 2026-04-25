@@ -27,10 +27,21 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [Header("Timing")]
     [SerializeField] private float waitBeforeFlySeconds = 0.6f;
     [SerializeField] private float flyDurationSeconds = 0.45f;
+    [SerializeField] private float delayBetweenDiceActivationsSeconds = 0.12f;
+
+    [Header("Die activation feedback")]
+    [Tooltip("Total duration of the RealToon Self Lit intensity pulse (up to 1, then back).")]
+    [SerializeField] private float selfLitPulseDurationSeconds = 0.22f;
+    [SerializeField] private float shakeDurationSeconds = 0.22f;
+    [SerializeField] private float shakeAmplitude = 0.035f;
 
     [Header("Motion (A → B along quadratic bezier)")]
     [SerializeField] private AnimationCurve flyEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField] private float arcHeightPixels = 96f;
+
+    private readonly Queue<DiceRollVisualPayload> regularPayloadQueue = new Queue<DiceRollVisualPayload>();
+    private readonly Queue<DiceRollVisualPayload> deferredPayloadQueue = new Queue<DiceRollVisualPayload>();
+    private Coroutine queueRoutine;
 
     private void Awake()
     {
@@ -54,6 +65,13 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     private void OnDisable()
     {
         CombatEvents.OnDiceRollVisualFeedback -= HandleRollVisual;
+        if (queueRoutine != null)
+        {
+            StopCoroutine(queueRoutine);
+            queueRoutine = null;
+        }
+        DrainQueueAndReportFinished(regularPayloadQueue);
+        DrainQueueAndReportFinished(deferredPayloadQueue);
     }
 
     private void HandleRollVisual(DiceRollVisualPayload payload)
@@ -76,13 +94,36 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             return;
         }
 
-        if (!storedActionsPoolDisplay.UsesFlyoutIncrementMode)
-        {
-            payload.ReportVisualFinished();
-            return;
-        }
+        if (payload.ActivateAfterRegularDice)
+            deferredPayloadQueue.Enqueue(payload);
+        else
+            regularPayloadQueue.Enqueue(payload);
 
-        StartCoroutine(PlayFlyoutRoutine(payload));
+        if (queueRoutine == null)
+            queueRoutine = StartCoroutine(ProcessPayloadQueueRoutine());
+    }
+
+    private IEnumerator ProcessPayloadQueueRoutine()
+    {
+        try
+        {
+            while (regularPayloadQueue.Count > 0 || deferredPayloadQueue.Count > 0)
+            {
+                DiceRollVisualPayload payload;
+                if (regularPayloadQueue.Count > 0)
+                    payload = regularPayloadQueue.Dequeue();
+                else
+                    payload = deferredPayloadQueue.Dequeue();
+
+                StartCoroutine(PlayFlyoutRoutine(payload));
+                if (delayBetweenDiceActivationsSeconds > 0f)
+                    yield return new WaitForSeconds(delayBetweenDiceActivationsSeconds);
+            }
+        }
+        finally
+        {
+            queueRoutine = null;
+        }
     }
 
     private IEnumerator PlayFlyoutRoutine(DiceRollVisualPayload payload)
@@ -127,6 +168,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
             if (lineRects.Count == 0) yield break;
 
+            if (payload.DieTransform != null)
+                yield return PlayDieActivationFeedback(payload.DieTransform);
+
             if (waitBeforeFlySeconds > 0f)
                 yield return new WaitForSeconds(waitBeforeFlySeconds);
 
@@ -161,15 +205,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         finally
         {
             payload.ReportVisualFinished();
-            if (payload.NeedsDelayedStoredPoolResync && payload.RequestFullStoredPoolResync != null)
-                StartCoroutine(CoDelayedStoredPoolResync(payload));
         }
-    }
-
-    private static IEnumerator CoDelayedStoredPoolResync(DiceRollVisualPayload payload)
-    {
-        yield return new WaitForSeconds(0.18f);
-        payload.RequestFullStoredPoolResync?.Invoke();
     }
 
     private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line)
@@ -186,7 +222,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
 
         rt.anchoredPosition = end;
-        storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride);
+        if (storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
+            storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride);
         Destroy(rt.gameObject);
     }
 
@@ -194,6 +231,99 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     {
         float u = 1f - t;
         return u * u * a + 2f * u * t * b + t * t * c;
+    }
+
+    private static void DrainQueueAndReportFinished(Queue<DiceRollVisualPayload> queue)
+    {
+        while (queue.Count > 0)
+        {
+            var payload = queue.Dequeue();
+            payload?.ReportVisualFinished();
+        }
+    }
+
+    private IEnumerator PlayDieActivationFeedback(Transform dieTransform)
+    {
+        if (dieTransform == null)
+            yield break;
+
+        var renderers = dieTransform.GetComponentsInChildren<Renderer>(true);
+        var blocks = new MaterialPropertyBlock[renderers.Length];
+        var originalSelfLitByRenderer = new float[renderers.Length];
+        var hasSelfLitByRenderer = new bool[renderers.Length];
+
+        for (var i = 0; i < renderers.Length; i++)
+        {
+            var renderer = renderers[i];
+            if (renderer == null)
+                continue;
+
+            var shared = GetFirstSelfLitMaterial(renderer);
+            if (shared == null)
+                continue;
+
+            var mpb = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(mpb);
+            blocks[i] = mpb;
+            hasSelfLitByRenderer[i] = true;
+            originalSelfLitByRenderer[i] = shared.GetFloat("_SelfLitIntensity");
+            mpb.SetFloat("_SelfLitIntensity", originalSelfLitByRenderer[i]);
+            renderer.SetPropertyBlock(mpb);
+        }
+
+        var localOrigin = dieTransform.localPosition;
+        var duration = Mathf.Max(0.01f, Mathf.Max(shakeDurationSeconds, selfLitPulseDurationSeconds));
+        var elapsed = 0f;
+        var pulseDuration = Mathf.Max(0.01f, selfLitPulseDurationSeconds);
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+
+            var pulseT = Mathf.Clamp01(elapsed / pulseDuration);
+            var pulse = 1f - Mathf.Abs(2f * pulseT - 1f); // 0->1->0
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                if (!hasSelfLitByRenderer[i]) continue;
+                var renderer = renderers[i];
+                if (renderer == null) continue;
+                var mpb = blocks[i] ?? new MaterialPropertyBlock();
+                var value = Mathf.Lerp(originalSelfLitByRenderer[i], 1f, pulse);
+                mpb.SetFloat("_SelfLitIntensity", value);
+                renderer.SetPropertyBlock(mpb);
+            }
+
+            var offset = Random.insideUnitSphere * shakeAmplitude;
+            dieTransform.localPosition = localOrigin + offset;
+            yield return null;
+        }
+
+        if (dieTransform != null)
+            dieTransform.localPosition = localOrigin;
+
+        for (var i = 0; i < renderers.Length; i++)
+        {
+            if (!hasSelfLitByRenderer[i]) continue;
+            var renderer = renderers[i];
+            if (renderer == null) continue;
+            var mpb = blocks[i] ?? new MaterialPropertyBlock();
+            mpb.SetFloat("_SelfLitIntensity", originalSelfLitByRenderer[i]);
+            renderer.SetPropertyBlock(mpb);
+        }
+    }
+
+    private static Material GetFirstSelfLitMaterial(Renderer renderer)
+    {
+        if (renderer == null) return null;
+        var mats = renderer.sharedMaterials;
+        if (mats == null || mats.Length == 0) return null;
+        for (var i = 0; i < mats.Length; i++)
+        {
+            var mat = mats[i];
+            if (mat != null && mat.HasProperty("_SelfLitIntensity"))
+                return mat;
+        }
+
+        return null;
     }
 
     private bool WorldToCanvasLocal(RectTransform canvasRect, Camera eventCamera, Vector3 world, out Vector2 localPoint)

@@ -17,10 +17,13 @@ public struct RollOutcomeVisualLine
 public class DiceRollVisualPayload
 {
     public Vector3 WorldAnchor;
+    public Transform DieTransform;
     public List<RollOutcomeVisualLine> Lines;
-    /// <summary>When true, <see cref="DiceRollOutcomeFlyoutController"/> runs <see cref="RequestFullStoredPoolResync"/> shortly after fly lines finish (clears flyout-only rows from the element bar).</summary>
+    /// <summary>When true, visual controller defers this die until regular queued dice have completed.</summary>
+    public bool ActivateAfterRegularDice;
+    /// <summary>Hint from producer that this payload includes visual-only rows; final full pool resync runs when all queued die visuals finish.</summary>
     public bool NeedsDelayedStoredPoolResync;
-    /// <summary>Optional. Invokes <see cref="CombatEvents.OnStoredActionsPoolIconsFullResync"/> with combat truth (assigned by <see cref="CombatManager"/>).</summary>
+    /// <summary>Reserved for custom visual handlers that need explicit full pool resync callback.</summary>
     public Action RequestFullStoredPoolResync;
 
     Action _onVisualFinished;

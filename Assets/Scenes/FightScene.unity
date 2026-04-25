@@ -3600,6 +3600,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   winStageFlow: {fileID: 430063147}
   faceRewardManager: {fileID: 576654137}
+  disableOnVictoryScreen:
+  - {fileID: 1941603153}
+  - {fileID: 2110974185}
   gameOverPanel: {fileID: 1293339380}
   mainMenuButton: {fileID: 396311228}
 --- !u!114 &430063147
@@ -4609,6 +4612,10 @@ MonoBehaviour:
   lineSpacing: 50
   waitBeforeFlySeconds: 1.5
   flyDurationSeconds: 1.2
+  delayBetweenDiceActivationsSeconds: 0.5
+  selfLitPulseDurationSeconds: 0.5
+  shakeDurationSeconds: 0.5
+  shakeAmplitude: 0.1
   flyEase:
     serializedVersion: 2
     m_Curve:
@@ -15844,6 +15851,10 @@ PrefabInstance:
     - target: {fileID: 5964833054135106555, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
+      objectReference: {fileID: 0}
+    - target: {fileID: 6204401492986444464, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6483806973210067452, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_AnchorMax.y

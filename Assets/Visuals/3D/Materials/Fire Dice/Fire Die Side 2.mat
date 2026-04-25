@@ -18,6 +18,7 @@ Material:
   - N_F_O_ON
   - N_F_RDC_ON
   - N_F_RELGI_ON
+  - N_F_SLMM_ON
   - N_F_SL_ON
   - N_F_SS_ON
   - N_F_TRANSAFFSHA_ON
@@ -89,7 +90,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskSelfLit:
-        m_Texture: {fileID: 2800000, guid: 353a162b16d64094f8ba43448b14b06c, type: 3}
+        m_Texture: {fileID: 10307, guid: 0000000000000000f000000000000000, type: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTransparency:
@@ -240,7 +241,7 @@ Material:
     - _N_F_SCT: 0
     - _N_F_SE: 0
     - _N_F_SL: 1
-    - _N_F_SLMM: 0
+    - _N_F_SLMM: 1
     - _N_F_SON: 0
     - _N_F_SS: 1
     - _N_F_ST: 0
@@ -294,8 +295,8 @@ Material:
     - _STIL: 0
     - _Saturation: 1
     - _SelfLitHighContrast: 1
-    - _SelfLitIntensity: 1
-    - _SelfLitPower: 0
+    - _SelfLitIntensity: 0
+    - _SelfLitPower: 1
     - _SelfShadowAffectedByLightShadowStrength: 0
     - _SelfShadowHardness: 1
     - _SelfShadowRealTimeShadowColorPower: 1
@@ -321,7 +322,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _StraWidt: 10
-    - _TEXMCOLINT: 1.77
+    - _TEXMCOLINT: 1
     - _TRANSMODE: 0
     - _TessellationFar: 1
     - _TessellationNear: 1
@@ -363,7 +364,7 @@ Material:
     - _RimLigPosi: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
     - _SSAOColor: {r: 0, g: 0, b: 0, a: 0}
-    - _SelfLitColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SelfLitColor: {r: 0.122641504, g: 0.000000026925177, b: 0, a: 1}
     - _SelfShadowRealTimeShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowTColor: {r: 1, g: 1, b: 1, a: 1}
     - _XYZPosition: {r: 0, g: 0, b: 0, a: 0}

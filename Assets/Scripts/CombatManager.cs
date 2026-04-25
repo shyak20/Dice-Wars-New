@@ -862,14 +862,19 @@ public class CombatManager : MonoBehaviour
             var lines = BuildRollVisualLines(result, kineticArmorThisRoll);
             if (lines.Count > 0 && CombatEvents.OnDiceRollVisualFeedback != null)
             {
+                var activateAfterRegularDice =
+                    sourceDieAsset != null &&
+                    sourceDieAsset.GetSocketedGems().Any(g =>
+                        g?.effects != null &&
+                        g.effects.Any(e => e != null && e.kind == GemEffectKind.RandomBatchRerollOtherDiceNoPower));
                 pendingRollVisualSequences++;
                 var payload = new DiceRollVisualPayload
                 {
                     WorldAnchor = dieWorldSource.position,
+                    DieTransform = dieWorldSource,
                     Lines = lines,
-                    NeedsDelayedStoredPoolResync = lines.Any(l => l.IsVisualFlyoutOnly),
-                    RequestFullStoredPoolResync = () =>
-                        CombatEvents.OnStoredActionsPoolIconsFullResync?.Invoke(BuildStoredActionsPool())
+                    ActivateAfterRegularDice = activateAfterRegularDice,
+                    NeedsDelayedStoredPoolResync = lines.Any(l => l.IsVisualFlyoutOnly)
                 };
                 payload.BindVisualFinished(OnRollVisualSequenceFinished);
                 CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
@@ -885,6 +890,9 @@ public class CombatManager : MonoBehaviour
             Debug.LogError("CombatManager: pendingRollVisualSequences underflow — check DiceRollVisualPayload.ReportVisualFinished is called once per payload.");
             pendingRollVisualSequences = 0;
         }
+
+        if (pendingRollVisualSequences == 0)
+            CombatEvents.OnStoredActionsPoolIconsFullResync?.Invoke(BuildStoredActionsPool());
     }
 
     private void PopulateActionPoolContributions(FaceResult result)

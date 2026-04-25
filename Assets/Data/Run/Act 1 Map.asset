@@ -21,9 +21,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7e1da11a59278e24199798074da7997d, type: 2}
   treasurePacks:
   - {fileID: 11400000, guid: 78ee3181637c4034a873ce0e5835a0d8, type: 2}
-  gridWidth: 4
+  gridWidth: 5
   gridHeight: 3
-  moveLimit: 6
+  moveLimit: 10
   eliteMinOnMap: 1
   eliteMaxOnMap: 2
   shopMinOnMap: 1
