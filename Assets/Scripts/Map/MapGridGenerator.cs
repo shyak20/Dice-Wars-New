@@ -44,12 +44,22 @@ public static class MapGridGenerator
 
         if (mode == MapConnectivityMode.UniquePathSpanningTree)
         {
-            var treeGrid = GenerateUniquePathSpanningTree(width, height, rng);
-            EnsureNoIsolatedNonEndTiles(treeGrid, end, rng);
-            EnsureEveryTileReachableFromStart(treeGrid, start, rng);
-            AssignMapEventTypes(treeGrid, rng, start, end, mapEvents);
-            StripEndTileExits(treeGrid, end);
-            return treeGrid;
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                var treeGrid = GenerateUniquePathSpanningTree(width, height, rng);
+                EnsureNoIsolatedNonEndTiles(treeGrid, end, rng);
+                EnsureEveryTileReachableFromStart(treeGrid, start, rng);
+                AssignMapEventTypes(treeGrid, rng, start, end, mapEvents);
+                if (!MapPathfinding.HasPath(treeGrid, start, end))
+                    continue;
+                StripEndTileExits(treeGrid, end);
+                if (!ValidateMapAfterBossSink(treeGrid, start, end))
+                    continue;
+                return treeGrid;
+            }
+
+            throw new InvalidOperationException(
+                $"MapGridGenerator: UniquePathSpanningTree could not satisfy boss-sink reachability after {maxAttempts} attempts.");
         }
 
         for (var attempt = 0; attempt < maxAttempts; attempt++)
@@ -64,6 +74,8 @@ public static class MapGridGenerator
             if (!MapPathfinding.HasPath(grid, start, end))
                 continue;
             StripEndTileExits(grid, end);
+            if (!ValidateMapAfterBossSink(grid, start, end))
+                continue;
             return grid;
         }
 
@@ -365,6 +377,17 @@ public static class MapGridGenerator
         var t = grid.Get(endCell.x, endCell.y);
         t.exitMask = 0;
         grid.SetTile(endCell.x, endCell.y, t);
+    }
+
+    /// <summary>
+    /// After <see cref="StripEndTileExits"/>, the boss cannot be used as a transit tile. Reject maps where any
+    /// non-boss cell is only reachable by passing through the boss (those become unreachable once the boss is a sink).
+    /// </summary>
+    private static bool ValidateMapAfterBossSink(MapGrid grid, Vector2Int start, Vector2Int end)
+    {
+        if (!MapPathfinding.HasPath(grid, start, end))
+            return false;
+        return MapPathfinding.AllNonEndCellsReachableFromStart(grid, start, end);
     }
 
     /// <summary>Start stays <see cref="MapEventType.None"/>; end is <see cref="MapEventType.CombatBoss"/>; elites are not orthogonally adjacent.</summary>
