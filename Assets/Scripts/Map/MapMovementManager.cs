@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
 /// Run map: generation modes (multi-path or unique spanning tree), player steps, move limit, corruption,
@@ -34,6 +36,9 @@ public sealed class MapMovementManager : MonoBehaviour
     [SerializeField] private MapShrineChoicePanel shrineChoicePanel;
     [SerializeField] private MapTreasurePanel treasurePanel;
     [SerializeField] private MapUnknownEventPanel unknownEventPanel;
+    [Header("Dev / map scene UI")]
+    [Tooltip("Assign the New Map button: reloads this scene and runs a fresh generate in Start (clears combat return snapshot). Leave empty to disable.")]
+    [SerializeField] private Button newMapReloadSceneButton;
 
     private MapGrid _grid;
     private System.Random _rng;
@@ -75,6 +80,8 @@ public sealed class MapMovementManager : MonoBehaviour
     {
         if (RunManager.Instance != null)
             RunManager.Instance.OnRunRelicsChanged -= OnRunRelicsChangedRefreshMoves;
+        if (newMapReloadSceneButton != null)
+            newMapReloadSceneButton.onClick.RemoveListener(ReloadMapSceneAndGenerateNew);
     }
 
     private void OnRunRelicsChangedRefreshMoves()
@@ -85,6 +92,9 @@ public sealed class MapMovementManager : MonoBehaviour
 
     private void Start()
     {
+        if (newMapReloadSceneButton != null)
+            newMapReloadSceneButton.onClick.AddListener(ReloadMapSceneAndGenerateNew);
+
         RefreshEffectiveMapLayoutFromActOrDefaults();
 
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun &&
@@ -107,8 +117,26 @@ public sealed class MapMovementManager : MonoBehaviour
         RegenerateMapInternal();
     }
 
+    /// <summary>
+    /// Clears any saved map return state, reloads the active scene, then <see cref="Start"/> generates a new map
+    /// (new <see cref="System.Random"/> in <see cref="Awake"/> unless <see cref="useFixedSeed"/>).
+    /// </summary>
+    public void ReloadMapSceneAndGenerateNew()
+    {
+        shrineChoicePanel?.Hide();
+        treasurePanel?.Hide();
+        unknownEventPanel?.Hide();
+        RunManager.Instance?.ClearPersistedMapState();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
     private void RegenerateMapInternal()
     {
+        shrineChoicePanel?.Hide();
+        treasurePanel?.Hide();
+        unknownEventPanel?.Hide();
+        RunManager.Instance?.ClearPersistedMapState();
+
         RefreshEffectiveMapLayoutFromActOrDefaults();
 
         if (_effectiveGridWidth < 1 || _effectiveGridHeight < 1)

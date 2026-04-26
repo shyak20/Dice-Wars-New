@@ -60,7 +60,10 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
         Close();
     }
 
-    private void Close() => root.SetActive(false);
+    private void Close() => Hide();
+
+    /// <summary>Closes the panel without applying a choice (e.g. map regenerated).</summary>
+    public void Hide() => root.SetActive(false);
 
     private static void ActivateSelfAndAncestors(Transform t)
     {

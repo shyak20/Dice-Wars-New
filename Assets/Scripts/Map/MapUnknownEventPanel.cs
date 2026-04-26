@@ -53,7 +53,10 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
         return true;
     }
 
-    private void Close()
+    private void Close() => Hide();
+
+    /// <summary>Closes the panel (e.g. map regenerated).</summary>
+    public void Hide()
     {
         _currentEvent = null;
         if (root != null)

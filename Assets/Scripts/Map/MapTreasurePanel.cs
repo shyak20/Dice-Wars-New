@@ -225,7 +225,10 @@ public sealed class MapTreasurePanel : MonoBehaviour
             Close();
     }
 
-    private void Close()
+    private void Close() => Hide();
+
+    /// <summary>Closes the panel and clears pending rewards UI (e.g. map regenerated).</summary>
+    public void Hide()
     {
         _currentPack = null;
         _rolledRewards.Clear();

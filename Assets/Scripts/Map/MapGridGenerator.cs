@@ -390,7 +390,10 @@ public static class MapGridGenerator
         return MapPathfinding.AllNonEndCellsReachableFromStart(grid, start, end);
     }
 
-    /// <summary>Start stays <see cref="MapEventType.None"/>; end is <see cref="MapEventType.CombatBoss"/>; elites are not orthogonally adjacent.</summary>
+    /// <summary>
+    /// Start stays <see cref="MapEventType.None"/>; end is <see cref="MapEventType.CombatBoss"/>.
+    /// Elites and duplicate Shop/Shrine/Treasure/Unknown tiles are never orthogonally adjacent to the same event type.
+    /// </summary>
     private static void AssignMapEventTypes(MapGrid grid, System.Random rng, Vector2Int start, Vector2Int end, MapGenerationEventsParams p)
     {
         for (var y = 0; y < grid.Height; y++)
@@ -491,8 +494,18 @@ public static class MapGridGenerator
                     $"MapGridGenerator: placed {shopTarget} shop tile(s) but shop min was {shopMin} (grid {grid.Width}×{grid.Height}).");
 
             var shopCells = new HashSet<Vector2Int>();
-            for (var i = 0; i < shopTarget; i++)
-                shopCells.Add(shopPool[i]);
+            foreach (var c in shopPool)
+            {
+                if (shopCells.Count >= shopTarget)
+                    break;
+                if (HasOrthogonalNeighborInSet(c, shopCells))
+                    continue;
+                shopCells.Add(c);
+            }
+
+            if (useFixedShopCount && shopCells.Count < shopTarget)
+                Debug.LogWarning(
+                    $"MapGridGenerator: placed {shopCells.Count} non-adjacent shop tile(s) but target was {shopTarget} (grid {grid.Width}×{grid.Height}).");
 
             foreach (var c in candidates)
             {
@@ -502,9 +515,11 @@ public static class MapGridGenerator
                 if (shopCells.Contains(c))
                     t.eventType = MapEventType.Shop;
                 else if (useFixedShopCount)
-                    t.eventType = PickNonShopFillerTypeRespectingMinSteps(distFromStart, grid.Width, c, p, rng);
+                    t.eventType = ResolveFillerAvoidingAdjacentSameType(
+                        grid, c, () => PickNonShopFillerTypeRespectingMinSteps(distFromStart, grid.Width, c, p, rng));
                 else
-                    t.eventType = PickNonEliteEventTypeRespectingMinSteps(distFromStart, grid.Width, c, p, rng);
+                    t.eventType = ResolveFillerAvoidingAdjacentSameType(
+                        grid, c, () => PickNonEliteEventTypeRespectingMinSteps(distFromStart, grid.Width, c, p, rng));
                 grid.SetTile(c.x, c.y, t);
             }
         }
@@ -547,7 +562,7 @@ public static class MapGridGenerator
             var minS = minStepsBySpecialIndex[t];
             for (var n = 0; n < specialCounts[t]; n++)
             {
-                if (!TryPickFillerCell(available, distFromStart, width, minS, rng, SpecialFillerTypes[t], out var pos))
+                if (!TryPickFillerCell(grid, available, distFromStart, width, minS, rng, SpecialFillerTypes[t], out var pos))
                 {
                     Debug.LogError(
                         $"MapGridGenerator: could not place {SpecialFillerTypes[t]} (min steps {minS}, remaining pool {available.Count}).");
@@ -568,25 +583,45 @@ public static class MapGridGenerator
         }
     }
 
-    /// <summary>Picks and removes one cell from <paramref name="pool"/> honoring <paramref name="minSteps"/> when &gt; 0.</summary>
+    /// <summary>Picks and removes one cell from <paramref name="pool"/> honoring <paramref name="minSteps"/> and no same-type neighbor on <paramref name="grid"/>.</summary>
     private static bool TryPickFillerCell(
+        MapGrid grid,
         List<Vector2Int> pool,
         int[] distFromStart,
         int width,
         int minSteps,
         System.Random rng,
-        MapEventType forLog,
+        MapEventType placingType,
         out Vector2Int pos)
     {
         pos = default;
         if (pool.Count == 0)
             return false;
 
+        bool PassesAdjacency(Vector2Int cell) => !HasOrthogonalNeighborOfEventType(grid, cell, placingType);
+
         if (minSteps <= 0)
         {
-            var i = rng.Next(pool.Count);
-            pos = pool[i];
-            pool.RemoveAt(i);
+            var adjOk = new List<int>();
+            for (var i = 0; i < pool.Count; i++)
+            {
+                if (PassesAdjacency(pool[i]))
+                    adjOk.Add(i);
+            }
+
+            if (adjOk.Count > 0)
+            {
+                var pick = adjOk[rng.Next(adjOk.Count)];
+                pos = pool[pick];
+                pool.RemoveAt(pick);
+                return true;
+            }
+
+            Debug.LogWarning(
+                $"MapGridGenerator: could not place {placingType} without an orthogonally adjacent same-type tile; placing anyway (pool {pool.Count}).");
+            var fallbackIdx = rng.Next(pool.Count);
+            pos = pool[fallbackIdx];
+            pool.RemoveAt(fallbackIdx);
             return true;
         }
 
@@ -600,17 +635,45 @@ public static class MapGridGenerator
 
         if (eligibleIdx.Count > 0)
         {
-            var pick = eligibleIdx[rng.Next(eligibleIdx.Count)];
+            var adjPref = new List<int>();
+            for (var k = 0; k < eligibleIdx.Count; k++)
+            {
+                var i = eligibleIdx[k];
+                if (PassesAdjacency(pool[i]))
+                    adjPref.Add(i);
+            }
+
+            var pickFrom = adjPref.Count > 0 ? adjPref : eligibleIdx;
+            if (adjPref.Count == 0)
+                Debug.LogWarning(
+                    $"MapGridGenerator: MinSteps satisfied for {placingType} but no cell avoids adjacent same-type; using min-steps pool only.");
+
+            var pick = pickFrom[rng.Next(pickFrom.Count)];
             pos = pool[pick];
             pool.RemoveAt(pick);
             return true;
         }
 
         Debug.LogWarning(
-            $"MapGridGenerator: MinStepsFromStart for {forLog} not satisfiable with {pool.Count} tile(s); placing without distance.");
-        var j = rng.Next(pool.Count);
-        pos = pool[j];
-        pool.RemoveAt(j);
+            $"MapGridGenerator: MinStepsFromStart for {placingType} not satisfiable with {pool.Count} tile(s); placing without distance.");
+        var adjOk2 = new List<int>();
+        for (var i = 0; i < pool.Count; i++)
+        {
+            if (PassesAdjacency(pool[i]))
+                adjOk2.Add(i);
+        }
+
+        if (adjOk2.Count > 0)
+        {
+            var j = adjOk2[rng.Next(adjOk2.Count)];
+            pos = pool[j];
+            pool.RemoveAt(j);
+            return true;
+        }
+
+        var j2 = rng.Next(pool.Count);
+        pos = pool[j2];
+        pool.RemoveAt(j2);
         return true;
     }
 
@@ -699,6 +762,36 @@ public static class MapGridGenerator
                || set.Contains(c + new Vector2Int(-1, 0))
                || set.Contains(c + new Vector2Int(0, 1))
                || set.Contains(c + new Vector2Int(0, -1));
+    }
+
+    private static bool HasOrthogonalNeighborOfEventType(MapGrid grid, Vector2Int c, MapEventType evt)
+    {
+        for (var di = 0; di < 4; di++)
+        {
+            var d = (MapCardinalDirection)di;
+            var n = c + d.ToDelta();
+            if (!grid.Contains(n))
+                continue;
+            if (grid.Get(n.x, n.y).eventType == evt)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Avoids placing the same special type orthogonally adjacent to an existing tile of that type (re-roll then fall back to normal).</summary>
+    private static MapEventType ResolveFillerAvoidingAdjacentSameType(MapGrid grid, Vector2Int cell, System.Func<MapEventType> rollType)
+    {
+        for (var attempt = 0; attempt < 32; attempt++)
+        {
+            var evt = rollType();
+            if (evt == MapEventType.CombatNormal || evt == MapEventType.None)
+                return evt;
+            if (!HasOrthogonalNeighborOfEventType(grid, cell, evt))
+                return evt;
+        }
+
+        return MapEventType.CombatNormal;
     }
 
     private static int MinStepsForMapEvent(MapEventType evt, MapGenerationEventsParams p)

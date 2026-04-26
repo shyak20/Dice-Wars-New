@@ -303,11 +303,14 @@ public class RunManager : MonoBehaviour
         return true;
     }
 
-    public void ClearMapPersistenceForNewAct()
+    /// <summary>Clears any saved map return snapshot (new act or map regenerated in the editor / dev UI).</summary>
+    public void ClearPersistedMapState()
     {
         _persistedMapGrid = null;
         _hasPersistedMapState = false;
     }
+
+    public void ClearMapPersistenceForNewAct() => ClearPersistedMapState();
 
     public void PersistAndLoadFightScene(MapGrid grid, Vector2Int playerCell, int movesTaken, EnemyRank rank,
         bool isBossEndTile)
