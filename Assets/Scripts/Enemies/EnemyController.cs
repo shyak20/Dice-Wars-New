@@ -216,16 +216,8 @@ public class EnemyController : MonoBehaviour
             }
         }
 
-        // 3. Health text / Armor text toggle
-        // When armor is present we hide normal health text and show the armor value instead.
         if (healthText != null)
-        {
-            healthText.gameObject.SetActive(!hasArmor);
-            if (enemyData != null)
-                healthText.text = $"{currentHealth} / {enemyData.maxHealth}";
-            else
-                healthText.text = currentHealth.ToString();
-        }
+            healthText.text = currentHealth.ToString();
 
         // 4. Small Armor Icon/Amount Display
         if (armorText != null)

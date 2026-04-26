@@ -6,6 +6,8 @@ using TMPro;
 /// <summary>One icon + amount for a deferred dice action row in <see cref="StoredActionsPoolDisplay"/>.</summary>
 public class StoredActionsPoolIcon : MonoBehaviour
 {
+    [Tooltip("Optional. Behind the action/die icon; sprite comes from GameIconIndexSO per pool row.")]
+    [SerializeField] private Image rowBackgroundImage;
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text valueText;
 
@@ -49,6 +51,13 @@ public class StoredActionsPoolIcon : MonoBehaviour
         icon.enabled = sprite != null;
     }
 
+    public void SetRowBackground(Sprite sprite)
+    {
+        if (rowBackgroundImage == null) return;
+        rowBackgroundImage.sprite = sprite;
+        rowBackgroundImage.enabled = sprite != null;
+    }
+
     public void SetValue(int value)
     {
         if (valueText == null) return;
@@ -60,6 +69,16 @@ public class StoredActionsPoolIcon : MonoBehaviour
     {
         configuredKey = key;
         UpdateTooltipText();
+    }
+
+    /// <summary>Icon + amount for <see cref="DiceRollOutcomeFlyoutController"/> (uses +N for positive deltas).</summary>
+    public void SetupForDiceRollFlyout(PoolRowKey key, Sprite iconSprite, int deltaAmount)
+    {
+        Configure(key);
+        SetPoolSprite(iconSprite);
+        SetRowBackground(GameIconCatalog.TryGetPoolRowBackground(key));
+        if (valueText == null) return;
+        valueText.text = deltaAmount > 0 ? $"+{deltaAmount}" : deltaAmount.ToString();
     }
 
     public void ShowJackpotMultiplierBadge(int multiplier)

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 309a6b02b9ae87a44b849eb2f36a72b0, type: 3}
+  m_Name: Faces Loot Table
+  m_EditorClassIdentifier: 
+  rarityConfig: {fileID: 11400000, guid: 5cc7f86d596871f409d01b2530a907f1, type: 2}
+  allPossibleFaces:
+  - {fileID: 11400000, guid: 4ceed482405bca14194bdd9f90f4084b, type: 2}
+  - {fileID: 11400000, guid: 8fe1d2e21ba9639458ad56ad86290129, type: 2}
+  - {fileID: 11400000, guid: 704747dc4d64ef94797446a51291b2af, type: 2}
+  - {fileID: 11400000, guid: 5766ac6d0032fac40b70b783778e9f37, type: 2}
+  - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
+  - {fileID: 11400000, guid: 8c07c67e0085aed419cdf5858f6d3c5a, type: 2}
+  - {fileID: 11400000, guid: 28b61a9e373006e44bd54cf91ae4df80, type: 2}
+  - {fileID: 11400000, guid: 6e2a973ea21b12e4caa2284a1ded1fd4, type: 2}
+  - {fileID: 11400000, guid: 15f866e93c3fc454292b1943700994ba, type: 2}
+  - {fileID: 11400000, guid: 6c4d47a23a23d7146955e689280ae1d3, type: 2}
+  - {fileID: 11400000, guid: 1252930fa62e9d14bad79c049ebfd5e7, type: 2}
+  - {fileID: 11400000, guid: 63f7b228223da9b46bbbe58a7079af0a, type: 2}
+  - {fileID: 11400000, guid: c94d60cf23a61d843bd0ac3f2f87f132, type: 2}
+  - {fileID: 11400000, guid: d93154d490bf7cb4388e709270cd8fc1, type: 2}
+  - {fileID: 11400000, guid: d87255a7470223c458542282c59b4c2e, type: 2}
+  - {fileID: 11400000, guid: 89b5e61b0d6ab4e48ba3c734f55e8d98, type: 2}
+  - {fileID: 11400000, guid: 0eb71236aeab18f45b751923925da1f6, type: 2}
+  - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
+  - {fileID: 11400000, guid: 3d9b777c454a3974e98bf6d5b6018ec4, type: 2}
+  - {fileID: 11400000, guid: 54329b8f680c9e3479923b8e99730339, type: 2}
+  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}

@@ -105,6 +105,8 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         return null;
     }
 
+    public Sprite GetPoolRowBackground(PoolRowKey key) => GameIconCatalog.TryGetPoolRowBackground(key);
+
     public void ApplyPoolDelta(PoolRowKey key, int delta, Sprite lineIconOverride = null)
     {
         if (delta == 0) return;
@@ -164,6 +166,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         displayedPools[key] = v;
         poolIcon.gameObject.SetActive(true);
         poolIcon.SetPoolSprite(GetPoolRowSprite(key));
+        poolIcon.SetRowBackground(GetPoolRowBackground(key));
         poolIcon.SetValue(v);
     }
 

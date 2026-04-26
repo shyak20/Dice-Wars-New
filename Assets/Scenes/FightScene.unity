@@ -2440,7 +2440,7 @@ MonoBehaviour:
     serializedVersion: 2
     rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
+  m_enableVertexGradient: 1
   m_colorMode: 3
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -3731,9 +3731,59 @@ MonoBehaviour:
   flyoutParent: {fileID: 634037715}
   storedActionsPoolDisplay: {fileID: 2110974188}
   worldCamera: {fileID: 963194227}
-  linePrefab: {fileID: 6282203067050408647, guid: 8c38c60e1dea21a458165192404f5a49, type: 3}
+  flyoutPoolIconPrefab: {fileID: 5249868910516358313, guid: 55e910efd313c564d93632aeb9614d0e, type: 3}
   worldOffsetAboveDie: 0.75
+  layoutOffsetX: 50
   lineSpacing: 50
+  spawnAlongYDurationSeconds: 0.5
+  spawnYOffsetOverTime:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 97.340546
+      outSlope: 97.340546
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.05791451
+    - serializedVersion: 3
+      time: 1
+      value: 60
+      inSlope: -31.239195
+      outSlope: -31.239195
+      tangentMode: 0
+      weightedMode: 3
+      inWeight: 0.4575122
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spawnUniformScaleOverTime:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2.048084
+      outSlope: 2.048084
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.06990291
+    - serializedVersion: 3
+      time: 1
+      value: 0.85
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   waitBeforeFlySeconds: 1.5
   flyDurationSeconds: 1.2
   delayBetweenDiceActivationsSeconds: 0.5
@@ -3763,7 +3813,7 @@ MonoBehaviour:
       outWeight: 0.33333334
     - serializedVersion: 3
       time: 1
-      value: 1
+      value: 0.90990335
       inSlope: 2.55074
       outSlope: 2.55074
       tangentMode: 0

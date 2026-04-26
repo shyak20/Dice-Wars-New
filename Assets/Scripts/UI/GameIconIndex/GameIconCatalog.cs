@@ -24,4 +24,16 @@ public static class GameIconCatalog
 
     public static Sprite GetStatusIcon(StatusEffectSO effect) =>
         _active != null ? _active.GetStatusIcon(effect) : null;
+
+    public static Sprite GetElementBackground(DieType type) =>
+        _active != null ? _active.GetElementBackground(type) : null;
+
+    public static Sprite GetActionBackground(ActionVisualId id) =>
+        _active != null ? _active.GetActionBackground(id) : null;
+
+    public static Sprite GetStatusBackground(StatusEffectSO effect) =>
+        _active != null ? _active.GetStatusBackground(effect) : null;
+
+    public static Sprite TryGetPoolRowBackground(PoolRowKey key) =>
+        _active != null ? _active.TryGetPoolRowBackground(key) : null;
 }
