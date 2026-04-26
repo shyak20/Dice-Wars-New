@@ -11,12 +11,19 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class DieTooltipOverlayUI : MonoBehaviour
 {
-    private static readonly int[] DieTooltipGridTemplate = { -1, 0, -1, -1, 1, 2, 3, 4, -1, 5 };
+    /// <summary>Used when <see cref="dieTooltipFaceGrid"/> is not set in the inspector.</summary>
+    public static readonly int[] DefaultFaceGridLayout = { -1, 0, -1, 1, 2, 3, -1, 4, -1, -1, 5 };
 
     [Header("Die Tooltip")]
     [SerializeField] private GameObject dieTooltipPanel;
     [SerializeField] private Transform dieTooltipSlotContainer;
     [SerializeField] private GameObject dieTooltipSlotPrefab;
+    [Tooltip("Layout order for the face grid. -1 = spacer (empty cell). 0–5 = index into die.faces. Leave empty (size 0) to use the default layout.")]
+    [SerializeField] private int[] dieTooltipFaceGrid;
+    [Tooltip("If > 0, applies Fixed Column Count on the slot container’s GridLayoutGroup when a die is shown. Use 4 for the default 11-cell layout; 0 leaves the group as authored.")]
+    [SerializeField, Min(0)] private int faceGridFixedColumnCount;
+    [Tooltip("Expands the slot container RectTransform so all grid rows/columns fit (uses cell size, spacing, padding).")]
+    [SerializeField] private bool resizeFaceGridContainerToFitCells = true;
 
     [Header("Gem slots (optional)")]
     [SerializeField] private Transform dieTooltipGemIconContainer;
@@ -27,6 +34,12 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
     [SerializeField] private TMP_Text faceHoverTitleText;
     [SerializeField] private TMP_Text faceHoverDescriptionText;
 
+    [Header("Type backgrounds (optional)")]
+    [Tooltip("Full die tooltip frame; sprite comes from DieAssetSO.uiTooltipBackground.")]
+    [SerializeField] private Image dieTooltipTypeBackground;
+    [Tooltip("Face hover frame from DieFaceSO.uiTooltipBackground; cleared for gem hover.")]
+    [SerializeField] private Image faceHoverTypeBackground;
+
     [Header("Status hover (from face actions)")]
     [SerializeField] private GameObject statusHoverTooltipPanel;
     [SerializeField] private TMP_Text statusHoverTitleText;
@@ -34,13 +47,17 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
 
     public DieAssetSO CurrentDie { get; private set; }
 
-    public void ShowDie(DieAssetSO die, bool facesInteractable, Action<int, DieFaceSO> onFaceClicked = null)
+    private readonly Vector3[] _worldCornersScratch = new Vector3[4];
+
+    /// <param name="horizontalCenterReference">When set (e.g. die icon <see cref="RectTransform"/>), moves the tooltip panel so its pivot’s world X matches this rect’s horizontal center.</param>
+    public void ShowDie(DieAssetSO die, bool facesInteractable, Action<int, DieFaceSO> onFaceClicked = null, RectTransform horizontalCenterReference = null)
     {
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
 
         CurrentDie = die;
         dieTooltipPanel.SetActive(true);
+        DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
 
@@ -48,9 +65,10 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             Destroy(child.gameObject);
 
         if (die.faces == null || die.faces.Length == 0) return;
-        for (var i = 0; i < DieTooltipGridTemplate.Length; i++)
+        var grid = GetFaceGridIndices();
+        for (var i = 0; i < grid.Length; i++)
         {
-            var faceIndex = DieTooltipGridTemplate[i];
+            var faceIndex = grid[i];
             if (faceIndex < 0 || faceIndex >= die.faces.Length)
             {
                 CreateTooltipSpacer();
@@ -82,7 +100,28 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             RegisterFaceHover(slot, face);
         }
 
+        RefreshFaceGridContainerLayout(grid.Length);
+        if (dieTooltipSlotContainer is RectTransform gridRt)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(gridRt);
+
         RebuildTooltipGemIcons(die);
+
+        if (horizontalCenterReference != null)
+            AlignDieTooltipPanelPivotWorldXToRect(horizontalCenterReference);
+    }
+
+    /// <summary>Moves the die tooltip panel in world space so pivot X matches the reference rect’s horizontal center (preserves Y/Z). Tooltip should use pivot x ≈ 0.5 for visual centering.</summary>
+    public void AlignDieTooltipPanelPivotWorldXToRect(RectTransform reference)
+    {
+        var panelRt = dieTooltipPanel != null ? dieTooltipPanel.transform as RectTransform : null;
+        if (panelRt == null || reference == null) return;
+
+        reference.GetWorldCorners(_worldCornersScratch);
+        var centerWorldX = (_worldCornersScratch[0].x + _worldCornersScratch[2].x) * 0.5f;
+
+        var pos = panelRt.position;
+        pos.x = centerWorldX;
+        panelRt.position = pos;
     }
 
     public void Hide()
@@ -90,6 +129,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         CurrentDie = null;
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);
+        DieTooltipBackgrounds.Clear(dieTooltipTypeBackground);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
     }
@@ -123,8 +163,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
 
         if (layout != null && slotRect != null)
         {
-            var w = slotRect.rect.width;
-            var h = slotRect.rect.height;
+            var w = slotRect.rect.width > 1f ? slotRect.rect.width : slotRect.sizeDelta.x;
+            var h = slotRect.rect.height > 1f ? slotRect.rect.height : slotRect.sizeDelta.y;
             if (w > 0f) layout.preferredWidth = w;
             if (h > 0f) layout.preferredHeight = h;
         }
@@ -154,6 +194,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
     private void ShowGemHoverTooltip(GemSO gem)
     {
         if (faceHoverTooltipPanel == null) return;
+        DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
         if (faceHoverTitleText != null)
             faceHoverTitleText.text = gem != null ? gem.DisplayLabel : "";
         if (faceHoverDescriptionText != null)
@@ -174,7 +215,6 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
 
         var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
         enter.callback.AddListener(_ => ShowFaceHoverTooltip(face));
-        et.triggers.Add(enter);
 
         var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
         exit.callback.AddListener(_ =>
@@ -182,11 +222,19 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             HideFaceHoverTooltip();
             HideStatusHoverTooltip();
         });
+
+        slot.AppendHoverRevealListeners(enter, exit);
+        et.triggers.Add(enter);
         et.triggers.Add(exit);
     }
 
     private void ShowFaceHoverTooltip(DieFaceSO face)
     {
+        if (face != null)
+            DieTooltipBackgrounds.ApplyFaceTooltip(faceHoverTypeBackground, face);
+        else
+            DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
+
         if (faceHoverTooltipPanel != null)
         {
             if (faceHoverTitleText != null) faceHoverTitleText.text = face != null ? face.Title : "";
@@ -205,6 +253,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
     {
         if (faceHoverTitleText != null) faceHoverTitleText.text = "";
         if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = "";
+        DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
         if (faceHoverTooltipPanel != null) faceHoverTooltipPanel.SetActive(false);
     }
 
@@ -256,4 +305,66 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
 
         return result;
     }
+
+    private int[] GetFaceGridIndices()
+    {
+        if (dieTooltipFaceGrid != null && dieTooltipFaceGrid.Length > 0)
+            return dieTooltipFaceGrid;
+        return DefaultFaceGridLayout;
+    }
+
+    private void RefreshFaceGridContainerLayout(int cellCount)
+    {
+        if (dieTooltipSlotContainer == null || cellCount <= 0) return;
+        var glg = dieTooltipSlotContainer.GetComponent<GridLayoutGroup>();
+        var rt = dieTooltipSlotContainer as RectTransform;
+        if (glg == null || rt == null) return;
+
+        if (faceGridFixedColumnCount > 0)
+        {
+            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            glg.constraintCount = faceGridFixedColumnCount;
+        }
+
+        if (!resizeFaceGridContainerToFitCells)
+            return;
+
+        var cols = ComputeGridColumnCount(glg, cellCount);
+        var rows = Mathf.Max(1, Mathf.CeilToInt(cellCount / (float)cols));
+        var pad = glg.padding;
+        var cellSize = glg.cellSize;
+        var spacing = glg.spacing;
+        var contentW = cols * cellSize.x + Mathf.Max(0, cols - 1) * spacing.x + pad.horizontal;
+        var contentH = rows * cellSize.y + Mathf.Max(0, rows - 1) * spacing.y + pad.vertical;
+        rt.sizeDelta = new Vector2(contentW, contentH);
+    }
+
+    private int ComputeGridColumnCount(GridLayoutGroup glg, int cellCount)
+    {
+        if (faceGridFixedColumnCount > 0)
+            return Mathf.Max(1, faceGridFixedColumnCount);
+        switch (glg.constraint)
+        {
+            case GridLayoutGroup.Constraint.FixedColumnCount:
+                return Mathf.Max(1, glg.constraintCount);
+            case GridLayoutGroup.Constraint.FixedRowCount:
+                var rows = Mathf.Max(1, glg.constraintCount);
+                return Mathf.Max(1, Mathf.CeilToInt(cellCount / (float)rows));
+            default:
+                return Mathf.Max(1, Mathf.CeilToInt(Mathf.Sqrt(cellCount)));
+        }
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (dieTooltipFaceGrid == null || dieTooltipFaceGrid.Length == 0) return;
+        for (var i = 0; i < dieTooltipFaceGrid.Length; i++)
+        {
+            var v = dieTooltipFaceGrid[i];
+            if (v < -1)
+                Debug.LogWarning($"DieTooltipOverlayUI on '{name}': dieTooltipFaceGrid[{i}] = {v}; use -1 for spacer or non-negative face indices.", this);
+        }
+    }
+#endif
 }

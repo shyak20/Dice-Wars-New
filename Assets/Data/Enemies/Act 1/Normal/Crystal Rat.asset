@@ -14,10 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyName: Bramble Mite
   displaySprite: {fileID: 21300000, guid: 1d3515ca0ca7efe488a6f9f15632ad84, type: 3}
+  combatAnimatorController: {fileID: 0}
+  idleAnimatorStateName: 
   enemyRank: 0
-  maxHealth: 15
+  maxHealth: 18
   startArmor: 0
   goldReward: 50
+  additionalRewardDrops: []
+  faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
+  dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
+  relicRewardPool: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
+  gemRewardPool: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
   isSequential: 1
   actionCycle:
   - {fileID: 11400000, guid: 0c2fe231434d99b4f920655f6b678ad8, type: 2}

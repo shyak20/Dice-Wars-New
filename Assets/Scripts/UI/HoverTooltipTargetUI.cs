@@ -9,19 +9,21 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     [SerializeField] private string tooltipTitle;
     [SerializeField, TextArea] private string tooltipDescription;
     [SerializeField] private HoverTooltipPanelUI tooltipPanel;
+    private Sprite _tooltipBackground;
 
-    public void SetContent(string title, string description)
+    public void SetContent(string title, string description, Sprite tooltipBackground = null)
     {
         tooltipTitle = title ?? string.Empty;
         tooltipDescription = description ?? string.Empty;
+        _tooltipBackground = tooltipBackground;
     }
 
     /// <summary>Optional panel wiring for runtime setup (e.g. <see cref="UIMapMoveCounterUI"/>).</summary>
-    public void Configure(HoverTooltipPanelUI panel, string title, string description)
+    public void Configure(HoverTooltipPanelUI panel, string title, string description, Sprite tooltipBackground = null)
     {
         if (panel != null)
             tooltipPanel = panel;
-        SetContent(title, description);
+        SetContent(title, description, tooltipBackground);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -31,7 +33,7 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
 
         var panel = ResolvePanel();
         if (panel == null) return;
-        panel.Show(tooltipTitle, tooltipDescription);
+        panel.Show(tooltipTitle, tooltipDescription, _tooltipBackground);
     }
 
     public void OnPointerExit(PointerEventData eventData)

@@ -10,17 +10,17 @@ using UnityEngine.Serialization;
 public class GameIconIndexSO : ScriptableObject
 {
     [Header("Base Actions")]
-    [Tooltip("Icon for stored physical attack / damage rows.")]
+    [Tooltip("Icon for stored physical attack / damage pool rows and face type chip.")]
     [SerializeField] private Sprite attack;
 
-    [Tooltip("Icon for stored armour / defence rows.")]
+    [Tooltip("Icon for stored armour / defence pool rows and face type chip.")]
     [FormerlySerializedAs("defense")]
     [SerializeField] private Sprite defence;
 
-    [Tooltip("Optional panel/frame behind attack/damage pool icons.")]
+    [Tooltip("Panel behind attack/damage pool row icons (not die tooltips).")]
     [SerializeField] private Sprite attackBackground;
 
-    [Tooltip("Optional panel/frame behind armour pool icons.")]
+    [Tooltip("Panel behind armour pool row icons (not die tooltips).")]
     [SerializeField] private Sprite defenceBackground;
 
     [Header("Actions (keys match ActionVisualId on each action class)")]
@@ -43,8 +43,9 @@ public class GameIconIndexSO : ScriptableObject
     {
         public StatusEffectSO effect;
         public Sprite icon;
-        [Tooltip("Shown behind the status pool icon; keyed by effect asset name as PoolRowKey.")]
-        public Sprite background;
+
+        [Tooltip("Behind the icon in the stored-actions pool row (PoolRowKey stable id = effect asset name).")]
+        public Sprite poolRowBackground;
     }
 
     [Serializable]
@@ -57,7 +58,6 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<ActionVisualId, Sprite> _actionLookup = new Dictionary<ActionVisualId, Sprite>();
     readonly Dictionary<StatusEffectSO, Sprite> _statusLookup = new Dictionary<StatusEffectSO, Sprite>();
     readonly Dictionary<ActionVisualId, Sprite> _actionBackgroundLookup = new Dictionary<ActionVisualId, Sprite>();
-    readonly Dictionary<StatusEffectSO, Sprite> _statusBackgroundLookup = new Dictionary<StatusEffectSO, Sprite>();
     readonly Dictionary<string, Sprite> _poolRowBackgroundByStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
 
     private void OnEnable() => RebuildLookups();
@@ -78,21 +78,17 @@ public class GameIconIndexSO : ScriptableObject
         }
 
         _statusLookup.Clear();
-        _statusBackgroundLookup.Clear();
         foreach (var e in statusEffectIcons)
         {
             if (e.effect == null) continue;
             if (e.icon != null)
                 _statusLookup[e.effect] = e.icon;
-            if (e.background != null)
-            {
-                _statusBackgroundLookup[e.effect] = e.background;
-                _poolRowBackgroundByStableId[e.effect.name] = e.background;
-            }
+            if (e.poolRowBackground != null)
+                _poolRowBackgroundByStableId[e.effect.name] = e.poolRowBackground;
         }
     }
 
-    /// <summary>Icons for <see cref="DieType.Damage"/> and <see cref="DieType.Armor"/> rows only.</summary>
+    /// <summary>Icons for <see cref="DieType.Damage"/> / <see cref="DieType.Armor"/> pool rows and face chips; element types have no base icon here.</summary>
     public Sprite GetElementIcon(DieType type)
     {
         switch (type)
@@ -119,7 +115,7 @@ public class GameIconIndexSO : ScriptableObject
         return _statusLookup.TryGetValue(effect, out var s) ? s : null;
     }
 
-    /// <summary>Background art for <see cref="DieType.Damage"/> / <see cref="DieType.Armor"/> pool rows.</summary>
+    /// <summary>Background for stored-actions pool rows only (<see cref="TryGetPoolRowBackground"/>).</summary>
     public Sprite GetElementBackground(DieType type)
     {
         switch (type)
@@ -138,16 +134,9 @@ public class GameIconIndexSO : ScriptableObject
         return _actionBackgroundLookup.TryGetValue(id, out var s) ? s : null;
     }
 
-    public Sprite GetStatusBackground(StatusEffectSO effect)
-    {
-        if (effect == null) return null;
-        if (_statusBackgroundLookup.Count == 0 && statusEffectIcons.Count > 0)
-            RebuildLookups();
-        return _statusBackgroundLookup.TryGetValue(effect, out var s) ? s : null;
-    }
-
     /// <summary>
-    /// Resolves a frame behind <see cref="StoredActionsPoolIcon"/> for this pool row (die types or status entry keyed by <c>effect.name</c> matching <see cref="PoolRowKey.StableId"/>).
+    /// Resolves a frame behind <see cref="StoredActionsPoolIcon"/> for this pool row
+    /// (<see cref="DieType"/> rows or per-status <see cref="StatusEffectIconEntry.poolRowBackground"/> keyed by <c>effect.name</c> as <see cref="PoolRowKey.StableId"/>).
     /// </summary>
     public Sprite TryGetPoolRowBackground(PoolRowKey key)
     {
@@ -192,8 +181,8 @@ public class GameIconIndexSO : ScriptableObject
                 key = status.effect != null ? $"Status.{status.effect.name}" : "Status.(null)",
                 sprite = status.icon
             });
-            if (status.background != null && status.effect != null)
-                entries.Add(new NamedIconEntry { key = $"Status.{status.effect.name}.Background", sprite = status.background });
+            if (status.poolRowBackground != null && status.effect != null)
+                entries.Add(new NamedIconEntry { key = $"Status.{status.effect.name}.PoolRowBackground", sprite = status.poolRowBackground });
         }
 
         return entries;

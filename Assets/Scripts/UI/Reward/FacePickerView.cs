@@ -42,6 +42,7 @@ public class FacePickerView : MonoBehaviour
     private Action<DieAssetSO, int> _onReplaceFaceSlotPicked;
     private Action _onBack;
     private Action _onSkip;
+    private Action _onRewindToFacePick;
     private DieFaceSO _selectedRewardFace;
     private DieAssetSO _activeReplacementDie;
     private Coroutine _pickTransitionRoutine;
@@ -82,7 +83,8 @@ public class FacePickerView : MonoBehaviour
         Action<DieFaceSO> onFacePicked,
         Action<DieAssetSO, int> onReplaceFaceSlotPicked,
         Action onBack = null,
-        Action onSkip = null)
+        Action onSkip = null,
+        Action onRewindToFacePick = null)
     {
         if (options == null || options.Count == 0)
         {
@@ -94,6 +96,7 @@ public class FacePickerView : MonoBehaviour
         _onReplaceFaceSlotPicked = onReplaceFaceSlotPicked;
         _onBack = onBack;
         _onSkip = onSkip;
+        _onRewindToFacePick = onRewindToFacePick;
         _selectedRewardFace = null;
         _activeReplacementDie = null;
 
@@ -137,6 +140,7 @@ public class FacePickerView : MonoBehaviour
 
             slot.Bind(face, OnRewardFaceClicked);
             slot.SetInteractable(true);
+            slot.EnsureStandaloneHoverReveal();
             _rewardSlots.Add(slot);
             var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
             _rewardSlotGroups[slot] = cg;
@@ -221,6 +225,12 @@ public class FacePickerView : MonoBehaviour
 
     private void OnBackClicked()
     {
+        if (_selectedRewardFace != null)
+        {
+            ReturnToFaceSelectionPhase();
+            return;
+        }
+
         Hide();
         _onBack?.Invoke();
     }
@@ -231,9 +241,48 @@ public class FacePickerView : MonoBehaviour
         _onSkip?.Invoke();
     }
 
+    private void ReturnToFaceSelectionPhase()
+    {
+        if (_pickTransitionRoutine != null)
+        {
+            StopCoroutine(_pickTransitionRoutine);
+            _pickTransitionRoutine = null;
+        }
+
+        _selectedRewardFace = null;
+        _activeReplacementDie = null;
+        _onRewindToFacePick?.Invoke();
+
+        for (var i = 0; i < _rewardSlots.Count; i++)
+        {
+            var slot = _rewardSlots[i];
+            if (slot == null) continue;
+            slot.gameObject.SetActive(true);
+            slot.SetInteractable(true);
+            slot.SetHoverRevealEnabled(true);
+            if (_rewardSlotGroups.TryGetValue(slot, out var cg) && cg != null)
+                cg.alpha = 1f;
+        }
+
+        if (diceLayoutContainer != null)
+        {
+            var layout = diceLayoutContainer.GetComponent<HorizontalOrVerticalLayoutGroup>();
+            if (layout != null)
+                layout.spacing = 0f;
+        }
+
+        RebuildDiceLayout();
+        if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
+        ClearDiceSelectionVisuals();
+    }
+
     private void OnRewardFaceClicked(DieFaceSO face)
     {
         if (face == null || _selectedRewardFace != null) return;
+
+        for (var i = 0; i < _rewardSlots.Count; i++)
+            _rewardSlots[i]?.SetHoverRevealEnabled(false);
+
         _selectedRewardFace = face;
         _onFacePicked?.Invoke(face);
 
@@ -327,7 +376,7 @@ public class FacePickerView : MonoBehaviour
         {
             if (_selectedRewardFace != null) return;
             if (dieTooltipOverlay == null) return;
-            dieTooltipOverlay.ShowDie(die, false);
+            dieTooltipOverlay.ShowDie(die, false, null, GetDieIconRectForTooltip(die));
         });
         et.triggers.Add(enter);
 
@@ -344,7 +393,13 @@ public class FacePickerView : MonoBehaviour
     {
         if (dieTooltipOverlay == null || die == null || _selectedRewardFace == null) return;
         if (!die.CanAttachFace(_selectedRewardFace)) return;
-        dieTooltipOverlay.ShowDie(die, true, OnDieFaceReplacementClicked);
+        dieTooltipOverlay.ShowDie(die, true, OnDieFaceReplacementClicked, GetDieIconRectForTooltip(die));
+    }
+
+    private RectTransform GetDieIconRectForTooltip(DieAssetSO die)
+    {
+        if (die == null) return null;
+        return _diceViews.TryGetValue(die, out var view) ? view.IconRectTransform : null;
     }
 
     private void OnDieFaceReplacementClicked(int slotIndex, DieFaceSO oldFace)

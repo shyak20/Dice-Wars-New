@@ -29,6 +29,9 @@ public class DieFaceSO : ScriptableObject
     [Header("UI (card/picker/shop)")]
     public Sprite uiIcon;
 
+    [Tooltip("Frame / panel art for this face in tooltips and face cards (e.g. UIRewardSlot when wired).")]
+    public Sprite uiTooltipBackground;
+
     [Header("Game Actions")]
     [Tooltip("If true, all actions run when the die settles; if false, they run at turn end before damage resolves.")]
     public bool activateImmediately = true;

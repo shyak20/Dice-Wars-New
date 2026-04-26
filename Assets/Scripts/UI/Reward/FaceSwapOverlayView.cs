@@ -50,6 +50,7 @@ public class FaceSwapOverlayView : MonoBehaviour
 
         newFacePreview.Bind(newFace, null);
         newFacePreview.SetInteractable(false);
+        newFacePreview.EnsureStandaloneHoverReveal();
 
         for (var i = 0; i < slotSlots.Length; i++)
         {
@@ -85,9 +86,10 @@ public class FaceSwapOverlayView : MonoBehaviour
         et.triggers.Clear();
         var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
         enter.callback.AddListener(_ => UpdateHoverFaceTexts(slotIndex));
-        et.triggers.Add(enter);
         var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
         exit.callback.AddListener(_ => ClearHoverPreview());
+        slot.AppendHoverRevealListeners(enter, exit);
+        et.triggers.Add(enter);
         et.triggers.Add(exit);
     }
 

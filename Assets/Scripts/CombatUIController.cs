@@ -7,7 +7,6 @@ using UnityEngine.EventSystems;
 
 public class CombatUIController : MonoBehaviour
 {
-    private static readonly int[] DieTooltipGridTemplate = { -1, 0, -1, -1, 1, 2, 3, 4, -1, 5 };
 
     [Header("Dice Tray (The Hand)")]
     public Transform diceButtonContainer;
@@ -54,6 +53,9 @@ public class CombatUIController : MonoBehaviour
     [SerializeField] private TMP_Text statusHoverDescriptionText;
     [Header("Generic Tooltip Presenter (preferred)")]
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
+    [Header("Legacy die tooltip type backgrounds (when overlay is null)")]
+    [SerializeField] private Image dieTooltipTypeBackground;
+    [SerializeField] private Image faceHoverTypeBackground;
 
     private Dictionary<DieAssetSO, DiceTrayButtonView> diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
     private Dictionary<DieAssetSO, Button> diceButtons = new Dictionary<DieAssetSO, Button>();
@@ -261,6 +263,7 @@ public class CombatUIController : MonoBehaviour
 
         tooltipShownForDie = die;
         dieTooltipPanel.SetActive(true);
+        DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
 
@@ -268,9 +271,10 @@ public class CombatUIController : MonoBehaviour
             Destroy(child.gameObject);
 
         if (die.faces == null || die.faces.Length == 0) return;
-        for (var i = 0; i < DieTooltipGridTemplate.Length; i++)
+        var grid = DieTooltipOverlayUI.DefaultFaceGridLayout;
+        for (var i = 0; i < grid.Length; i++)
         {
-            var faceIndex = DieTooltipGridTemplate[i];
+            var faceIndex = grid[i];
             if (faceIndex < 0 || faceIndex >= die.faces.Length)
             {
                 CreateTooltipSpacer();
@@ -352,6 +356,7 @@ public class CombatUIController : MonoBehaviour
         tooltipShownForDie = null;
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);
+        DieTooltipBackgrounds.Clear(dieTooltipTypeBackground);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
     }
@@ -377,6 +382,7 @@ public class CombatUIController : MonoBehaviour
     private void ShowGemHoverTooltip(GemSO gem)
     {
         if (faceHoverTooltipPanel == null) return;
+        DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
         if (faceHoverTitleText != null)
             faceHoverTitleText.text = gem != null ? gem.DisplayLabel : "";
         if (faceHoverDescriptionText != null)
@@ -397,7 +403,6 @@ public class CombatUIController : MonoBehaviour
 
         var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
         enter.callback.AddListener(_ => ShowFaceHoverTooltip(face));
-        et.triggers.Add(enter);
 
         var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
         exit.callback.AddListener(_ =>
@@ -405,11 +410,19 @@ public class CombatUIController : MonoBehaviour
             HideFaceHoverTooltip();
             HideStatusHoverTooltip();
         });
+
+        slot.AppendHoverRevealListeners(enter, exit);
+        et.triggers.Add(enter);
         et.triggers.Add(exit);
     }
 
     private void ShowFaceHoverTooltip(DieFaceSO face)
     {
+        if (face != null)
+            DieTooltipBackgrounds.ApplyFaceTooltip(faceHoverTypeBackground, face);
+        else
+            DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
+
         if (faceHoverTooltipPanel != null)
         {
             if (faceHoverTitleText != null) faceHoverTitleText.text = face != null ? face.Title : "";
@@ -428,6 +441,7 @@ public class CombatUIController : MonoBehaviour
     {
         if (faceHoverTitleText != null) faceHoverTitleText.text = "";
         if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = "";
+        DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
         if (faceHoverTooltipPanel != null) faceHoverTooltipPanel.SetActive(false);
     }
 

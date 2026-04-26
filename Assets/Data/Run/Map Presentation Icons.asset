@@ -17,7 +17,7 @@ MonoBehaviour:
   combatNormalIcon: {fileID: 21300000, guid: da21dfef0c1019c4b9ad2dd3ff17d481, type: 3}
   combatEliteIcon: {fileID: 21300000, guid: aadbddcce9eccea4f943317a2d000a81, type: 3}
   combatBossIcon: {fileID: 21300000, guid: deb1c267c6e4540428bdf0eda091b861, type: 3}
-  shopIcon: {fileID: 21300000, guid: f1c1262013618084491c451046d7ebb0, type: 3}
+  shopIcon: {fileID: 21300000, guid: cc6e83651480f18448a300f3da7c8689, type: 3}
   unknownIcon: {fileID: 21300000, guid: 19618fabf9d74694897b81edd02a8375, type: 3}
   shrineIcon: {fileID: 21300000, guid: f1012328c13c09c4c88833e8b97a4af8, type: 3}
   treasureIcon: {fileID: 21300000, guid: 45340d43c09ffd843aa3306f764a4080, type: 3}

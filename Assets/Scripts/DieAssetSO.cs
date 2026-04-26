@@ -17,6 +17,9 @@ public class DieAssetSO : ScriptableObject
     [Tooltip("Icon for this die in deck / reward / die-picker UI (not per-face art).")]
     public Sprite uiIcon;
 
+    [Tooltip("Frame / panel art behind the full die tooltip (combat, shop, face picker).")]
+    public Sprite uiTooltipBackground;
+
     [Header("Shop")]
     [Tooltip("Gold cost when this die appears as a full-die shop offer. 0 = ShopGenerator fallback default.")]
     public int shopGoldPrice;

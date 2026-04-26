@@ -179,6 +179,7 @@ public class UIShopSlot : MonoBehaviour
             var entry = Instantiate(dieFaceEntryPrefab, dieFacesContainer);
             entry.Bind(face, null);
             entry.SetInteractable(false);
+            entry.EnsureStandaloneHoverReveal();
             _spawnedDieFaceEntries.Add(entry);
         }
     }

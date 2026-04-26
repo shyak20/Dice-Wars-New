@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -14,10 +15,16 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private TMP_Text rarityText;
     [SerializeField] private Image iconImage;
     [SerializeField] private Image typeIconImage;
+    [Tooltip("Optional. Behind card content; uses DieFaceSO.uiTooltipBackground.")]
+    [SerializeField] private Image tooltipBackgroundImage;
     [SerializeField] private Button button;
+    [Header("Optional hover highlight")]
+    [Tooltip("Shown while the pointer is over the slot (same raycast target as the Button). Leave empty to disable.")]
+    [SerializeField] private GameObject hoverRevealObject;
     [Header("Optional Status Hover Tooltip")]
     [SerializeField] private HoverTooltipTargetUI statusHoverTooltipTarget;
 
+    private bool _hoverRevealEnabled = true;
     private DieFaceSO _face;
     public DieFaceSO Face => _face;
 
@@ -52,7 +59,14 @@ public class UIRewardSlot : MonoBehaviour
             typeIconImage.enabled = elementSprite != null;
         }
 
+        if (tooltipBackgroundImage != null)
+            DieTooltipBackgrounds.ApplyFaceTooltip(tooltipBackgroundImage, face);
+
         SetupStatusHoverTooltip(face);
+
+        _hoverRevealEnabled = true;
+        if (hoverRevealObject != null)
+            hoverRevealObject.SetActive(false);
 
         if (button != null)
         {
@@ -69,10 +83,63 @@ public class UIRewardSlot : MonoBehaviour
             button.interactable = interactable;
     }
 
+    /// <summary>
+    /// When false, pointer hover no longer shows <see cref="hoverRevealObject"/> (and it is hidden immediately).
+    /// </summary>
+    public void SetHoverRevealEnabled(bool enabled)
+    {
+        _hoverRevealEnabled = enabled;
+        if (!enabled && hoverRevealObject != null)
+            hoverRevealObject.SetActive(false);
+    }
+
+    private void ApplyHoverRevealPointerEnter()
+    {
+        if (!_hoverRevealEnabled || hoverRevealObject == null) return;
+        hoverRevealObject.SetActive(true);
+    }
+
+    private void ApplyHoverRevealPointerExit()
+    {
+        if (hoverRevealObject == null) return;
+        hoverRevealObject.SetActive(false);
+    }
+
     /// <summary>Used for average-roll hover on the swap overlay (raycast target).</summary>
     public GameObject GetHoverTarget()
     {
         return button != null ? button.gameObject : gameObject;
+    }
+
+    /// <summary>
+    /// Call from code that builds <see cref="EventTrigger"/> PointerEnter/Exit for face tooltips (before <c>triggers.Add</c>).
+    /// Adds show/hide for <see cref="hoverRevealObject"/> on the same entries so a later <c>triggers.Clear()</c> is not used for reveal.
+    /// </summary>
+    public void AppendHoverRevealListeners(EventTrigger.Entry pointerEnter, EventTrigger.Entry pointerExit)
+    {
+        if (hoverRevealObject == null) return;
+        if (pointerEnter != null)
+            pointerEnter.callback.AddListener(_ => ApplyHoverRevealPointerEnter());
+        if (pointerExit != null)
+            pointerExit.callback.AddListener(_ => ApplyHoverRevealPointerExit());
+    }
+
+    /// <summary>
+    /// When nothing else wires pointer hover on this slot (reward picker, shop face row), registers self-contained enter/exit.
+    /// Do not use together with external <c>EventTrigger.triggers.Clear()</c> on the same button unless you also call <see cref="AppendHoverRevealListeners"/>.
+    /// </summary>
+    public void EnsureStandaloneHoverReveal()
+    {
+        if (hoverRevealObject == null || button == null) return;
+        hoverRevealObject.SetActive(false);
+        var go = button.gameObject;
+        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => ApplyHoverRevealPointerEnter());
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => ApplyHoverRevealPointerExit());
+        et.triggers.Add(enter);
+        et.triggers.Add(exit);
     }
 
     private void SetupStatusHoverTooltip(DieFaceSO face)

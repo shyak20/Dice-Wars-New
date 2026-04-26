@@ -23,6 +23,8 @@ public class FaceRewardManager : MonoBehaviour
 
     private DieFaceSO chosenFace;
     private DieAssetSO chosenDie;
+    /// <summary>Win-stage only: same 3 faces until the row is consumed or a new victory rebuilds rewards (survives Back to win screen).</summary>
+    private List<DieFaceSO> _winStageFaceOfferCache;
 
     private void Awake()
     {
@@ -34,6 +36,7 @@ public class FaceRewardManager : MonoBehaviour
     {
         chosenFace = null;
         chosenDie = null;
+        ReleaseWinStageFaceOfferCache();
 
         if (dieDisambiguationView != null) dieDisambiguationView.Hide();
         if (faceSwapOverlayView != null) faceSwapOverlayView.Hide();
@@ -41,8 +44,16 @@ public class FaceRewardManager : MonoBehaviour
         var preferredTypes = new HashSet<DieType>(
             PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
         var options = lootTable.GetRandomRewards(3, preferredTypes);
-        facePickerView.Show(options, OnFaceChosen, OnReplacementSlotChosen);
+        facePickerView.Show(options, OnFaceChosen, OnReplacementSlotChosen, onRewindToFacePick: RewindFacePickProgress);
         gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// Call from <see cref="WinStageFlowController"/> when reward rows are rebuilt for a new victory so the next face offer is a fresh roll.
+    /// </summary>
+    public void OnWinStageRewardsLayoutRebuilt()
+    {
+        ReleaseWinStageFaceOfferCache();
     }
 
     /// <summary>Win-stage flow: picker with Back (return to win popup) and Skip (no new face).</summary>
@@ -63,7 +74,21 @@ public class FaceRewardManager : MonoBehaviour
 
         var preferredTypes = new HashSet<DieType>(
             PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
-        var options = lootTable.GetRandomRewards(3, preferredTypes);
+        var options = _winStageFaceOfferCache;
+        if (options == null || options.Count == 0)
+        {
+            options = lootTable.GetRandomRewards(3, preferredTypes);
+            if (options == null || options.Count == 0)
+            {
+                Debug.LogError("FaceRewardManager.StartFaceRewardFromWinStage: loot roll returned no faces.");
+                gameObject.SetActive(false);
+                onBackToWin?.Invoke();
+                return;
+            }
+
+            _winStageFaceOfferCache = options;
+        }
+
         facePickerView.Show(
             options,
             OnFaceChosen,
@@ -75,10 +100,23 @@ public class FaceRewardManager : MonoBehaviour
             },
             () =>
             {
+                ReleaseWinStageFaceOfferCache();
                 gameObject.SetActive(false);
                 onSkippedFace?.Invoke();
-            });
+            },
+            RewindFacePickProgress);
         gameObject.SetActive(true);
+    }
+
+    private void ReleaseWinStageFaceOfferCache()
+    {
+        _winStageFaceOfferCache = null;
+    }
+
+    private void RewindFacePickProgress()
+    {
+        chosenFace = null;
+        chosenDie = null;
     }
 
     private void OnFaceChosen(DieFaceSO face)
@@ -123,6 +161,7 @@ public class FaceRewardManager : MonoBehaviour
             faceSwapOverlayView.Hide();
 
         FaceRewardEvents.OnFaceRewardCompleted?.Invoke(chosenFace);
+        ReleaseWinStageFaceOfferCache();
         gameObject.SetActive(false);
     }
 }

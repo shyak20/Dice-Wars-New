@@ -29,6 +29,9 @@ public class DiceTrayButtonView : MonoBehaviour
     /// <param name="enabled">Pass true only in the combat scene when using the dice hand for rolls.</param>
     public void SetSelectedIconShakeEnabled(bool enabled) => _selectedIconShakeEnabled = enabled;
 
+    /// <summary>Die artwork rect; use to align tooltips (e.g. face picker) to the icon center.</summary>
+    public RectTransform IconRectTransform => iconImage != null ? iconImage.rectTransform : null;
+
     private void Awake()
     {
         if (selectedImage == null)

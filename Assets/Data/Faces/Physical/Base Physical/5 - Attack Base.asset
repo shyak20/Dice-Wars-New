@@ -20,8 +20,10 @@ MonoBehaviour:
   faceMaterial: {fileID: 2100000, guid: f35ae15ee7e93c149b27a0d43069dfd5, type: 2}
   rarity: 0
   damage: 5
+  damageAttackTimes: 1
   armor: 0
   uiIcon: {fileID: 21300000, guid: 00dda7a098b7ec6478fd1355f4741d3d, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: d54377126ab96104899c9eaf08f5578c, type: 3}
   activateImmediately: 1
   actions: []
   references:

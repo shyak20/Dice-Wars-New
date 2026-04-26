@@ -15,6 +15,7 @@ MonoBehaviour:
   dieName: Base Defense
   dieType: 1
   uiIcon: {fileID: 21300000, guid: eca18e2cf14c282488edf3fe654b1805, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: 1086363c2a90d07439f392d72ef1197e, type: 3}
   shopGoldPrice: 50
   faces:
   - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}

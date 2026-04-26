@@ -89,6 +89,9 @@ public class WinStageFlowController : MonoBehaviour
     {
         if (rewardsLayout == null) return;
 
+        if (faceRewardManager != null)
+            faceRewardManager.OnWinStageRewardsLayoutRebuilt();
+
         foreach (Transform c in rewardsLayout)
             Destroy(c.gameObject);
 
