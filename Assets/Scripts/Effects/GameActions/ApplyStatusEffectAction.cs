@@ -7,9 +7,6 @@ public class ApplyStatusEffectAction : GameActionWithIcon
     [SerializeField] private StatusEffectSO statusEffect;
     [SerializeField] private int stacks = 1;
 
-    [Tooltip("Optional. Element pool row id (defaults to the status asset name). Same id merges rows across dice.")]
-    [SerializeField] private string poolRowKeyOverride;
-
     public int ConfiguredStacks => stacks;
 
     public StatusEffectSO StatusEffectDefinition => statusEffect;
@@ -19,8 +16,6 @@ public class ApplyStatusEffectAction : GameActionWithIcon
 
     PoolRowKey ResolvePoolRowKey()
     {
-        if (!string.IsNullOrWhiteSpace(poolRowKeyOverride))
-            return PoolRowKey.FromInspectorString(poolRowKeyOverride);
         if (statusEffect != null)
             return PoolRowKey.Custom(statusEffect.name);
         return PoolRowKey.Custom("Status");

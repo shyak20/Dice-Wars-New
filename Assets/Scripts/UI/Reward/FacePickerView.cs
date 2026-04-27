@@ -28,6 +28,8 @@ public class FacePickerView : MonoBehaviour
 
     [Header("Shared die tooltip")]
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
+    [Tooltip("Optional. If assigned, reward-face status hovers use this panel (same behavior as fight scene status tooltip).")]
+    [SerializeField] private HoverTooltipPanelUI statusHoverTooltipPanel;
 
     [Header("Win-stage flow (optional)")]
     [SerializeField] private Button backButton;
@@ -139,6 +141,7 @@ public class FacePickerView : MonoBehaviour
             }
 
             slot.Bind(face, OnRewardFaceClicked);
+            slot.SetStatusHoverTooltipPanel(statusHoverTooltipPanel);
             slot.SetInteractable(true);
             slot.EnsureStandaloneHoverReveal();
             _rewardSlots.Add(slot);

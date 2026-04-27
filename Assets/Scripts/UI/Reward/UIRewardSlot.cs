@@ -24,6 +24,7 @@ public class UIRewardSlot : MonoBehaviour
     [Header("Optional Status Hover Tooltip")]
     [SerializeField] private HoverTooltipTargetUI statusHoverTooltipTarget;
 
+    private HoverTooltipPanelUI _statusHoverTooltipPanel;
     private bool _hoverRevealEnabled = true;
     private DieFaceSO _face;
     public DieFaceSO Face => _face;
@@ -93,6 +94,12 @@ public class UIRewardSlot : MonoBehaviour
             hoverRevealObject.SetActive(false);
     }
 
+    /// <summary>Optional explicit panel used by status hover on this slot; falls back to scene lookup when null.</summary>
+    public void SetStatusHoverTooltipPanel(HoverTooltipPanelUI panel)
+    {
+        _statusHoverTooltipPanel = panel;
+    }
+
     private void ApplyHoverRevealPointerEnter()
     {
         if (!_hoverRevealEnabled || hoverRevealObject == null) return;
@@ -144,17 +151,21 @@ public class UIRewardSlot : MonoBehaviour
 
     private void SetupStatusHoverTooltip(DieFaceSO face)
     {
+        var hoverGo = GetHoverTarget();
+        if (hoverGo == null) return;
+
+        // Always bind status hover to the actual raycast target (button). A serialized reference on
+        // another child object will never receive pointer enter/exit for this slot.
         var target = statusHoverTooltipTarget;
-        if (target == null)
-        {
-            var hoverGo = GetHoverTarget();
-            if (hoverGo == null) return;
+        if (target == null || target.gameObject != hoverGo)
             target = hoverGo.GetComponent<HoverTooltipTargetUI>() ?? hoverGo.AddComponent<HoverTooltipTargetUI>();
-            statusHoverTooltipTarget = target;
-        }
+        statusHoverTooltipTarget = target;
 
         BuildEffectTooltip(face, out var title, out var description);
-        target.SetContent(title, description);
+        if (_statusHoverTooltipPanel != null)
+            target.Configure(_statusHoverTooltipPanel, title, description);
+        else
+            target.SetContent(title, description);
     }
 
     private static void BuildEffectTooltip(DieFaceSO face, out string title, out string description)

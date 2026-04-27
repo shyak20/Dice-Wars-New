@@ -34,6 +34,7 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
         var panel = ResolvePanel();
         if (panel == null) return;
         panel.Show(tooltipTitle, tooltipDescription, _tooltipBackground);
+        panel.AlignPivotWorldXToRect(transform as RectTransform);
     }
 
     public void OnPointerExit(PointerEventData eventData)

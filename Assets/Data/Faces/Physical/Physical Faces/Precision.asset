@@ -10,23 +10,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Double Attack
+  m_Name: Precision
   m_EditorClassIdentifier: 
-  title: Double Attack
+  title: Stronger
   description: Harness 1 Damage \nHarness +1 Strength
   descriptionLines:
-  - Deal <style=Attack>2</style> twice
+  - Deal <style=Attack>4</style>
+  - Apply Precision - Option to add +1 to the Power Pool (immediate)
   value: 2
   type: 0
   faceMaterial: {fileID: 2100000, guid: 52b940e1549b9774ebc0a8ab346d6eab, type: 2}
-  rarity: 0
+  rarity: 1
   damage: 2
-  damageAttackTimes: 2
+  damageAttackTimes: 1
   armor: 0
   uiIcon: {fileID: 21300000, guid: a7129468cb1a3ab45864828edc698b50, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: d54377126ab96104899c9eaf08f5578c, type: 3}
-  activateImmediately: 0
-  actions: []
+  activateImmediately: 1
+  actions:
+  - rid: 6494956392264499731
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 6494956392264499731
+      type: {class: PrecisionAction, ns: , asm: Assembly-CSharp}
+      data:
+        powerAmount: 1

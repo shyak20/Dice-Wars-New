@@ -33,6 +33,21 @@ public class HoverTooltipPanelUI : MonoBehaviour
         if (panelRoot != null) panelRoot.SetActive(true);
     }
 
+    /// <summary>Aligns panel pivot world X to the reference rect center (preserves Y/Z).</summary>
+    public void AlignPivotWorldXToRect(RectTransform reference)
+    {
+        if (reference == null || panelRoot == null) return;
+        var panelRect = panelRoot.transform as RectTransform;
+        if (panelRect == null) return;
+
+        var corners = new Vector3[4];
+        reference.GetWorldCorners(corners);
+        var centerWorldX = (corners[0].x + corners[2].x) * 0.5f;
+        var pos = panelRect.position;
+        pos.x = centerWorldX;
+        panelRect.position = pos;
+    }
+
     public void Hide()
     {
         if (titleText != null) titleText.text = string.Empty;
