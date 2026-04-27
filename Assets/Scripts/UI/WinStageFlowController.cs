@@ -122,7 +122,7 @@ public class WinStageFlowController : MonoBehaviour
             }
         }
 
-        if (_pendingGemRewards.Count > 0 && gemRewardRowPrefab != null)
+        if (_pendingGemRewards.Count > 0 && gemRewardRowPrefab != null && faceRewardManager != null)
         {
             for (var i = 0; i < _pendingGemRewards.Count; i++)
             {
@@ -140,7 +140,7 @@ public class WinStageFlowController : MonoBehaviour
                     continue;
                 }
 
-                row.Setup(gem, () =>
+                row.Setup(this, faceRewardManager, gem, () =>
                 {
                     _uncollectedGemRewards = Mathf.Max(0, _uncollectedGemRewards - 1);
                     UpdateContinueInteractable();
@@ -192,7 +192,7 @@ public class WinStageFlowController : MonoBehaviour
     private void UpdateContinueInteractable()
     {
         if (continueButton == null) return;
-        continueButton.interactable = _uncollectedGold <= 0 && _uncollectedGemRewards <= 0 && _faceFlowComplete;
+        continueButton.interactable = true;
     }
 
     private void OnContinueClicked()

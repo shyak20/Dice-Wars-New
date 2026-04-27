@@ -11,8 +11,7 @@ public class FaceRewardManager : MonoBehaviour
 {
     [Header("Views")]
     [SerializeField] private FacePickerView facePickerView;
-    [SerializeField] private DieDisambiguationView dieDisambiguationView;
-    [SerializeField] private FaceSwapOverlayView faceSwapOverlayView;
+    [SerializeField] private GemRewardView gemRewardView;
 
     [Header("Data")]
     [SerializeField] private FaceLootTableSO lootTable;
@@ -38,8 +37,7 @@ public class FaceRewardManager : MonoBehaviour
         chosenDie = null;
         ReleaseWinStageFaceOfferCache();
 
-        if (dieDisambiguationView != null) dieDisambiguationView.Hide();
-        if (faceSwapOverlayView != null) faceSwapOverlayView.Hide();
+        if (gemRewardView != null) gemRewardView.Hide();
 
         var preferredTypes = new HashSet<DieType>(
             PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
@@ -62,8 +60,7 @@ public class FaceRewardManager : MonoBehaviour
         chosenFace = null;
         chosenDie = null;
 
-        if (dieDisambiguationView != null) dieDisambiguationView.Hide();
-        if (faceSwapOverlayView != null) faceSwapOverlayView.Hide();
+        if (gemRewardView != null) gemRewardView.Hide();
 
         if (lootTable == null || facePickerView == null || PlayerDataContainer.Instance == null)
         {
@@ -157,11 +154,43 @@ public class FaceRewardManager : MonoBehaviour
         if (closeDelay > 0f)
             yield return new WaitForSeconds(closeDelay);
 
-        if (faceSwapOverlayView != null)
-            faceSwapOverlayView.Hide();
-
         FaceRewardEvents.OnFaceRewardCompleted?.Invoke(chosenFace);
         ReleaseWinStageFaceOfferCache();
         gameObject.SetActive(false);
+    }
+
+    /// <summary>Win-stage flow: choose a die socket for the collected gem.</summary>
+    public void StartGemRewardFromWinStage(GemSO gem, Action onGemSocketed, Action onBackToWin = null)
+    {
+        if (gemRewardView == null)
+        {
+            Debug.LogError("FaceRewardManager.StartGemRewardFromWinStage: assign gemRewardView.");
+            onBackToWin?.Invoke();
+            return;
+        }
+
+        var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+        var candidates = PlayerInventory.GetDiceWithEmptyGemSocket(data);
+        if (candidates.Count <= 0)
+        {
+            Debug.LogWarning($"FaceRewardManager: cannot start gem reward for '{gem?.name}' — no free gem sockets.");
+            onBackToWin?.Invoke();
+            return;
+        }
+
+        if (facePickerView != null) facePickerView.Hide();
+        gameObject.SetActive(true);
+        gemRewardView.Show(
+            gem,
+            _ =>
+            {
+                gameObject.SetActive(false);
+                onGemSocketed?.Invoke();
+            },
+            () =>
+            {
+                gameObject.SetActive(false);
+                onBackToWin?.Invoke();
+            });
     }
 }

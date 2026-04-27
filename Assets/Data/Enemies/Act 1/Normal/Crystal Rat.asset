@@ -20,7 +20,10 @@ MonoBehaviour:
   maxHealth: 18
   startArmor: 0
   goldReward: 50
-  additionalRewardDrops: []
+  additionalRewardDrops:
+  - pool: 3
+    dropChance: 1
+    rolls: 1
   faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
   dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
   relicRewardPool: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}

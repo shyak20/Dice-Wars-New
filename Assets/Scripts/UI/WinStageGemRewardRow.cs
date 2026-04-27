@@ -3,13 +3,15 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>One row in the win-stage rewards list: gem icon/name + collect button (sockets into a random die with a free socket).</summary>
+/// <summary>One row in the win-stage rewards list: gem icon/name + collect button (opens gem die-selection flow).</summary>
 public class WinStageGemRewardRow : MonoBehaviour
 {
     [SerializeField] private TMP_Text labelText;
     [SerializeField] private Image iconImage;
     [SerializeField] private Button collectButton;
 
+    private WinStageFlowController _host;
+    private FaceRewardManager _faceRewards;
     private GemSO _gem;
     private Action _onCollected;
 
@@ -19,8 +21,10 @@ public class WinStageGemRewardRow : MonoBehaviour
             Debug.LogError($"WinStageGemRewardRow on '{name}': assign collectButton.");
     }
 
-    public void Setup(GemSO gem, Action onCollected)
+    public void Setup(WinStageFlowController host, FaceRewardManager faceRewardManager, GemSO gem, Action onCollected)
     {
+        _host = host;
+        _faceRewards = faceRewardManager;
         _gem = gem;
         _onCollected = onCollected;
 
@@ -43,24 +47,23 @@ public class WinStageGemRewardRow : MonoBehaviour
 
     private void OnCollectClicked()
     {
-        TrySocketGemToRandomDie(_gem);
-        _onCollected?.Invoke();
-        Destroy(gameObject);
-    }
-
-    private static void TrySocketGemToRandomDie(GemSO gem)
-    {
-        if (gem == null) return;
-        var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
-        var candidates = PlayerInventory.GetDiceWithEmptyGemSocket(data);
-        if (candidates == null || candidates.Count == 0)
+        if (_host == null || _faceRewards == null || _gem == null)
         {
-            Debug.LogWarning($"WinStageGemRewardRow: could not collect gem '{gem.name}' — no dice have free sockets.");
+            Debug.LogError("WinStageGemRewardRow: not configured — call Setup from WinStageFlowController.");
             return;
         }
 
-        var die = candidates[UnityEngine.Random.Range(0, candidates.Count)];
-        if (die != null && die.TrySocketGem(gem))
-            Debug.Log($"Win-stage reward: socketed gem '{gem.name}' into die '{die.dieName}'.");
+        collectButton.interactable = false;
+        _faceRewards.StartGemRewardFromWinStage(
+            _gem,
+            () =>
+            {
+                _onCollected?.Invoke();
+                Destroy(gameObject);
+            },
+            () =>
+            {
+                collectButton.interactable = true;
+            });
     }
 }
