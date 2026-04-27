@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -13,6 +14,8 @@ public class WinStageFlowController : MonoBehaviour
     [SerializeField] private GameObject winStagePanel;
     [SerializeField] private Transform rewardsLayout;
     [SerializeField] private GameObject goldRewardRowPrefab;
+    [Tooltip("Reward row with WinStageGemRewardRow + Collect button; sockets the gem reward into a random die with a free socket.")]
+    [SerializeField] private GameObject gemRewardRowPrefab;
     [Tooltip("Reward row with WinStageFaceRewardRow + Select button; opens FaceRewardManager when pressed.")]
     [SerializeField] private GameObject faceRewardRowPrefab;
     [SerializeField] private string faceRewardRowLabel = "New face";
@@ -24,6 +27,8 @@ public class WinStageFlowController : MonoBehaviour
     [SerializeField] private FaceRewardManager faceRewardManager;
 
     private int _uncollectedGold;
+    private int _uncollectedGemRewards;
+    private readonly List<GemSO> _pendingGemRewards = new List<GemSO>();
     private bool _faceFlowComplete = true;
     private Coroutine _flowRoutine;
     /// <summary>True after the post-victory intro (delay + first layout) has run for this fight.</summary>
@@ -62,6 +67,9 @@ public class WinStageFlowController : MonoBehaviour
         }
 
         _uncollectedGold = VictoryRewardBuffer.PendingGold;
+        _pendingGemRewards.Clear();
+        _pendingGemRewards.AddRange(VictoryRewardBuffer.PendingGems);
+        _uncollectedGemRewards = 0;
         VictoryRewardBuffer.Clear();
         _faceFlowComplete = true;
 
@@ -114,6 +122,32 @@ public class WinStageFlowController : MonoBehaviour
             }
         }
 
+        if (_pendingGemRewards.Count > 0 && gemRewardRowPrefab != null)
+        {
+            for (var i = 0; i < _pendingGemRewards.Count; i++)
+            {
+                var gem = _pendingGemRewards[i];
+                if (gem == null) continue;
+                _uncollectedGemRewards++;
+
+                var go = Instantiate(gemRewardRowPrefab, rewardsLayout);
+                var row = go.GetComponent<WinStageGemRewardRow>();
+                if (row == null)
+                {
+                    Debug.LogError("WinStageFlowController: gemRewardRowPrefab needs WinStageGemRewardRow.");
+                    _uncollectedGemRewards = Mathf.Max(0, _uncollectedGemRewards - 1);
+                    Destroy(go);
+                    continue;
+                }
+
+                row.Setup(gem, () =>
+                {
+                    _uncollectedGemRewards = Mathf.Max(0, _uncollectedGemRewards - 1);
+                    UpdateContinueInteractable();
+                });
+            }
+        }
+
         if (faceRewardManager != null && faceRewardRowPrefab != null)
         {
             var go = Instantiate(faceRewardRowPrefab, rewardsLayout);
@@ -158,7 +192,7 @@ public class WinStageFlowController : MonoBehaviour
     private void UpdateContinueInteractable()
     {
         if (continueButton == null) return;
-        continueButton.interactable = _uncollectedGold <= 0 && _faceFlowComplete;
+        continueButton.interactable = _uncollectedGold <= 0 && _uncollectedGemRewards <= 0 && _faceFlowComplete;
     }
 
     private void OnContinueClicked()

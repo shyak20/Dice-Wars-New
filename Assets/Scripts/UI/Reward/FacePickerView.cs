@@ -31,6 +31,12 @@ public class FacePickerView : MonoBehaviour
     [Tooltip("Optional. If assigned, reward-face status hovers use this panel (same behavior as fight scene status tooltip).")]
     [SerializeField] private HoverTooltipPanelUI statusHoverTooltipPanel;
 
+    [Header("Phase Objects")]
+    [Tooltip("Active only in phase B: face reward selection (before choosing a reward face).")]
+    [SerializeField] private List<GameObject> phaseBObjects = new List<GameObject>();
+    [Tooltip("Active only in phase C: face replacement (after choosing a reward face).")]
+    [SerializeField] private List<GameObject> phaseCObjects = new List<GameObject>();
+
     [Header("Win-stage flow (optional)")]
     [SerializeField] private Button backButton;
     [SerializeField] private Button skipButton;
@@ -106,6 +112,7 @@ public class FacePickerView : MonoBehaviour
         RebuildRewardSlots(options);
         RebuildDiceLayout();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
+        SetPhaseVisuals(phaseBActive: true);
 
         panel.SetActive(true);
     }
@@ -120,6 +127,7 @@ public class FacePickerView : MonoBehaviour
 
         if (panel != null) panel.SetActive(false);
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
+        SetAllPhaseObjects(false);
     }
 
     private void RebuildRewardSlots(List<DieFaceSO> options)
@@ -255,6 +263,7 @@ public class FacePickerView : MonoBehaviour
         _selectedRewardFace = null;
         _activeReplacementDie = null;
         _onRewindToFacePick?.Invoke();
+        SetPhaseVisuals(phaseBActive: true);
 
         for (var i = 0; i < _rewardSlots.Count; i++)
         {
@@ -287,6 +296,7 @@ public class FacePickerView : MonoBehaviour
             _rewardSlots[i]?.SetHoverRevealEnabled(false);
 
         _selectedRewardFace = face;
+        SetPhaseVisuals(phaseBActive: false);
         _onFacePicked?.Invoke(face);
 
         if (_pickTransitionRoutine != null)
@@ -427,5 +437,28 @@ public class FacePickerView : MonoBehaviour
     {
         foreach (var kv in _diceViews)
             kv.Value.SetSelected(false);
+    }
+
+    private void SetPhaseVisuals(bool phaseBActive)
+    {
+        SetObjectListActive(phaseBObjects, phaseBActive);
+        SetObjectListActive(phaseCObjects, !phaseBActive);
+    }
+
+    private void SetAllPhaseObjects(bool active)
+    {
+        SetObjectListActive(phaseBObjects, active);
+        SetObjectListActive(phaseCObjects, active);
+    }
+
+    private static void SetObjectListActive(List<GameObject> list, bool active)
+    {
+        if (list == null) return;
+        for (var i = 0; i < list.Count; i++)
+        {
+            var go = list[i];
+            if (go != null)
+                go.SetActive(active);
+        }
     }
 }

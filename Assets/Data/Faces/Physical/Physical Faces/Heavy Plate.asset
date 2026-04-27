@@ -10,30 +10,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Shattered Physical
+  m_Name: Heavy Plate
   m_EditorClassIdentifier: 
-  title: Stronger
+  title: Basic Training
   description: Harness 1 Damage \nHarness +1 Strength
   descriptionLines:
-  - Deal <style=Attack>5</style>
-  - Apply 1 Shattered (Reduce enemy damage by 5% per stack)
+  - Deal <style=Attack></style> equal to the accumulated <style=Shield></style> gained
+    so far
   value: 5
   type: 0
   faceMaterial: {fileID: 2100000, guid: f35ae15ee7e93c149b27a0d43069dfd5, type: 2}
   rarity: 2
-  damage: 5
+  damage: 0
   damageAttackTimes: 1
   armor: 0
   uiIcon: {fileID: 21300000, guid: 00dda7a098b7ec6478fd1355f4741d3d, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: d54377126ab96104899c9eaf08f5578c, type: 3}
-  activateImmediately: 0
+  activateImmediately: 1
   actions:
-  - rid: 6494956392264499734
+  - rid: 6494956392264499736
   references:
     version: 2
     RefIds:
-    - rid: 6494956392264499734
-      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+    - rid: 6494956392264499736
+      type: {class: AddDamageFromAccumulatedPhysicalModifier, ns: , asm: Assembly-CSharp}
       data:
-        statusEffect: {fileID: 11400000, guid: 360fe59033bb92b4b84477572b111710, type: 2}
-        stacks: 1
+        physicalDamageMultiplier: 1

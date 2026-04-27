@@ -97,8 +97,7 @@ public static class EnemyBonusRewardResolver
             return;
         }
 
-        var die = candidates[Random.Range(0, candidates.Count)];
-        if (die != null && die.TrySocketGem(gem))
-            Debug.Log($"Enemy bonus reward: socketed gem '{gem.name}' into die '{die.dieName}'.");
+        VictoryRewardBuffer.PendingGems.Add(gem);
+        Debug.Log($"Enemy bonus reward: queued gem '{gem.name}' for win-stage collection.");
     }
 }
