@@ -10,6 +10,8 @@ public class StatusEffectBarUI : MonoBehaviour
     private readonly Dictionary<StatusEffectSO, StatusEffectIconUI> activeIcons = new();
 
     private StatusEffectManager trackedManager;
+    private bool _refreshFrozen;
+    private bool _refreshQueued;
 
     private void Awake()
     {
@@ -22,7 +24,7 @@ public class StatusEffectBarUI : MonoBehaviour
     public void Bind(StatusEffectManager manager)
     {
         if (trackedManager != null)
-            trackedManager.OnEffectsChanged -= Refresh;
+            trackedManager.OnEffectsChanged -= QueueRefresh;
 
         trackedManager = manager;
 
@@ -32,17 +34,40 @@ public class StatusEffectBarUI : MonoBehaviour
             return;
         }
 
-        trackedManager.OnEffectsChanged += Refresh;
-        Refresh();
+        trackedManager.OnEffectsChanged += QueueRefresh;
+        QueueRefresh();
     }
 
     private void OnDestroy()
     {
         if (trackedManager != null)
-            trackedManager.OnEffectsChanged -= Refresh;
+            trackedManager.OnEffectsChanged -= QueueRefresh;
     }
 
-    private void Refresh()
+    private void LateUpdate()
+    {
+        if (_refreshFrozen || !_refreshQueued)
+            return;
+        _refreshQueued = false;
+        RefreshNow();
+    }
+
+    public void SetVisualRefreshFrozen(bool frozen)
+    {
+        _refreshFrozen = frozen;
+        if (!_refreshFrozen && _refreshQueued)
+        {
+            _refreshQueued = false;
+            RefreshNow();
+        }
+    }
+
+    private void QueueRefresh()
+    {
+        _refreshQueued = true;
+    }
+
+    private void RefreshNow()
     {
         if (trackedManager == null) return;
 

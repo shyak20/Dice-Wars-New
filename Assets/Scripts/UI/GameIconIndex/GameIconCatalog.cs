@@ -33,4 +33,10 @@ public static class GameIconCatalog
 
     public static Sprite TryGetPoolRowBackground(PoolRowKey key) =>
         _active != null ? _active.TryGetPoolRowBackground(key) : null;
+
+    public static bool TryGetStatusTargetForPoolRow(PoolRowKey key, out StatusEffectTarget target)
+    {
+        target = default;
+        return _active != null && _active.TryGetStatusTargetForPoolRow(key, out target);
+    }
 }

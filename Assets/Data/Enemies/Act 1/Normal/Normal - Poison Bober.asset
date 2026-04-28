@@ -10,25 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2da12b934c0d2dc4a9c0c744a1a817d9, type: 3}
-  m_Name: Bramble Mite - Normal
+  m_Name: Normal - Poison Bober
   m_EditorClassIdentifier: 
-  enemyName: Bramble Mite
-  displaySprite: {fileID: 21300000, guid: c0411742813c80946a9c882b65ea7df4, type: 3}
-  combatAnimatorController: {fileID: 9100000, guid: 7ea95e0b0bdb425449d786d1a63097cc, type: 2}
-  idleAnimatorStateName: Idle
+  enemyName: Poison Bober
+  displaySprite: {fileID: 21300000, guid: 7c1a6f19263069849bcef3798bb825b9, type: 3}
+  combatAnimatorController: {fileID: 0}
+  idleAnimatorStateName: 
   enemyRank: 0
-  maxHealth: 14
+  maxHealth: 22
   startArmor: 0
   goldReward: 50
-  additionalRewardDrops:
-  - pool: 3
-    dropChance: 1
-    rolls: 1
+  additionalRewardDrops: []
   faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
   dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
   relicRewardPool: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
   gemRewardPool: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
   isSequential: 1
   actionCycle:
-  - {fileID: 11400000, guid: b0db59302412e6c4a894f589f7afc276, type: 2}
-  - {fileID: 11400000, guid: 8d144569403ac17448f1c6fe9b2556e4, type: 2}
+  - {fileID: 11400000, guid: 97af343274d929446bf14410a4e601d1, type: 2}
+  - {fileID: 11400000, guid: f9a695fae022b594e955c9cf3418ac21, type: 2}
+  - {fileID: 11400000, guid: d0ff7ba965c199c43acf307beef797f1, type: 2}

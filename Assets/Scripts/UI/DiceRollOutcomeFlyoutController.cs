@@ -14,6 +14,14 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [FormerlySerializedAs("elementPoolDisplay")]
     [SerializeField] private StoredActionsPoolDisplay storedActionsPoolDisplay;
     [SerializeField] private Camera worldCamera;
+    [Tooltip("Optional. Status flyouts targeting the player fly here (player status bar).")]
+    [SerializeField] private RectTransform playerStatusBarFlyTarget;
+    [Tooltip("Optional. Status flyouts targeting the enemy fly here (enemy status bar).")]
+    [SerializeField] private RectTransform enemyStatusBarFlyTarget;
+    [Tooltip("Optional. Player status bar; frozen while status flyouts are in flight, then refreshed on landing.")]
+    [SerializeField] private StatusEffectBarUI playerStatusBarUI;
+    [Tooltip("Optional. Enemy status bar; frozen while status flyouts are in flight, then refreshed on landing.")]
+    [SerializeField] private StatusEffectBarUI enemyStatusBarUI;
 
     [Header("Prefab")]
     [FormerlySerializedAs("linePrefab")]
@@ -55,6 +63,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     private readonly Queue<DiceRollVisualPayload> regularPayloadQueue = new Queue<DiceRollVisualPayload>();
     private readonly Queue<DiceRollVisualPayload> deferredPayloadQueue = new Queue<DiceRollVisualPayload>();
     private Coroutine queueRoutine;
+    private int _playerStatusFreezeCount;
+    private int _enemyStatusFreezeCount;
 
     private void Awake()
     {
@@ -94,6 +104,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
         DrainQueueAndReportFinished(regularPayloadQueue);
         DrainQueueAndReportFinished(deferredPayloadQueue);
+        ForceUnfreezeStatusBars();
     }
 
     private void HandleRollVisual(DiceRollVisualPayload payload)
@@ -150,12 +161,18 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private IEnumerator PlayFlyoutRoutine(DiceRollVisualPayload payload)
     {
+        var frozePlayerForFlyout = false;
+        var frozeEnemyForFlyout = false;
         try
         {
             Vector3 dieWorld = payload.DieTransform != null ? payload.DieTransform.position : payload.WorldAnchor;
             Vector3 stackAnchorWorld = dieWorld + Vector3.up * worldOffsetAboveDie;
             if (!WorldPointToFlyoutParentLocal(stackAnchorWorld, out Vector2 anchorLocal))
                 yield break;
+
+            // Status is applied (and OnEffectsChanged queued a refresh) before this event fires.
+            // Freeze here synchronously — before any yield — so LateUpdate cannot refresh stacks until the fly lands.
+            TryBeginStatusBarFlyoutFreeze(payload, ref frozePlayerForFlyout, ref frozeEnemyForFlyout);
 
             Vector2 stackOriginLocal = anchorLocal + Vector2.right * layoutOffsetX;
 
@@ -226,7 +243,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             for (int i = 0; i < payload.Lines.Count && i < lineRects.Count; i++)
             {
                 var line = payload.Lines[i];
-                RectTransform target = storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey);
+                RectTransform target = ResolveFlyTargetRect(line);
                 if (target == null)
                 {
                     Destroy(lineRects[i].gameObject);
@@ -241,7 +258,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
                 Vector2 startLocal = stackRestAnchored[i];
                 Vector2 mid = (startLocal + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
-                flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line)));
+                var statusTarget = ResolveStatusTarget(line);
+                var applyPoolDelta = ShouldApplyPoolDelta(line, statusTarget);
+                flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line, applyPoolDelta)));
             }
 
             foreach (var c in flyCoroutines)
@@ -252,7 +271,44 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
         finally
         {
+            if (frozePlayerForFlyout)
+                EndFreezeStatusBar(StatusEffectTarget.Player);
+            if (frozeEnemyForFlyout)
+                EndFreezeStatusBar(StatusEffectTarget.Enemy);
             payload.ReportVisualFinished();
+        }
+    }
+
+    /// <summary>
+    /// Call synchronously at the start of a flyout (no yields before this) so status bar stack text
+    /// does not refresh until <see cref="EndFreezeStatusBar"/> runs after lines land.
+    /// </summary>
+    private void TryBeginStatusBarFlyoutFreeze(DiceRollVisualPayload payload, ref bool frozePlayer, ref bool frozeEnemy)
+    {
+        if (payload?.Lines == null) return;
+
+        var needPlayer = false;
+        var needEnemy = false;
+        for (var i = 0; i < payload.Lines.Count; i++)
+        {
+            var line = payload.Lines[i];
+            var st = ResolveStatusTarget(line);
+            if (st == StatusEffectTarget.Player && playerStatusBarFlyTarget != null)
+                needPlayer = true;
+            else if (st == StatusEffectTarget.Enemy && enemyStatusBarFlyTarget != null)
+                needEnemy = true;
+        }
+
+        if (needPlayer && playerStatusBarUI != null)
+        {
+            BeginFreezeStatusBar(StatusEffectTarget.Player);
+            frozePlayer = true;
+        }
+
+        if (needEnemy && enemyStatusBarUI != null)
+        {
+            BeginFreezeStatusBar(StatusEffectTarget.Enemy);
+            frozeEnemy = true;
         }
     }
 
@@ -274,7 +330,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         rt.localScale = prefabRootBaseScale * EvaluateSpawnScaleMultiplier(1f);
     }
 
-    private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line)
+    private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line, bool applyPoolDeltaOnLanding)
     {
         float dur = Mathf.Max(0.01f, flyDurationSeconds);
         float t = 0f;
@@ -288,7 +344,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
 
         rt.anchoredPosition = end;
-        if (storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
+        if (applyPoolDeltaOnLanding && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
             storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride);
         Destroy(rt.gameObject);
     }
@@ -423,5 +479,89 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         var corners = new Vector3[4];
         target.GetWorldCorners(corners);
         return (corners[0] + corners[1] + corners[2] + corners[3]) * 0.25f;
+    }
+
+    private RectTransform ResolveFlyTargetRect(RollOutcomeVisualLine line)
+    {
+        var statusTarget = ResolveStatusTarget(line);
+        if (statusTarget.HasValue)
+        {
+            if (statusTarget.Value == StatusEffectTarget.Player && playerStatusBarFlyTarget != null)
+                return playerStatusBarFlyTarget;
+            if (statusTarget.Value == StatusEffectTarget.Enemy && enemyStatusBarFlyTarget != null)
+                return enemyStatusBarFlyTarget;
+        }
+
+        return storedActionsPoolDisplay != null ? storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey) : null;
+    }
+
+    private StatusEffectTarget? ResolveStatusTarget(RollOutcomeVisualLine line)
+    {
+        if (GameIconCatalog.TryGetStatusTargetForPoolRow(line.RowKey, out var statusTarget))
+            return statusTarget;
+        return null;
+    }
+
+    private bool ShouldApplyPoolDelta(RollOutcomeVisualLine line, StatusEffectTarget? statusTarget)
+    {
+        // Status-targeted flyouts that route to status bars are visual-only and must not mutate pool display rows.
+        if (!statusTarget.HasValue)
+            return true;
+        if (statusTarget.Value == StatusEffectTarget.Player && playerStatusBarFlyTarget != null)
+            return false;
+        if (statusTarget.Value == StatusEffectTarget.Enemy && enemyStatusBarFlyTarget != null)
+            return false;
+        return true;
+    }
+
+    private bool BeginFreezeStatusBar(StatusEffectTarget target)
+    {
+        if (target == StatusEffectTarget.Player)
+        {
+            _playerStatusFreezeCount++;
+            if (_playerStatusFreezeCount == 1 && playerStatusBarUI != null)
+                playerStatusBarUI.SetVisualRefreshFrozen(true);
+            return true;
+        }
+
+        if (target == StatusEffectTarget.Enemy)
+        {
+            _enemyStatusFreezeCount++;
+            if (_enemyStatusFreezeCount == 1 && enemyStatusBarUI != null)
+                enemyStatusBarUI.SetVisualRefreshFrozen(true);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void EndFreezeStatusBar(StatusEffectTarget target)
+    {
+        if (target == StatusEffectTarget.Player)
+        {
+            if (_playerStatusFreezeCount > 0)
+                _playerStatusFreezeCount--;
+            if (_playerStatusFreezeCount == 0 && playerStatusBarUI != null)
+                playerStatusBarUI.SetVisualRefreshFrozen(false);
+            return;
+        }
+
+        if (target == StatusEffectTarget.Enemy)
+        {
+            if (_enemyStatusFreezeCount > 0)
+                _enemyStatusFreezeCount--;
+            if (_enemyStatusFreezeCount == 0 && enemyStatusBarUI != null)
+                enemyStatusBarUI.SetVisualRefreshFrozen(false);
+        }
+    }
+
+    private void ForceUnfreezeStatusBars()
+    {
+        _playerStatusFreezeCount = 0;
+        _enemyStatusFreezeCount = 0;
+        if (playerStatusBarUI != null)
+            playerStatusBarUI.SetVisualRefreshFrozen(false);
+        if (enemyStatusBarUI != null)
+            enemyStatusBarUI.SetVisualRefreshFrozen(false);
     }
 }

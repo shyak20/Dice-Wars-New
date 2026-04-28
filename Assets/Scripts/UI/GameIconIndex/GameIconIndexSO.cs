@@ -59,6 +59,7 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<StatusEffectSO, Sprite> _statusLookup = new Dictionary<StatusEffectSO, Sprite>();
     readonly Dictionary<ActionVisualId, Sprite> _actionBackgroundLookup = new Dictionary<ActionVisualId, Sprite>();
     readonly Dictionary<string, Sprite> _poolRowBackgroundByStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
+    readonly Dictionary<string, StatusEffectTarget> _statusTargetByPoolRowStableId = new Dictionary<string, StatusEffectTarget>(StringComparer.Ordinal);
 
     private void OnEnable() => RebuildLookups();
 
@@ -69,6 +70,7 @@ public class GameIconIndexSO : ScriptableObject
         _actionLookup.Clear();
         _actionBackgroundLookup.Clear();
         _poolRowBackgroundByStableId.Clear();
+        _statusTargetByPoolRowStableId.Clear();
         foreach (var e in actionIcons)
         {
             if (e.id != ActionVisualId.None && e.sprite != null)
@@ -83,6 +85,7 @@ public class GameIconIndexSO : ScriptableObject
             if (e.effect == null) continue;
             if (e.icon != null)
                 _statusLookup[e.effect] = e.icon;
+            _statusTargetByPoolRowStableId[e.effect.name] = e.effect.target;
             if (e.poolRowBackground != null)
                 _poolRowBackgroundByStableId[e.effect.name] = e.poolRowBackground;
         }
@@ -145,6 +148,14 @@ public class GameIconIndexSO : ScriptableObject
         if (_poolRowBackgroundByStableId.Count == 0 && (actionIcons.Count > 0 || statusEffectIcons.Count > 0))
             RebuildLookups();
         return _poolRowBackgroundByStableId.TryGetValue(key.StableId, out var bg) ? bg : null;
+    }
+
+    /// <summary>Resolves whether a pool row key belongs to a known status effect and returns its target side.</summary>
+    public bool TryGetStatusTargetForPoolRow(PoolRowKey key, out StatusEffectTarget target)
+    {
+        if (_statusTargetByPoolRowStableId.Count == 0 && statusEffectIcons.Count > 0)
+            RebuildLookups();
+        return _statusTargetByPoolRowStableId.TryGetValue(key.StableId, out target);
     }
 
     /// <summary>
