@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -97,6 +96,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
                 slot.Bind(face, null);
 
             slot.SetInteractable(facesInteractable && onFaceClicked != null);
+            slot.SetExternalStatusHoverTooltipEnabled(false);
             RegisterFaceHover(slot, face);
         }
 
@@ -242,9 +242,9 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             faceHoverTooltipPanel.SetActive(true);
         }
 
-        var statusDefs = CollectUniqueStatusEffectsFromFace(face);
-        if (statusDefs.Count > 0)
-            ShowStatusHoverTooltip(statusDefs);
+        UIRewardSlot.BuildEffectTooltip(face, out var effectTitle, out var effectDescription);
+        if (!string.IsNullOrWhiteSpace(effectTitle) || !string.IsNullOrWhiteSpace(effectDescription))
+            ShowStatusHoverTooltip(effectTitle, effectDescription);
         else
             HideStatusHoverTooltip();
     }
@@ -257,26 +257,14 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         if (faceHoverTooltipPanel != null) faceHoverTooltipPanel.SetActive(false);
     }
 
-    private void ShowStatusHoverTooltip(IReadOnlyList<StatusEffectSO> definitions)
+    private void ShowStatusHoverTooltip(string title, string description)
     {
-        if (statusHoverTooltipPanel == null || definitions == null || definitions.Count == 0) return;
-
-        var titleParts = new List<string>();
-        var descParts = new List<string>();
-        for (var i = 0; i < definitions.Count; i++)
-        {
-            var d = definitions[i];
-            if (d == null) continue;
-            if (!string.IsNullOrWhiteSpace(d.effectName))
-                titleParts.Add(d.effectName.Trim());
-            if (!string.IsNullOrWhiteSpace(d.description))
-                descParts.Add(d.description.Trim());
-        }
+        if (statusHoverTooltipPanel == null) return;
 
         if (statusHoverTitleText != null)
-            statusHoverTitleText.text = titleParts.Count > 0 ? string.Join(" · ", titleParts) : "";
+            statusHoverTitleText.text = title ?? string.Empty;
         if (statusHoverDescriptionText != null)
-            statusHoverDescriptionText.text = descParts.Count > 0 ? string.Join("\n\n", descParts) : "";
+            statusHoverDescriptionText.text = description ?? string.Empty;
 
         statusHoverTooltipPanel.SetActive(true);
     }
@@ -286,24 +274,6 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         if (statusHoverTitleText != null) statusHoverTitleText.text = "";
         if (statusHoverDescriptionText != null) statusHoverDescriptionText.text = "";
         if (statusHoverTooltipPanel != null) statusHoverTooltipPanel.SetActive(false);
-    }
-
-    private static List<StatusEffectSO> CollectUniqueStatusEffectsFromFace(DieFaceSO face)
-    {
-        var result = new List<StatusEffectSO>();
-        if (face?.actions == null || face.actions.Count == 0) return result;
-
-        var seen = new HashSet<StatusEffectSO>();
-        for (var i = 0; i < face.actions.Count; i++)
-        {
-            if (face.actions[i] is not ApplyStatusEffectAction apply) continue;
-            var def = apply.StatusEffectDefinition;
-            if (def == null) continue;
-            if (!seen.Add(def)) continue;
-            result.Add(def);
-        }
-
-        return result;
     }
 
     private int[] GetFaceGridIndices()

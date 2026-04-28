@@ -39,7 +39,6 @@ public class FacePickerView : MonoBehaviour
 
     [Header("Win-stage flow (optional)")]
     [SerializeField] private Button backButton;
-    [SerializeField] private Button skipButton;
 
     private readonly List<UIRewardSlot> _rewardSlots = new List<UIRewardSlot>();
     private readonly Dictionary<UIRewardSlot, CanvasGroup> _rewardSlotGroups = new Dictionary<UIRewardSlot, CanvasGroup>();
@@ -49,7 +48,6 @@ public class FacePickerView : MonoBehaviour
     private Action<DieFaceSO> _onFacePicked;
     private Action<DieAssetSO, int> _onReplaceFaceSlotPicked;
     private Action _onBack;
-    private Action _onSkip;
     private Action _onRewindToFacePick;
     private DieFaceSO _selectedRewardFace;
     private DieAssetSO _activeReplacementDie;
@@ -91,7 +89,6 @@ public class FacePickerView : MonoBehaviour
         Action<DieFaceSO> onFacePicked,
         Action<DieAssetSO, int> onReplaceFaceSlotPicked,
         Action onBack = null,
-        Action onSkip = null,
         Action onRewindToFacePick = null)
     {
         if (options == null || options.Count == 0)
@@ -103,7 +100,6 @@ public class FacePickerView : MonoBehaviour
         _onFacePicked = onFacePicked;
         _onReplaceFaceSlotPicked = onReplaceFaceSlotPicked;
         _onBack = onBack;
-        _onSkip = onSkip;
         _onRewindToFacePick = onRewindToFacePick;
         _selectedRewardFace = null;
         _activeReplacementDie = null;
@@ -148,8 +144,8 @@ public class FacePickerView : MonoBehaviour
                 continue;
             }
 
-            slot.Bind(face, OnRewardFaceClicked);
             slot.SetStatusHoverTooltipPanel(statusHoverTooltipPanel);
+            slot.Bind(face, OnRewardFaceClicked);
             slot.SetInteractable(true);
             slot.EnsureStandaloneHoverReveal();
             _rewardSlots.Add(slot);
@@ -225,13 +221,6 @@ public class FacePickerView : MonoBehaviour
                 backButton.onClick.AddListener(OnBackClicked);
         }
 
-        if (skipButton != null)
-        {
-            skipButton.gameObject.SetActive(_onSkip != null);
-            skipButton.onClick.RemoveAllListeners();
-            if (_onSkip != null)
-                skipButton.onClick.AddListener(OnSkipClicked);
-        }
     }
 
     private void OnBackClicked()
@@ -244,12 +233,6 @@ public class FacePickerView : MonoBehaviour
 
         Hide();
         _onBack?.Invoke();
-    }
-
-    private void OnSkipClicked()
-    {
-        Hide();
-        _onSkip?.Invoke();
     }
 
     private void ReturnToFaceSelectionPhase()

@@ -98,6 +98,23 @@ public class UIRewardSlot : MonoBehaviour
     public void SetStatusHoverTooltipPanel(HoverTooltipPanelUI panel)
     {
         _statusHoverTooltipPanel = panel;
+        if (_face != null)
+            SetupStatusHoverTooltip(_face);
+    }
+
+    /// <summary>
+    /// <see cref="DieTooltipOverlayUI"/> drives status copy via its own panel; disable the standalone
+    /// <see cref="HoverTooltipTargetUI"/> so it does not compete with overlay <see cref="EventTrigger"/> hovers.
+    /// </summary>
+    public void SetExternalStatusHoverTooltipEnabled(bool enabled)
+    {
+        var hoverGo = GetHoverTarget();
+        if (hoverGo == null) return;
+        var t = statusHoverTooltipTarget;
+        if (t == null || t.gameObject != hoverGo)
+            t = hoverGo.GetComponent<HoverTooltipTargetUI>();
+        if (t != null)
+            t.enabled = enabled;
     }
 
     private void ApplyHoverRevealPointerEnter()
@@ -168,7 +185,8 @@ public class UIRewardSlot : MonoBehaviour
             target.SetContent(title, description);
     }
 
-    private static void BuildEffectTooltip(DieFaceSO face, out string title, out string description)
+    /// <summary>Shared by reward slots and <see cref="DieTooltipOverlayUI"/> status line (ApplyStatus, Heal, etc.).</summary>
+    public static void BuildEffectTooltip(DieFaceSO face, out string title, out string description)
     {
         title = string.Empty;
         description = string.Empty;

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Win-screen reward row: Select opens <see cref="FaceRewardManager"/> win flow. Row is removed after Skip or when the face flow completes (swap or no-match close).
+/// Win-screen reward row: Select opens <see cref="FaceRewardManager"/> win flow. Row is removed when the face flow completes (swap or no-match close) or when backing out of the picker.
 /// </summary>
 public class WinStageFaceRewardRow : MonoBehaviour
 {
@@ -54,20 +54,13 @@ public class WinStageFaceRewardRow : MonoBehaviour
         _subscribedToCompleted = true;
 
         _host.NotifyFacePickerOpening();
-        _faceRewards.StartFaceRewardFromWinStage(OnPickerBack, OnPickerSkipped);
+        _faceRewards.StartFaceRewardFromWinStage(OnPickerBack);
     }
 
     private void OnPickerBack()
     {
         UnsubscribeCompleted();
         _host.NotifyFacePickerBackedOut();
-    }
-
-    private void OnPickerSkipped()
-    {
-        UnsubscribeCompleted();
-        _host.NotifyFaceRewardRowRemoved();
-        Destroy(gameObject);
     }
 
     private void OnFaceRewardFlowCompletedOnce(DieFaceSO _)

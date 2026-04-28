@@ -101,9 +101,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 2880
-        width: 960
-        height: 960
+        y: 3136
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -122,10 +122,10 @@ TextureImporter:
       name: Nimue0_1
       rect:
         serializedVersion: 2
-        x: 960
-        y: 2880
-        width: 960
-        height: 960
+        x: 1176
+        y: 3136
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -144,10 +144,10 @@ TextureImporter:
       name: Nimue0_2
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 2880
-        width: 960
-        height: 960
+        x: 2352
+        y: 3136
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -166,10 +166,10 @@ TextureImporter:
       name: Nimue0_3
       rect:
         serializedVersion: 2
-        x: 2880
-        y: 2880
-        width: 960
-        height: 960
+        x: 0
+        y: 2352
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -188,10 +188,10 @@ TextureImporter:
       name: Nimue0_4
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1920
-        width: 960
-        height: 960
+        x: 1176
+        y: 2352
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -210,10 +210,10 @@ TextureImporter:
       name: Nimue0_5
       rect:
         serializedVersion: 2
-        x: 960
-        y: 1920
-        width: 960
-        height: 960
+        x: 2352
+        y: 2352
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -232,10 +232,10 @@ TextureImporter:
       name: Nimue0_6
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 1920
-        width: 960
-        height: 960
+        x: 0
+        y: 1568
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -254,10 +254,10 @@ TextureImporter:
       name: Nimue0_7
       rect:
         serializedVersion: 2
-        x: 2880
-        y: 1920
-        width: 960
-        height: 960
+        x: 1176
+        y: 1568
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -276,10 +276,10 @@ TextureImporter:
       name: Nimue0_8
       rect:
         serializedVersion: 2
-        x: 0
-        y: 960
-        width: 960
-        height: 960
+        x: 2352
+        y: 1568
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -298,10 +298,10 @@ TextureImporter:
       name: Nimue0_9
       rect:
         serializedVersion: 2
-        x: 960
-        y: 960
-        width: 960
-        height: 960
+        x: 0
+        y: 784
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -320,10 +320,10 @@ TextureImporter:
       name: Nimue0_10
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 960
-        width: 960
-        height: 960
+        x: 1176
+        y: 784
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -342,10 +342,10 @@ TextureImporter:
       name: Nimue0_11
       rect:
         serializedVersion: 2
-        x: 2880
-        y: 960
-        width: 960
-        height: 960
+        x: 2352
+        y: 784
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -366,8 +366,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 960
-        height: 960
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -386,10 +386,10 @@ TextureImporter:
       name: Nimue0_13
       rect:
         serializedVersion: 2
-        x: 960
+        x: 1176
         y: 0
-        width: 960
-        height: 960
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -408,10 +408,10 @@ TextureImporter:
       name: Nimue0_14
       rect:
         serializedVersion: 2
-        x: 1920
+        x: 2352
         y: 0
-        width: 960
-        height: 960
+        width: 1176
+        height: 784
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -422,28 +422,6 @@ TextureImporter:
       bones: []
       spriteID: 2d8918dbf54b54c45aab5973a70ab0ef
       internalID: 989111358
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Nimue0_15
-      rect:
-        serializedVersion: 2
-        x: 2880
-        y: 0
-        width: 960
-        height: 960
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 9dec78059db82784fbc4e568f091fd31
-      internalID: -1621949064
       vertices: []
       indices: 
       edges: []
@@ -462,7 +440,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":4.0,"y":4.0},"gridSpriteSize":{"x":960.0,"y":960.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":5.0},"gridSpriteSize":{"x":1176.0,"y":784.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Nimue0_0: -1862756426
       Nimue0_1: 1145432915
@@ -471,7 +449,6 @@ TextureImporter:
       Nimue0_12: 1654124813
       Nimue0_13: 1479151599
       Nimue0_14: 989111358
-      Nimue0_15: -1621949064
       Nimue0_2: -2053392036
       Nimue0_3: 531387079
       Nimue0_4: 797238784

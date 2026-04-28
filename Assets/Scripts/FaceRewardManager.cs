@@ -54,8 +54,8 @@ public class FaceRewardManager : MonoBehaviour
         ReleaseWinStageFaceOfferCache();
     }
 
-    /// <summary>Win-stage flow: picker with Back (return to win popup) and Skip (no new face).</summary>
-    public void StartFaceRewardFromWinStage(Action onBackToWin, Action onSkippedFace)
+    /// <summary>Win-stage flow: picker with Back (return to win popup).</summary>
+    public void StartFaceRewardFromWinStage(Action onBackToWin)
     {
         chosenFace = null;
         chosenDie = null;
@@ -90,18 +90,12 @@ public class FaceRewardManager : MonoBehaviour
             options,
             OnFaceChosen,
             OnReplacementSlotChosen,
-            () =>
+            onBack: () =>
             {
                 gameObject.SetActive(false);
                 onBackToWin?.Invoke();
             },
-            () =>
-            {
-                ReleaseWinStageFaceOfferCache();
-                gameObject.SetActive(false);
-                onSkippedFace?.Invoke();
-            },
-            RewindFacePickProgress);
+            onRewindToFacePick: RewindFacePickProgress);
         gameObject.SetActive(true);
     }
 
