@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyName: Poison Bober
   displaySprite: {fileID: 21300000, guid: 7c1a6f19263069849bcef3798bb825b9, type: 3}
-  combatAnimatorController: {fileID: 0}
-  idleAnimatorStateName: 
+  combatAnimatorController: {fileID: 9100000, guid: b4955a03a63aec14e911ab1a8e5b2522, type: 2}
+  idleAnimatorStateName: Poison Bober Idle
   enemyRank: 0
   maxHealth: 22
   startArmor: 0

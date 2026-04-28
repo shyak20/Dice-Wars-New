@@ -24,13 +24,14 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 977457062939649727}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3782001688746458831}
   - {fileID: 1450585959384458339}
+  - {fileID: 2359415664478948830}
   - {fileID: 6037686921644915491}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -80,15 +81,15 @@ RectTransform:
   m_GameObject: {fileID: 1967696106337780172}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1450585959384458339}
+  m_Father: {fileID: 8628419183183905116}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 1.6873016, y: 0}
-  m_SizeDelta: {x: -25.8879, y: 0.0000095367}
+  m_SizeDelta: {x: -29.8879, y: -3.9999886}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6212874519231497007
 CanvasRenderer:
@@ -145,7 +146,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 17.95
+  m_fontSize: 25.15
   m_fontSizeBase: 28
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -294,8 +295,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2359415664478948830}
+  m_Children: []
   m_Father: {fileID: 8628419183183905116}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -375,8 +375,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 6.6, y: -3.5}
-  m_SizeDelta: {x: 40.3964, y: 40.396}
+  m_AnchoredPosition: {x: 6.6, y: -6}
+  m_SizeDelta: {x: 46.1117, y: 46.1113}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1286126751455867232
 CanvasRenderer:

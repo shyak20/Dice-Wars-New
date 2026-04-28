@@ -15,9 +15,9 @@ MonoBehaviour:
   possibleEnemies:
   - {fileID: 11400000, guid: 2dd5811f0a2c75b4790d046a18a4828f, type: 2}
   - {fileID: 11400000, guid: 3033f0f7f31d33b4183ce2141d918cd2, type: 2}
-  - {fileID: 11400000, guid: 8f3e5f5a095a6524783b02c371e52eaa, type: 2}
-  - {fileID: 11400000, guid: e90e4b2912d70c2419b7be11cca5a37d, type: 2}
   - {fileID: 11400000, guid: 0a2c3c0c7cfaaf747be8100c4d379169, type: 2}
+  - {fileID: 11400000, guid: e90e4b2912d70c2419b7be11cca5a37d, type: 2}
+  - {fileID: 11400000, guid: 475f3c6e5877cc249a47a9e54308fee0, type: 2}
   possibleUnknownEvents:
   - {fileID: 11400000, guid: 7e1da11a59278e24199798074da7997d, type: 2}
   treasurePacks:

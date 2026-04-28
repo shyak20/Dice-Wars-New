@@ -293,9 +293,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         {
             var line = payload.Lines[i];
             var st = ResolveStatusTarget(line);
-            if (st == StatusEffectTarget.Player && playerStatusBarFlyTarget != null)
+            if (ShouldRouteStatusToStatusBar(line, st) && st == StatusEffectTarget.Player)
                 needPlayer = true;
-            else if (st == StatusEffectTarget.Enemy && enemyStatusBarFlyTarget != null)
+            else if (ShouldRouteStatusToStatusBar(line, st) && st == StatusEffectTarget.Enemy)
                 needEnemy = true;
         }
 
@@ -484,7 +484,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     private RectTransform ResolveFlyTargetRect(RollOutcomeVisualLine line)
     {
         var statusTarget = ResolveStatusTarget(line);
-        if (statusTarget.HasValue)
+        if (ShouldRouteStatusToStatusBar(line, statusTarget))
         {
             if (statusTarget.Value == StatusEffectTarget.Player && playerStatusBarFlyTarget != null)
                 return playerStatusBarFlyTarget;
@@ -505,13 +505,22 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     private bool ShouldApplyPoolDelta(RollOutcomeVisualLine line, StatusEffectTarget? statusTarget)
     {
         // Status-targeted flyouts that route to status bars are visual-only and must not mutate pool display rows.
-        if (!statusTarget.HasValue)
+        if (!ShouldRouteStatusToStatusBar(line, statusTarget))
             return true;
-        if (statusTarget.Value == StatusEffectTarget.Player && playerStatusBarFlyTarget != null)
+        return false;
+    }
+
+    private bool ShouldRouteStatusToStatusBar(RollOutcomeVisualLine line, StatusEffectTarget? statusTarget)
+    {
+        // Deferred rows (non-immediate actions) must always fly to the element container.
+        // Only immediate visual-only status rows route to status bars.
+        if (!line.IsVisualFlyoutOnly || !statusTarget.HasValue)
             return false;
-        if (statusTarget.Value == StatusEffectTarget.Enemy && enemyStatusBarFlyTarget != null)
-            return false;
-        return true;
+        if (statusTarget.Value == StatusEffectTarget.Player)
+            return playerStatusBarFlyTarget != null;
+        if (statusTarget.Value == StatusEffectTarget.Enemy)
+            return enemyStatusBarFlyTarget != null;
+        return false;
     }
 
     private bool BeginFreezeStatusBar(StatusEffectTarget target)

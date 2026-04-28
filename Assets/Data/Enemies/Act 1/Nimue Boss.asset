@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyName: Boss Test
   displaySprite: {fileID: 21300000, guid: bcba409166e1b5541942cb2a084b3faa, type: 3}
-  combatAnimatorController: {fileID: 0}
-  idleAnimatorStateName: 
+  combatAnimatorController: {fileID: 9100000, guid: 0b94c6194a78f29418600ed8e986a8f8, type: 2}
+  idleAnimatorStateName: Idle
   enemyRank: 2
   maxHealth: 5000
   startArmor: 500

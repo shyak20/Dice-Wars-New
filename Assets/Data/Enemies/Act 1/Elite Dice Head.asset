@@ -14,10 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyName: Elite Dice Head
   displaySprite: {fileID: 21300000, guid: bcba409166e1b5541942cb2a084b3faa, type: 3}
+  combatAnimatorController: {fileID: 9100000, guid: 79c299600131ffe478e9c88abb6023f3, type: 2}
+  idleAnimatorStateName: DIce Head Idle
   enemyRank: 1
   maxHealth: 300
   startArmor: 500
   goldReward: 500
+  additionalRewardDrops: []
+  faceRewardPool: {fileID: 0}
+  dieRewardPool: {fileID: 0}
+  relicRewardPool: {fileID: 0}
+  gemRewardPool: {fileID: 0}
   isSequential: 1
   actionCycle:
   - {fileID: 11400000, guid: b0db59302412e6c4a894f589f7afc276, type: 2}
