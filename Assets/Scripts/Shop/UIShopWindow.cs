@@ -25,6 +25,8 @@ public class UIShopWindow : MonoBehaviour
     [SerializeField] private UIShopSlot slotPrefab;
     [Tooltip("Optional full-die offers prefab root. If null, falls back to Slot Prefab.")]
     [SerializeField] private UIShopSlot diceSlotPrefab;
+    [Tooltip("Optional gem offers prefab root. If null, falls back to Slot Prefab.")]
+    [SerializeField] private UIShopSlot gemSlotPrefab;
     [Tooltip("Relic offers prefab root must have UIShopRelicSlot.")]
     [SerializeField] private UIShopRelicSlot relicSlotPrefab;
     [SerializeField] private Button leaveShopButton;
@@ -150,7 +152,7 @@ public class UIShopWindow : MonoBehaviour
         if (gemSlotsContainer != null)
         {
             foreach (var item in shopGenerator.GemOffers)
-                AddGemSlot(gemSlotsContainer, item, diceSlotPrefab != null ? diceSlotPrefab : slotPrefab);
+                AddGemSlot(gemSlotsContainer, item, gemSlotPrefab != null ? gemSlotPrefab : slotPrefab);
         }
         else if (shopGenerator.GemOffers.Count > 0)
             Debug.LogWarning("UIShopWindow: assign gemSlotsContainer to show gem offers.", this);
