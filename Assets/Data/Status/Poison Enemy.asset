@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Poison Enemy
   m_EditorClassIdentifier: 
   effectName: Poison
-  description: 'Deals 1 Damage per Stack. Before the turn. Ignores armor.
+  description: 'Lose 1 HP per Stack before the your turn. Ignores armor.
 
     stays
     between turns.'

@@ -87,6 +87,11 @@ public sealed class DiceSelectDieSlot : MonoBehaviour
         if (startingDie == null || _owner == null)
             return;
 
+        // Prevent selecting more than two dice.
+        // Deselect is always allowed.
+        if (!_selected && _owner.GetSelectedDiceCount() >= _owner.GetMaxSelectableDiceCount())
+            return;
+
         _selected = !_selected;
         ApplyIndicatorVisual();
         _owner.RefreshSelectionUi();

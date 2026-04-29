@@ -15,6 +15,8 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     [SerializeField] private GameObject continueLockedOverlay;
     [SerializeField, Min(1)] private int requiredStartingDiceCount = 3;
     [SerializeField] private string titleFormat = "{0}/{1} Starting dice";
+    /// <summary>Hard cap for dice the player may pick on this screen.</summary>
+    private const int MaxSelectableDiceCount = 2;
 
     [Header("Testing")]
     [Tooltip("Optional. Wire a UI Button to fill the run deck with Test Starting Die Asset (Required Starting Dice Count copies) and continue — same as Continue, skipping manual picks.")]
@@ -36,6 +38,15 @@ public sealed class DiceSelectSceneController : MonoBehaviour
 
     private void Start()
     {
+        // Keep gameplay consistent if the inspector value was set above 2.
+        if (requiredStartingDiceCount > MaxSelectableDiceCount)
+        {
+            Debug.LogWarning(
+                $"DiceSelectSceneController: requiredStartingDiceCount was {requiredStartingDiceCount}, clamping to {MaxSelectableDiceCount} (max selection for this screen).",
+                this);
+            requiredStartingDiceCount = MaxSelectableDiceCount;
+        }
+
         if (dieSlots == null || dieSlots.Length == 0)
             dieSlots = GetComponentsInChildren<DiceSelectDieSlot>(true);
 
@@ -126,6 +137,23 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (continueLockedOverlay != null)
             continueLockedOverlay.SetActive(!canContinue);
     }
+
+    internal int GetSelectedDiceCount()
+    {
+        var count = 0;
+        if (dieSlots == null)
+            return count;
+
+        foreach (var s in dieSlots)
+        {
+            if (s != null && s.IsSelected)
+                count++;
+        }
+
+        return count;
+    }
+
+    internal int GetMaxSelectableDiceCount() => requiredStartingDiceCount;
 
     private void OnContinueClicked()
     {

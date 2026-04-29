@@ -15,7 +15,7 @@ MonoBehaviour:
   actionName: 
   icon: {fileID: 21300000, guid: 618a26f22d6051543af8c274abf85fdf, type: 3}
   damage: 2
-  numberOfAttacks: 0
+  numberOfAttacks: 1
   armor: 0
   actionAnimatorStateName: 
   actionAnimationLeadInSeconds: 0.2

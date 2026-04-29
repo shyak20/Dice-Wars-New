@@ -1709,7 +1709,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 7
+  m_SortingOrder: 12
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: fe912c102db5316448fff45b6cd84b2b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8181,7 +8181,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 11
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: a7ce776b7ea0ed246b6afa5b20748266, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16653,7 +16653,7 @@ Transform:
   m_GameObject: {fileID: 1884634428}
   serializedVersion: 2
   m_LocalRotation: {x: 0.22405815, y: 0, z: 0, w: 0.9745758}
-  m_LocalPosition: {x: 0, y: -1.88, z: -2.08}
+  m_LocalPosition: {x: 0, y: -0.74, z: -1.53}
   m_LocalScale: {x: 1051.5599, y: 0.40251, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17417,7 +17417,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 11
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: a7ce776b7ea0ed246b6afa5b20748266, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -17713,7 +17713,7 @@ Transform:
   m_GameObject: {fileID: 919132148197319506}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0, y: -2.72, z: 4.37}
+  m_LocalPosition: {x: -0, y: -2.72, z: 3.82}
   m_LocalScale: {x: 591.2359, y: 591.2359, z: 391.53418}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -18031,6 +18031,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3652815370507214424, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_fontSize
+      value: 20.6
+      objectReference: {fileID: 0}
     - target: {fileID: 4101363524488668439, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_Name
       value: Enemy Prefab
@@ -18053,7 +18057,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 21.87
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x

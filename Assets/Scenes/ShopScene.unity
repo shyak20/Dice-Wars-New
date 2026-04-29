@@ -403,7 +403,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   shopGenerator: {fileID: 308379230}
   socketFlow: {fileID: 308379232}
-  gemSocketFlow: {fileID: 0}
+  gemSocketFlow: {fileID: 308379233}
   goldHeaderText: {fileID: 1957574316}
   faceSlotsContainer: {fileID: 2127162005}
   diceSlotsContainer: {fileID: 2028850145}
@@ -786,6 +786,7 @@ GameObject:
   - component: {fileID: 308379231}
   - component: {fileID: 308379230}
   - component: {fileID: 308379232}
+  - component: {fileID: 308379233}
   m_Layer: 0
   m_Name: Shop Generator
   m_TagString: Untagged
@@ -846,6 +847,20 @@ MonoBehaviour:
   dieDisambiguationView: {fileID: 5638154829262542859}
   faceSwapOverlayView: {fileID: 7085208894254328053}
   flowViewsRoot: {fileID: 3447947144344846618}
+--- !u!114 &308379233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 308379229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66cdf352cb5407f4d8f4971d557e1199, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShopGemSocketFlow
+  dieDisambiguationView: {fileID: 0}
+  flowViewsRoot: {fileID: 0}
 --- !u!1 &390486027
 GameObject:
   m_ObjectHideFlags: 0
@@ -2704,6 +2719,9 @@ MonoBehaviour:
   statusHoverTooltipPanel: {fileID: 1629307014}
   statusHoverTitleText: {fileID: 1550399998}
   statusHoverDescriptionText: {fileID: 1807733741}
+  dieTooltipOverlay: {fileID: 0}
+  dieTooltipTypeBackground: {fileID: 0}
+  faceHoverTypeBackground: {fileID: 0}
 --- !u!1 &1301276560
 GameObject:
   m_ObjectHideFlags: 0
@@ -3978,6 +3996,7 @@ MonoBehaviour:
   panelRoot: {fileID: 1629307014}
   titleText: {fileID: 1550399998}
   descriptionText: {fileID: 1807733741}
+  tooltipBackgroundImage: {fileID: 0}
 --- !u!114 &1629307017
 MonoBehaviour:
   m_ObjectHideFlags: 0
