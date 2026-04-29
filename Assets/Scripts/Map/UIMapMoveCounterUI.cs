@@ -2,10 +2,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Displays "Moves: current/limit" and tints red when over limit.</summary>
+/// <summary>Displays remaining map moves (countdown) and tints red when over limit. Use <see cref="movesTextFormat"/> with <c>{0}</c> = moves left.</summary>
 public class UIMapMoveCounterUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text movesText;
+    [Tooltip("String.Format pattern. {0} = moves remaining before the limit (never negative).")]
+    [SerializeField] private string movesTextFormat = "{0}";
+    [SerializeField] private string unboundMovesText = "—";
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color overLimitColor = new Color(0.95f, 0.2f, 0.2f, 1f);
     [Header("Optional hover tooltip")]
@@ -32,14 +35,25 @@ public class UIMapMoveCounterUI : MonoBehaviour
 
         if (_manager == null)
         {
-            movesText.text = "Moves: —";
+            movesText.text = unboundMovesText ?? "—";
             movesText.color = normalColor;
             return;
         }
 
         var taken = _manager.MovesTaken;
         var limit = _manager.MoveLimit;
-        movesText.text = $"Moves: {taken}/{limit}";
+        var movesLeft = Mathf.Max(0, limit - taken);
+        var format = string.IsNullOrEmpty(movesTextFormat) ? "{0}" : movesTextFormat;
+        try
+        {
+            movesText.text = string.Format(format, movesLeft);
+        }
+        catch (System.FormatException)
+        {
+            movesText.text = movesLeft.ToString();
+            Debug.LogError($"UIMapMoveCounterUI: invalid movesTextFormat '{format}'. Use {{0}} for moves left.", this);
+        }
+
         movesText.color = taken > limit ? overLimitColor : normalColor;
     }
 

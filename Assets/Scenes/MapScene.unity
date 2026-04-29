@@ -302,6 +302,7 @@ GameObject:
   m_Component:
   - component: {fileID: 161461482}
   - component: {fileID: 161461483}
+  - component: {fileID: 161461484}
   m_Layer: 0
   m_Name: Move list
   m_TagString: Untagged
@@ -328,10 +329,10 @@ RectTransform:
   - {fileID: 179175256}
   m_Father: {fileID: 219642503}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 159.2832, y: -50}
-  m_SizeDelta: {x: 216.4764, y: 47.52}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -258.5}
+  m_SizeDelta: {x: 250.9413, y: 51.5277}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &161461483
 MonoBehaviour:
@@ -346,6 +347,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   movesText: {fileID: 1165224644}
+  movesTextFormat: 'Moves left: {0}'
+  unboundMovesText: "\u2014"
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   overLimitColor: {r: 0.95, g: 0.2, b: 0.2, a: 1}
   tooltipPointerTarget: {fileID: 607561254}
@@ -353,6 +356,18 @@ MonoBehaviour:
   hoverTooltipTitle: Moves
   hoverTooltipDescription: "When exceeding the moves, take <Style=Damage>{0}</style>
     damage. \nIncrease that damage by <Style=Damage>{1}</style> every move."
+--- !u!225 &161461484
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 161461481}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &179175255
 GameObject:
   m_ObjectHideFlags: 0
@@ -498,8 +513,8 @@ RectTransform:
   - {fileID: 1409848892}
   - {fileID: 1988976952}
   - {fileID: 2040840678}
-  - {fileID: 161461482}
   - {fileID: 996091471}
+  - {fileID: 161461482}
   - {fileID: 2034626118}
   - {fileID: 1677661260}
   - {fileID: 502440728}
@@ -2138,7 +2153,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 2d96c6dec5a9da645a6f6cbe018e7480, type: 3}
+  m_Sprite: {fileID: 21300000, guid: df1fd5759648ea04b88599e5b18df46f, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2969,7 +2984,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 2d96c6dec5a9da645a6f6cbe018e7480, type: 3}
+  m_Sprite: {fileID: 21300000, guid: df1fd5759648ea04b88599e5b18df46f, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4546,11 +4561,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 161461482}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 18.5, y: 0}
-  m_SizeDelta: {x: 385.7586, y: 100}
-  m_Pivot: {x: 0, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1165224644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4571,10 +4586,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Moves: 8/11'
+  m_text: 'Moves left: 8/11'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
-  m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 810d386e95b2f1b42a69da4de514b4f9, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4598,14 +4613,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 28
-  m_fontSizeBase: 28
+  m_fontSize: 22
+  m_fontSizeBase: 22
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -8232,10 +8247,10 @@ RectTransform:
   - {fileID: 9177584369517286055}
   m_Father: {fileID: 161461482}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 453.52103, y: -38.235596}
-  m_SizeDelta: {x: 512.0626, y: 105.6488}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: 59}
+  m_SizeDelta: {x: 520.3661, y: 105.6488}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &664536958335454091
 CanvasRenderer:
@@ -8265,8 +8280,11 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "When exceeding the moves, take <Style=Damage>{0}</style> damage. \nIncrease
-    that damage by <Style=Damage>{1}</style> every move."
+  m_text: 'When exceeding the moves, take <Style=Damage>{0}</style> damage. Increase
+    that damage by <Style=Damage>{1}</style> every move.
+
+    Passageways will begin
+    to close with each step.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}

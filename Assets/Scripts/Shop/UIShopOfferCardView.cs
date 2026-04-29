@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class UIShopOfferCardView : MonoBehaviour
 {
+    [SerializeField] Image iconImage;
     [SerializeField] TMP_Text nameText;
     [SerializeField] TMP_Text descriptionText;
     [SerializeField] TMP_Text priceText;
@@ -23,12 +24,18 @@ public class UIShopOfferCardView : MonoBehaviour
             buyButton.onClick.AddListener(() => _onBuy?.Invoke());
     }
 
-    public void Bind(string title, string desc, int price, bool canAfford, bool sold, Action onBuy)
+    public void Bind(string title, string desc, Sprite icon, int price, bool canAfford, bool sold, Action onBuy)
     {
         _price = price;
         _sold = sold;
         _onBuy = onBuy;
 
+        if (iconImage != null)
+        {
+            iconImage.sprite = icon;
+            iconImage.enabled = icon != null;
+            iconImage.color = icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+        }
         if (nameText != null) nameText.text = title ?? "";
         if (descriptionText != null) descriptionText.text = desc ?? "";
         if (priceText != null) priceText.text = price.ToString();

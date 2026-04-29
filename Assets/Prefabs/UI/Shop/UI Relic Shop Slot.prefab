@@ -497,6 +497,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2288306da15ebd45a2cf742f3f0c7f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIShopOfferCardView
+  iconImage: {fileID: 6098667529676642019}
   nameText: {fileID: 8563295902042333479}
   descriptionText: {fileID: 5079719312575018914}
   priceText: {fileID: 955915631920301487}

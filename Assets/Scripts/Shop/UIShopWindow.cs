@@ -75,12 +75,30 @@ public class UIShopWindow : MonoBehaviour
         {
             var v = Instantiate(prefab, parent); _cards.Add(v);
             var canAfford = RunEconomyManager.Instance != null && RunEconomyManager.Instance.CanAfford(o.Price);
-            v.Bind(NameOf(o), DescOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o));
+            v.Bind(NameOf(o), DescOf(o), IconOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o));
         }
     }
 
     static string NameOf(OfferData o) => o.Kind switch { OfferKind.Face => o.Face != null ? o.Face.Title : "Face", OfferKind.Gem => o.Gem != null ? o.Gem.DisplayLabel : "Gem", OfferKind.Relic => o.Relic != null ? o.Relic.title : "Relic", OfferKind.Die => o.Die != null ? o.Die.dieName : "Die", _ => "" };
-    static string DescOf(OfferData o) => o.Kind switch { OfferKind.Face => o.Face != null ? o.Face.Description : "", OfferKind.Gem => o.Gem != null ? o.Gem.description : "", OfferKind.Relic => o.Relic != null ? o.Relic.description : "", OfferKind.Die => o.Die != null ? $"Type: {o.Die.dieType}" : "", _ => "" };
+    static string DescOf(OfferData o) => o.Kind switch
+    {
+        OfferKind.Face => o.Face != null ? NormalizeSingleLineBreaks(o.Face.Description) : "",
+        OfferKind.Gem => o.Gem != null ? o.Gem.description : "",
+        OfferKind.Relic => o.Relic != null ? o.Relic.description : "",
+        OfferKind.Die => o.Die != null ? $"Type: {o.Die.dieType}" : "",
+        _ => ""
+    };
+    static Sprite IconOf(OfferData o) => o.Kind switch { OfferKind.Face => o.Face != null ? o.Face.uiIcon : null, OfferKind.Gem => o.Gem != null ? o.Gem.icon : null, OfferKind.Relic => o.Relic != null ? o.Relic.icon : null, OfferKind.Die => o.Die != null ? o.Die.uiIcon : null, _ => null };
+
+    static string NormalizeSingleLineBreaks(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return "";
+        var normalized = text.Replace("\r\n", "\n").Replace('\r', '\n');
+        while (normalized.Contains("\n\n"))
+            normalized = normalized.Replace("\n\n", "\n");
+        return normalized;
+    }
 
     void TryBuy(OfferData o)
     {
