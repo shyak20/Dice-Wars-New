@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>Displays icons for relics on the current run (map, shop, combat). Wire a horizontal layout and slot prefab (root with <see cref="RunRelicSlotView"/>).</summary>
 public sealed class RunRelicBarUI : MonoBehaviour
 {
+    [Tooltip("Root object to hide when the player has no relics. Defaults to iconParent object when not assigned.")]
+    [SerializeField] private GameObject relicsParent;
     [SerializeField] private Transform iconParent;
     [Tooltip("Prefab root must include RunRelicSlotView.")]
     [SerializeField] private GameObject slotPrefab;
@@ -41,6 +43,11 @@ public sealed class RunRelicBarUI : MonoBehaviour
 
         if (slotPrefab == null || RunManager.Instance == null)
             return;
+
+        var relicCount = RunManager.Instance.RunRelics != null ? RunManager.Instance.RunRelics.Count : 0;
+        var parentToToggle = relicsParent != null ? relicsParent : iconParent.gameObject;
+        if (parentToToggle != null)
+            parentToToggle.SetActive(relicCount > 0);
 
         foreach (var r in RunManager.Instance.RunRelics)
         {

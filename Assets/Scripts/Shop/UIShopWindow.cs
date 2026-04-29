@@ -1,375 +1,165 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// Shop storefront: gold header, face offers under a layout group, dice offers under another, leave button.
-/// </summary>
 public class UIShopWindow : MonoBehaviour
 {
-    [SerializeField] private ShopGenerator shopGenerator;
-    [SerializeField] private ShopFaceSocketFlow socketFlow;
-    [SerializeField] private ShopGemSocketFlow gemSocketFlow;
-    [SerializeField] private TMP_Text goldHeaderText;
-    [Header("Layouts (required)")]
-    [Tooltip("RectTransform that has a Horizontal/Vertical/Grid Layout Group for face offer rows.")]
-    [SerializeField] private Transform faceSlotsContainer;
-    [Tooltip("RectTransform that has a Layout Group for full-die offers.")]
-    [SerializeField] private Transform diceSlotsContainer;
-    [Tooltip("RectTransform that has a Layout Group for relic offers.")]
-    [SerializeField] private Transform relicSlotsContainer;
-    [Tooltip("RectTransform that has a Layout Group for gem offers.")]
-    [SerializeField] private Transform gemSlotsContainer;
-    [Tooltip("Face offers prefab root must have a UIShopSlot component.")]
-    [SerializeField] private UIShopSlot slotPrefab;
-    [Tooltip("Optional full-die offers prefab root. If null, falls back to Slot Prefab.")]
-    [SerializeField] private UIShopSlot diceSlotPrefab;
-    [Tooltip("Optional gem offers prefab root. If null, falls back to Slot Prefab.")]
-    [SerializeField] private UIShopSlot gemSlotPrefab;
-    [Tooltip("Relic offers prefab root must have UIShopRelicSlot.")]
-    [SerializeField] private UIShopRelicSlot relicSlotPrefab;
-    [SerializeField] private Button leaveShopButton;
-    [Header("Optional")]
-    [Tooltip("Player deck tray; refreshes when the shop UI refreshes (e.g. after buying a die or socketing a face).")]
-    [SerializeField] private UIShopDiceTray shopDiceTray;
-
-    private readonly List<UIShopSlot> _slots = new List<UIShopSlot>();
-    private readonly List<UIShopRelicSlot> _relicSlots = new List<UIShopRelicSlot>();
-    private readonly List<UIShopSlot> _gemSlots = new List<UIShopSlot>();
-
-    private void Start()
+    enum OfferKind { Face, Gem, Relic, Die }
+    sealed class OfferData
     {
-        Debug.Log($"[UIShopWindow] Start on '{name}' — shopGenerator={(shopGenerator != null)}, faceSlotPrefab={(slotPrefab != null)}, diceSlotPrefab={(diceSlotPrefab != null)}, faceContainer={(faceSlotsContainer != null)}, diceContainer={(diceSlotsContainer != null)}", this);
+        public OfferKind Kind; public DieFaceSO Face; public GemSO Gem; public RelicSO Relic; public DieAssetSO Die;
+        public int Price; public bool Sold;
+    }
 
-        if (leaveShopButton != null)
-            leaveShopButton.onClick.AddListener(OnLeaveShop);
+    [Header("Loot")] [SerializeField] FaceLootTableSO faceLootTable; [SerializeField] DieLootTableSO dieLootTable;
+    [SerializeField] RelicLootTableSO relicLootTable; [SerializeField] GemLootTableSO gemLootTable;
+    [Header("Counts")] [SerializeField, Min(0)] int faceOfferCount = 4; [SerializeField, Min(0)] int gemOfferCount = 2;
+    [SerializeField, Min(0)] int relicOfferCount = 2; [SerializeField, Min(0)] int dieOfferCount = 1; [SerializeField] int fallbackDiePrice = 100;
+    [Header("Header")] [SerializeField] TMP_Text goldHeaderText; [SerializeField] Button leaveShopButton;
+    [Header("Offer Containers")] [SerializeField] Transform faceOffersContainer; [SerializeField] Transform gemOffersContainer;
+    [SerializeField] Transform relicOffersContainer; [SerializeField] Transform dieOffersContainer;
+    [Header("Offer Prefabs")] [SerializeField] UIShopOfferCardView dieFaceOfferPrefab; [SerializeField] UIShopOfferCardView gemOfferPrefab;
+    [SerializeField] UIShopOfferCardView relicOfferPrefab; [SerializeField] UIShopOfferCardView dieOfferPrefab;
+    [Header("Player Containers")] [SerializeField] Transform playerDiceContainer; [SerializeField] GameObject playerDieButtonPrefab;
+    [SerializeField] Transform playerRelicsContainer; [SerializeField] RunRelicSlotView playerRelicSlotPrefab;
+    [Header("Die Tooltip")] [SerializeField] DieTooltipOverlayUI dieTooltipOverlay;
+    [Header("Popup")] [SerializeField] ShopDieChoicePopupView dieChoicePopup;
 
-        ShopGenerator.InventoryChanged += OnInventoryChanged;
+    readonly List<OfferData> _face = new(); readonly List<OfferData> _gem = new(); readonly List<OfferData> _relic = new(); readonly List<OfferData> _die = new();
+    readonly List<UIShopOfferCardView> _cards = new();
+
+    void Start()
+    {
+        if (leaveShopButton != null) leaveShopButton.onClick.AddListener(OnLeaveShop);
         RunEconomyManager.OnGoldChanged += OnGoldChanged;
-
-        if (shopGenerator == null)
-        {
-            Debug.LogError("UIShopWindow: Assign Shop Generator (drag the GameObject that has ShopGenerator). Nothing will show until this is set.", this);
-            return;
-        }
-
-        shopGenerator.GenerateShopInventory();
-
-        if (RunEconomyManager.Instance != null)
-            OnGoldChanged(RunEconomyManager.Instance.CurrentGold);
+        if (RunManager.Instance != null) RunManager.Instance.OnRunRelicsChanged += RebuildPlayerRelics;
+        BuildOffers(); RebuildOfferUi(); RebuildPlayerDice(); RebuildPlayerRelics();
+        if (RunEconomyManager.Instance != null) OnGoldChanged(RunEconomyManager.Instance.CurrentGold);
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
-        ShopGenerator.InventoryChanged -= OnInventoryChanged;
         RunEconomyManager.OnGoldChanged -= OnGoldChanged;
+        if (RunManager.Instance != null) RunManager.Instance.OnRunRelicsChanged -= RebuildPlayerRelics;
     }
 
-    private void OnInventoryChanged() => RebuildSlots();
-
-    private void OnGoldChanged(int newTotal)
+    void BuildOffers()
     {
-        if (goldHeaderText != null)
-            goldHeaderText.text = newTotal.ToString();
-
-        foreach (var s in _slots)
-        {
-            if (s != null)
-                s.Refresh();
-        }
-
-        foreach (var s in _relicSlots)
-        {
-            if (s != null)
-                s.Refresh();
-        }
-
-        foreach (var s in _gemSlots)
-        {
-            if (s != null)
-                s.Refresh();
-        }
+        _face.Clear(); _gem.Clear(); _relic.Clear(); _die.Clear();
+        var preferred = BuildPreferredTypes();
+        if (faceLootTable != null) foreach (var f in faceLootTable.GetRandomRewards(faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = FacePriceUtility.GetFaceGoldPrice(f) });
+        if (gemLootTable != null) foreach (var g in gemLootTable.GetRandomGems(gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = GemPriceUtility.GetGemGoldPrice(g) });
+        if (relicLootTable != null) foreach (var r in relicLootTable.GetRandomRelics(relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = RelicPriceUtility.GetRelicGoldPrice(r) });
+        if (dieLootTable != null) foreach (var d in dieLootTable.GetRandomDice(dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = d.shopGoldPrice > 0 ? d.shopGoldPrice : fallbackDiePrice });
     }
 
-    private void RebuildSlots()
+    HashSet<DieType> BuildPreferredTypes()
     {
-        if (shopGenerator == null)
-        {
-            Debug.LogError("UIShopWindow.RebuildSlots: shopGenerator is null.", this);
-            return;
-        }
-
-        if (slotPrefab == null)
-        {
-            Debug.LogError("UIShopWindow: Slot Prefab is not assigned. Drag your UIShopSlot prefab from the Project window into the UIShopWindow component.", this);
-            return;
-        }
-
-        if (faceSlotsContainer == null)
-            Debug.LogError("UIShopWindow: assign Face Slots Container (empty UI object with a Layout Group).", this);
-        if (diceSlotsContainer == null)
-            Debug.LogError("UIShopWindow: assign Dice Slots Container.", this);
-
-        foreach (var s in _slots)
-        {
-            if (s != null && s.gameObject != null)
-                Destroy(s.gameObject);
-        }
-
-        _slots.Clear();
-
-        foreach (var s in _relicSlots)
-        {
-            if (s != null && s.gameObject != null)
-                Destroy(s.gameObject);
-        }
-
-        _relicSlots.Clear();
-
-        foreach (var s in _gemSlots)
-        {
-            if (s != null && s.gameObject != null)
-                Destroy(s.gameObject);
-        }
-
-        _gemSlots.Clear();
-
-        foreach (var item in shopGenerator.FaceOffers)
-            AddSlot(faceSlotsContainer, item, slotPrefab);
-
-        foreach (var item in shopGenerator.DiceOffers)
-            AddSlot(diceSlotsContainer, item, diceSlotPrefab != null ? diceSlotPrefab : slotPrefab);
-
-        if (relicSlotsContainer != null)
-        {
-            foreach (var item in shopGenerator.RelicOffers)
-                AddRelicSlot(relicSlotsContainer, item);
-        }
-        else if (shopGenerator.RelicOffers.Count > 0)
-            Debug.LogWarning("UIShopWindow: assign relicSlotsContainer to show relic offers.", this);
-
-        if (gemSlotsContainer != null)
-        {
-            foreach (var item in shopGenerator.GemOffers)
-                AddGemSlot(gemSlotsContainer, item, gemSlotPrefab != null ? gemSlotPrefab : slotPrefab);
-        }
-        else if (shopGenerator.GemOffers.Count > 0)
-            Debug.LogWarning("UIShopWindow: assign gemSlotsContainer to show gem offers.", this);
-
-        RefreshShopDiceTray();
+        var set = new HashSet<DieType>(); var runtime = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+        if (runtime?.currentDeck == null) return set; foreach (var d in runtime.currentDeck) if (d != null) set.Add(d.dieType); return set;
     }
 
-    private void AddGemSlot(Transform parent, ShopItem item, UIShopSlot prefab) =>
-        AddSlotToList(parent, item, prefab, _gemSlots);
-
-    private void AddSlotToList(Transform parent, ShopItem item, UIShopSlot prefab, List<UIShopSlot> into)
+    void RebuildOfferUi()
     {
-        if (parent == null)
-        {
-            Debug.LogError("UIShopWindow: gem (or other) slots container is not assigned — shop items cannot be instantiated.");
-            return;
-        }
-
-        if (prefab == null)
-        {
-            Debug.LogError("UIShopWindow: slot prefab is not assigned for this section.");
-            return;
-        }
-
-        var go = Instantiate(prefab, parent);
-        var slot = go.GetComponent<UIShopSlot>();
-        if (slot == null)
-        {
-            Debug.LogError("UIShopWindow: assigned slot prefab needs UIShopSlot.");
-            Destroy(go);
-            return;
-        }
-
-        slot.Bind(this, item);
-        into.Add(slot);
+        foreach (var c in _cards) if (c != null) Destroy(c.gameObject); _cards.Clear();
+        Spawn(faceOffersContainer, dieFaceOfferPrefab, _face); Spawn(gemOffersContainer, gemOfferPrefab, _gem); Spawn(relicOffersContainer, relicOfferPrefab, _relic); Spawn(dieOffersContainer, dieOfferPrefab, _die);
     }
 
-    private void AddSlot(Transform parent, ShopItem item, UIShopSlot prefab)
+    void Spawn(Transform parent, UIShopOfferCardView prefab, List<OfferData> list)
     {
-        if (parent == null)
+        if (parent == null || prefab == null) return;
+        foreach (var o in list)
         {
-            Debug.LogError("UIShopWindow: faceSlotsContainer or diceSlotsContainer is not assigned — shop items cannot be instantiated.");
-            return;
-        }
-
-        if (prefab == null)
-        {
-            Debug.LogError("UIShopWindow: slot prefab is not assigned for this section.");
-            return;
-        }
-
-        var go = Instantiate(prefab, parent);
-        var slot = go.GetComponent<UIShopSlot>();
-        if (slot == null)
-        {
-            Debug.LogError("UIShopWindow: assigned slot prefab needs UIShopSlot.");
-            Destroy(go);
-            return;
-        }
-
-        slot.Bind(this, item);
-        _slots.Add(slot);
-    }
-
-    private void AddRelicSlot(Transform parent, ShopItem item)
-    {
-        if (parent == null)
-        {
-            Debug.LogError("UIShopWindow: relicSlotsContainer is not assigned.");
-            return;
-        }
-
-        if (relicSlotPrefab == null)
-        {
-            Debug.LogError("UIShopWindow: assign relicSlotPrefab (UIShopRelicSlot) for relic offers.", this);
-            return;
-        }
-
-        var go = Instantiate(relicSlotPrefab, parent);
-        var slot = go.GetComponent<UIShopRelicSlot>();
-        if (slot == null)
-        {
-            Debug.LogError("UIShopWindow: relic slot prefab needs UIShopRelicSlot.");
-            Destroy(go);
-            return;
-        }
-
-        slot.Bind(this, item);
-        _relicSlots.Add(slot);
-    }
-
-    public void TryBuy(ShopItem item)
-    {
-        if (shopGenerator == null || item == null || item.IsSoldOut) return;
-
-        if (RunEconomyManager.Instance == null)
-        {
-            Debug.LogError("UIShopWindow: RunEconomyManager is missing (needs DontDestroyOnLoad in a loaded scene). Buy cannot complete.", this);
-            return;
-        }
-
-        if (item.ItemKind == ShopItem.Kind.Face && item.Face != null)
-        {
-            var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
-            if (data == null || !PlayerInventory.HasDieSupportingFace(data, item.Face))
-            {
-                Debug.LogWarning("UIShopWindow: Face purchase blocked — no die in deck supports this face's element.");
-                return;
-            }
-        }
-
-        if (item.ItemKind == ShopItem.Kind.Gem && item.Gem != null)
-        {
-            var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
-            if (data == null || !PlayerInventory.HasDieWithEmptyGemSocket(data))
-            {
-                Debug.LogWarning("UIShopWindow: Gem purchase blocked — no die has an empty gem socket.");
-                return;
-            }
-        }
-
-        if (!shopGenerator.PurchaseItem(item))
-        {
-            Debug.LogWarning($"UIShopWindow: Purchase failed (gold={RunEconomyManager.Instance.CurrentGold}, price={item.CalculatedPrice}).", this);
-            return;
-        }
-
-        if (item.ItemKind == ShopItem.Kind.FullDie && item.Die != null)
-        {
-            if (PlayerDataContainer.Instance != null)
-                PlayerDataContainer.Instance.AddDieToDeck(item.Die);
-            ShopToastUI.Show("New Die Acquired");
-        }
-
-        if (item.ItemKind == ShopItem.Kind.Relic && item.Relic != null && RunManager.Instance != null)
-        {
-            RunManager.Instance.AddRunRelic(item.Relic);
-            ShopToastUI.Show($"Relic: {item.Relic.title}");
-        }
-
-        RefreshAllSlots();
-
-        if (item.ItemKind == ShopItem.Kind.Face)
-        {
-            if (socketFlow == null)
-            {
-                Debug.LogError("UIShopWindow: assign ShopFaceSocketFlow for face purchases.");
-                shopGenerator.RefundAndRestock(item);
-                RefreshAllSlots();
-                return;
-            }
-
-            socketFlow.BeginInstallFace(item.Face, item, shopGenerator, RefreshSlotsAfterSocket);
-        }
-
-        if (item.ItemKind == ShopItem.Kind.Gem)
-        {
-            if (gemSocketFlow == null)
-            {
-                Debug.LogError("UIShopWindow: assign ShopGemSocketFlow for gem purchases.");
-                shopGenerator.RefundAndRestock(item);
-                RefreshAllSlots();
-                return;
-            }
-
-            gemSocketFlow.BeginSocketGem(item.Gem, item, shopGenerator, RefreshSlotsAfterSocket);
+            var v = Instantiate(prefab, parent); _cards.Add(v);
+            var canAfford = RunEconomyManager.Instance != null && RunEconomyManager.Instance.CanAfford(o.Price);
+            v.Bind(NameOf(o), DescOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o));
         }
     }
 
-    private void RefreshSlotsAfterSocket()
+    static string NameOf(OfferData o) => o.Kind switch { OfferKind.Face => o.Face != null ? o.Face.Title : "Face", OfferKind.Gem => o.Gem != null ? o.Gem.DisplayLabel : "Gem", OfferKind.Relic => o.Relic != null ? o.Relic.title : "Relic", OfferKind.Die => o.Die != null ? o.Die.dieName : "Die", _ => "" };
+    static string DescOf(OfferData o) => o.Kind switch { OfferKind.Face => o.Face != null ? o.Face.Description : "", OfferKind.Gem => o.Gem != null ? o.Gem.description : "", OfferKind.Relic => o.Relic != null ? o.Relic.description : "", OfferKind.Die => o.Die != null ? $"Type: {o.Die.dieType}" : "", _ => "" };
+
+    void TryBuy(OfferData o)
     {
-        RefreshAllSlots();
+        if (o == null || o.Sold) return;
+        switch (o.Kind)
+        {
+            case OfferKind.Face: StartFaceFlow(o); break;
+            case OfferKind.Gem: StartGemFlow(o); break;
+            case OfferKind.Relic: BuyRelic(o); break;
+            case OfferKind.Die: BuyDie(o); break;
+        }
     }
 
-    private void RefreshAllSlots()
+    void StartFaceFlow(OfferData o)
     {
-        foreach (var s in _slots)
+        if (dieChoicePopup == null || o.Face == null) return;
+        dieChoicePopup.ShowForFaceReplacement(o.Face, (die, idx) =>
         {
-            if (s != null)
-                s.Refresh();
-        }
-
-        foreach (var s in _relicSlots)
-        {
-            if (s != null)
-                s.Refresh();
-        }
-
-        foreach (var s in _gemSlots)
-        {
-            if (s != null)
-                s.Refresh();
-        }
-
-        if (RunEconomyManager.Instance != null)
-            OnGoldChanged(RunEconomyManager.Instance.CurrentGold);
-
-        RefreshShopDiceTray();
+            if (die == null || !SpendGold(o.Price)) return false;
+            try { die.SwapFace(idx, o.Face); o.Sold = true; RebuildOfferUi(); RebuildPlayerDice(); return true; }
+            catch (Exception e) { Debug.LogError(e, this); if (RunEconomyManager.Instance != null) RunEconomyManager.Instance.GrantGold(o.Price, null); return false; }
+        }, null);
     }
 
-    private void RefreshShopDiceTray()
+    void StartGemFlow(OfferData o)
     {
-        if (shopDiceTray != null)
-            shopDiceTray.RebuildFromDeck();
+        if (dieChoicePopup == null || o.Gem == null) return;
+        dieChoicePopup.ShowForGemSocket(o.Gem, die =>
+        {
+            if (die == null || !SpendGold(o.Price)) return false;
+            if (!die.TrySocketGem(o.Gem)) { if (RunEconomyManager.Instance != null) RunEconomyManager.Instance.GrantGold(o.Price, null); return false; }
+            o.Sold = true; RebuildOfferUi(); RebuildPlayerDice(); return true;
+        }, null);
     }
 
-    private void OnLeaveShop()
+    void BuyRelic(OfferData o) { if (o.Relic == null || !SpendGold(o.Price) || RunManager.Instance == null) return; RunManager.Instance.AddRunRelic(o.Relic); o.Sold = true; RebuildOfferUi(); RebuildPlayerRelics(); }
+    void BuyDie(OfferData o) { if (o.Die == null || !SpendGold(o.Price) || PlayerDataContainer.Instance == null) return; PlayerDataContainer.Instance.AddDieToDeck(o.Die); o.Sold = true; RebuildOfferUi(); RebuildPlayerDice(); }
+    bool SpendGold(int amount) { var eco = RunEconomyManager.Instance; return eco != null && eco.CanAfford(amount) && eco.TrySpend(amount); }
+
+    void RebuildPlayerDice()
     {
-        if (RunManager.Instance == null)
+        if (playerDiceContainer == null || PlayerDataContainer.Instance?.RuntimeData == null) return;
+        foreach (Transform c in playerDiceContainer) Destroy(c.gameObject);
+        dieTooltipOverlay?.Hide();
+        foreach (var die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
         {
-            Debug.LogError("UIShopWindow: RunManager missing — cannot leave shop.");
+            if (die == null || playerDieButtonPrefab == null) continue;
+            var go = Instantiate(playerDieButtonPrefab, playerDiceContainer); var txt = go.GetComponentInChildren<TMP_Text>(); if (txt != null) txt.text = die.dieName;
+            var tray = go.GetComponent<DiceTrayButtonView>(); if (tray != null) { tray.SetIcon(die.uiIcon); tray.SetSelected(false); tray.SetSelectedIconShakeEnabled(false); }
+            RegisterPlayerDieHover(go, die, tray != null ? tray.IconRectTransform : null);
+        }
+    }
+
+    void RegisterPlayerDieHover(GameObject target, DieAssetSO die, RectTransform iconRect)
+    {
+        if (target == null || die == null || dieTooltipOverlay == null)
             return;
-        }
+        var et = target.GetComponent<EventTrigger>() ?? target.AddComponent<EventTrigger>();
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => dieTooltipOverlay.ShowDie(die, false, null, iconRect));
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => dieTooltipOverlay.Hide());
+        et.triggers.Add(enter);
+        et.triggers.Add(exit);
+    }
 
-        if (RunManager.Instance.UseMapBasedRun)
-            RunManager.Instance.ReturnToMapFromSubScene();
-        else
-            RunManager.Instance.AdvanceToNextRoom();
+    void RebuildPlayerRelics()
+    {
+        if (playerRelicsContainer == null || playerRelicSlotPrefab == null || RunManager.Instance == null) return;
+        foreach (Transform c in playerRelicsContainer) Destroy(c.gameObject);
+        foreach (var relic in RunManager.Instance.RunRelics) { if (relic == null) continue; var slot = Instantiate(playerRelicSlotPrefab, playerRelicsContainer); slot.Bind(relic); }
+    }
+
+    void OnGoldChanged(int gold) { if (goldHeaderText != null) goldHeaderText.text = gold.ToString(); RebuildOfferUi(); }
+
+    void OnLeaveShop()
+    {
+        if (RunManager.Instance == null) return;
+        if (RunManager.Instance.UseMapBasedRun) RunManager.Instance.ReturnToMapFromSubScene();
+        else RunManager.Instance.AdvanceToNextRoom();
     }
 }
