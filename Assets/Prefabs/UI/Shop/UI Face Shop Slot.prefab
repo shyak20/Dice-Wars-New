@@ -581,6 +581,7 @@ MonoBehaviour:
   unaffordablePriceColor: {r: 1, g: 0.39708054, b: 0.3726415, a: 1}
   buyButton: {fileID: 9016214631269652103}
   soldStamp: {fileID: 4177987594101679047}
+  hoverOnBuyButton: {fileID: 1985397098723337018}
 --- !u!1 &4177987594101679047
 GameObject:
   m_ObjectHideFlags: 0
