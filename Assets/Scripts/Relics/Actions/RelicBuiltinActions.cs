@@ -62,6 +62,13 @@ public sealed class RelicOncePerCombatFreeBustAction : RelicGameActionBase
 {
     public override void Execute(GameActionContext ctx)
     {
+        if (ctx.RelicPhase == RelicPhases.QueryFreeBustRelicCount)
+        {
+            if (ctx.RelicRuntime != null && !ctx.RelicRuntime.FreeBustConsumed)
+                ctx.RelicBoolAccumulator = true;
+            return;
+        }
+
         if (ctx.RelicPhase != RelicPhases.TryConsumeFreeBust) return;
         if (ctx.RelicRuntime == null || ctx.RelicRuntime.FreeBustConsumed) return;
         ctx.RelicRuntime.FreeBustConsumed = true;

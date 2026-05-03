@@ -165,6 +165,19 @@ public class EnemyController : MonoBehaviour
             CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
     }
 
+    /// <summary>
+    /// Restores HP and armor after <see cref="CombatManager.ResolveBust"/> clears the channel when early flush had already applied combat.
+    /// </summary>
+    public void RestoreAfterBustChannelClear(int healthRestore, int armorRestore)
+    {
+        if (healthRestore < 0 || armorRestore < 0) return;
+        if (healthRestore == 0 && armorRestore == 0) return;
+
+        currentHealth = Mathf.Min(currentHealth + healthRestore, enemyData != null ? enemyData.maxHealth : currentHealth + healthRestore);
+        currentArmor += armorRestore;
+        UpdateUI();
+    }
+
     public void AddArmor(int amount)
     {
         currentArmor += amount;

@@ -40,6 +40,9 @@ public class EnemyTypeSO : ScriptableObject
     [Tooltip("State name on the controller (e.g. Idle or Base Layer.Idle). Empty uses the controller default entry state.")]
     public string idleAnimatorStateName;
 
+    [Tooltip("Optional. Played when the enemy takes physical damage from the player (early flush or turn resolution). Empty skips.")]
+    public string physicalHitAnimatorStateName;
+
     [Header("Classification")]
     public EnemyRank enemyRank = EnemyRank.Normal;
 

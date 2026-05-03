@@ -12,6 +12,7 @@ public class StatusEffectBarUI : MonoBehaviour
     private StatusEffectManager trackedManager;
     private bool _refreshFrozen;
     private bool _refreshQueued;
+    private int _visualRefreshFreezeDepth;
 
     private void Awake()
     {
@@ -52,13 +53,42 @@ public class StatusEffectBarUI : MonoBehaviour
         RefreshNow();
     }
 
-    public void SetVisualRefreshFrozen(bool frozen)
+    public void PushVisualRefreshFreeze()
     {
-        _refreshFrozen = frozen;
+        _visualRefreshFreezeDepth++;
+        _refreshFrozen = true;
+    }
+
+    public void PopVisualRefreshFreeze()
+    {
+        if (_visualRefreshFreezeDepth <= 0)
+        {
+            Debug.LogError($"StatusEffectBarUI on '{gameObject.name}': PopVisualRefreshFreeze underflow.");
+            return;
+        }
+
+        _visualRefreshFreezeDepth--;
+        _refreshFrozen = _visualRefreshFreezeDepth > 0;
         if (!_refreshFrozen && _refreshQueued)
         {
             _refreshQueued = false;
             RefreshNow();
+        }
+    }
+
+    public void SetVisualRefreshFrozen(bool frozen)
+    {
+        if (frozen)
+            PushVisualRefreshFreeze();
+        else
+        {
+            _visualRefreshFreezeDepth = 0;
+            _refreshFrozen = false;
+            if (_refreshQueued)
+            {
+                _refreshQueued = false;
+                RefreshNow();
+            }
         }
     }
 

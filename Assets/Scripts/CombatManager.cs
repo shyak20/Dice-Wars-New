@@ -60,6 +60,21 @@ public class CombatManager : MonoBehaviour
     private bool kineticShieldActive;
     private int kineticShieldBonus;
 
+    /// <summary>Kinetic armor entries already granted via <see cref="FlushImmediatePlayerCombatDeltas"/> (see <see cref="GetPendingDefense"/>).</summary>
+    private int _kineticShieldArmorAppliedEarly;
+
+    private bool _flatBonusAttackAppliedEarly;
+    private int _bonusDamageAppliedEarly;
+    private int _bonusArmorAppliedEarly;
+
+    private int _earlyFlushEnemyHealthDamage;
+    private int _earlyFlushEnemyArmorStripped;
+    private int _earlyFlushPlayerArmorGained;
+    private int _earlyFlushPlayerHealthLostToThorns;
+
+    /// <summary>Armor granted to the player this player turn from dice/orb resolution (stripped on bust).</summary>
+    private int _turnPlayerArmorGainedFromDice;
+
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
     private struct PrecisionChoiceEntry
@@ -98,6 +113,7 @@ public class CombatManager : MonoBehaviour
     private readonly HashSet<int> _gemScheduledBatchRerollIndices = new HashSet<int>();
     private readonly HashSet<int> _noPowerOnNextGatherCommit = new HashSet<int>();
     private readonly HashSet<int> _gemBatchRerollIndicesInFlight = new HashSet<int>();
+    private readonly List<DiceRollVisualPayload> _deferredRollFlyoutPayloads = new List<DiceRollVisualPayload>();
     private int _rollBatchId;
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
     private int _faceResolveSequence;
@@ -119,12 +135,21 @@ public class CombatManager : MonoBehaviour
     public int CurrentRollBatchId => _rollBatchId;
 
     // Updated summation logic to pull from FaceResult properties
-    public int GetPendingAttack() => channeledFaces.Sum(f => f.TotalDamageContribution) + bonusDamageFromActions;
-    public int GetPendingDefense() => channeledFaces.Sum(f => f.Armor) + kineticShieldBonus + bonusArmorFromActions;
+    public int GetPendingAttack() =>
+        channeledFaces.Sum(f => Mathf.Max(0, f.TotalDamageContribution - f.PhysicalDamageAppliedEarly)) +
+        Mathf.Max(0, bonusDamageFromActions - _bonusDamageAppliedEarly);
+
+    public int GetPendingDefense() =>
+        channeledFaces.Sum(f => Mathf.Max(0, f.Armor - f.ArmorAppliedEarly)) +
+        Mathf.Max(0, kineticShieldBonus - _kineticShieldArmorAppliedEarly) +
+        Mathf.Max(0, bonusArmorFromActions - _bonusArmorAppliedEarly);
 
     public List<FaceResult> GetChanneledFaces() => channeledFaces;
 
-    /// <summary>Stored-actions bar: face attack/defense plus deferred <see cref="IGameAction"/> pool rows (status actions scale with Perfect Strike separately).</summary>
+    /// <summary>
+    /// Element pool bar: full turn totals gathered from all dice (not reduced by early HP/armor flush).
+    /// Orb / SubmitTurn pending damage and defense use <see cref="GetPendingAttack"/> and <see cref="GetPendingDefense"/>.
+    /// </summary>
     private Dictionary<PoolRowKey, int> BuildStoredActionsPool()
     {
         var pools = new Dictionary<PoolRowKey, int>();
@@ -143,10 +168,7 @@ public class CombatManager : MonoBehaviour
 
             if (face.ActionPoolContributions == null) continue;
             foreach (var extra in face.ActionPoolContributions)
-            {
-                if (extra.VisualFlyoutOnly) continue;
                 Add(extra.PoolKey, extra.Amount);
-            }
         }
 
         Add(PoolRowKey.FromDieType(DieType.Damage), bonusDamageFromActions);
@@ -407,6 +429,8 @@ public class CombatManager : MonoBehaviour
         kineticShieldBonus = 0;
         bonusDamageFromActions = 0;
         bonusArmorFromActions = 0;
+        ClearEarlyFlushTracking();
+        _turnPlayerArmorGainedFromDice = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
         maxRolls = playerData.maxRollsPerTurn;
@@ -589,6 +613,7 @@ public class CombatManager : MonoBehaviour
         }
 
         _rollBatchPipelineRunning = true;
+        _deferredRollFlyoutPayloads.Clear();
 
         // --- Special effects (reroll, and later more) run before combat state receives the batch. ---
         if (rerollDieSelection == null && CountRerollGrantsFromAllPendingFaces() > 0)
@@ -659,6 +684,8 @@ public class CombatManager : MonoBehaviour
 
         QueueAddPowerChoicesAfterBatchGather(batchGatherStart, channeledFaces.Count);
 
+        DispatchOrDiscardDeferredRollFlyouts();
+
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
         _pendingDieSourceByIndex = null;
@@ -666,6 +693,42 @@ public class CombatManager : MonoBehaviour
 
         yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
         ProcessPrecisionQueue();
+    }
+
+    /// <summary>True when over max power would lead to the hard bust resolution UI (not free bust / protected / supernova).</summary>
+    private bool RollWouldShowHardBustCheckNow()
+    {
+        if (currentPower <= maxPower) return false;
+        if (bustProtected) return false;
+        if (_turnRegistry.SupernovaBustOverrideActive) return false;
+        if (RelicActionRunner.QueryBoolOr(RelicPhases.QueryFreeBustRelicCount, this)) return false;
+        return true;
+    }
+
+    private void DispatchOrDiscardDeferredRollFlyouts()
+    {
+        if (_deferredRollFlyoutPayloads.Count == 0) return;
+
+        if (RollWouldShowHardBustCheckNow())
+        {
+            _deferredRollFlyoutPayloads.Clear();
+            return;
+        }
+
+        if (CombatEvents.OnDiceRollVisualFeedback == null)
+        {
+            _deferredRollFlyoutPayloads.Clear();
+            return;
+        }
+
+        foreach (var payload in _deferredRollFlyoutPayloads)
+        {
+            pendingRollVisualSequences++;
+            payload.BindVisualFinished(OnRollVisualSequenceFinished);
+            CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
+        }
+
+        _deferredRollFlyoutPayloads.Clear();
     }
 
     private void QueueAddPowerChoicesAfterBatchGather(int startInclusive, int endExclusive)
@@ -838,6 +901,43 @@ public class CombatManager : MonoBehaviour
                     continue;
                 }
 
+                if (a is ApplyStatusEffectAction applyNow &&
+                    ShouldDeferEnemyStatusApplyForFlyout(applyNow, result, result.ActivateImmediately))
+                {
+                    var ctxDefer = BuildContext(result);
+                    AddDeferredEnemyApply(result, PoolRowKey.Custom(applyNow.StatusEffectDefinition.name),
+                        () => applyNow.Execute(ctxDefer));
+                    var iconDef = GameActionIconUtility.GetDisplayIcon(applyNow);
+                    if (iconDef != null)
+                    {
+                        immediateIcons ??= new List<Sprite>();
+                        immediateIcons.Add(iconDef);
+                    }
+
+                    continue;
+                }
+
+                if (a is AddValueBasedOnRollAction addRoll &&
+                    addRoll.Duration == AddValueBasedOnRollDuration.SameRoll &&
+                    addRoll.BonusTypeConfig == RollBonusType.Burn &&
+                    addRoll.BurnDefinitionConfig != null &&
+                    addRoll.BurnDefinitionConfig.target == StatusEffectTarget.Enemy &&
+                    result.Value == addRoll.RequiredFaceValueConfig)
+                {
+                    var ctxBurn = BuildContext(result);
+                    AddDeferredEnemyApply(result, PoolRowKey.Custom(addRoll.BurnDefinitionConfig.name),
+                        () => AddValueBasedOnRollAction.ExecuteSameRollBonus(ctxBurn, addRoll.RequiredFaceValueConfig,
+                            RollBonusType.Burn, addRoll.AmountConfig, addRoll.BurnDefinitionConfig));
+                    var iconBr = GameActionIconUtility.GetDisplayIcon(addRoll);
+                    if (iconBr != null)
+                    {
+                        immediateIcons ??= new List<Sprite>();
+                        immediateIcons.Add(iconBr);
+                    }
+
+                    continue;
+                }
+
                 a.Execute(context);
                 var icon = GameActionIconUtility.GetDisplayIcon(a);
                 if (icon != null)
@@ -855,32 +955,65 @@ public class CombatManager : MonoBehaviour
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         NotifyStoredActionsPoolUpdated();
-        if (!result.ActivateImmediately)
-            PushDeferredPoolIconHints(result);
+        PushPoolIconHintsForFace(result);
 
         if (dieWorldSource != null)
         {
             var lines = BuildRollVisualLines(result, kineticArmorThisRoll);
-            if (lines.Count > 0 && CombatEvents.OnDiceRollVisualFeedback != null)
+            if (lines.Count > 0)
             {
                 var activateAfterRegularDice =
                     sourceDieAsset != null &&
                     sourceDieAsset.GetSocketedGems().Any(g =>
                         g?.effects != null &&
                         g.effects.Any(e => e != null && e.kind == GemEffectKind.RandomBatchRerollOtherDiceNoPower));
-                pendingRollVisualSequences++;
                 var payload = new DiceRollVisualPayload
                 {
                     WorldAnchor = dieWorldSource.position,
                     DieTransform = dieWorldSource,
                     Lines = lines,
                     ActivateAfterRegularDice = activateAfterRegularDice,
-                    NeedsDelayedStoredPoolResync = lines.Any(l => l.IsVisualFlyoutOnly)
+                    NeedsDelayedStoredPoolResync = lines.Any(l => l.IsVisualFlyoutOnly),
+                    EnemyTarget = activeEnemy,
+                    DeferredEnemyApplies = result.DeferredEnemyFlyoutApplies != null && result.DeferredEnemyFlyoutApplies.Count > 0
+                        ? result.DeferredEnemyFlyoutApplies
+                        : null
                 };
-                payload.BindVisualFinished(OnRollVisualSequenceFinished);
-                CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
+                result.DeferredEnemyFlyoutApplies = null;
+                _deferredRollFlyoutPayloads.Add(payload);
             }
         }
+    }
+
+    private static bool ShouldDeferEnemyStatusApplyForFlyout(ApplyStatusEffectAction apply, FaceResult result, bool activateImmediately)
+    {
+        if (!activateImmediately || apply?.StatusEffectDefinition == null) return false;
+        if (apply.StatusEffectDefinition.target != StatusEffectTarget.Enemy) return false;
+        var key = PoolRowKey.Custom(apply.StatusEffectDefinition.name);
+        foreach (var c in result.ActionPoolContributions)
+        {
+            if (!c.VisualFlyoutOnly || c.PoolKey != key) continue;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void AddDeferredEnemyApply(FaceResult result, PoolRowKey key, Action apply)
+    {
+        if (apply == null) return;
+        if (result.DeferredEnemyFlyoutApplies == null)
+            result.DeferredEnemyFlyoutApplies = new List<DeferredEnemyApplyEntry>();
+        result.DeferredEnemyFlyoutApplies.Add(new DeferredEnemyApplyEntry { PoolRowKey = key, Apply = apply });
+    }
+
+    private void ScheduleDeferredBurnFromWatcher(FaceResult result, ValueBasedRollWatcherEntry w)
+    {
+        if (w.BurnDefinition == null || w.Amount <= 0) return;
+        if (result.Value != w.RequiredFaceValue) return;
+        var ctx = BuildContext(result);
+        AddDeferredEnemyApply(result, PoolRowKey.Custom(w.BurnDefinition.name),
+            () => AddValueBasedOnRollAction.ApplyBurnToEnemyFromContext(ctx, w.Amount, w.BurnDefinition));
     }
 
     private void OnRollVisualSequenceFinished()
@@ -910,6 +1043,8 @@ public class CombatManager : MonoBehaviour
                 valueBonus.AppendPoolContributionIfAny(result, player);
             if (a is ThornsAction thorns)
                 thorns.AppendPoolContributionIfAny(result, result.ActivateImmediately);
+            if (a is AddRollsAction addRolls)
+                addRolls.AppendPoolContributionIfAny(result, result.ActivateImmediately);
         }
     }
 
@@ -1042,13 +1177,13 @@ public class CombatManager : MonoBehaviour
         if (result.Value != w.RequiredFaceValue) return;
         if (w.BonusType != RollBonusType.Burn || w.Amount <= 0) return;
 
-        AddValueBasedOnRollAction.ApplyBurnToEnemyFromContext(ctx, w.Amount, w.BurnDefinition);
         AddValueBasedOnRollAction.TryAppendBurnPoolLine(result, player, w.RequiredFaceValue, w.Amount, w.BurnDefinition);
+        ScheduleDeferredBurnFromWatcher(result, w);
     }
 
-    private static void PushDeferredPoolIconHints(FaceResult result)
+    private static void PushPoolIconHintsForFace(FaceResult result)
     {
-        if (result.ActivateImmediately) return;
+        if (result == null) return;
 
         void Hint(PoolRowKey key, int amt, Sprite icon)
         {
@@ -1198,20 +1333,31 @@ public class CombatManager : MonoBehaviour
                 appliedMultiplier = Mathf.Max(appliedMultiplier, relicPerfect);
             appliedMultiplier += overchargeBonus;
             int jackpotMultiplier = appliedMultiplier;
-            foreach (var face in channeledFaces)
+            var perfectCopies = Mathf.Max(0, appliedMultiplier - 1);
+            if (perfectCopies > 0)
             {
-                face.Damage *= appliedMultiplier;
-                face.Armor *= appliedMultiplier;
+                foreach (var face in channeledFaces)
+                {
+                    var d0 = face.Damage;
+                    var a0 = face.Armor;
+                    face.Damage += d0 * perfectCopies;
+                    face.Armor += a0 * perfectCopies;
+                }
+
+                AddDuplicatePoolContributionsForPerfectStrike(channeledFaces, perfectCopies);
+
+                var kin0 = kineticShieldBonus;
+                kineticShieldBonus += kin0 * perfectCopies;
+                var bd0 = bonusDamageFromActions;
+                bonusDamageFromActions += bd0 * perfectCopies;
+                var ba0 = bonusArmorFromActions;
+                bonusArmorFromActions += ba0 * perfectCopies;
             }
 
-            MultiplyPendingStrikeScaledPoolContributions(channeledFaces, appliedMultiplier);
-
-            kineticShieldBonus *= appliedMultiplier;
-            bonusDamageFromActions *= appliedMultiplier;
-            bonusArmorFromActions *= appliedMultiplier;
             activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
             RelicActionRunner.RunPhase(this, RelicPhases.OnPerfectStrike);
             var poolsAfter = SnapshotStoredActionsPool();
+            FlushImmediatePlayerCombatDeltas();
             if (CheckVictory())
             {
                 NotifyAllStoredActionsPoolUI();
@@ -1251,6 +1397,9 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
+            FlushImmediatePlayerCombatDeltas();
+            if (currentState == CombatState.Victory || currentState == CombatState.Defeat)
+                return;
             if (rollsRemaining <= 0) SubmitTurn();
             else ChangeState(CombatState.WaitingForRoll);
         }
@@ -1273,10 +1422,19 @@ public class CombatManager : MonoBehaviour
 
     private void ResolveBust()
     {
+        var stripArmor = Mathf.Min(player != null ? player.GetCurrentArmor() : 0, _turnPlayerArmorGainedFromDice);
+        if (stripArmor > 0 && player != null)
+            player.AddArmor(-stripArmor);
+        _turnPlayerArmorGainedFromDice = 0;
+
+        ApplyBustReflectionToPlayer();
+
         foreach (var face in channeledFaces)
         {
             face.Damage = 0;
             face.Armor = 0;
+            face.PhysicalDamageAppliedEarly = 0;
+            face.ArmorAppliedEarly = 0;
             if (face.ActionPoolContributions == null) continue;
             for (var i = 0; i < face.ActionPoolContributions.Count; i++)
             {
@@ -1289,26 +1447,105 @@ public class CombatManager : MonoBehaviour
         bonusDamageFromActions = 0;
         bonusArmorFromActions = 0;
         kineticShieldBonus = 0;
+        ClearEarlyFlushTracking();
 
         NotifyAllStoredActionsPoolUI();
         _skipPowerOrbFlightForNextSubmitTurn = true;
         SubmitTurn();
     }
 
-    /// <summary>Status applies and Max HP rows in <see cref="FaceResult.ActionPoolContributions"/> scale with Perfect Strike (display + grant use same totals).</summary>
-    private static void MultiplyPendingStrikeScaledPoolContributions(List<FaceResult> faces, int multiplier)
+    private void RegisterPlayerArmorGainedFromDice(int amount)
     {
-        if (faces == null || multiplier <= 1) return;
+        if (amount <= 0) return;
+        _turnPlayerArmorGainedFromDice += amount;
+    }
+
+    /// <summary>Adds duplicate amounts to pool rows that participate in perfect strike scaling (same rows as legacy multiply).</summary>
+    private static void AddDuplicatePoolContributionsForPerfectStrike(List<FaceResult> faces, int extraCopies)
+    {
+        if (faces == null || extraCopies <= 0) return;
         foreach (var face in faces)
         {
+            if (face.ActionPoolContributions == null) continue;
             for (var i = 0; i < face.ActionPoolContributions.Count; i++)
             {
                 var c = face.ActionPoolContributions[i];
                 if (c.VisualFlyoutOnly) continue;
                 if (c.PoolSourceAction == null && c.MaxHpPoolSource == null && !c.PerfectStrikeScales) continue;
-                c.Amount *= multiplier;
+                var amt0 = c.Amount;
+                c.Amount += amt0 * extraCopies;
                 face.ActionPoolContributions[i] = c;
             }
+        }
+    }
+
+    private static void AggregateEnemyDirectedStatusStacksFromChannel(
+        List<FaceResult> faces,
+        Dictionary<StatusEffectSO, int> into)
+    {
+        if (faces == null || into == null) return;
+        foreach (var face in faces)
+        {
+            if (face.ActionPoolContributions == null) continue;
+            foreach (var c in face.ActionPoolContributions)
+            {
+                if (c.Amount <= 0) continue;
+                if (!GameIconCatalog.TryGetStatusEffectDefinitionForPoolRow(c.PoolKey, out var def) || def == null) continue;
+                if (!GameIconCatalog.TryGetStatusTargetForPoolRow(c.PoolKey, out var tgt) || tgt != StatusEffectTarget.Enemy) continue;
+                into.TryGetValue(def, out var cur);
+                into[def] = cur + c.Amount;
+            }
+        }
+    }
+
+    private void ApplyBustReflectionToPlayer()
+    {
+        if (player == null || activeEnemy == null) return;
+
+        var ctx = BuildStatusContext();
+        var grossPhysical = 0;
+        foreach (var f in channeledFaces)
+            grossPhysical += f.TotalDamageContribution;
+        grossPhysical += bonusDamageFromActions;
+        grossPhysical += player.StatusEffects.GetTotalBonusAttack(ctx);
+        grossPhysical = Mathf.Max(0, grossPhysical);
+        if (grossPhysical > 0)
+        {
+            var mirroredPhysical = player.StatusEffects.ApplyDamageModifiers(ctx, grossPhysical);
+            if (mirroredPhysical > 0)
+                player.TakeDamage(mirroredPhysical, PlayerDamageSource.BustReflection);
+            if (CheckDefeat()) return;
+        }
+
+        var statusTotals = new Dictionary<StatusEffectSO, int>();
+        AggregateEnemyDirectedStatusStacksFromChannel(channeledFaces, statusTotals);
+        foreach (var kvp in statusTotals)
+        {
+            var def = kvp.Key;
+            var stacks = kvp.Value;
+            if (stacks <= 0 || def == null) continue;
+            if (def is BurnEffectSO)
+            {
+                player.TakeDamage(stacks, PlayerDamageSource.BustReflection);
+                if (CheckDefeat()) return;
+                continue;
+            }
+
+            if (def is PoisonEffectSO && def.target == StatusEffectTarget.Enemy)
+            {
+                player.TakeDamage(stacks, PlayerDamageSource.BustReflection);
+                if (CheckDefeat()) return;
+                continue;
+            }
+
+            if (def is ChillEffectSO)
+            {
+                player.TakeDamage(stacks, PlayerDamageSource.BustReflection);
+                if (CheckDefeat()) return;
+                continue;
+            }
+
+            player.StatusEffects.ApplyStatus(def, stacks, ctx);
         }
     }
 
@@ -1376,6 +1613,127 @@ public class CombatManager : MonoBehaviour
         return map;
     }
 
+    private void ClearEarlyFlushLedgers()
+    {
+        _earlyFlushEnemyHealthDamage = 0;
+        _earlyFlushEnemyArmorStripped = 0;
+        _earlyFlushPlayerArmorGained = 0;
+        _earlyFlushPlayerHealthLostToThorns = 0;
+    }
+
+    private void ClearEarlyFlushTracking()
+    {
+        _kineticShieldArmorAppliedEarly = 0;
+        _flatBonusAttackAppliedEarly = false;
+        _bonusDamageAppliedEarly = 0;
+        _bonusArmorAppliedEarly = 0;
+        ClearEarlyFlushLedgers();
+    }
+
+    /// <summary>
+    /// Applies player armor and enemy-facing physical damage as soon as dice (and perfect strike scaling) are known.
+    /// Remaining totals stay in <see cref="GetPendingAttack"/> / <see cref="GetPendingDefense"/> for orb + SubmitTurn.
+    /// </summary>
+    private void FlushImmediatePlayerCombatDeltas()
+    {
+        if (player == null || activeEnemy == null) return;
+        if (currentState == CombatState.Victory || currentState == CombatState.Defeat) return;
+
+        var statusCtx = BuildStatusContext();
+
+        foreach (var face in channeledFaces)
+        {
+            var deltaArmor = Mathf.Max(0, face.Armor - face.ArmorAppliedEarly);
+            if (deltaArmor <= 0) continue;
+            _earlyFlushPlayerArmorGained += deltaArmor;
+            player.AddArmor(deltaArmor);
+            RegisterPlayerArmorGainedFromDice(deltaArmor);
+            face.ArmorAppliedEarly = face.Armor;
+        }
+
+        var kinDelta = Mathf.Max(0, kineticShieldBonus - _kineticShieldArmorAppliedEarly);
+        if (kinDelta > 0)
+        {
+            _earlyFlushPlayerArmorGained += kinDelta;
+            player.AddArmor(kinDelta);
+            RegisterPlayerArmorGainedFromDice(kinDelta);
+            _kineticShieldArmorAppliedEarly = kineticShieldBonus;
+        }
+
+        var bonusArDelta = Mathf.Max(0, bonusArmorFromActions - _bonusArmorAppliedEarly);
+        if (bonusArDelta > 0)
+        {
+            _earlyFlushPlayerArmorGained += bonusArDelta;
+            player.AddArmor(bonusArDelta);
+            RegisterPlayerArmorGainedFromDice(bonusArDelta);
+            _bonusArmorAppliedEarly = bonusArmorFromActions;
+        }
+
+        foreach (var face in channeledFaces)
+        {
+            if (!FlushOneFacePhysicalDamage(face, statusCtx))
+                return;
+        }
+
+        var bonusDmgDelta = Mathf.Max(0, bonusDamageFromActions - _bonusDamageAppliedEarly);
+        if (bonusDmgDelta > 0)
+        {
+            if (!ApplyOnePhysicalFlushChunk(bonusDmgDelta, statusCtx))
+                return;
+            _bonusDamageAppliedEarly = bonusDamageFromActions;
+        }
+
+        if (!_flatBonusAttackAppliedEarly && player.StatusEffects.GetTotalBonusAttack(statusCtx) > 0 &&
+            GetPendingAttack() == 0)
+        {
+            if (!ApplyOnePhysicalFlushChunk(0, statusCtx))
+                return;
+        }
+    }
+
+    private bool FlushOneFacePhysicalDamage(FaceResult face, StatusEffectContext statusCtx)
+    {
+        var delta = Mathf.Max(0, face.TotalDamageContribution - face.PhysicalDamageAppliedEarly);
+        if (delta <= 0) return true;
+        if (!ApplyOnePhysicalFlushChunk(delta, statusCtx))
+            return false;
+        face.PhysicalDamageAppliedEarly = face.TotalDamageContribution;
+        return true;
+    }
+
+    private bool ApplyOnePhysicalFlushChunk(int rawChunk, StatusEffectContext statusCtx)
+    {
+        var payload = rawChunk;
+        if (!_flatBonusAttackAppliedEarly)
+        {
+            payload += player.StatusEffects.GetTotalBonusAttack(statusCtx);
+            _flatBonusAttackAppliedEarly = true;
+        }
+
+        var modified = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, payload);
+        if (modified <= 0)
+            return true;
+
+        var hpBefore = activeEnemy.GetCurrentHealth();
+        var arBefore = activeEnemy.GetCurrentArmor();
+        activeEnemy.TakeDamage(modified, EnemyDamagePresentationKind.Physical);
+        _earlyFlushEnemyHealthDamage += hpBefore - activeEnemy.GetCurrentHealth();
+        _earlyFlushEnemyArmorStripped += arBefore - activeEnemy.GetCurrentArmor();
+
+        var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
+        if (retaliate > 0)
+        {
+            var phpBefore = player.GetCurrentHealth();
+            var thornsPopupAnchor = Vector3.Lerp(player.GetDamageNumberWorldPosition(), activeEnemy.GetDamageNumberWorldPosition(), 0.25f);
+            player.TakeDamage(retaliate, PlayerDamageSource.ThornsRetaliation, thornsPopupAnchor);
+            _earlyFlushPlayerHealthLostToThorns += phpBefore - player.GetCurrentHealth();
+            if (CheckDefeat()) return false;
+        }
+
+        if (CheckVictory()) return false;
+        return true;
+    }
+
     private void SubmitTurn()
     {
         _afterPhysicalDeferredStatusPhaseCompleted = false;
@@ -1387,9 +1745,14 @@ public class CombatManager : MonoBehaviour
         foreach (var action in turnEndActions) action.Invoke(ctx);
         turnEndActions.Clear();
 
+        FlushImmediatePlayerCombatDeltas();
+        if (currentState == CombatState.Victory || currentState == CombatState.Defeat)
+            return;
+
         var statusCtx = BuildStatusContext();
         int pendingAttack = GetPendingAttack();
-        pendingAttack += player.StatusEffects.GetTotalBonusAttack(statusCtx);
+        if (!_flatBonusAttackAppliedEarly)
+            pendingAttack += player.StatusEffects.GetTotalBonusAttack(statusCtx);
         pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
 
@@ -1442,7 +1805,10 @@ public class CombatManager : MonoBehaviour
         bool forceStartingVisibleScale)
     {
         if (pendingDefense > 0 && player != null)
+        {
             player.AddArmor(pendingDefense);
+            RegisterPlayerArmorGainedFromDice(pendingDefense);
+        }
 
         bool impactAnnounced = false;
         bool attackResolved = false;
@@ -1590,7 +1956,10 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CoApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
     {
         if (pendingDefense > 0 && player != null)
+        {
             player.AddArmor(pendingDefense);
+            RegisterPlayerArmorGainedFromDice(pendingDefense);
+        }
 
         if (!RunPlayerPhysicalResolution(pendingAttack)) yield break;
 
@@ -1746,6 +2115,8 @@ public class CombatManager : MonoBehaviour
         appliedMultiplier = 1;
         bustProtected = false;
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
+        ClearEarlyFlushTracking();
+        _turnPlayerArmorGainedFromDice = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
         _gemBonusRollChainActivationsByDieThisBatch.Clear();

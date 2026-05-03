@@ -24,6 +24,10 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
     protected override ActionVisualId VisualKey => ActionVisualId.AddValueBasedOnRoll;
 
     public AddValueBasedOnRollDuration Duration => duration;
+    public int RequiredFaceValueConfig => requiredFaceValue;
+    public int AmountConfig => amount;
+    public RollBonusType BonusTypeConfig => bonusType;
+    public BurnEffectSO BurnDefinitionConfig => burnDefinition;
 
     public override void Execute(GameActionContext context)
     {

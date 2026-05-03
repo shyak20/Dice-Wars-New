@@ -32,6 +32,8 @@ public class PlayerStatus : MonoBehaviour
 
     public int GetCurrentHealth() => currentHealth;
 
+    public int GetCurrentArmor() => currentArmor;
+
     public Vector3 GetDamageNumberWorldPosition()
     {
         if (damageNumberWorldAnchor != null)
@@ -118,8 +120,8 @@ public class PlayerStatus : MonoBehaviour
     /// </summary>
     public void AddArmor(int amount)
     {
-        currentArmor += amount;
-        UnityEngine.Debug.Log($"<color=blue>Player gained {amount} Armor. Total: {currentArmor}</color>");
+        currentArmor = Mathf.Max(0, currentArmor + amount);
+        UnityEngine.Debug.Log($"<color=blue>Player armor change {amount}. Total: {currentArmor}</color>");
         UpdateUI();
     }
 

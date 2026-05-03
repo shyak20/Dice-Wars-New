@@ -13,12 +13,23 @@ public struct RollOutcomeVisualLine
     public bool IsVisualFlyoutOnly;
 }
 
+/// <summary>Enemy status/burn applied after the matching pool-row flyout reaches the enemy (see <see cref="DiceRollOutcomeFlyoutController"/>).</summary>
+public sealed class DeferredEnemyApplyEntry
+{
+    public PoolRowKey PoolRowKey;
+    public System.Action Apply;
+}
+
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>
 public class DiceRollVisualPayload
 {
     public Vector3 WorldAnchor;
     public Transform DieTransform;
     public List<RollOutcomeVisualLine> Lines;
+    /// <summary>When set, each entry runs <see cref="DeferredEnemyApplyEntry.Apply"/> when the line with matching <see cref="DeferredEnemyApplyEntry.PoolRowKey"/> lands.</summary>
+    public List<DeferredEnemyApplyEntry> DeferredEnemyApplies;
+    /// <summary>Enemy that receives deferred applies / status flyouts (single-enemy combat).</summary>
+    public EnemyController EnemyTarget;
     /// <summary>When true, visual controller defers this die until regular queued dice have completed.</summary>
     public bool ActivateAfterRegularDice;
     /// <summary>Hint from producer that this payload includes visual-only rows; final full pool resync runs when all queued die visuals finish.</summary>
@@ -76,6 +87,8 @@ public static class CombatEvents
     public static Action<int, Vector3> OnPlayerDamageNumber;
     /// <summary>Floating damage UI: amount, world anchor, which enemy was hit, and presentation channel (physical vs burn).</summary>
     public static Action<int, Vector3, EnemyController, EnemyDamagePresentationKind> OnEnemyDamagePresentation;
+    /// <summary>After a status flyout line hits the enemy UI target; burn presentation uses <see cref="PoolRowKey"/> (before deferred apply runs).</summary>
+    public static Action<EnemyController, PoolRowKey> OnEnemyStatusFlyoutPresentation;
     /// <summary>Power orb reached enemy hit point or player support (HP) anchor; fires before turn physical damage from <see cref="CombatManager"/> applies.</summary>
     public static Action<PowerOrbImpactPayload> OnPowerOrbImpact;
 

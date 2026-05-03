@@ -40,8 +40,8 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         CombatEvents.OnStoredActionsPoolIconsFullResync += ApplyFullPoolSync;
         CombatEvents.OnStoredActionsPoolRuntimeIconsClear += ClearRuntimeRowIcons;
         CombatEvents.OnRuntimePoolIconForRow += OnRuntimePoolIconForRow;
-        if (!incrementPoolIconsWithFlyouts)
-            CombatEvents.OnStoredActionsPoolUpdated += ApplyFullPoolSync;
+        // Pool bar always mirrors combat totals immediately; die flyouts no longer drive increments via landing.
+        CombatEvents.OnStoredActionsPoolUpdated += ApplyFullPoolSync;
     }
 
     private void OnDisable()
@@ -49,8 +49,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         CombatEvents.OnStoredActionsPoolIconsFullResync -= ApplyFullPoolSync;
         CombatEvents.OnStoredActionsPoolRuntimeIconsClear -= ClearRuntimeRowIcons;
         CombatEvents.OnRuntimePoolIconForRow -= OnRuntimePoolIconForRow;
-        if (!incrementPoolIconsWithFlyouts)
-            CombatEvents.OnStoredActionsPoolUpdated -= ApplyFullPoolSync;
+        CombatEvents.OnStoredActionsPoolUpdated -= ApplyFullPoolSync;
     }
 
     private void OnRuntimePoolIconForRow(PoolRowKey key, Sprite sprite)

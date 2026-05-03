@@ -7,7 +7,7 @@ public static class GemCombatResolver
     const string GemPoolRowBurn = "Gem Burn";
     const string GemPoolRowHeal = "Gem Heal";
     const string GemPoolRowCleanse = "Gem Cleanse";
-    const string GemPoolRowGold = "Gem Gold";
+    public const string PoolRowIdGold = "Gem Gold";
     const string GemPoolRowMaxHp = "Gem Max HP";
     const string GemPoolRowPower = "Gem Power";
     static int _nextDeferredHandleId = 1;
@@ -304,7 +304,7 @@ public static class GemCombatResolver
                 var handle = NextDeferredHandleId();
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
                 {
-                    PoolKey = PoolRowKey.Custom(GemPoolRowGold),
+                    PoolKey = PoolRowKey.Custom(PoolRowIdGold),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetActionIcon(ActionVisualId.AddValueBasedOnRoll),
                     PerfectStrikeScales = true,

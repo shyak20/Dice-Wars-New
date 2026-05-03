@@ -132,12 +132,21 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
     {
         CombatEvents.OnPowerOrbImpact += OnOrbImpact;
         CombatEvents.OnEnemyDamagePresentation += OnEnemyDamage;
+        CombatEvents.OnEnemyStatusFlyoutPresentation += OnEnemyStatusFlyoutPresentation;
     }
 
     private void OnDisable()
     {
         CombatEvents.OnPowerOrbImpact -= OnOrbImpact;
         CombatEvents.OnEnemyDamagePresentation -= OnEnemyDamage;
+        CombatEvents.OnEnemyStatusFlyoutPresentation -= OnEnemyStatusFlyoutPresentation;
+    }
+
+    private void OnEnemyStatusFlyoutPresentation(EnemyController enemy, PoolRowKey rowKey)
+    {
+        if (_enemy == null || enemy == null || enemy != _enemy) return;
+        if (!GameIconCatalog.TryGetStatusEffectDefinitionForPoolRow(rowKey, out var def) || def is not BurnEffectSO) return;
+        PlayBurnIndicatorAndFlash(withCameraShake: false);
     }
 
     private void OnOrbImpact(PowerOrbImpactPayload payload)
@@ -152,19 +161,34 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
     {
         if (_enemy == null || damagedEnemy != _enemy || amount <= 0) return;
 
-        var flashColor = kind == EnemyDamagePresentationKind.Burn ? burnSpriteFlashColor : physicalSpriteFlashColor;
-        PlayDamageJuice(flashColor);
-
         if (kind == EnemyDamagePresentationKind.Burn)
-        {
-            if (_burnRoutine != null) StopCoroutine(_burnRoutine);
-            _burnRoutine = StartCoroutine(IndicatorPulseRoutine(burnDamageIndicator, burnIndicatorSeconds, () => _burnRoutine = null));
-        }
+            PlayBurnIndicatorAndFlash(withCameraShake: true);
         else
         {
+            PlayDamageJuice(physicalSpriteFlashColor);
+            TryPlayPhysicalHitAnimation();
             if (_physicalRoutine != null) StopCoroutine(_physicalRoutine);
             _physicalRoutine = StartCoroutine(IndicatorPulseRoutine(physicalDamageIndicator, physicalDamageIndicatorSeconds, () => _physicalRoutine = null));
         }
+    }
+
+    /// <summary>Burn damage tick or debuff feedback: flash tint + optional shake, burn indicator pulse.</summary>
+    private void PlayBurnIndicatorAndFlash(bool withCameraShake)
+    {
+        FlashSprite(burnSpriteFlashColor, withCameraShake);
+        if (_burnRoutine != null) StopCoroutine(_burnRoutine);
+        _burnRoutine = StartCoroutine(IndicatorPulseRoutine(burnDamageIndicator, burnIndicatorSeconds, () => _burnRoutine = null));
+    }
+
+    private void TryPlayPhysicalHitAnimation()
+    {
+        if (combatAnimator == null || _enemy == null || _enemy.enemyData == null) return;
+        if (_enemy.enemyData.combatAnimatorController == null) return;
+
+        var hitName = _enemy.enemyData.physicalHitAnimatorStateName;
+        if (string.IsNullOrWhiteSpace(hitName)) return;
+
+        combatAnimator.CrossFade(hitName, 0.08f, 0, 0f);
     }
 
     private void PlayDamageJuice(Color spriteFlashTint)

@@ -39,4 +39,10 @@ public static class GameIconCatalog
         target = default;
         return _active != null && _active.TryGetStatusTargetForPoolRow(key, out target);
     }
+
+    public static bool TryGetStatusEffectDefinitionForPoolRow(PoolRowKey key, out StatusEffectSO definition)
+    {
+        definition = null;
+        return _active != null && _active.TryGetStatusEffectDefinitionForPoolRow(key, out definition);
+    }
 }

@@ -60,6 +60,7 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<ActionVisualId, Sprite> _actionBackgroundLookup = new Dictionary<ActionVisualId, Sprite>();
     readonly Dictionary<string, Sprite> _poolRowBackgroundByStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, StatusEffectTarget> _statusTargetByPoolRowStableId = new Dictionary<string, StatusEffectTarget>(StringComparer.Ordinal);
+    readonly Dictionary<string, StatusEffectSO> _statusEffectByPoolRowStableId = new Dictionary<string, StatusEffectSO>(StringComparer.Ordinal);
 
     private void OnEnable() => RebuildLookups();
 
@@ -71,6 +72,7 @@ public class GameIconIndexSO : ScriptableObject
         _actionBackgroundLookup.Clear();
         _poolRowBackgroundByStableId.Clear();
         _statusTargetByPoolRowStableId.Clear();
+        _statusEffectByPoolRowStableId.Clear();
         foreach (var e in actionIcons)
         {
             if (e.id != ActionVisualId.None && e.sprite != null)
@@ -86,6 +88,7 @@ public class GameIconIndexSO : ScriptableObject
             if (e.icon != null)
                 _statusLookup[e.effect] = e.icon;
             _statusTargetByPoolRowStableId[e.effect.name] = e.effect.target;
+            _statusEffectByPoolRowStableId[e.effect.name] = e.effect;
             if (e.poolRowBackground != null)
                 _poolRowBackgroundByStableId[e.effect.name] = e.poolRowBackground;
         }
@@ -156,6 +159,15 @@ public class GameIconIndexSO : ScriptableObject
         if (_statusTargetByPoolRowStableId.Count == 0 && statusEffectIcons.Count > 0)
             RebuildLookups();
         return _statusTargetByPoolRowStableId.TryGetValue(key.StableId, out target);
+    }
+
+    /// <summary>When this pool row is registered for a status effect, returns that asset (e.g. to test <see cref="BurnEffectSO"/>).</summary>
+    public bool TryGetStatusEffectDefinitionForPoolRow(PoolRowKey key, out StatusEffectSO definition)
+    {
+        definition = null;
+        if (_statusEffectByPoolRowStableId.Count == 0 && statusEffectIcons.Count > 0)
+            RebuildLookups();
+        return _statusEffectByPoolRowStableId.TryGetValue(key.StableId, out definition);
     }
 
     /// <summary>

@@ -27,10 +27,20 @@ public class FaceResult
         : 0;
 
     public int Armor { get; set; }
+
+    /// <summary>Portion of <see cref="TotalDamageContribution"/> already applied to the enemy via early flush (bust revert uses this).</summary>
+    public int PhysicalDamageAppliedEarly { get; set; }
+
+    /// <summary>Portion of <see cref="Armor"/> already granted to the player via early flush.</summary>
+    public int ArmorAppliedEarly { get; set; }
+
     public bool ActivateImmediately { get; set; }
     /// <summary>Copied from the rolled face; executed in order (immediate vs turn-end per <see cref="ActivateImmediately"/>).</summary>
     public List<IGameAction> Actions { get; set; } = new List<IGameAction>();
 
     /// <summary>Deferred-action rows for <see cref="StoredActionsPoolDisplay"/> (ApplyStatusEffect, Thorns, Max HP, etc.); filled before this face is added to channeled faces.</summary>
     public List<FacePoolExtraContribution> ActionPoolContributions { get; } = new List<FacePoolExtraContribution>();
+
+    /// <summary>Enemy-only applies run when the matching flyout line lands (cleared when attached to <see cref="DiceRollVisualPayload"/>).</summary>
+    public List<DeferredEnemyApplyEntry> DeferredEnemyFlyoutApplies;
 }

@@ -18,6 +18,12 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [SerializeField] private RectTransform playerStatusBarFlyTarget;
     [Tooltip("Optional. Status flyouts targeting the enemy fly here (enemy status bar).")]
     [SerializeField] private RectTransform enemyStatusBarFlyTarget;
+    [Tooltip("Damage / attack pool flyouts aim here (e.g. enemy anchor). Falls back to enemy status bar, then element pool.")]
+    [SerializeField] private RectTransform enemyCombatFlyTarget;
+    [Tooltip("Optional. Bonus gold / coin UI (e.g. RunGoldDisplay). Matches Gem deferred pool id GemCombatResolver.PoolRowIdGold.")]
+    [SerializeField] private RectTransform coinIndicatorFlyTarget;
+    [Tooltip("Optional. Extra-roll flyouts (AddRolls immediate faces).")]
+    [SerializeField] private RectTransform rollButtonFlyTarget;
     [Tooltip("Optional. Player status bar; frozen while status flyouts are in flight, then refreshed on landing.")]
     [SerializeField] private StatusEffectBarUI playerStatusBarUI;
     [Tooltip("Optional. Enemy status bar; frozen while status flyouts are in flight, then refreshed on landing.")]
@@ -170,8 +176,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             if (!WorldPointToFlyoutParentLocal(stackAnchorWorld, out Vector2 anchorLocal))
                 yield break;
 
-            // Status is applied (and OnEffectsChanged queued a refresh) before this event fires.
-            // Freeze here synchronously — before any yield — so LateUpdate cannot refresh stacks until the fly lands.
+            // Freeze status bar repaints until this die's flyouts finish (enemy debuffs apply when the matching line lands).
             TryBeginStatusBarFlyoutFreeze(payload, ref frozePlayerForFlyout, ref frozeEnemyForFlyout);
 
             Vector2 stackOriginLocal = anchorLocal + Vector2.right * layoutOffsetX;
@@ -258,9 +263,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
                 Vector2 startLocal = stackRestAnchored[i];
                 Vector2 mid = (startLocal + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
-                var statusTarget = ResolveStatusTarget(line);
-                var applyPoolDelta = ShouldApplyPoolDelta(line, statusTarget);
-                flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line, applyPoolDelta)));
+                flyCoroutines.Add(StartCoroutine(FlyLineRoutine(payload, lineRects[i], startLocal, mid, endLocal, line, applyPoolDeltaOnLanding: false)));
             }
 
             foreach (var c in flyCoroutines)
@@ -271,11 +274,42 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
         finally
         {
+            FlushRemainingDeferredEnemyApplies(payload);
             if (frozePlayerForFlyout)
                 EndFreezeStatusBar(StatusEffectTarget.Player);
             if (frozeEnemyForFlyout)
                 EndFreezeStatusBar(StatusEffectTarget.Enemy);
             payload.ReportVisualFinished();
+        }
+    }
+
+    private static void FlushRemainingDeferredEnemyApplies(DiceRollVisualPayload payload)
+    {
+        if (payload?.DeferredEnemyApplies == null || payload.DeferredEnemyApplies.Count == 0) return;
+        for (var i = 0; i < payload.DeferredEnemyApplies.Count; i++)
+            payload.DeferredEnemyApplies[i].Apply?.Invoke();
+        payload.DeferredEnemyApplies.Clear();
+    }
+
+    private void OnEnemyFlyoutLineLanded(DiceRollVisualPayload payload, RollOutcomeVisualLine line)
+    {
+        var routesToEnemyStatus =
+            GameIconCatalog.TryGetStatusTargetForPoolRow(line.RowKey, out var st) && st == StatusEffectTarget.Enemy;
+        if (routesToEnemyStatus)
+            CombatEvents.OnEnemyStatusFlyoutPresentation?.Invoke(payload.EnemyTarget, line.RowKey);
+
+        TryExecuteDeferredEnemyApply(payload, line);
+    }
+
+    private static void TryExecuteDeferredEnemyApply(DiceRollVisualPayload payload, RollOutcomeVisualLine line)
+    {
+        if (payload?.DeferredEnemyApplies == null) return;
+        for (var i = 0; i < payload.DeferredEnemyApplies.Count; i++)
+        {
+            if (payload.DeferredEnemyApplies[i].PoolRowKey != line.RowKey) continue;
+            payload.DeferredEnemyApplies[i].Apply?.Invoke();
+            payload.DeferredEnemyApplies.RemoveAt(i);
+            return;
         }
     }
 
@@ -330,7 +364,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         rt.localScale = prefabRootBaseScale * EvaluateSpawnScaleMultiplier(1f);
     }
 
-    private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line, bool applyPoolDeltaOnLanding)
+    private IEnumerator FlyLineRoutine(DiceRollVisualPayload payload, RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line, bool applyPoolDeltaOnLanding)
     {
         float dur = Mathf.Max(0.01f, flyDurationSeconds);
         float t = 0f;
@@ -346,6 +380,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         rt.anchoredPosition = end;
         if (applyPoolDeltaOnLanding && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
             storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride);
+        OnEnemyFlyoutLineLanded(payload, line);
         Destroy(rt.gameObject);
     }
 
@@ -483,6 +518,25 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private RectTransform ResolveFlyTargetRect(RollOutcomeVisualLine line)
     {
+        if (PoolRowKey.TryGetDieType(line.RowKey, out var dieRowType))
+        {
+            if (dieRowType == DieType.Damage)
+            {
+                if (enemyCombatFlyTarget != null) return enemyCombatFlyTarget;
+                if (enemyStatusBarFlyTarget != null) return enemyStatusBarFlyTarget;
+            }
+            else if (dieRowType == DieType.Armor)
+            {
+                if (playerStatusBarFlyTarget != null) return playerStatusBarFlyTarget;
+            }
+        }
+
+        if (line.RowKey.StableId == GemCombatResolver.PoolRowIdGold && coinIndicatorFlyTarget != null)
+            return coinIndicatorFlyTarget;
+
+        if (line.RowKey.StableId == CombatPoolRowIds.ExtraRolls && rollButtonFlyTarget != null)
+            return rollButtonFlyTarget;
+
         var statusTarget = ResolveStatusTarget(line);
         if (ShouldRouteStatusToStatusBar(line, statusTarget))
         {
@@ -502,19 +556,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         return null;
     }
 
-    private bool ShouldApplyPoolDelta(RollOutcomeVisualLine line, StatusEffectTarget? statusTarget)
-    {
-        // Status-targeted flyouts that route to status bars are visual-only and must not mutate pool display rows.
-        if (!ShouldRouteStatusToStatusBar(line, statusTarget))
-            return true;
-        return false;
-    }
-
     private bool ShouldRouteStatusToStatusBar(RollOutcomeVisualLine line, StatusEffectTarget? statusTarget)
     {
-        // Deferred rows (non-immediate actions) must always fly to the element container.
-        // Only immediate visual-only status rows route to status bars.
-        if (!line.IsVisualFlyoutOnly || !statusTarget.HasValue)
+        if (!statusTarget.HasValue)
             return false;
         if (statusTarget.Value == StatusEffectTarget.Player)
             return playerStatusBarFlyTarget != null;
@@ -529,7 +573,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         {
             _playerStatusFreezeCount++;
             if (_playerStatusFreezeCount == 1 && playerStatusBarUI != null)
-                playerStatusBarUI.SetVisualRefreshFrozen(true);
+                playerStatusBarUI.PushVisualRefreshFreeze();
             return true;
         }
 
@@ -537,7 +581,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         {
             _enemyStatusFreezeCount++;
             if (_enemyStatusFreezeCount == 1 && enemyStatusBarUI != null)
-                enemyStatusBarUI.SetVisualRefreshFrozen(true);
+                enemyStatusBarUI.PushVisualRefreshFreeze();
             return true;
         }
 
@@ -551,7 +595,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             if (_playerStatusFreezeCount > 0)
                 _playerStatusFreezeCount--;
             if (_playerStatusFreezeCount == 0 && playerStatusBarUI != null)
-                playerStatusBarUI.SetVisualRefreshFrozen(false);
+                playerStatusBarUI.PopVisualRefreshFreeze();
             return;
         }
 
@@ -560,7 +604,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             if (_enemyStatusFreezeCount > 0)
                 _enemyStatusFreezeCount--;
             if (_enemyStatusFreezeCount == 0 && enemyStatusBarUI != null)
-                enemyStatusBarUI.SetVisualRefreshFrozen(false);
+                enemyStatusBarUI.PopVisualRefreshFreeze();
         }
     }
 
