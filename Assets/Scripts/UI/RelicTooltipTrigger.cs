@@ -7,7 +7,7 @@ using UnityEngine.UI;
 /// Calls <see cref="RelicTooltipUI"/> (optional override or <see cref="RelicTooltipUI.Instance"/>).
 /// </summary>
 [RequireComponent(typeof(Graphic))]
-public sealed class RelicTooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
+public sealed class RelicTooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private RelicTooltipUI tooltipOverride;
 
@@ -39,13 +39,7 @@ public sealed class RelicTooltipTrigger : MonoBehaviour, IPointerEnterHandler, I
             return;
         }
 
-        t.Show(_relic, eventData.position);
-    }
-
-    public void OnPointerMove(PointerEventData eventData)
-    {
-        if (_relic == null) return;
-        Resolve()?.MoveTo(eventData.position);
+        t.Show(_relic, _graphic.rectTransform);
     }
 
     public void OnPointerExit(PointerEventData eventData) => Resolve()?.Hide();

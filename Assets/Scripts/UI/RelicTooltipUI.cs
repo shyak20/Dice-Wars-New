@@ -2,8 +2,8 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// Scene UI singleton: shows <see cref="RelicSO.title"/> and <see cref="RelicSO.description"/> near the pointer.
-/// Place one instance under your Canvas (e.g. Fight / Map / Shop). Wire panel root, title, and description.
+/// Scene UI singleton: shows <see cref="RelicSO.title"/> and <see cref="RelicSO.description"/>.
+/// Horizontal position matches the hover target’s center (same rule as <see cref="HoverTooltipPanelUI.AlignPivotWorldXToRect"/>).
 /// </summary>
 public sealed class RelicTooltipUI : MonoBehaviour
 {
@@ -12,11 +12,6 @@ public sealed class RelicTooltipUI : MonoBehaviour
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text descriptionText;
-    [SerializeField] private Vector2 screenOffset = new Vector2(16f, -16f);
-
-    private RectTransform _rectTransform;
-    private RectTransform _parentRect;
-    private Canvas _canvas;
 
     private void Awake()
     {
@@ -27,26 +22,16 @@ public sealed class RelicTooltipUI : MonoBehaviour
             return;
         }
 
-        _rectTransform = transform as RectTransform;
-        if (_rectTransform == null)
+        if (transform as RectTransform == null)
         {
             Debug.LogError("RelicTooltipUI: must be on a RectTransform.", this);
             enabled = false;
             return;
         }
 
-        _canvas = GetComponentInParent<Canvas>();
-        if (_canvas == null)
+        if (GetComponentInParent<Canvas>() == null)
         {
             Debug.LogError("RelicTooltipUI: must be a child of a Canvas.", this);
-            enabled = false;
-            return;
-        }
-
-        _parentRect = _rectTransform.parent as RectTransform;
-        if (_parentRect == null)
-        {
-            Debug.LogError("RelicTooltipUI: parent must be a RectTransform (e.g. Canvas or panel).", this);
             enabled = false;
             return;
         }
@@ -70,7 +55,8 @@ public sealed class RelicTooltipUI : MonoBehaviour
 
     private void OnDisable() => Hide();
 
-    public void Show(RelicSO relic, Vector2 screenPosition)
+    /// <param name="alignTo">Graphic that was hovered; panel pivot world X matches this rect’s horizontal center.</param>
+    public void Show(RelicSO relic, RectTransform alignTo)
     {
         if (relic == null || panelRoot == null || titleText == null || descriptionText == null)
             return;
@@ -78,20 +64,22 @@ public sealed class RelicTooltipUI : MonoBehaviour
         titleText.text = relic.title ?? "";
         descriptionText.text = relic.description ?? "";
         panelRoot.SetActive(true);
-        MoveTo(screenPosition);
+        AlignPivotWorldXToReference(alignTo);
     }
 
-    public void MoveTo(Vector2 screenPosition)
+    /// <summary>Aligns <see cref="panelRoot"/> pivot world X to <paramref name="reference"/> center (preserves Y/Z).</summary>
+    public void AlignPivotWorldXToReference(RectTransform reference)
     {
-        if (panelRoot == null || !panelRoot.activeSelf || _rectTransform == null || _parentRect == null || _canvas == null)
-            return;
+        if (reference == null || panelRoot == null) return;
+        var panelRect = panelRoot.transform as RectTransform;
+        if (panelRect == null) return;
 
-        var cam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
-        var point = screenPosition + screenOffset;
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_parentRect, point, cam, out var local))
-            return;
-
-        _rectTransform.anchoredPosition = local;
+        var corners = new Vector3[4];
+        reference.GetWorldCorners(corners);
+        var centerWorldX = (corners[0].x + corners[2].x) * 0.5f;
+        var pos = panelRect.position;
+        pos.x = centerWorldX;
+        panelRect.position = pos;
     }
 
     public void Hide()

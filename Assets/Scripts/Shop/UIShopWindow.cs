@@ -25,11 +25,15 @@ public class UIShopWindow : MonoBehaviour
     [SerializeField] UIShopOfferCardView relicOfferPrefab; [SerializeField] UIShopOfferCardView dieOfferPrefab;
     [Header("Player Containers")] [SerializeField] Transform playerDiceContainer; [SerializeField] GameObject playerDieButtonPrefab;
     [SerializeField] Transform playerRelicsContainer; [SerializeField] RunRelicSlotView playerRelicSlotPrefab;
-    [Header("Die Tooltip")] [SerializeField] DieTooltipOverlayUI dieTooltipOverlay;
+    [Header("Tooltips")]
+    [SerializeField] DieTooltipOverlayUI dieTooltipOverlay;
+    [Tooltip("Hover text for gem shop offers. Leave empty to use the first HoverTooltipPanelUI in the scene.")]
+    [SerializeField] HoverTooltipPanelUI shopGemHoverTooltipPanel;
     [Header("Popup")] [SerializeField] ShopDieChoicePopupView dieChoicePopup;
 
     readonly List<OfferData> _face = new(); readonly List<OfferData> _gem = new(); readonly List<OfferData> _relic = new(); readonly List<OfferData> _die = new();
     readonly List<UIShopOfferCardView> _cards = new();
+    readonly List<RunRelicSlotView> _spawnedPlayerRelicSlots = new();
 
     void Start()
     {
@@ -75,7 +79,23 @@ public class UIShopWindow : MonoBehaviour
         {
             var v = Instantiate(prefab, parent); _cards.Add(v);
             var canAfford = RunEconomyManager.Instance != null && RunEconomyManager.Instance.CanAfford(o.Price);
-            v.Bind(NameOf(o), DescOf(o), IconOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o));
+            v.Bind(NameOf(o), DescOf(o), IconOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o), BuildOfferTooltipBindings(o));
+        }
+    }
+
+    ShopOfferTooltipBindings BuildOfferTooltipBindings(OfferData o)
+    {
+        if (o == null) return null;
+        switch (o.Kind)
+        {
+            case OfferKind.Relic when o.Relic != null:
+                return new ShopOfferTooltipBindings { Relic = o.Relic };
+            case OfferKind.Gem when o.Gem != null:
+                return new ShopOfferTooltipBindings { Gem = o.Gem, HoverTooltipPanel = shopGemHoverTooltipPanel };
+            case OfferKind.Die when o.Die != null:
+                return new ShopOfferTooltipBindings { DieOffer = o.Die, DieTooltipOverlay = dieTooltipOverlay };
+            default:
+                return null;
         }
     }
 
@@ -168,8 +188,20 @@ public class UIShopWindow : MonoBehaviour
     void RebuildPlayerRelics()
     {
         if (playerRelicsContainer == null || playerRelicSlotPrefab == null || RunManager.Instance == null) return;
-        foreach (Transform c in playerRelicsContainer) Destroy(c.gameObject);
-        foreach (var relic in RunManager.Instance.RunRelics) { if (relic == null) continue; var slot = Instantiate(playerRelicSlotPrefab, playerRelicsContainer); slot.Bind(relic); }
+        foreach (var slot in _spawnedPlayerRelicSlots)
+        {
+            if (slot != null)
+                Destroy(slot.gameObject);
+        }
+
+        _spawnedPlayerRelicSlots.Clear();
+        foreach (var relic in RunManager.Instance.RunRelics)
+        {
+            if (relic == null) continue;
+            var slot = Instantiate(playerRelicSlotPrefab, playerRelicsContainer);
+            slot.Bind(relic);
+            _spawnedPlayerRelicSlots.Add(slot);
+        }
     }
 
     void OnGoldChanged(int gold) { if (goldHeaderText != null) goldHeaderText.text = gold.ToString(); RebuildOfferUi(); }
