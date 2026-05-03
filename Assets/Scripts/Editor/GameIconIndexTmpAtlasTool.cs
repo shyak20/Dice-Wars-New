@@ -12,6 +12,8 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
     private const int PrivateUseAreaStart = 0xE000;
 
     [SerializeField] private GameIconIndexSO iconIndex;
+    [Tooltip("Optional. All Sprites under each folder (recursive) are packed; atlas sprite names match each Sprite asset name in Unity.")]
+    [SerializeField] private List<DefaultAsset> additionalIconFolders = new List<DefaultAsset>();
     [SerializeField] private DefaultAsset outputFolder;
     [SerializeField] private string atlasBaseName = "GameIconIndexTMPAtlas";
     [SerializeField] private int atlasSize = 1024;
@@ -30,11 +32,21 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
     {
         EditorGUILayout.LabelField("Generate TMP Sprite Atlas", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Reads icons from GameIconIndexSO, packs them into one atlas texture, then creates a TMP Sprite Asset. " +
-            "Sprite character names are set from source sprite names.",
+            "Reads icons from GameIconIndexSO and/or the folders below, packs them into one atlas texture, then creates a TMP Sprite Asset. " +
+            "Sprite names in the atlas match each source Sprite’s name in Unity (first wins if two sprites share a name).",
             MessageType.Info);
 
         iconIndex = (GameIconIndexSO)EditorGUILayout.ObjectField("Game Icon Index", iconIndex, typeof(GameIconIndexSO), false);
+        EditorGUILayout.LabelField("Additional Icon Folders (recursive)", EditorStyles.boldLabel);
+        for (var i = 0; i < additionalIconFolders.Count; i++)
+            additionalIconFolders[i] = (DefaultAsset)EditorGUILayout.ObjectField($"Folder {i + 1}", additionalIconFolders[i], typeof(DefaultAsset), false);
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Add Folder", GUILayout.Width(100f)))
+                additionalIconFolders.Add(null);
+            if (additionalIconFolders.Count > 0 && GUILayout.Button("Remove Last", GUILayout.Width(100f)))
+                additionalIconFolders.RemoveAt(additionalIconFolders.Count - 1);
+        }
         outputFolder = (DefaultAsset)EditorGUILayout.ObjectField("Output Folder", outputFolder, typeof(DefaultAsset), false);
         atlasBaseName = EditorGUILayout.TextField("Asset Base Name", atlasBaseName);
         atlasSize = Mathf.Clamp(EditorGUILayout.IntField("Atlas Size", atlasSize), 128, 8192);
@@ -42,7 +54,8 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         setAsTmpDefaultSpriteAsset = EditorGUILayout.ToggleLeft("Set generated atlas as TMP default sprite asset", setAsTmpDefaultSpriteAsset);
 
         EditorGUILayout.Space(12f);
-        using (new EditorGUI.DisabledScope(iconIndex == null))
+        var hasFolder = additionalIconFolders != null && additionalIconFolders.Exists(f => f != null);
+        using (new EditorGUI.DisabledScope(iconIndex == null && !hasFolder))
         {
             if (GUILayout.Button("Create TMP Atlas Assets", GUILayout.Height(32f)))
                 Generate();
@@ -51,9 +64,10 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
 
     private void Generate()
     {
-        if (iconIndex == null)
+        var hasFolder = additionalIconFolders != null && additionalIconFolders.Exists(f => f != null);
+        if (iconIndex == null && !hasFolder)
         {
-            Debug.LogError("TMP Atlas Tool: assign a GameIconIndexSO.");
+            Debug.LogError("TMP Atlas Tool: assign a GameIconIndexSO and/or at least one additional icon folder.");
             return;
         }
 
@@ -64,19 +78,35 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
             return;
         }
 
-        var sourceIcons = iconIndex.GetAllIconEntries();
         var uniqueSprites = new List<Sprite>();
-        var seen = new HashSet<Sprite>();
-        foreach (var entry in sourceIcons)
+        var seenSprites = new HashSet<Sprite>();
+        var usedNames = new HashSet<string>();
+
+        if (iconIndex != null)
         {
-            if (entry.sprite == null) continue;
-            if (seen.Add(entry.sprite))
-                uniqueSprites.Add(entry.sprite);
+            foreach (var entry in iconIndex.GetAllIconEntries())
+                AddSpriteIfUnique(entry.sprite, uniqueSprites, seenSprites, usedNames);
+        }
+
+        if (additionalIconFolders != null)
+        {
+            foreach (var folderAsset in additionalIconFolders)
+            {
+                if (folderAsset == null) continue;
+                var path = AssetDatabase.GetAssetPath(folderAsset);
+                if (!AssetDatabase.IsValidFolder(path))
+                {
+                    Debug.LogWarning($"TMP Atlas Tool: '{path}' is not a project folder; skipping.");
+                    continue;
+                }
+
+                CollectSpritesFromFolderRecursive(path, uniqueSprites, seenSprites, usedNames);
+            }
         }
 
         if (uniqueSprites.Count == 0)
         {
-            Debug.LogError("TMP Atlas Tool: no sprites found in GameIconIndexSO.");
+            Debug.LogError("TMP Atlas Tool: no sprites found (check GameIconIndexSO and icon folders).");
             return;
         }
 
@@ -391,6 +421,49 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         if (string.IsNullOrEmpty(path) || !path.StartsWith("Assets"))
             return null;
         return path;
+    }
+
+    private static void AddSpriteIfUnique(
+        Sprite s,
+        List<Sprite> uniqueSprites,
+        HashSet<Sprite> seenSprites,
+        HashSet<string> usedNames)
+    {
+        if (s == null) return;
+        if (!seenSprites.Add(s)) return;
+
+        var n = s.name;
+        if (!usedNames.Add(n))
+        {
+            seenSprites.Remove(s);
+            Debug.LogWarning(
+                $"TMP Atlas Tool: duplicate sprite name '{n}' skipped — {AssetDatabase.GetAssetPath(s)} (keep first occurrence only).",
+                s);
+            return;
+        }
+
+        uniqueSprites.Add(s);
+    }
+
+    private static void CollectSpritesFromFolderRecursive(
+        string folderPath,
+        List<Sprite> uniqueSprites,
+        HashSet<Sprite> seenSprites,
+        HashSet<string> usedNames)
+    {
+        if (string.IsNullOrEmpty(folderPath) || !folderPath.StartsWith("Assets", StringComparison.Ordinal))
+            return;
+
+        var guids = AssetDatabase.FindAssets("t:Texture2D", new[] { folderPath });
+        foreach (var guid in guids)
+        {
+            var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            foreach (var obj in AssetDatabase.LoadAllAssetsAtPath(assetPath))
+            {
+                if (obj is Sprite sp)
+                    AddSpriteIfUnique(sp, uniqueSprites, seenSprites, usedNames);
+            }
+        }
     }
 
     private static Texture2D ExtractSpriteTexture(Sprite sprite)

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: Base Shadow 5
   description: Harness 5 Damage
-  descriptionLines: []
+  descriptionLines:
+  - Deal <style=Attack>5</style>
   value: 5
   type: 0
   faceMaterial: {fileID: 2100000, guid: f35ae15ee7e93c149b27a0d43069dfd5, type: 2}

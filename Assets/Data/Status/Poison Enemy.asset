@@ -15,8 +15,8 @@ MonoBehaviour:
   effectName: Poison
   description: 'Lose 1 HP per Stack before the your turn. Ignores armor.
 
-    stays
-    between turns.'
+    Stacks
+    stay between turns.'
   type: 1
   target: 0
   stackDecayPerTurn: 0

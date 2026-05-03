@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Vulnerable
   m_EditorClassIdentifier: Assembly-CSharp::VulnerableEffectSO
   effectName: Vulnerable
-  description: Takes 10% more damage from <style=Attack>Physical</style> attacks
+  description: 'Takes 10% more damage per stack from <style=Attack>Physical attacks</style> '
   type: 1
   target: 1
   stackDecayPerTurn: 0

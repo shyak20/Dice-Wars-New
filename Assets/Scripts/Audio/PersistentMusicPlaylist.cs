@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -8,15 +9,25 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class PersistentMusicPlaylist : MonoBehaviour
 {
+    public const string MusicMutedPlayerPrefKey = "DiceWars_MusicMuted";
+
     public static PersistentMusicPlaylist Instance { get; private set; }
 
     [SerializeField] private AudioClip[] tracks;
     [SerializeField] private bool playOnStart = true;
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
+    [Tooltip("When true, PlayerPrefs remembers mute across runs.")]
+    [SerializeField] private bool persistMutePreference = true;
 
     private AudioSource _audio;
     private int _nextIndex;
     private Coroutine _sequence;
+    private bool _muted;
+
+    /// <summary>Fired after mute state changes (including on startup when loaded from PlayerPrefs).</summary>
+    public event Action<bool> MuteStateChanged;
+
+    public bool IsMuted => _muted;
 
     private void Awake()
     {
@@ -42,9 +53,13 @@ public class PersistentMusicPlaylist : MonoBehaviour
 
         _audio.playOnAwake = false;
         _audio.loop = false;
-        _audio.mute = false;
         _audio.spatialBlend = 0f;
-        ApplyVolume();
+
+        if (persistMutePreference && PlayerPrefs.GetInt(MusicMutedPlayerPrefKey, 0) != 0)
+            _muted = true;
+
+        ApplyMuteAndVolume();
+        MuteStateChanged?.Invoke(_muted);
 
         if (FindObjectOfType<AudioListener>() == null)
             Debug.LogError("PersistentMusicPlaylist: no AudioListener in the scene — add one (e.g. on the main camera).", this);
@@ -93,13 +108,28 @@ public class PersistentMusicPlaylist : MonoBehaviour
     public void SetVolume(float normalized)
     {
         volume = Mathf.Clamp01(normalized);
-        ApplyVolume();
+        ApplyMuteAndVolume();
     }
 
-    private void ApplyVolume()
+    public void SetMuted(bool muted)
     {
-        if (_audio != null)
-            _audio.volume = volume;
+        if (_muted == muted)
+            return;
+        _muted = muted;
+        if (persistMutePreference)
+            PlayerPrefs.SetInt(MusicMutedPlayerPrefKey, _muted ? 1 : 0);
+        ApplyMuteAndVolume();
+        MuteStateChanged?.Invoke(_muted);
+    }
+
+    public void ToggleMuted() => SetMuted(!_muted);
+
+    private void ApplyMuteAndVolume()
+    {
+        if (_audio == null)
+            return;
+        _audio.volume = volume;
+        _audio.mute = _muted;
     }
 
     private IEnumerator PlaySequence()

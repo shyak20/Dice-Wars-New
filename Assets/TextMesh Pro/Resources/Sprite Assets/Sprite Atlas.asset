@@ -47,417 +47,837 @@ MonoBehaviour:
     m_Unicode: 57345
     m_GlyphIndex: 1
     m_Scale: 1
-    m_Name: Burn Icon
+    m_Name: Attack Icon BG 2
   - m_ElementType: 2
     m_Unicode: 57346
     m_GlyphIndex: 2
     m_Scale: 1
-    m_Name: Cleanse Icon
+    m_Name: blood_02_0002
   - m_ElementType: 2
     m_Unicode: 57347
     m_GlyphIndex: 3
     m_Scale: 1
-    m_Name: Freeze Icon
+    m_Name: Burn Icon
   - m_ElementType: 2
     m_Unicode: 57348
     m_GlyphIndex: 4
     m_Scale: 1
-    m_Name: Heal Icon
+    m_Name: Cleanse Icon
   - m_ElementType: 2
     m_Unicode: 57349
     m_GlyphIndex: 5
     m_Scale: 1
-    m_Name: Kinetic Shield Icon
+    m_Name: Defence Icon BG 2
   - m_ElementType: 2
     m_Unicode: 57350
     m_GlyphIndex: 6
     m_Scale: 1
-    m_Name: Max HP Icon
+    m_Name: Die Icon Face 1
   - m_ElementType: 2
     m_Unicode: 57351
     m_GlyphIndex: 7
     m_Scale: 1
-    m_Name: Shield Icon
+    m_Name: Die Icon Face 2
   - m_ElementType: 2
     m_Unicode: 57352
     m_GlyphIndex: 8
     m_Scale: 1
-    m_Name: Strength Icon
+    m_Name: Die Icon Face 3
   - m_ElementType: 2
     m_Unicode: 57353
     m_GlyphIndex: 9
     m_Scale: 1
-    m_Name: Thorns Icon
+    m_Name: Die Icon Face 4
   - m_ElementType: 2
     m_Unicode: 57354
     m_GlyphIndex: 10
     m_Scale: 1
-    m_Name: Vulnerable Icon
+    m_Name: Die Icon Face 5
   - m_ElementType: 2
     m_Unicode: 57355
     m_GlyphIndex: 11
+    m_Scale: 1
+    m_Name: Die Icon Face 6
+  - m_ElementType: 2
+    m_Unicode: 57356
+    m_GlyphIndex: 12
+    m_Scale: 1
+    m_Name: Freeze Icon
+  - m_ElementType: 2
+    m_Unicode: 57357
+    m_GlyphIndex: 13
+    m_Scale: 1
+    m_Name: Green Icon BG
+  - m_ElementType: 2
+    m_Unicode: 57358
+    m_GlyphIndex: 14
+    m_Scale: 1
+    m_Name: Heal Icon
+  - m_ElementType: 2
+    m_Unicode: 57359
+    m_GlyphIndex: 15
+    m_Scale: 1
+    m_Name: Heal Icon BG
+  - m_ElementType: 2
+    m_Unicode: 57360
+    m_GlyphIndex: 16
+    m_Scale: 1
+    m_Name: Kinetic Shield Icon
+  - m_ElementType: 2
+    m_Unicode: 57361
+    m_GlyphIndex: 17
+    m_Scale: 1
+    m_Name: Max HP Icon
+  - m_ElementType: 2
+    m_Unicode: 57362
+    m_GlyphIndex: 18
+    m_Scale: 1
+    m_Name: Poison Icon
+  - m_ElementType: 2
+    m_Unicode: 57363
+    m_GlyphIndex: 19
+    m_Scale: 1
+    m_Name: Shield Icon
+  - m_ElementType: 2
+    m_Unicode: 57364
+    m_GlyphIndex: 20
+    m_Scale: 1
+    m_Name: Strength Icon
+  - m_ElementType: 2
+    m_Unicode: 57365
+    m_GlyphIndex: 21
+    m_Scale: 1
+    m_Name: Thorns Icon
+  - m_ElementType: 2
+    m_Unicode: 57366
+    m_GlyphIndex: 22
+    m_Scale: 1
+    m_Name: Vulnerable Icon
+  - m_ElementType: 2
+    m_Unicode: 57367
+    m_GlyphIndex: 23
     m_Scale: 1
     m_Name: Water_Splash_16_07
   m_GlyphTable:
   - m_Index: 0
     m_Metrics:
-      m_Width: 191
-      m_Height: 200
+      m_Width: 341
+      m_Height: 356
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 200
-      m_HorizontalAdvance: 191
+      m_HorizontalBearingY: 356
+      m_HorizontalAdvance: 341
     m_GlyphRect:
-      m_X: 827
-      m_Y: 0
-      m_Width: 191
-      m_Height: 200
+      m_X: 727
+      m_Y: 1618
+      m_Width: 341
+      m_Height: 356
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - m_Index: 1
     m_Metrics:
-      m_Width: 194
-      m_Height: 195
+      m_Width: 384
+      m_Height: 378
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 195
-      m_HorizontalAdvance: 194
+      m_HorizontalBearingY: 378
+      m_HorizontalAdvance: 384
+    m_GlyphRect:
+      m_X: 1099
+      m_Y: 0
+      m_Width: 384
+      m_Height: 378
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 200187152838841157, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 2
+    m_Metrics:
+      m_Width: 339
+      m_Height: 692
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 692
+      m_HorizontalAdvance: 339
     m_GlyphRect:
       m_X: 0
-      m_Y: 320
-      m_Width: 194
-      m_Height: 195
+      m_Y: 568
+      m_Width: 339
+      m_Height: 692
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -3967975971440997542, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 3
+    m_Metrics:
+      m_Width: 346
+      m_Height: 348
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 348
+      m_HorizontalAdvance: 346
+    m_GlyphRect:
+      m_X: 1078
+      m_Y: 918
+      m_Width: 346
+      m_Height: 348
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 2
+  - m_Index: 4
     m_Metrics:
-      m_Width: 206
-      m_Height: 190
+      m_Width: 367
+      m_Height: 339
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 190
-      m_HorizontalAdvance: 206
+      m_HorizontalBearingY: 339
+      m_HorizontalAdvance: 367
     m_GlyphRect:
-      m_X: 619
-      m_Y: 0
-      m_Width: 206
-      m_Height: 190
+      m_X: 341
+      m_Y: 1328
+      m_Width: 367
+      m_Height: 339
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -5647151390834640249, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 3
+  - m_Index: 5
     m_Metrics:
-      m_Width: 171
-      m_Height: 173
+      m_Width: 384
+      m_Height: 378
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 173
-      m_HorizontalAdvance: 171
+      m_HorizontalBearingY: 378
+      m_HorizontalAdvance: 384
     m_GlyphRect:
-      m_X: 196
-      m_Y: 505
-      m_Width: 171
-      m_Height: 173
+      m_X: 1485
+      m_Y: 0
+      m_Width: 384
+      m_Height: 378
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 299225067176281671, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 6
+    m_Metrics:
+      m_Width: 349
+      m_Height: 348
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 308
+      m_HorizontalAdvance: 349
+    m_GlyphRect:
+      m_X: 341
+      m_Y: 1669
+      m_Width: 349
+      m_Height: 348
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -951324242474890380, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 7
+    m_Metrics:
+      m_Width: 349
+      m_Height: 348
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 308
+      m_HorizontalAdvance: 349
+    m_GlyphRect:
+      m_X: 727
+      m_Y: 568
+      m_Width: 349
+      m_Height: 348
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 5030406608479721366, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 8
+    m_Metrics:
+      m_Width: 349
+      m_Height: 348
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 308
+      m_HorizontalAdvance: 349
+    m_GlyphRect:
+      m_X: 1078
+      m_Y: 568
+      m_Width: 349
+      m_Height: 348
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -8306455795211793738, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 9
+    m_Metrics:
+      m_Width: 349
+      m_Height: 348
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 308
+      m_HorizontalAdvance: 349
+    m_GlyphRect:
+      m_X: 1429
+      m_Y: 568
+      m_Width: 349
+      m_Height: 348
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 9192458185809667784, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 10
+    m_Metrics:
+      m_Width: 349
+      m_Height: 348
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 308
+      m_HorizontalAdvance: 349
+    m_GlyphRect:
+      m_X: 727
+      m_Y: 918
+      m_Width: 349
+      m_Height: 348
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 2753783077020577227, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 11
+    m_Metrics:
+      m_Width: 349
+      m_Height: 348
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 308
+      m_HorizontalAdvance: 349
+    m_GlyphRect:
+      m_X: 727
+      m_Y: 1268
+      m_Width: 349
+      m_Height: 348
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 5790224405844098233, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 12
+    m_Metrics:
+      m_Width: 304
+      m_Height: 309
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 309
+      m_HorizontalAdvance: 304
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 1567
+      m_Width: 304
+      m_Height: 309
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 4
+  - m_Index: 13
     m_Metrics:
-      m_Width: 157
-      m_Height: 165
+      m_Width: 384
+      m_Height: 378
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 165
-      m_HorizontalAdvance: 157
+      m_HorizontalBearingY: 378
+      m_HorizontalAdvance: 384
     m_GlyphRect:
-      m_X: 196
-      m_Y: 844
-      m_Width: 157
-      m_Height: 165
+      m_X: 341
+      m_Y: 948
+      m_Width: 384
+      m_Height: 378
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1850640359596639596, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 14
+    m_Metrics:
+      m_Width: 281
+      m_Height: 294
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 294
+      m_HorizontalAdvance: 281
+    m_GlyphRect:
+      m_X: 1422
+      m_Y: 1559
+      m_Width: 281
+      m_Height: 294
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 5
+  - m_Index: 15
     m_Metrics:
-      m_Width: 192
-      m_Height: 177
+      m_Width: 384
+      m_Height: 378
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 177
-      m_HorizontalAdvance: 192
+      m_HorizontalBearingY: 378
+      m_HorizontalAdvance: 384
     m_GlyphRect:
-      m_X: 0
-      m_Y: 517
-      m_Width: 192
-      m_Height: 177
+      m_X: 341
+      m_Y: 568
+      m_Width: 384
+      m_Height: 378
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1600010482700210598, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 16
+    m_Metrics:
+      m_Width: 342
+      m_Height: 315
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 315
+      m_HorizontalAdvance: 342
+    m_GlyphRect:
+      m_X: 1078
+      m_Y: 1268
+      m_Width: 342
+      m_Height: 315
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 6
+  - m_Index: 17
     m_Metrics:
-      m_Width: 186
-      m_Height: 170
+      m_Width: 333
+      m_Height: 303
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 170
-      m_HorizontalAdvance: 186
+      m_HorizontalBearingY: 303
+      m_HorizontalAdvance: 333
     m_GlyphRect:
       m_X: 0
-      m_Y: 696
-      m_Width: 186
-      m_Height: 170
+      m_Y: 1262
+      m_Width: 333
+      m_Height: 303
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 7
+  - m_Index: 18
     m_Metrics:
-      m_Width: 141
-      m_Height: 171
+      m_Width: 254
+      m_Height: 362
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 171
-      m_HorizontalAdvance: 141
+      m_HorizontalBearingY: 362
+      m_HorizontalAdvance: 254
     m_GlyphRect:
-      m_X: 393
-      m_Y: 320
-      m_Width: 141
-      m_Height: 171
+      m_X: 1078
+      m_Y: 1585
+      m_Width: 254
+      m_Height: 362
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 6346943658632662112, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 19
+    m_Metrics:
+      m_Width: 252
+      m_Height: 306
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 306
+      m_HorizontalAdvance: 252
+    m_GlyphRect:
+      m_X: 1780
+      m_Y: 568
+      m_Width: 252
+      m_Height: 306
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 8
+  - m_Index: 20
     m_Metrics:
-      m_Width: 160
-      m_Height: 162
+      m_Width: 286
+      m_Height: 289
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 162
-      m_HorizontalAdvance: 160
+      m_HorizontalBearingY: 289
+      m_HorizontalAdvance: 286
     m_GlyphRect:
-      m_X: 196
-      m_Y: 680
-      m_Width: 160
-      m_Height: 162
+      m_X: 1422
+      m_Y: 1268
+      m_Width: 286
+      m_Height: 289
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -8130133584056446798, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 9
+  - m_Index: 21
     m_Metrics:
-      m_Width: 195
-      m_Height: 183
+      m_Width: 349
+      m_Height: 327
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 183
-      m_HorizontalAdvance: 195
+      m_HorizontalBearingY: 327
+      m_HorizontalAdvance: 349
     m_GlyphRect:
-      m_X: 196
-      m_Y: 320
-      m_Width: 195
-      m_Height: 183
+      m_X: 1426
+      m_Y: 918
+      m_Width: 349
+      m_Height: 327
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 5248542921010066017, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 10
+  - m_Index: 22
     m_Metrics:
-      m_Width: 244
-      m_Height: 237
+      m_Width: 435
+      m_Height: 422
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 237
-      m_HorizontalAdvance: 244
+      m_HorizontalBearingY: 422
+      m_HorizontalAdvance: 435
     m_GlyphRect:
-      m_X: 373
+      m_X: 662
       m_Y: 0
-      m_Width: 244
-      m_Height: 237
+      m_Width: 435
+      m_Height: 422
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 7052443852177249881, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 11
+  - m_Index: 23
     m_Metrics:
-      m_Width: 371
-      m_Height: 318
+      m_Width: 660
+      m_Height: 566
       m_HorizontalBearingX: 0
-      m_HorizontalBearingY: 318
-      m_HorizontalAdvance: 371
+      m_HorizontalBearingY: 566
+      m_HorizontalAdvance: 660
     m_GlyphRect:
       m_X: 0
       m_Y: 0
-      m_Width: 371
-      m_Height: 318
+      m_Width: 660
+      m_Height: 566
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 6494035533245625250, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   spriteInfoList:
   - id: 0
-    x: 827
-    y: 0
-    width: 191
-    height: 200
+    x: 727
+    y: 1618
+    width: 341
+    height: 356
     xOffset: 0
-    yOffset: 200
-    xAdvance: 191
+    yOffset: 356
+    xAdvance: 341
     scale: 1
     name: Attack Icon
     hashCode: 502227619
     unicode: 57344
-    pivot: {x: 95.5, y: 100}
+    pivot: {x: 170.5, y: 178}
     sprite: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 1
-    x: 0
-    y: 320
-    width: 194
-    height: 195
+    x: 1099
+    y: 0
+    width: 384
+    height: 378
     xOffset: 0
-    yOffset: 195
-    xAdvance: 194
+    yOffset: 378
+    xAdvance: 384
+    scale: 1
+    name: Attack Icon BG 2
+    hashCode: 1132040500
+    unicode: 57345
+    pivot: {x: 192, y: 189}
+    sprite: {fileID: 200187152838841157, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 2
+    x: 0
+    y: 568
+    width: 339
+    height: 692
+    xOffset: 0
+    yOffset: 692
+    xAdvance: 339
+    scale: 1
+    name: blood_02_0002
+    hashCode: 713328874
+    unicode: 57346
+    pivot: {x: 169.5, y: 346}
+    sprite: {fileID: -3967975971440997542, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 3
+    x: 1078
+    y: 918
+    width: 346
+    height: 348
+    xOffset: 0
+    yOffset: 348
+    xAdvance: 346
     scale: 1
     name: Burn Icon
     hashCode: -1089975744
-    unicode: 57345
-    pivot: {x: 97, y: 97.5}
+    unicode: 57347
+    pivot: {x: 173, y: 174}
     sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 2
-    x: 619
-    y: 0
-    width: 206
-    height: 190
+  - id: 4
+    x: 341
+    y: 1328
+    width: 367
+    height: 339
     xOffset: 0
-    yOffset: 190
-    xAdvance: 206
+    yOffset: 339
+    xAdvance: 367
     scale: 1
     name: Cleanse Icon
     hashCode: -831836616
-    unicode: 57346
-    pivot: {x: 103, y: 95}
+    unicode: 57348
+    pivot: {x: 183.5, y: 169.5}
     sprite: {fileID: -5647151390834640249, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 3
-    x: 196
-    y: 505
-    width: 171
-    height: 173
+  - id: 5
+    x: 1485
+    y: 0
+    width: 384
+    height: 378
     xOffset: 0
-    yOffset: 173
-    xAdvance: 171
+    yOffset: 378
+    xAdvance: 384
+    scale: 1
+    name: Defence Icon BG 2
+    hashCode: 2105157750
+    unicode: 57349
+    pivot: {x: 192, y: 189}
+    sprite: {fileID: 299225067176281671, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 6
+    x: 341
+    y: 1669
+    width: 349
+    height: 348
+    xOffset: 0
+    yOffset: 348
+    xAdvance: 349
+    scale: 1
+    name: Die Icon Face 1
+    hashCode: -2007454413
+    unicode: 57350
+    pivot: {x: 174.5, y: 174}
+    sprite: {fileID: -951324242474890380, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 7
+    x: 727
+    y: 568
+    width: 349
+    height: 348
+    xOffset: 0
+    yOffset: 348
+    xAdvance: 349
+    scale: 1
+    name: Die Icon Face 2
+    hashCode: -2007454416
+    unicode: 57351
+    pivot: {x: 174.5, y: 174}
+    sprite: {fileID: 5030406608479721366, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 8
+    x: 1078
+    y: 568
+    width: 349
+    height: 348
+    xOffset: 0
+    yOffset: 348
+    xAdvance: 349
+    scale: 1
+    name: Die Icon Face 3
+    hashCode: -2007454415
+    unicode: 57352
+    pivot: {x: 174.5, y: 174}
+    sprite: {fileID: -8306455795211793738, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 9
+    x: 1429
+    y: 568
+    width: 349
+    height: 348
+    xOffset: 0
+    yOffset: 348
+    xAdvance: 349
+    scale: 1
+    name: Die Icon Face 4
+    hashCode: -2007454410
+    unicode: 57353
+    pivot: {x: 174.5, y: 174}
+    sprite: {fileID: 9192458185809667784, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 10
+    x: 727
+    y: 918
+    width: 349
+    height: 348
+    xOffset: 0
+    yOffset: 348
+    xAdvance: 349
+    scale: 1
+    name: Die Icon Face 5
+    hashCode: -2007454409
+    unicode: 57354
+    pivot: {x: 174.5, y: 174}
+    sprite: {fileID: 2753783077020577227, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 11
+    x: 727
+    y: 1268
+    width: 349
+    height: 348
+    xOffset: 0
+    yOffset: 348
+    xAdvance: 349
+    scale: 1
+    name: Die Icon Face 6
+    hashCode: -2007454412
+    unicode: 57355
+    pivot: {x: 174.5, y: 174}
+    sprite: {fileID: 5790224405844098233, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 12
+    x: 0
+    y: 1567
+    width: 304
+    height: 309
+    xOffset: 0
+    yOffset: 309
+    xAdvance: 304
     scale: 1
     name: Freeze Icon
     hashCode: 512502304
-    unicode: 57347
-    pivot: {x: 85.5, y: 86.5}
+    unicode: 57356
+    pivot: {x: 152, y: 154.5}
     sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 4
-    x: 196
-    y: 844
-    width: 157
-    height: 165
+  - id: 13
+    x: 341
+    y: 948
+    width: 384
+    height: 378
     xOffset: 0
-    yOffset: 165
-    xAdvance: 157
+    yOffset: 378
+    xAdvance: 384
+    scale: 1
+    name: Green Icon BG
+    hashCode: 2039785973
+    unicode: 57357
+    pivot: {x: 192, y: 189}
+    sprite: {fileID: 1850640359596639596, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 14
+    x: 1422
+    y: 1559
+    width: 281
+    height: 294
+    xOffset: 0
+    yOffset: 294
+    xAdvance: 281
     scale: 1
     name: Heal Icon
     hashCode: 479724235
-    unicode: 57348
-    pivot: {x: 78.5, y: 82.5}
+    unicode: 57358
+    pivot: {x: 140.5, y: 147}
     sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 5
-    x: 0
-    y: 517
-    width: 192
-    height: 177
+  - id: 15
+    x: 341
+    y: 568
+    width: 384
+    height: 378
     xOffset: 0
-    yOffset: 177
-    xAdvance: 192
+    yOffset: 378
+    xAdvance: 384
+    scale: 1
+    name: Heal Icon BG
+    hashCode: -148930034
+    unicode: 57359
+    pivot: {x: 192, y: 189}
+    sprite: {fileID: 1600010482700210598, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 16
+    x: 1078
+    y: 1268
+    width: 342
+    height: 315
+    xOffset: 0
+    yOffset: 315
+    xAdvance: 342
     scale: 1
     name: Kinetic Shield Icon
     hashCode: -1426757565
-    unicode: 57349
-    pivot: {x: 96, y: 88.5}
+    unicode: 57360
+    pivot: {x: 171, y: 157.5}
     sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 6
+  - id: 17
     x: 0
-    y: 696
-    width: 186
-    height: 170
+    y: 1262
+    width: 333
+    height: 303
     xOffset: 0
-    yOffset: 170
-    xAdvance: 186
+    yOffset: 303
+    xAdvance: 333
     scale: 1
     name: Max HP Icon
     hashCode: -91572025
-    unicode: 57350
-    pivot: {x: 93, y: 85}
+    unicode: 57361
+    pivot: {x: 166.5, y: 151.5}
     sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 7
-    x: 393
-    y: 320
-    width: 141
-    height: 171
+  - id: 18
+    x: 1078
+    y: 1585
+    width: 254
+    height: 362
     xOffset: 0
-    yOffset: 171
-    xAdvance: 141
+    yOffset: 362
+    xAdvance: 254
+    scale: 1
+    name: Poison Icon
+    hashCode: 515284655
+    unicode: 57362
+    pivot: {x: 127, y: 181}
+    sprite: {fileID: 6346943658632662112, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 19
+    x: 1780
+    y: 568
+    width: 252
+    height: 306
+    xOffset: 0
+    yOffset: 306
+    xAdvance: 252
     scale: 1
     name: Shield Icon
     hashCode: 198985492
-    unicode: 57351
-    pivot: {x: 70.5, y: 85.5}
+    unicode: 57363
+    pivot: {x: 126, y: 153}
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 8
-    x: 196
-    y: 680
-    width: 160
-    height: 162
+  - id: 20
+    x: 1422
+    y: 1268
+    width: 286
+    height: 289
     xOffset: 0
-    yOffset: 162
-    xAdvance: 160
+    yOffset: 289
+    xAdvance: 286
     scale: 1
     name: Strength Icon
     hashCode: -1581046482
-    unicode: 57352
-    pivot: {x: 80, y: 81}
+    unicode: 57364
+    pivot: {x: 143, y: 144.5}
     sprite: {fileID: -8130133584056446798, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 9
-    x: 196
-    y: 320
-    width: 195
-    height: 183
+  - id: 21
+    x: 1426
+    y: 918
+    width: 349
+    height: 327
     xOffset: 0
-    yOffset: 183
-    xAdvance: 195
+    yOffset: 327
+    xAdvance: 349
     scale: 1
     name: Thorns Icon
     hashCode: 1557527063
-    unicode: 57353
-    pivot: {x: 97.5, y: 91.5}
+    unicode: 57365
+    pivot: {x: 174.5, y: 163.5}
     sprite: {fileID: 5248542921010066017, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 10
-    x: 373
+  - id: 22
+    x: 662
     y: 0
-    width: 244
-    height: 237
+    width: 435
+    height: 422
     xOffset: 0
-    yOffset: 237
-    xAdvance: 244
+    yOffset: 422
+    xAdvance: 435
     scale: 1
     name: Vulnerable Icon
     hashCode: 433637111
-    unicode: 57354
-    pivot: {x: 122, y: 118.5}
+    unicode: 57366
+    pivot: {x: 217.5, y: 211}
     sprite: {fileID: 7052443852177249881, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 11
+  - id: 23
     x: 0
     y: 0
-    width: 371
-    height: 318
+    width: 660
+    height: 566
     xOffset: 0
-    yOffset: 318
-    xAdvance: 371
+    yOffset: 566
+    xAdvance: 660
     scale: 1
     name: Water_Splash_16_07
     hashCode: -1102918017
-    unicode: 57355
-    pivot: {x: 185.5, y: 159}
+    unicode: 57367
+    pivot: {x: 330, y: 283}
     sprite: {fileID: 6494035533245625250, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   fallbackSpriteAssets: []

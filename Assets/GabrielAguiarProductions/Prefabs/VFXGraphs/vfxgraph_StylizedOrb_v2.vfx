@@ -405,6 +405,38 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
+  - name: SphereRate
+    path: SphereRate
+    tooltip: 
+    space: -1
+    spaceable: 0
+    sheetType: m_Float
+    realType: Single
+    defaultValue:
+      m_Type:
+        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+      m_SerializableObject: 1
+    min: -Infinity
+    max: Infinity
+    enumValues: []
+    descendantCount: 0
+  - name: SphereTexture
+    path: SphereTexture
+    tooltip: 
+    space: -1
+    spaceable: 0
+    sheetType: m_NamedObject
+    realType: Texture2D
+    defaultValue:
+      m_Type:
+        m_SerializableType: UnityEngine.Texture2D, UnityEngine.CoreModule, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+      m_SerializableObject: '{"obj":{"fileID":2800000,"guid":"daafc0f24fae6cb47a6b0cbcea111687","type":3}}'
+    min: -Infinity
+    max: Infinity
+    enumValues: []
+    descendantCount: 0
   - name: SphereFrontColor
     path: SphereFrontColor
     tooltip: 
@@ -437,18 +469,18 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: SphereTexture
-    path: SphereTexture
+  - name: SphereTextureSpeed
+    path: SphereTextureSpeed
     tooltip: 
     space: -1
     spaceable: 0
-    sheetType: m_NamedObject
-    realType: Texture2D
+    sheetType: m_Vector2f
+    realType: Vector2
     defaultValue:
       m_Type:
-        m_SerializableType: UnityEngine.Texture2D, UnityEngine.CoreModule, Version=0.0.0.0,
+        m_SerializableType: UnityEngine.Vector2, UnityEngine.CoreModule, Version=0.0.0.0,
           Culture=neutral, PublicKeyToken=null
-      m_SerializableObject: '{"obj":{"fileID":2800000,"guid":"daafc0f24fae6cb47a6b0cbcea111687","type":3}}'
+      m_SerializableObject: '{"x":0.6000000238418579,"y":-0.10000000149011612}'
     min: -Infinity
     max: Infinity
     enumValues: []
@@ -469,18 +501,18 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: SphereTextureSpeed
-    path: SphereTextureSpeed
+  - name: SphereTexturingClip
+    path: SphereTexturingClip
     tooltip: 
     space: -1
     spaceable: 0
-    sheetType: m_Vector2f
-    realType: Vector2
+    sheetType: m_Float
+    realType: Single
     defaultValue:
       m_Type:
-        m_SerializableType: UnityEngine.Vector2, UnityEngine.CoreModule, Version=0.0.0.0,
-          Culture=neutral, PublicKeyToken=null
-      m_SerializableObject: '{"x":0.6000000238418579,"y":-0.10000000149011612}'
+        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+      m_SerializableObject: 0.636
     min: -Infinity
     max: Infinity
     enumValues: []
@@ -513,38 +545,6 @@ MonoBehaviour:
         m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
       m_SerializableObject: 0.4
-    min: -Infinity
-    max: Infinity
-    enumValues: []
-    descendantCount: 0
-  - name: SphereTexturingClip
-    path: SphereTexturingClip
-    tooltip: 
-    space: -1
-    spaceable: 0
-    sheetType: m_Float
-    realType: Single
-    defaultValue:
-      m_Type:
-        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 0.636
-    min: -Infinity
-    max: Infinity
-    enumValues: []
-    descendantCount: 0
-  - name: SphereRate
-    path: SphereRate
-    tooltip: 
-    space: -1
-    spaceable: 0
-    sheetType: m_Float
-    realType: Single
-    defaultValue:
-      m_Type:
-        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 1
     min: -Infinity
     max: Infinity
     enumValues: []
@@ -707,22 +707,6 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: FlareBrightLifetime
-    path: FlareBrightLifetime
-    tooltip: 
-    space: -1
-    spaceable: 0
-    sheetType: m_Float
-    realType: Single
-    defaultValue:
-      m_Type:
-        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 0.75
-    min: -Infinity
-    max: Infinity
-    enumValues: []
-    descendantCount: 0
   - name: FlareBrightSize
     path: FlareBrightSize
     tooltip: 
@@ -735,6 +719,22 @@ MonoBehaviour:
         m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
       m_SerializableObject: 2
+    min: -Infinity
+    max: Infinity
+    enumValues: []
+    descendantCount: 0
+  - name: FlareBrightLifetime
+    path: FlareBrightLifetime
+    tooltip: 
+    space: -1
+    spaceable: 0
+    sheetType: m_Float
+    realType: Single
+    defaultValue:
+      m_Type:
+        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+      m_SerializableObject: 0.75
     min: -Infinity
     max: Infinity
     enumValues: []
@@ -819,22 +819,6 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: FlareDarkRate
-    path: FlareDarkRate
-    tooltip: 
-    space: -1
-    spaceable: 0
-    sheetType: m_Float
-    realType: Single
-    defaultValue:
-      m_Type:
-        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 2
-    min: -Infinity
-    max: Infinity
-    enumValues: []
-    descendantCount: 0
   - name: FlareDarkSize
     path: FlareDarkSize
     tooltip: 
@@ -847,6 +831,22 @@ MonoBehaviour:
         m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
       m_SerializableObject: 5
+    min: -Infinity
+    max: Infinity
+    enumValues: []
+    descendantCount: 0
+  - name: FlareDarkRate
+    path: FlareDarkRate
+    tooltip: 
+    space: -1
+    spaceable: 0
+    sheetType: m_Float
+    realType: Single
+    defaultValue:
+      m_Type:
+        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+      m_SerializableObject: 2
     min: -Infinity
     max: Infinity
     enumValues: []
@@ -11001,7 +11001,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615291}
   m_ExposedName: SphereRate
   m_Exposed: 1
-  m_Order: 11
+  m_Order: 1
   m_Category: SPHERE
   m_Min:
     m_Type:
@@ -11082,7 +11082,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615293}
   m_ExposedName: SphereTexture
   m_Exposed: 1
-  m_Order: 3
+  m_Order: 2
   m_Category: SPHERE
   m_Min:
     m_Type:
@@ -11163,7 +11163,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615295}
   m_ExposedName: SphereFrontColor
   m_Exposed: 1
-  m_Order: 1
+  m_Order: 3
   m_Category: SPHERE
   m_Min:
     m_Type:
@@ -11380,7 +11380,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615319}
   m_ExposedName: SphereBackColor
   m_Exposed: 1
-  m_Order: 2
+  m_Order: 4
   m_Category: SPHERE
   m_Min:
     m_Type:
@@ -11746,7 +11746,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615329}
   m_ExposedName: WavesRate
   m_Exposed: 1
-  m_Order: 7
+  m_Order: 6
   m_Category: WAVES
   m_Min:
     m_Type:
@@ -11830,7 +11830,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615331}
   m_ExposedName: WavesBrightTexture
   m_Exposed: 1
-  m_Order: 13
+  m_Order: 7
   m_Category: WAVES
   m_Min:
     m_Type:
@@ -11911,7 +11911,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615333}
   m_ExposedName: WavesBrightTexture2
   m_Exposed: 1
-  m_Order: 16
+  m_Order: 8
   m_Category: WAVES
   m_Min:
     m_Type:
@@ -11992,7 +11992,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615335}
   m_ExposedName: WavesBrightGradient
   m_Exposed: 1
-  m_Order: 19
+  m_Order: 9
   m_Category: WAVES
   m_Min:
     m_Type:
@@ -12393,7 +12393,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615347}
   m_ExposedName: WavesBrightGradient2
   m_Exposed: 1
-  m_Order: 22
+  m_Order: 10
   m_Category: WAVES
   m_Min:
     m_Type:
@@ -12474,7 +12474,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615349}
   m_ExposedName: FlaresRate
   m_Exposed: 1
-  m_Order: 9
+  m_Order: 11
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13150,7 +13150,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615370}
   m_ExposedName: FlareBrightTexture
   m_Exposed: 1
-  m_Order: 14
+  m_Order: 12
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13231,7 +13231,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615372}
   m_ExposedName: FlareBrightGradient
   m_Exposed: 1
-  m_Order: 17
+  m_Order: 13
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13312,7 +13312,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615374}
   m_ExposedName: FlareBrightSize
   m_Exposed: 1
-  m_Order: 23
+  m_Order: 14
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13393,7 +13393,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615376}
   m_ExposedName: FlareBrightLifetime
   m_Exposed: 1
-  m_Order: 20
+  m_Order: 15
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13474,7 +13474,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615378}
   m_ExposedName: RaysTexture
   m_Exposed: 1
-  m_Order: 24
+  m_Order: 16
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13555,7 +13555,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615380}
   m_ExposedName: RaysGradient
   m_Exposed: 1
-  m_Order: 25
+  m_Order: 17
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13636,7 +13636,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615382}
   m_ExposedName: RaysSize
   m_Exposed: 1
-  m_Order: 26
+  m_Order: 18
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13717,7 +13717,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615384}
   m_ExposedName: FlareDarkTexture
   m_Exposed: 1
-  m_Order: 27
+  m_Order: 19
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13798,7 +13798,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615386}
   m_ExposedName: FlareDarkGradient
   m_Exposed: 1
-  m_Order: 28
+  m_Order: 20
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13879,7 +13879,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615388}
   m_ExposedName: FlareDarkSize
   m_Exposed: 1
-  m_Order: 30
+  m_Order: 21
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -13960,7 +13960,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615390}
   m_ExposedName: FlareDarkRate
   m_Exposed: 1
-  m_Order: 29
+  m_Order: 22
   m_Category: FLARES
   m_Min:
     m_Type:
@@ -14340,7 +14340,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615403}
   m_ExposedName: ParticlesFloatingColor
   m_Exposed: 1
-  m_Order: 12
+  m_Order: 23
   m_Category: PARTICLES FLOATING
   m_Min:
     m_Type:
@@ -14557,7 +14557,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615409}
   m_ExposedName: ParticlesFloatingTexture
   m_Exposed: 1
-  m_Order: 15
+  m_Order: 24
   m_Category: PARTICLES FLOATING
   m_Min:
     m_Type:
@@ -14638,7 +14638,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615413}
   m_ExposedName: ParticlesFloatingRate
   m_Exposed: 1
-  m_Order: 18
+  m_Order: 25
   m_Category: PARTICLES FLOATING
   m_Min:
     m_Type:
@@ -14719,7 +14719,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615415}
   m_ExposedName: ParticlesFloatingLifetime
   m_Exposed: 1
-  m_Order: 21
+  m_Order: 26
   m_Category: PARTICLES FLOATING
   m_Min:
     m_Type:
@@ -14939,7 +14939,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615435}
   m_ExposedName: SphereTextureTiling
   m_Exposed: 1
-  m_Order: 4
+  m_Order: 27
   m_Category: SPHERE
   m_Min:
     m_Type:
@@ -15088,7 +15088,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615439}
   m_ExposedName: SphereTexturingClip
   m_Exposed: 1
-  m_Order: 10
+  m_Order: 28
   m_Category: SPHERE
   m_Min:
     m_Type:
@@ -15169,7 +15169,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615441}
   m_ExposedName: SphereTexturePower
   m_Exposed: 1
-  m_Order: 6
+  m_Order: 29
   m_Category: SPHERE
   m_Min:
     m_Type:
@@ -15250,7 +15250,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615443}
   m_ExposedName: SphereTextureSinePower
   m_Exposed: 1
-  m_Order: 8
+  m_Order: 30
   m_Category: SPHERE
   m_Min:
     m_Type:
