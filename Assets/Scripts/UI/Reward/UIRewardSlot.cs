@@ -24,6 +24,11 @@ public class UIRewardSlot : MonoBehaviour
     [Header("Optional Status Hover Tooltip")]
     [SerializeField] private HoverTooltipTargetUI statusHoverTooltipTarget;
 
+    [Header("Face swap confirmation (die tooltip)")]
+    [Tooltip("Shown after the player replaces this face; assign a child Image or set New Face Preview Image.")]
+    [SerializeField] private GameObject newFacePickedRevealRoot;
+    [SerializeField] private Image newFacePickedPreviewImage;
+
     private HoverTooltipPanelUI _statusHoverTooltipPanel;
     private bool _hoverRevealEnabled = true;
     private DieFaceSO _face;
@@ -68,6 +73,7 @@ public class UIRewardSlot : MonoBehaviour
         _hoverRevealEnabled = true;
         if (hoverRevealObject != null)
             hoverRevealObject.SetActive(false);
+        HideNewFacePickedPreview();
 
         if (button != null)
         {
@@ -75,6 +81,34 @@ public class UIRewardSlot : MonoBehaviour
             if (onPicked != null)
                 button.onClick.AddListener(() => onPicked.Invoke(_face));
         }
+    }
+
+    /// <summary>
+    /// After a successful face replacement, shows <see cref="newFacePickedRevealRoot"/> and the new face art
+    /// (uses <see cref="newFacePickedPreviewImage"/> or the first <see cref="Image"/> under the reveal root).
+    /// </summary>
+    public void ShowNewFacePickedPreview(DieFaceSO newFace)
+    {
+        if (newFacePickedRevealRoot == null || newFace == null)
+            return;
+
+        var img = newFacePickedPreviewImage;
+        if (img == null)
+            img = newFacePickedRevealRoot.GetComponentInChildren<Image>(true);
+        if (img != null)
+        {
+            var s = newFace.uiIcon;
+            img.sprite = s;
+            img.enabled = s != null;
+        }
+
+        newFacePickedRevealRoot.SetActive(true);
+    }
+
+    public void HideNewFacePickedPreview()
+    {
+        if (newFacePickedRevealRoot != null)
+            newFacePickedRevealRoot.SetActive(false);
     }
 
     /// <summary>For preview-only slots; swap overlay disables the reward button.</summary>

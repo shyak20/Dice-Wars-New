@@ -10,29 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: 3 - Fire Base 3
+  m_Name: Fanning Flames
   m_EditorClassIdentifier: 
-  title: Basic Fire 2
-  description: Harness 2 Damage \nHarness 2 Burn
+  title: Basic Fire 3
+  description: Harness 3 Damage \nHarness 3 Burn
   descriptionLines:
-  - Apply <style=Burn>3</style>
-  value: 3
+  - Double the current Burn stacks on enemy
+  value: 6
   type: 2
-  faceMaterial: {fileID: 2100000, guid: 57e98965d3724e04e94a3fcf286034af, type: 2}
-  rarity: 0
+  faceMaterial: {fileID: 2100000, guid: 3e0141633dd484c4ea2beb1a03e5d504, type: 2}
+  rarity: 2
   damage: 0
   damageAttackTimes: 1
   armor: 0
-  uiIcon: {fileID: 21300000, guid: 2130e8f815a02114f85b785710ea8bf4, type: 3}
+  uiIcon: {fileID: 21300000, guid: fa9342af0f4a5a145b9b429e7efac97b, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: f339cdf1fdb78ed4aa08d149092d6b9e, type: 3}
-  activateImmediately: 0
+  activateImmediately: 1
   actions:
-  - rid: 7307556737978990593
+  - rid: 6494956586993451198
   references:
     version: 2
     RefIds:
-    - rid: 7307556737978990593
-      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+    - rid: 6494956586993451198
+      type: {class: MultiplyEnemyBurnStacksModifier, ns: , asm: Assembly-CSharp}
       data:
-        statusEffect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
-        stacks: 3
+        stackMultiplier: 2

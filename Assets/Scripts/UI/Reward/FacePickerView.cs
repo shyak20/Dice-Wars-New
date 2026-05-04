@@ -46,7 +46,7 @@ public class FacePickerView : MonoBehaviour
     private readonly Dictionary<DieAssetSO, Button> _diceButtons = new Dictionary<DieAssetSO, Button>();
 
     private Action<DieFaceSO> _onFacePicked;
-    private Action<DieAssetSO, int> _onReplaceFaceSlotPicked;
+    private Action<DieAssetSO, int, UIRewardSlot> _onReplaceFaceSlotPicked;
     private Action _onBack;
     private Action _onRewindToFacePick;
     private DieFaceSO _selectedRewardFace;
@@ -87,7 +87,7 @@ public class FacePickerView : MonoBehaviour
     public void Show(
         List<DieFaceSO> options,
         Action<DieFaceSO> onFacePicked,
-        Action<DieAssetSO, int> onReplaceFaceSlotPicked,
+        Action<DieAssetSO, int, UIRewardSlot> onReplaceFaceSlotPicked,
         Action onBack = null,
         Action onRewindToFacePick = null)
     {
@@ -398,13 +398,13 @@ public class FacePickerView : MonoBehaviour
         return _diceViews.TryGetValue(die, out var view) ? view.IconRectTransform : null;
     }
 
-    private void OnDieFaceReplacementClicked(int slotIndex, DieFaceSO oldFace)
+    private void OnDieFaceReplacementClicked(int slotIndex, DieFaceSO oldFace, UIRewardSlot slot)
     {
         if (_selectedRewardFace == null) return;
         var die = _activeReplacementDie;
         if (die == null) die = dieTooltipOverlay != null ? dieTooltipOverlay.CurrentDie : null;
         if (die == null) return;
-        _onReplaceFaceSlotPicked?.Invoke(die, slotIndex);
+        _onReplaceFaceSlotPicked?.Invoke(die, slotIndex, slot);
     }
 
     private void SetDieButtonInteractable(DieAssetSO die, bool interactable)

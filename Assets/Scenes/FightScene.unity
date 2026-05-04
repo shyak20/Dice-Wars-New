@@ -18226,6 +18226,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -95
       objectReference: {fileID: 0}
+    - target: {fileID: 2372300537678174789, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
+      propertyPath: diceLayoutSpacing
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 2372300537678174789, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
+      propertyPath: pickTransitionSeconds
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 2597819194262903869, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1

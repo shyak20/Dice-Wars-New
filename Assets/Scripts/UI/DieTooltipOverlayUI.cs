@@ -49,7 +49,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
     private readonly Vector3[] _worldCornersScratch = new Vector3[4];
 
     /// <param name="horizontalCenterReference">When set (e.g. die icon <see cref="RectTransform"/>), moves the tooltip panel so its pivot’s world X matches this rect’s horizontal center.</param>
-    public void ShowDie(DieAssetSO die, bool facesInteractable, Action<int, DieFaceSO> onFaceClicked = null, RectTransform horizontalCenterReference = null)
+    /// <param name="onFaceClicked">When faces are interactable, receives the clicked slot’s <see cref="UIRewardSlot"/> for swap confirmation UI.</param>
+    public void ShowDie(DieAssetSO die, bool facesInteractable, Action<int, DieFaceSO, UIRewardSlot> onFaceClicked = null, RectTransform horizontalCenterReference = null)
     {
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
@@ -91,7 +92,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             }
 
             if (facesInteractable && onFaceClicked != null)
-                slot.Bind(face, _ => onFaceClicked.Invoke(faceIndex, face));
+                slot.Bind(face, _ => onFaceClicked.Invoke(faceIndex, face, slot));
             else
                 slot.Bind(face, null);
 

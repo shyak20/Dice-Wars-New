@@ -17,7 +17,7 @@ public class FaceRewardManager : MonoBehaviour
     [SerializeField] private FaceLootTableSO lootTable;
 
     [Header("Timing")]
-    [Tooltip("Seconds to wait after swap (or no-match close) before hiding overlay, firing OnFaceRewardCompleted, and deactivating. Set to 0 for immediate.")]
+    [Tooltip("After a face swap, seconds to show the slot’s new-face preview before hiding the picker and firing OnFaceRewardCompleted. Also used after no-match close (no preview).")]
     [SerializeField, Min(0f)] private float closeDelay = 2f;
 
     private DieFaceSO chosenFace;
@@ -121,7 +121,7 @@ public class FaceRewardManager : MonoBehaviour
         }
     }
 
-    private void OnReplacementSlotChosen(DieAssetSO die, int slotIndex)
+    private void OnReplacementSlotChosen(DieAssetSO die, int slotIndex, UIRewardSlot clickedSlot)
     {
         if (die == null || chosenFace == null)
             return;
@@ -137,16 +137,32 @@ public class FaceRewardManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(CloseAfterDelay());
+        StartCoroutine(CloseAfterFaceSwap(clickedSlot));
+    }
+
+    private IEnumerator CloseAfterFaceSwap(UIRewardSlot clickedSlot)
+    {
+        if (clickedSlot != null && chosenFace != null)
+            clickedSlot.ShowNewFacePickedPreview(chosenFace);
+
+        if (closeDelay > 0f)
+            yield return new WaitForSeconds(closeDelay);
+
+        if (facePickerView != null)
+            facePickerView.Hide();
+
+        FaceRewardEvents.OnFaceRewardCompleted?.Invoke(chosenFace);
+        ReleaseWinStageFaceOfferCache();
+        gameObject.SetActive(false);
     }
 
     private IEnumerator CloseAfterDelay()
     {
-        if (facePickerView != null)
-            facePickerView.Hide();
-
         if (closeDelay > 0f)
             yield return new WaitForSeconds(closeDelay);
+
+        if (facePickerView != null)
+            facePickerView.Hide();
 
         FaceRewardEvents.OnFaceRewardCompleted?.Invoke(chosenFace);
         ReleaseWinStageFaceOfferCache();

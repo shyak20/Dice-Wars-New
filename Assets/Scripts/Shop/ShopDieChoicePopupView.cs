@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -13,6 +14,8 @@ public class ShopDieChoicePopupView : MonoBehaviour
     [SerializeField] Transform diceLayoutContainer;
     [SerializeField] GameObject dieButtonPrefab;
     [SerializeField] DieTooltipOverlayUI dieTooltipOverlay;
+    [Tooltip("After buying a face in the shop, delay before closing this popup (new-face preview on the clicked slot).")]
+    [SerializeField, Min(0f)] private float faceSwapCloseDelay = 1.25f;
 
     readonly Dictionary<DieAssetSO, DiceTrayButtonView> _views = new();
     readonly Dictionary<DieAssetSO, Button> _buttons = new();
@@ -116,10 +119,11 @@ public class ShopDieChoicePopupView : MonoBehaviour
         foreach (var kv in _views) kv.Value.SetSelected(kv.Key == die);
         if (_targetFace != null)
         {
-            dieTooltipOverlay?.ShowDie(die, true, (slotIndex, _) =>
+            dieTooltipOverlay?.ShowDie(die, true, (slotIndex, _, slot) =>
             {
-                if (_onFaceCommit != null && _onFaceCommit(die, slotIndex))
-                    Hide();
+                if (_onFaceCommit == null || !_onFaceCommit(die, slotIndex))
+                    return;
+                StartCoroutine(CoCloseAfterFaceSwapPreview(slot, _targetFace));
             }, GetIconRect(die));
             return;
         }
@@ -133,6 +137,17 @@ public class ShopDieChoicePopupView : MonoBehaviour
     }
 
     RectTransform GetIconRect(DieAssetSO die) => die != null && _views.TryGetValue(die, out var v) ? v.IconRectTransform : null;
+
+    IEnumerator CoCloseAfterFaceSwapPreview(UIRewardSlot slot, DieFaceSO newFace)
+    {
+        if (slot != null && newFace != null)
+            slot.ShowNewFacePickedPreview(newFace);
+
+        if (faceSwapCloseDelay > 0f)
+            yield return new WaitForSeconds(faceSwapCloseDelay);
+
+        Hide();
+    }
 
     void Cancel()
     {

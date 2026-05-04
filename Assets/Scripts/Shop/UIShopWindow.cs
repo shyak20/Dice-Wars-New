@@ -138,8 +138,21 @@ public class UIShopWindow : MonoBehaviour
         dieChoicePopup.ShowForFaceReplacement(o.Face, (die, idx) =>
         {
             if (die == null || !SpendGold(o.Price)) return false;
-            try { die.SwapFace(idx, o.Face); o.Sold = true; RebuildOfferUi(); RebuildPlayerDice(); return true; }
-            catch (Exception e) { Debug.LogError(e, this); if (RunEconomyManager.Instance != null) RunEconomyManager.Instance.GrantGold(o.Price, null); return false; }
+            try
+            {
+                die.SwapFace(idx, o.Face);
+                o.Sold = true;
+                RebuildOfferUi();
+                // Keep die tooltip open for ShopDieChoicePopupView face-swap close delay (preview on slot).
+                RebuildPlayerDice(hideDieTooltipOverlay: false);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e, this);
+                if (RunEconomyManager.Instance != null) RunEconomyManager.Instance.GrantGold(o.Price, null);
+                return false;
+            }
         }, null);
     }
 
@@ -158,11 +171,12 @@ public class UIShopWindow : MonoBehaviour
     void BuyDie(OfferData o) { if (o.Die == null || !SpendGold(o.Price) || PlayerDataContainer.Instance == null) return; PlayerDataContainer.Instance.AddDieToDeck(o.Die); o.Sold = true; RebuildOfferUi(); RebuildPlayerDice(); }
     bool SpendGold(int amount) { var eco = RunEconomyManager.Instance; return eco != null && eco.CanAfford(amount) && eco.TrySpend(amount); }
 
-    void RebuildPlayerDice()
+    void RebuildPlayerDice(bool hideDieTooltipOverlay = true)
     {
         if (playerDiceContainer == null || PlayerDataContainer.Instance?.RuntimeData == null) return;
         foreach (Transform c in playerDiceContainer) Destroy(c.gameObject);
-        dieTooltipOverlay?.Hide();
+        if (hideDieTooltipOverlay)
+            dieTooltipOverlay?.Hide();
         foreach (var die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
         {
             if (die == null || playerDieButtonPrefab == null) continue;

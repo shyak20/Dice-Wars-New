@@ -45,6 +45,33 @@ public class SimulationSpeedController : MonoBehaviour
         }
     }
 
+    /// <summary>Forces 1× speed and keeps the slider in sync.</summary>
+    public void ApplyRealtimeSpeed()
+    {
+        SetSimulationSpeed(1f);
+        if (speedSlider != null)
+            speedSlider.SetValueWithoutNotify(1f);
+    }
+
+    /// <summary>Resets <see cref="Time.timeScale"/> to 1 for every controller in the scene, or sets time scale directly if none exist.</summary>
+    public static void ApplyRealtimeGlobally()
+    {
+        var controllers = FindObjectsOfType<SimulationSpeedController>(true); // include inactive
+        if (controllers != null && controllers.Length > 0)
+        {
+            for (var i = 0; i < controllers.Length; i++)
+            {
+                if (controllers[i] != null)
+                    controllers[i].ApplyRealtimeSpeed();
+            }
+
+            return;
+        }
+
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+    }
+
     private void OnDestroy()
     {
         Time.timeScale = 1f;

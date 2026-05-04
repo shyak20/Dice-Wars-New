@@ -53,6 +53,7 @@ public class WinStageFaceRewardRow : MonoBehaviour
         FaceRewardEvents.OnFaceRewardCompleted += OnFaceRewardFlowCompletedOnce;
         _subscribedToCompleted = true;
 
+        SimulationSpeedController.ApplyRealtimeGlobally();
         _host.NotifyFacePickerOpening();
         _faceRewards.StartFaceRewardFromWinStage(OnPickerBack);
     }
