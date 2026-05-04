@@ -8,10 +8,37 @@ public class StatusEffectManager : MonoBehaviour
 {
     private readonly List<StatusEffectInstance> effects = new List<StatusEffectInstance>();
 
+    CombatManager _boundCombatManager;
+    PlayerStatus _boundPlayer;
+
     public IReadOnlyList<StatusEffectInstance> Effects => effects;
 
     public event Action OnEffectsChanged;
     private void NotifyChanged() => OnEffectsChanged?.Invoke();
+
+    /// <summary>Lets burn-damage hooks build a <see cref="StatusEffectContext"/> from <see cref="EnemyController.TakeDamage"/>.</summary>
+    public void BindBattleContext(CombatManager combatManager, PlayerStatus player)
+    {
+        _boundCombatManager = combatManager;
+        _boundPlayer = player;
+    }
+
+    public StatusEffectContext CreateContextForEnemy(EnemyController enemy)
+    {
+        return new StatusEffectContext
+        {
+            CombatManager = _boundCombatManager,
+            Player = _boundPlayer,
+            Enemy = enemy
+        };
+    }
+
+    public int ApplyBurnDamageModifiers(StatusEffectContext ctx, int damage)
+    {
+        foreach (var instance in effects)
+            damage = instance.Definition.ModifyBurnDamageToOwner(instance, ctx, damage);
+        return damage;
+    }
 
     public void ApplyStatus(StatusEffectSO definition, int stacks, StatusEffectContext ctx)
     {

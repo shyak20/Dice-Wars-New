@@ -102,6 +102,15 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(int amount, EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical)
     {
+        if (amount <= 0) return;
+
+        if (presentationKind == EnemyDamagePresentationKind.Burn && StatusEffects != null)
+        {
+            var burnCtx = StatusEffects.CreateContextForEnemy(this);
+            amount = StatusEffects.ApplyBurnDamageModifiers(burnCtx, amount);
+            if (amount <= 0) return;
+        }
+
         var damageRemaining = amount;
         var armorDamage = 0;
 

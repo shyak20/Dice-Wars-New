@@ -78,3 +78,6 @@ MonoBehaviour:
   - effect: {fileID: 11400000, guid: 12b0a443afbbafe4fa0b3e6124092a36, type: 2}
     icon: {fileID: 21300000, guid: 618a26f22d6051543af8c274abf85fdf, type: 3}
     poolRowBackground: {fileID: 0}
+  - effect: {fileID: 11400000, guid: 5566e5d6dc6943599c897d06a088c281, type: 2}
+    icon: {fileID: 21300000, guid: 0aa3c0b0d176e3c498739a1a0e8b400c, type: 3}
+    poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}

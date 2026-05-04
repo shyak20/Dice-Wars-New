@@ -23,6 +23,12 @@ public abstract class StatusEffectSO : ScriptableObject
     public virtual void OnAfterEnemyTurn(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual void OnPerfectStrike(StatusEffectInstance instance, StatusEffectContext ctx) { }
     public virtual int ModifyDamageToOwner(StatusEffectInstance instance, StatusEffectContext ctx, int damage) => damage;
+
+    /// <summary>
+    /// Enemy-only: modifies incoming damage from <see cref="EnemyDamagePresentationKind.Burn"/> hits (burn ticks, perfect strike burn, etc.).
+    /// Default: unchanged. Physical pending attack uses <see cref="ModifyDamageToOwner"/> via <see cref="StatusEffectManager.ApplyDamageModifiers"/>.
+    /// </summary>
+    public virtual int ModifyBurnDamageToOwner(StatusEffectInstance instance, StatusEffectContext ctx, int damage) => damage;
     public virtual int GetBonusAttack(StatusEffectInstance instance, StatusEffectContext ctx) => 0;
     /// <summary>Added to <see cref="DieFaceSO.damage"/> when the player resolves an attacking die, and to each enemy physical strike base damage before <see cref="ModifyEnemyHitDamage"/> (e.g. Strength).</summary>
     public virtual int GetPerDieAttackDamageBonus(StatusEffectInstance instance, StatusEffectContext ctx) => 0;

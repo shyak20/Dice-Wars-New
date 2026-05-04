@@ -508,6 +508,11 @@ public class CombatManager : MonoBehaviour
 
         if (enemyStatusBar != null && activeEnemy != null && activeEnemy.StatusEffects != null)
             enemyStatusBar.Bind(activeEnemy.StatusEffects);
+
+        if (player != null && player.StatusEffects != null)
+            player.StatusEffects.BindBattleContext(this, player);
+        if (activeEnemy != null && activeEnemy.StatusEffects != null)
+            activeEnemy.StatusEffects.BindBattleContext(this, player);
     }
 
     private void ApplyTestStartingFaces()
