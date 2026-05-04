@@ -26,7 +26,6 @@ MonoBehaviour:
   armor: 5
   uiIcon: {fileID: 21300000, guid: 65d8887db19ae6545b307f87fc0a4639, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: dff0064be162cef4091e7191cddcf4b8, type: 3}
-  activateImmediately: 0
   actions:
   - rid: 6494956095240142855
   references:
@@ -35,6 +34,7 @@ MonoBehaviour:
     - rid: 6494956095240142855
       type: {class: FirstRollAction, ns: , asm: Assembly-CSharp}
       data:
+        activateImmediately: 0
         bonusDamage: 0
         bonusArmor: 5
         actions: []

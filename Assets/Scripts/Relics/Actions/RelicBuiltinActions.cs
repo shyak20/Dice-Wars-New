@@ -137,8 +137,11 @@ public sealed class RelicApplyBurnOnFaceValueAction : RelicGameActionBase
         if (ctx.RelicPhase != RelicPhases.AfterPowerChangedFromRoll) return;
         if (ctx.TriggeringFace == null || ctx.TriggeringFace.Value != faceValue) return;
         if (burnDefinition == null || ctx.Enemy == null) return;
+        var stacks = burnStacks;
+        if (ctx.TriggeringFace != null)
+            stacks = ctx.TriggeringFace.ApplyFireDoubleToEnemyBurnStacks(stacks, burnDefinition);
         var sctx = ctx.CombatManager != null ? ctx.CombatManager.BuildStatusContextForEffects() : new StatusEffectContext { Player = ctx.Player, Enemy = ctx.Enemy, CombatManager = ctx.CombatManager };
-        ctx.Enemy.StatusEffects.ApplyStatus(burnDefinition, burnStacks, sctx);
+        ctx.Enemy.StatusEffects.ApplyStatus(burnDefinition, stacks, sctx);
     }
 }
 

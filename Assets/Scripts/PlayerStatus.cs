@@ -130,6 +130,7 @@ public class PlayerStatus : MonoBehaviour
     public void TakeDamage(int damage, PlayerDamageSource source = PlayerDamageSource.Generic, Vector3? floatingDamageNumberWorldOverride = null)
     {
         var hpBefore = currentHealth;
+        var armorBefore = currentArmor;
 
         // 1. Armor absorbs damage first
         int damageRemaining = damage;
@@ -147,6 +148,13 @@ public class PlayerStatus : MonoBehaviour
                 damageRemaining -= currentArmor;
                 currentArmor = 0;
             }
+        }
+
+        if (source == PlayerDamageSource.EnemyPhysicalAttack)
+        {
+            var armorLost = armorBefore - currentArmor;
+            if (armorLost > 0)
+                CombatEvents.OnPlayerArmorLostToEnemyPhysicalAttack?.Invoke(armorLost);
         }
 
         // 2. Remaining damage hits Health

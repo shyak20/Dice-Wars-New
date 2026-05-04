@@ -88,6 +88,9 @@ public class CombatManager : MonoBehaviour
     private RelicRuntimeState _relicRuntime;
 
     private readonly TurnRegistry _turnRegistry = new TurnRegistry();
+
+    BurnEffectSO _burnOnPlayerArmorLostFromEnemyDef;
+    int _burnStacksPerArmorLostFromEnemyPhysical;
     private readonly List<ValueBasedRollWatcherEntry> _sameTurnValueWatchers = new List<ValueBasedRollWatcherEntry>();
     private readonly List<ValueBasedRollWatcherEntry> _entireCombatValueWatchers = new List<ValueBasedRollWatcherEntry>();
     private List<DieAssetSO> _pendingBatchDiceAssets;
@@ -196,6 +199,60 @@ public class CombatManager : MonoBehaviour
     {
         if (amount <= 0) return;
         bonusArmorFromActions += amount;
+    }
+
+    /// <summary>Run after enemy HP changes outside normal submit resolution (e.g. instant burn proc from a face action).</summary>
+    public void TryResolveVictoryAfterDirectEnemyDamage() => CheckVictory();
+
+    /// <summary>
+    /// For the upcoming enemy turn: each point of player armor lost to <see cref="PlayerDamageSource.EnemyPhysicalAttack"/>
+    /// applies <paramref name="stacksPerArmorPoint"/> burn (using <paramref name="burnDefinition"/>) to the enemy. Cleared next player turn.
+    /// </summary>
+    public void RegisterBurnOnPlayerArmorLostFromEnemyPhysical(BurnEffectSO burnDefinition, int stacksPerArmorPoint)
+    {
+        if (burnDefinition == null)
+        {
+            Debug.LogError("CombatManager.RegisterBurnOnPlayerArmorLostFromEnemyPhysical: burnDefinition is required.");
+            return;
+        }
+
+        if (burnDefinition.target != StatusEffectTarget.Enemy)
+        {
+            Debug.LogError("CombatManager.RegisterBurnOnPlayerArmorLostFromEnemyPhysical: burnDefinition must target Enemy.");
+            return;
+        }
+
+        if (stacksPerArmorPoint <= 0)
+        {
+            Debug.LogError("CombatManager.RegisterBurnOnPlayerArmorLostFromEnemyPhysical: stacksPerArmorPoint must be positive.");
+            return;
+        }
+
+        if (_burnOnPlayerArmorLostFromEnemyDef != null && _burnOnPlayerArmorLostFromEnemyDef != burnDefinition)
+            Debug.LogWarning("CombatManager: burn-on-armor-lost already used a different Burn asset; switching to the latest registration.");
+
+        _burnOnPlayerArmorLostFromEnemyDef = burnDefinition;
+        _burnStacksPerArmorLostFromEnemyPhysical += stacksPerArmorPoint;
+    }
+
+    void HandlePlayerArmorLostToEnemyPhysicalAttack(int armorLost)
+    {
+        if (armorLost <= 0 || _burnStacksPerArmorLostFromEnemyPhysical <= 0 || _burnOnPlayerArmorLostFromEnemyDef == null) return;
+        if (player == null || activeEnemy == null) return;
+        if (currentState == CombatState.Victory || currentState == CombatState.Defeat) return;
+
+        var applyStacks = armorLost * _burnStacksPerArmorLostFromEnemyPhysical;
+        if (_burnOnPlayerArmorLostFromEnemyDef.target == StatusEffectTarget.Enemy)
+            applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
+
+        if (applyStacks <= 0) return;
+
+        var ctx = BuildStatusContextForEffects();
+        activeEnemy.StatusEffects.ApplyStatus(_burnOnPlayerArmorLostFromEnemyDef, applyStacks, ctx);
+        _turnRegistry.RecordBurnApplied(applyStacks);
+
+        if (GameActionDebug.Enabled)
+            Debug.Log($"[BurnOnArmorLost] +{applyStacks} burn ({armorLost} armor lost × {_burnStacksPerArmorLostFromEnemyPhysical})");
     }
 
     /// <summary>Player power meter (Resonance): additive, can exceed max toward bust.</summary>
@@ -343,6 +400,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnEndTurnPressed += ManualEndTurn;
         CombatEvents.OnCheatWinPressed += CheatWinCombat;
         CombatEvents.OnCheatPerfectStrikePressed += ForcePerfectStrikeCheat;
+        CombatEvents.OnPlayerArmorLostToEnemyPhysicalAttack += HandlePlayerArmorLostToEnemyPhysicalAttack;
     }
 
     private void OnDisable()
@@ -353,6 +411,7 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnEndTurnPressed -= ManualEndTurn;
         CombatEvents.OnCheatWinPressed -= CheatWinCombat;
         CombatEvents.OnCheatPerfectStrikePressed -= ForcePerfectStrikeCheat;
+        CombatEvents.OnPlayerArmorLostToEnemyPhysicalAttack -= HandlePlayerArmorLostToEnemyPhysicalAttack;
     }
 
     private void InitializeCombat()
@@ -407,6 +466,8 @@ public class CombatManager : MonoBehaviour
         kineticShieldBonus = 0;
         bonusDamageFromActions = 0;
         bonusArmorFromActions = 0;
+        _burnOnPlayerArmorLostFromEnemyDef = null;
+        _burnStacksPerArmorLostFromEnemyPhysical = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
         maxRolls = playerData.maxRollsPerTurn;
@@ -765,7 +826,6 @@ public class CombatManager : MonoBehaviour
             Damage = rolledDamage,
             DamageAttackTimes = face.type == DieType.Damage ? Mathf.Max(1, face.damageAttackTimes) : 1,
             Armor = face.armor,
-            ActivateImmediately = face.activateImmediately,
         };
         if (face.actions != null)
         {
@@ -779,13 +839,19 @@ public class CombatManager : MonoBehaviour
             (_echoSkipsPowerThisBatch || skipPowerContribution) ? 0 : modifiedValue;
         result.KineticShieldBonusContribution = kineticArmorThisRoll ? 1 : 0;
 
+        if (face.type == DieType.Fire && _turnRegistry.PendingNextFireRollDoubleEnemyBurn)
+        {
+            result.DoubleEnemyBurnStacksThisResolve = true;
+            _turnRegistry.PendingNextFireRollDoubleEnemyBurn = false;
+        }
+
         ApplyQueuedNextRollMultiplier(result, _turnRegistry);
 
         if (face.actions != null)
         {
             foreach (var a in face.actions)
             {
-                if (a is FaceResolveModifierBase mod)
+                if (a is FaceResolveModifierBase mod && mod.ActivateImmediately)
                     mod.Modify(face, result, this, _turnRegistry);
             }
         }
@@ -800,6 +866,15 @@ public class CombatManager : MonoBehaviour
             GemCombatResolver.ApplySocketedGems(sourceDieAsset, result, this, batchGatherIndex);
 
         ApplyValueBasedRollWatchersArmorDamage(result);
+
+        if (face.actions != null)
+        {
+            foreach (var a in face.actions)
+            {
+                if (a is FaceResolveModifierBase mod && !mod.ActivateImmediately)
+                    mod.Modify(face, result, this, _turnRegistry);
+            }
+        }
 
         _turnRegistry.RecordResolvedFace(result);
 
@@ -817,13 +892,15 @@ public class CombatManager : MonoBehaviour
 
         ApplyValueBasedRollWatchersBurn(result);
 
-        if (result.ActivateImmediately && result.Actions.Count > 0)
+        if (result.Actions.Count > 0)
         {
             var context = BuildContext(result);
             List<Sprite> immediateIcons = null;
             foreach (var a in result.Actions)
             {
+                if (a == null) continue;
                 if (a is FaceResolveModifierBase) continue;
+                if (!a.ActivateImmediately) continue;
                 if (a is RerollDieAction) continue;
                 if (a is AddPowerAction) continue;
                 if (a is ApplyStatusEffectAction applyLate &&
@@ -855,7 +932,7 @@ public class CombatManager : MonoBehaviour
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         NotifyStoredActionsPoolUpdated();
-        if (!result.ActivateImmediately)
+        if (FaceHasAnyDeferredExecutableAction(result))
             PushDeferredPoolIconHints(result);
 
         if (dieWorldSource != null)
@@ -903,13 +980,13 @@ public class CombatManager : MonoBehaviour
         {
             if (a is FaceResolveModifierBase) continue;
             if (a is ApplyStatusEffectAction apply)
-                apply.AppendPoolContributionIfAny(result, player, result.ActivateImmediately);
+                apply.AppendPoolContributionIfAny(result, player, apply.ActivateImmediately);
             if (a is MaxHpAction maxHp)
                 maxHp.AppendPoolContributionIfAny(result);
             if (a is AddValueBasedOnRollAction valueBonus)
                 valueBonus.AppendPoolContributionIfAny(result, player);
             if (a is ThornsAction thorns)
-                thorns.AppendPoolContributionIfAny(result, result.ActivateImmediately);
+                thorns.AppendPoolContributionIfAny(result, thorns.ActivateImmediately);
         }
     }
 
@@ -1046,9 +1123,23 @@ public class CombatManager : MonoBehaviour
         AddValueBasedOnRollAction.TryAppendBurnPoolLine(result, player, w.RequiredFaceValue, w.Amount, w.BurnDefinition);
     }
 
+    private static bool FaceHasAnyDeferredExecutableAction(FaceResult result)
+    {
+        if (result?.Actions == null) return false;
+        foreach (var a in result.Actions)
+        {
+            if (a is FaceResolveModifierBase) continue;
+            if (a is RerollDieAction) continue;
+            if (a is AddPowerAction) continue;
+            if (a == null) continue;
+            if (!a.ActivateImmediately) return true;
+        }
+
+        return false;
+    }
+
     private static void PushDeferredPoolIconHints(FaceResult result)
     {
-        if (result.ActivateImmediately) return;
 
         void Hint(PoolRowKey key, int amt, Sprite icon)
         {
@@ -1491,7 +1582,7 @@ public class CombatManager : MonoBehaviour
     {
         foreach (var face in channeledFaces)
         {
-            if (face.ActivateImmediately || face.Actions == null || face.Actions.Count == 0) continue;
+            if (face.Actions == null || face.Actions.Count == 0) continue;
             var faceCtx = BuildContext(face);
             faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
             foreach (var a in face.Actions)
@@ -1499,6 +1590,7 @@ public class CombatManager : MonoBehaviour
                 if (a is FaceResolveModifierBase) continue;
                 if (a is AddPowerAction) continue;
                 if (a == null) continue;
+                if (a.ActivateImmediately) continue;
 
                 if (a is ApplyStatusEffectAction apply)
                 {
@@ -1746,6 +1838,8 @@ public class CombatManager : MonoBehaviour
         appliedMultiplier = 1;
         bustProtected = false;
         kineticShieldActive = false; kineticShieldBonus = 0; bonusDamageFromActions = 0; bonusArmorFromActions = 0;
+        _burnOnPlayerArmorLostFromEnemyDef = null;
+        _burnStacksPerArmorLostFromEnemyPhysical = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
         _gemBonusRollChainActivationsByDieThisBatch.Clear();

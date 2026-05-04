@@ -27,8 +27,27 @@ public class FaceResult
         : 0;
 
     public int Armor { get; set; }
-    public bool ActivateImmediately { get; set; }
-    /// <summary>Copied from the rolled face; executed in order (immediate vs turn-end per <see cref="ActivateImmediately"/>).</summary>
+
+    /// <summary>Set when this resolve is the next Fire face after <see cref="TurnRegistry.PendingNextFireRollDoubleEnemyBurn"/>; doubles enemy burn stacks applied from this face only.</summary>
+    public bool DoubleEnemyBurnStacksThisResolve { get; set; }
+
+    /// <summary>When <see cref="DoubleEnemyBurnStacksThisResolve"/> and <paramref name="appliedStatus"/> is enemy-target burn, returns <paramref name="stacks"/> × 2; otherwise unchanged.</summary>
+    public int ApplyFireDoubleToEnemyBurnStacks(int stacks, StatusEffectSO appliedStatus)
+    {
+        if (stacks <= 0 || appliedStatus == null || !DoubleEnemyBurnStacksThisResolve) return stacks;
+        if (appliedStatus is BurnEffectSO b && b.target == StatusEffectTarget.Enemy) return stacks * 2;
+        return stacks;
+    }
+
+    /// <summary>Overload for burn-only apply paths (e.g. roll watcher).</summary>
+    public int ApplyFireDoubleToEnemyBurnStacks(int stacks, BurnEffectSO burnDefinition)
+    {
+        if (burnDefinition == null || stacks <= 0 || !DoubleEnemyBurnStacksThisResolve) return stacks;
+        if (burnDefinition.target == StatusEffectTarget.Enemy) return stacks * 2;
+        return stacks;
+    }
+
+    /// <summary>Copied from the rolled face; <see cref="IGameAction.ActivateImmediately"/> controls gather vs turn-end <see cref="IGameAction.Execute"/>, and early vs late <see cref="FaceResolveModifierBase.Modify"/>.</summary>
     public List<IGameAction> Actions { get; set; } = new List<IGameAction>();
 
     /// <summary>Deferred-action rows for <see cref="StoredActionsPoolDisplay"/> (ApplyStatusEffect, Thorns, Max HP, etc.); filled before this face is added to channeled faces.</summary>

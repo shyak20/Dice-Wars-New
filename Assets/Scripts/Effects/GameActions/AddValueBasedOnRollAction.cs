@@ -85,6 +85,9 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
         if (burnDefinition.target == StatusEffectTarget.Enemy && ctx.Player != null)
             applyStacks += ctx.Player.StatusEffects.GetStacks<PyromaniacEffectSO>();
 
+        if (ctx.TriggeringFace != null)
+            applyStacks = ctx.TriggeringFace.ApplyFireDoubleToEnemyBurnStacks(applyStacks, burnDefinition);
+
         var sctx = ctx.CombatManager != null
             ? ctx.CombatManager.BuildStatusContextForEffects()
             : new StatusEffectContext { Player = ctx.Player, Enemy = ctx.Enemy, CombatManager = ctx.CombatManager };
@@ -117,6 +120,8 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
             applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
 
         if (applyStacks <= 0) return;
+
+        applyStacks = result.ApplyFireDoubleToEnemyBurnStacks(applyStacks, burnDefinition);
 
         result.ActionPoolContributions.Add(new FacePoolExtraContribution
         {

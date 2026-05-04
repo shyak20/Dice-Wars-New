@@ -26,7 +26,6 @@ MonoBehaviour:
   armor: 0
   uiIcon: {fileID: 21300000, guid: fdf4d84fdc9b7424481735ecf9c89bd3, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: d54377126ab96104899c9eaf08f5578c, type: 3}
-  activateImmediately: 0
   actions:
   - rid: 6494956392264499314
   references:
@@ -35,6 +34,6 @@ MonoBehaviour:
     - rid: 6494956392264499314
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
+        activateImmediately: 0
         statusEffect: {fileID: 11400000, guid: c1d7c22239e0b6447a991d852bd36739, type: 2}
         stacks: 1
-        poolRowKeyOverride: 

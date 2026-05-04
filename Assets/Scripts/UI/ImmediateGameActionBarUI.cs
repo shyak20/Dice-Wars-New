@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Shows icons for <see cref="GameActionWithIcon"/> when a face resolves with <c>activateImmediately</c>.
+/// Shows icons for <see cref="GameActionWithIcon"/> when a face resolves (actions with <see cref="IGameAction.ActivateImmediately"/> true).
 /// Wire next to <see cref="StatusEffectBarUI"/> on the player HUD.
 /// </summary>
 public class ImmediateGameActionBarUI : MonoBehaviour

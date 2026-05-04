@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
+  m_Name: Supernova
+  m_EditorClassIdentifier: 
+  title: Basic Fire 3
+  description: Harness 3 Damage \nHarness 3 Burn
+  descriptionLines:
+  - Apply <style=burn>10</style> to enemy and <style=burn>4</style> to self
+  value: 4
+  type: 2
+  faceMaterial: {fileID: 2100000, guid: e1be335986f1bca4f8e6be4b12db220e, type: 2}
+  rarity: 1
+  damage: 0
+  damageAttackTimes: 1
+  armor: 0
+  uiIcon: {fileID: 21300000, guid: 7a5b73e4b11a85142be39c5163f40f8a, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: f339cdf1fdb78ed4aa08d149092d6b9e, type: 3}
+  actions:
+  - rid: 6494956095240142853
+  - rid: 6494956586993451207
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956095240142853
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        statusEffect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
+        stacks: 10
+    - rid: 6494956586993451207
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        statusEffect: {fileID: 11400000, guid: eab92401621da2241a6640d43a76acb5, type: 2}
+        stacks: 4

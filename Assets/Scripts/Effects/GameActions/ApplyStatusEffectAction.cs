@@ -54,6 +54,9 @@ public class ApplyStatusEffectAction : GameActionWithIcon
                 var pyro = context.Player.StatusEffects.GetStacks<PyromaniacEffectSO>();
                 applyStacks += pyro;
             }
+
+            if (context.TriggeringFace != null)
+                applyStacks = context.TriggeringFace.ApplyFireDoubleToEnemyBurnStacks(applyStacks, statusEffect);
         }
 
         if (applyStacks <= 0) return;
@@ -80,6 +83,8 @@ public class ApplyStatusEffectAction : GameActionWithIcon
             applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
 
         if (applyStacks <= 0) return;
+
+        applyStacks = result.ApplyFireDoubleToEnemyBurnStacks(applyStacks, statusEffect);
 
         result.ActionPoolContributions.Add(new FacePoolExtraContribution
         {

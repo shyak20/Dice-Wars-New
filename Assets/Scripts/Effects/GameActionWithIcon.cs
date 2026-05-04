@@ -7,6 +7,12 @@ using UnityEngine;
 [Serializable]
 public abstract class GameActionWithIcon : IGameAction
 {
+    [SerializeField, Tooltip("If off, this action runs at turn end (before or after physical damage per status timing rules) instead of when the die settles.")]
+    private bool activateImmediately = false;
+
+    /// <inheritdoc />
+    public bool ActivateImmediately => activateImmediately;
+
     protected virtual ActionVisualId VisualKey => ActionVisualId.None;
 
     public Sprite ResolveActionIcon() =>

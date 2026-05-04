@@ -21,4 +21,22 @@ public enum ActionVisualId
     RerollDie = 15,
     /// <summary>Optional +X power prompt (<see cref="AddPowerAction"/>).</summary>
     AddPower = 16,
+
+    /// <summary><see cref="DamageFromEnemyBurnStacksPercentAction"/> — pending damage from % of enemy burn stacks.</summary>
+    DamageFromEnemyBurnStacks = 17,
+
+    /// <summary><see cref="InstantBurnDamageFromEnemyStacksPercentAction"/> — immediate burn damage from % of stacks (stacks unchanged).</summary>
+    InstantBurnProcFromStacks = 18,
+
+    /// <summary><see cref="ConsumeAllBurnForMaxHpAction"/> — strip burn from a target for +max HP.</summary>
+    ConsumeBurnForMaxHp = 19,
+
+    /// <summary><see cref="ArmorFromEnemyBurnStacksAction"/> — bonus armor from % of enemy burn stacks.</summary>
+    ArmorFromEnemyBurnStacks = 20,
+
+    /// <summary><see cref="BonusArmorBurnWhenEnemyHitsArmorAction"/> — armor + burn when enemy breaks player armor.</summary>
+    BonusArmorBurnWhenStruck = 21,
+
+    /// <summary><see cref="BonusDamageIfEnemyBurnMeetsThresholdAction"/> — bonus damage scaled when enemy burn ≥ threshold.</summary>
+    BonusDamageVsBurnThreshold = 22,
 }

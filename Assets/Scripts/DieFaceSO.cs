@@ -33,9 +33,7 @@ public class DieFaceSO : ScriptableObject
     public Sprite uiTooltipBackground;
 
     [Header("Game Actions")]
-    [Tooltip("If true, all actions run when the die settles; if false, they run at turn end before damage resolves.")]
-    public bool activateImmediately = true;
-    [Tooltip("Executed in list order. Use + in the inspector to add multiple polymorphic actions.")]
+    [Tooltip("Executed in list order. Use + in the inspector to add multiple polymorphic actions. Timing is per action (Activate Immediately on each action).")]
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();
 
     private string BuildDescription()

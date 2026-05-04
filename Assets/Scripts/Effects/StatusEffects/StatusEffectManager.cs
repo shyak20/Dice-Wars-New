@@ -102,7 +102,7 @@ public class StatusEffectManager : MonoBehaviour
         return instance?.Stacks ?? 0;
     }
 
-    /// <summary>Multiplies stacks of the first effect of type T (e.g. Burn ×2 for Fanning Flames).</summary>
+    /// <summary>Multiplies stacks of the first effect of type T (first matching instance only).</summary>
     public void MultiplyStacks<T>(int multiplier, StatusEffectContext ctx) where T : StatusEffectSO
     {
         foreach (var effect in effects)
@@ -117,6 +117,45 @@ public class StatusEffectManager : MonoBehaviour
                 return;
             }
         }
+    }
+
+    /// <summary>Multiplies every <see cref="BurnEffectSO"/> on this manager: each instance’s stacks become stacks × <paramref name="multiplier"/>.</summary>
+    public void MultiplyAllBurnStacks(int multiplier, StatusEffectContext ctx)
+    {
+        if (multiplier <= 1) return;
+        var changed = false;
+        for (var i = 0; i < effects.Count; i++)
+        {
+            var effect = effects[i];
+            if (effect?.Definition is not BurnEffectSO) continue;
+            if (effect.Stacks <= 0) continue;
+            var delta = effect.Stacks * (multiplier - 1);
+            if (delta <= 0) continue;
+            effect.AddStacks(delta);
+            changed = true;
+        }
+
+        if (changed)
+            NotifyChanged();
+    }
+
+    /// <summary>Removes every <see cref="BurnEffectSO"/> (all stacks each). Returns total stacks removed.</summary>
+    public int RemoveAllBurnStacks(StatusEffectContext ctx)
+    {
+        var total = 0;
+        for (var i = effects.Count - 1; i >= 0; i--)
+        {
+            var inst = effects[i];
+            if (inst?.Definition is not BurnEffectSO) continue;
+            total += inst.Stacks;
+            inst.Definition.OnRemove(inst, ctx);
+            effects.RemoveAt(i);
+        }
+
+        if (total > 0)
+            NotifyChanged();
+
+        return total;
     }
 
     public bool HasEffect<T>() where T : StatusEffectSO

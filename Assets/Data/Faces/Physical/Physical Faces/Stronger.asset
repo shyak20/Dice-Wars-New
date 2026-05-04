@@ -16,11 +16,11 @@ MonoBehaviour:
   description: Harness 1 Damage \nHarness +1 Strength
   descriptionLines:
   - Deal <style=Attack>4</style>
-  - Deal 5 Damage for every <style=Strength>Strength</style> you have
+  - Deal 4 additional Damage for every <style=Strength>Strength</style> you have
   value: 4
   type: 0
   faceMaterial: {fileID: 2100000, guid: e7f2e895d671c5343bdd66a43248d860, type: 2}
-  rarity: 0
+  rarity: 2
   damage: 4
   damageAttackTimes: 1
   armor: 0
@@ -35,4 +35,4 @@ MonoBehaviour:
     - rid: 6494956392264499284
       type: {class: StrengthDamagePerStackOverrideModifier, ns: , asm: Assembly-CSharp}
       data:
-        damagePerStrength: 5
+        damagePerStrength: 4

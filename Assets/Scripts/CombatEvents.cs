@@ -72,6 +72,9 @@ public static class CombatEvents
     public static Action OnPlayerVictory;
     public static Action OnPlayerDefeat;
 
+    /// <summary>Player armor points destroyed by a single <see cref="PlayerDamageSource.EnemyPhysicalAttack"/> hit (not HP loss).</summary>
+    public static Action<int> OnPlayerArmorLostToEnemyPhysicalAttack;
+
     /// <summary>Floating damage UI: amount hit for, world anchor (e.g. player).</summary>
     public static Action<int, Vector3> OnPlayerDamageNumber;
     /// <summary>Floating damage UI: amount, world anchor, which enemy was hit, and presentation channel (physical vs burn).</summary>

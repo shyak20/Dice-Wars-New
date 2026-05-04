@@ -10,6 +10,9 @@ public class TurnRegistry
     public int AccumulatedArmor { get; private set; }
     public int BurnAppliedThisTurn { get; private set; }
 
+    /// <summary>When true, the next committed <see cref="DieType.Fire"/> face doubles enemy-target <see cref="BurnEffectSO"/> stacks from that resolve (then cleared).</summary>
+    public bool PendingNextFireRollDoubleEnemyBurn { get; set; }
+
     /// <summary>
     /// Queued one-shot multiplier for the next eligible roll result this turn.
     /// Applied in <see cref="CombatManager"/> before the face is recorded.
@@ -34,6 +37,7 @@ public class TurnRegistry
         AccumulatedPhysicalDamage = 0;
         AccumulatedArmor = 0;
         BurnAppliedThisTurn = 0;
+        PendingNextFireRollDoubleEnemyBurn = false;
         NextRollMultiplierActive = false;
         NextRollMultiplyDamage = false;
         NextRollMultiplyArmor = false;

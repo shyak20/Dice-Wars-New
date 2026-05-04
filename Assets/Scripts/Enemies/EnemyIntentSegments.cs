@@ -69,6 +69,20 @@ public static class EnemyIntentSegments
                 return p.PowerOfferAmount.ToString();
             case AddPowerAction ap:
                 return ap.PowerAmount.ToString();
+            case DamageFromEnemyBurnStacksPercentAction burnPct:
+                return burnPct.DamagePercentOfBurnStacks <= 0 ? "" : $"{burnPct.DamagePercentOfBurnStacks}%";
+            case InstantBurnDamageFromEnemyStacksPercentAction instantBurn:
+                return instantBurn.DealPercentOfBurnStacksAsDamage <= 0 ? "" : $"{instantBurn.DealPercentOfBurnStacksAsDamage}%";
+            case ConsumeAllBurnForMaxHpAction burnToHp:
+                return burnToHp.StacksPerMaxHp <= 0 ? "" : $"/{burnToHp.StacksPerMaxHp}";
+            case ArmorFromEnemyBurnStacksAction armorBurn:
+                return armorBurn.ArmorPercentOfBurnStacks <= 0 ? "" : $"{armorBurn.ArmorPercentOfBurnStacks}%";
+            case BonusArmorBurnWhenEnemyHitsArmorAction struck:
+                return struck.BonusArmor <= 0 ? "" : $"{struck.BonusArmor}";
+            case BonusDamageIfEnemyBurnMeetsThresholdAction burnDmg:
+                return burnDmg.BaseDamage <= 0
+                    ? ""
+                    : $"{burnDmg.BaseDamage}/{burnDmg.BurnStackThreshold}×{burnDmg.DamageMultiplierIfMet}";
             default:
                 return "";
         }
