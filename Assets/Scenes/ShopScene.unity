@@ -679,7 +679,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 79}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!95 &218256565
@@ -1334,7 +1334,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: -9.63}
+  m_SizeDelta: {x: 0, y: -22.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &391490263
 MonoBehaviour:
@@ -1356,7 +1356,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Mr. Pips pit stop
+  m_text: Mr. Pit - Pit Stop Shop
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}
@@ -1383,7 +1383,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 35
+  m_fontSize: 30.9
   m_fontSizeBase: 39.37
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2231,7 +2231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8313726, g: 0.07058824, b: 0.87843144, a: 1}
+  m_Color: {r: 0.08627451, g: 0.078431375, b: 0.07058824, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2461,7 +2461,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -4, y: -4}
+  m_SizeDelta: {x: -8, y: -8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &624388516
 MonoBehaviour:
@@ -2476,7 +2476,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.121568635, g: 0.10196079, b: 0.08627451, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3728,7 +3728,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1144, y: -567.02}
+  m_AnchoredPosition: {x: 1144, y: -444}
   m_SizeDelta: {x: 340.3, y: 163.14}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1006675611
@@ -3780,7 +3780,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1144, y: -567.02}
+  m_AnchoredPosition: {x: 1144, y: -444}
   m_SizeDelta: {x: 340.3, y: 163.14}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1021955734
@@ -7391,7 +7391,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 635.2, y: 186.72}
+  m_AnchoredPosition: {x: -250, y: -91}
   m_SizeDelta: {x: 522.4, y: 306.66}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &2028850147
