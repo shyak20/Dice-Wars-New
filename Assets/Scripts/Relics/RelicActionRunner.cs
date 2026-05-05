@@ -20,6 +20,21 @@ public static class RelicActionRunner
         return ctx.RelicIntAccumulator;
     }
 
+    /// <summary>
+    /// Sum of relic contributions for <see cref="RelicPhases.QueryMaxPowerBonus"/> using deck data (map / UI without <see cref="CombatManager"/>).
+    /// </summary>
+    public static int QueryMaxPowerBonusFromRelics(PlayerDataSO playerData)
+    {
+        var ctx = new GameActionContext
+        {
+            PlayerData = playerData,
+            RelicPhase = RelicPhases.QueryMaxPowerBonus,
+            RelicIntAccumulator = 0
+        };
+        ExecuteAllRelics(ctx);
+        return ctx.RelicIntAccumulator;
+    }
+
     public static int QueryIntMax(string phase, CombatManager combat = null)
     {
         var ctx = combat != null ? combat.BuildRelicContext(null) : BuildMapOnlyContext();

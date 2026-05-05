@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 
 public static class PlayFromMainMenuHotkey
 {
@@ -7,7 +8,13 @@ public static class PlayFromMainMenuHotkey
 
     // Ctrl+G (Windows) / Cmd+G (macOS)
     [MenuItem("Tools/Dice Wars/Play From Main Menu %g")]
-    private static void PlayFromMainMenu()
+    private static void PlayFromMainMenu() => PlayFromMainMenuInternal(clearPlayerPrefs: false);
+
+    // Ctrl+H (Windows) / Cmd+H (macOS) — same as above, then clears all PlayerPrefs before play.
+    [MenuItem("Tools/Dice Wars/Play From Main Menu (Clear PlayerPrefs) %h")]
+    private static void PlayFromMainMenuClearPlayerPrefs() => PlayFromMainMenuInternal(clearPlayerPrefs: true);
+
+    private static void PlayFromMainMenuInternal(bool clearPlayerPrefs)
     {
         if (EditorApplication.isPlaying)
             return;
@@ -15,10 +22,16 @@ public static class PlayFromMainMenuHotkey
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
             return;
 
+        if (clearPlayerPrefs)
+        {
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+        }
+
         var scene = EditorSceneManager.OpenScene(MainMenuScenePath);
         if (!scene.IsValid())
         {
-            UnityEngine.Debug.LogError($"PlayFromMainMenuHotkey: Failed to open scene at '{MainMenuScenePath}'.");
+            Debug.LogError($"PlayFromMainMenuHotkey: Failed to open scene at '{MainMenuScenePath}'.");
             return;
         }
 

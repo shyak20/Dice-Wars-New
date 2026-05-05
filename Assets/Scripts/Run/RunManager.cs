@@ -77,6 +77,9 @@ public class RunManager : MonoBehaviour
     /// <summary>Fired after run HP changes from map overflow, shrine heal, etc. (not every combat frame).</summary>
     public event Action OnRunVitalityChanged;
 
+    /// <summary>Fired when shrine max-power bonus changes (map HUD max-power meter).</summary>
+    public event Action OnRunMaxPowerBudgetChanged;
+
     /// <summary>Relics collected this run (shop, treasure, etc.).</summary>
     public IReadOnlyList<RelicSO> RunRelics => _runRelics;
 
@@ -496,6 +499,7 @@ public class RunManager : MonoBehaviour
         if (amount <= 0)
             return;
         _runShrineBonusMaxPower += amount;
+        OnRunMaxPowerBudgetChanged?.Invoke();
     }
 
     public void HandleVictoryContinueFromCombat()

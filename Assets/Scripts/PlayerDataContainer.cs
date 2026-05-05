@@ -1,8 +1,12 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerDataContainer : MonoBehaviour
 {
+    /// <summary>Fired after <see cref="RuntimeData"/> deck contents change (shop, treasure, dice select, etc.).</summary>
+    public static event Action OnRuntimeDeckChanged;
+
     [SerializeField] private PlayerDataSO sourcePlayerData;
 
     public static PlayerDataContainer Instance { get; private set; }
@@ -46,6 +50,7 @@ public class PlayerDataContainer : MonoBehaviour
         var clone = Instantiate(template);
         clone.name = template.name;
         RuntimeData.currentDeck.Add(clone);
+        OnRuntimeDeckChanged?.Invoke();
     }
 
     private void CloneDeckForRuntime()
@@ -87,5 +92,7 @@ public class PlayerDataContainer : MonoBehaviour
             clone.name = template.name;
             RuntimeData.currentDeck.Add(clone);
         }
+
+        OnRuntimeDeckChanged?.Invoke();
     }
 }

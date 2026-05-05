@@ -552,20 +552,7 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
-        maxPower = playerData.baseMaxPower;
-        if (RunManager.Instance != null)
-            maxPower += RunManager.Instance.RunShrineBonusMaxPower;
-        if (playerData?.currentDeck != null)
-        {
-            for (int i = 2; i < playerData.currentDeck.Count; i++)
-            {
-                var die = playerData.currentDeck[i];
-                if (die != null)
-                    maxPower += die.MaxPowerContribution;
-            }
-        }
-
-        maxPower += RelicActionRunner.QueryIntSum(RelicPhases.QueryMaxPowerBonus, this);
+        maxPower = PlayerMaxPowerForRun.Compute(playerData);
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
     }
