@@ -1365,6 +1365,10 @@ public class CombatManager : MonoBehaviour
         {
             face.Damage = 0;
             face.Armor = 0;
+            face.DamageAttackTimes = 0;
+            face.PowerContributionThisResolve = 0;
+            if (face.Actions != null)
+                face.Actions.Clear();
             if (face.ActionPoolContributions == null) continue;
             for (var i = 0; i < face.ActionPoolContributions.Count; i++)
             {
@@ -1377,6 +1381,10 @@ public class CombatManager : MonoBehaviour
         bonusDamageFromActions = 0;
         bonusArmorFromActions = 0;
         kineticShieldBonus = 0;
+        turnEndActions.Clear();
+        _pendingAfterPhysicalApplyStatuses.Clear();
+        _afterPhysicalDeferredStatusPhaseCompleted = true;
+        _turnRegistry.ResetVolatile();
 
         NotifyAllStoredActionsPoolUI();
         _skipPowerOrbFlightForNextSubmitTurn = true;

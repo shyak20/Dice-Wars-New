@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -38,6 +39,7 @@ public class StoredActionsPoolIcon : MonoBehaviour
     private Coroutine _valueRevealCoroutine;
     private bool _jackpotPostMultiplyRevealInProgress;
     private bool _jackpotPostMultiplyValueTextApplied;
+    private readonly Dictionary<Transform, bool> _defaultChildActiveStates = new Dictionary<Transform, bool>();
 
     public RectTransform FlyTargetRect => (RectTransform)transform;
 
@@ -103,6 +105,7 @@ public class StoredActionsPoolIcon : MonoBehaviour
             jackpotMultiplierRoot.SetActive(false);
         if (bustDestroyRoot != null)
             bustDestroyRoot.SetActive(false);
+        CaptureDefaultChildActiveStates();
     }
 
     /// <summary>
@@ -150,8 +153,52 @@ public class StoredActionsPoolIcon : MonoBehaviour
 
     public void ShowBustDestroyVisual(bool visible)
     {
+        if (bustDestroyRoot == null)
+            return;
+
+        if (visible)
+            DisableAllNonBustVisualChildren();
+        bustDestroyRoot.SetActive(visible);
+    }
+
+    public void RestoreDefaultChildVisualStates()
+    {
+        foreach (var kvp in _defaultChildActiveStates)
+        {
+            if (kvp.Key == null) continue;
+            kvp.Key.gameObject.SetActive(kvp.Value);
+        }
+    }
+
+    public void ResetToIdleVisualState()
+    {
+        RestoreDefaultChildVisualStates();
+        HideJackpotMultiplierBadge();
         if (bustDestroyRoot != null)
-            bustDestroyRoot.SetActive(visible);
+            bustDestroyRoot.SetActive(false);
+    }
+
+    private void CaptureDefaultChildActiveStates()
+    {
+        _defaultChildActiveStates.Clear();
+        for (var i = 0; i < transform.childCount; i++)
+        {
+            var child = transform.GetChild(i);
+            if (child == null) continue;
+            _defaultChildActiveStates[child] = child.gameObject.activeSelf;
+        }
+    }
+
+    private void DisableAllNonBustVisualChildren()
+    {
+        var bustTransform = bustDestroyRoot != null ? bustDestroyRoot.transform : null;
+        for (var i = 0; i < transform.childCount; i++)
+        {
+            var child = transform.GetChild(i);
+            if (child == null || child == bustTransform)
+                continue;
+            child.gameObject.SetActive(false);
+        }
     }
 
     private IEnumerator CoJackpotPostMultiplyValueReveal(int newValue, float delayAfterJackpotStart)

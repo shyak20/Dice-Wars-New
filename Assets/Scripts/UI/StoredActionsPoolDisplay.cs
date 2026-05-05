@@ -165,6 +165,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
 
         displayedPools[key] = v;
         poolIcon.gameObject.SetActive(true);
+        poolIcon.ResetToIdleVisualState();
         poolIcon.SetPoolSprite(GetPoolRowSprite(key));
         poolIcon.SetRowBackground(GetPoolRowBackground(key));
         poolIcon.SetValue(v);
@@ -217,6 +218,9 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         return list;
     }
 
+    /// <summary>Visible rows in layout order from left to right (or top to bottom for vertical stacks).</summary>
+    public List<StoredActionsPoolIcon> GetVisiblePoolIconsInLayoutOrder() => GetVisiblePoolIconsTopToBottom();
+
     public void HideAllBustDestroyVisuals()
     {
         if (iconMap == null) return;
@@ -225,6 +229,13 @@ public class StoredActionsPoolDisplay : MonoBehaviour
             if (kvp.Value == null) continue;
             kvp.Value.ShowBustDestroyVisual(false);
         }
+    }
+
+    public void RestoreAllIconDefaultChildStates()
+    {
+        if (iconMap == null) return;
+        foreach (var kvp in iconMap)
+            kvp.Value?.RestoreDefaultChildVisualStates();
     }
 
     public void FinishJackpotPresentation(Dictionary<PoolRowKey, int> valuesAfter)

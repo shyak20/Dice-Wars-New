@@ -12,6 +12,8 @@ public sealed class BustPresentationController : MonoBehaviour
     [SerializeField, Min(0f)] private float waitBeforeExplosion = 0.35f;
     [Tooltip("Realtime delay between each element in the stored-actions pool.")]
     [SerializeField, Min(0f)] private float delayBetweenElementDestroy = 0.08f;
+    [Tooltip("After the last element starts its destroy visual, wait this long before resuming combat flow.")]
+    [SerializeField, Min(0f)] private float delayPostAnimation = 0.2f;
     [Tooltip("Shown while bust is being presented.")]
     [SerializeField] private GameObject bustPanel;
 
@@ -57,7 +59,7 @@ public sealed class BustPresentationController : MonoBehaviour
 
         if (storedActionsPoolDisplay != null)
         {
-            var icons = storedActionsPoolDisplay.GetVisiblePoolIconsTopToBottom();
+            var icons = storedActionsPoolDisplay.GetVisiblePoolIconsInLayoutOrder();
             for (var i = 0; i < icons.Count; i++)
             {
                 var icon = icons[i];
@@ -69,9 +71,13 @@ public sealed class BustPresentationController : MonoBehaviour
             }
         }
 
+        if (delayPostAnimation > 0f)
+            yield return new WaitForSecondsRealtime(delayPostAnimation);
+
         CombatEvents.OnBustResolved?.Invoke();
 
         storedActionsPoolDisplay?.HideAllBustDestroyVisuals();
+        storedActionsPoolDisplay?.RestoreAllIconDefaultChildStates();
         if (bustPanel != null)
             bustPanel.SetActive(false);
         _routine = null;
