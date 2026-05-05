@@ -18,6 +18,10 @@ public class StoredActionsPoolIcon : MonoBehaviour
     [Tooltip("TMP format string; {0} is replaced by the jackpot multiply amount (integer).")]
     [SerializeField] private string jackpotMultiplierTextFormat = "×{0}";
 
+    [Header("Bust presentation (optional)")]
+    [Tooltip("Shown when this pooled row is destroyed during bust presentation.")]
+    [SerializeField] private GameObject bustDestroyRoot;
+
     [Header("Jackpot value bump (optional)")]
     [Tooltip("Background behind the amount text — scaled up, then the multiplied value is shown, then scale returns.")]
     [SerializeField] private Transform valueAmountBackgroundRoot;
@@ -97,6 +101,8 @@ public class StoredActionsPoolIcon : MonoBehaviour
     {
         if (jackpotMultiplierRoot != null)
             jackpotMultiplierRoot.SetActive(false);
+        if (bustDestroyRoot != null)
+            bustDestroyRoot.SetActive(false);
     }
 
     /// <summary>
@@ -141,6 +147,12 @@ public class StoredActionsPoolIcon : MonoBehaviour
     }
 
     private void OnDisable() => CancelJackpotValueReveal();
+
+    public void ShowBustDestroyVisual(bool visible)
+    {
+        if (bustDestroyRoot != null)
+            bustDestroyRoot.SetActive(visible);
+    }
 
     private IEnumerator CoJackpotPostMultiplyValueReveal(int newValue, float delayAfterJackpotStart)
     {

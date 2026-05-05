@@ -217,6 +217,16 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         return list;
     }
 
+    public void HideAllBustDestroyVisuals()
+    {
+        if (iconMap == null) return;
+        foreach (var kvp in iconMap)
+        {
+            if (kvp.Value == null) continue;
+            kvp.Value.ShowBustDestroyVisual(false);
+        }
+    }
+
     public void FinishJackpotPresentation(Dictionary<PoolRowKey, int> valuesAfter)
     {
         if (iconMap == null) return;

@@ -322,10 +322,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "If (and when) you encounter the horrors listed above, please tell me all
-    about it. \nDon't hold back on anything. Whether you want to offer constructive
-    criticism or just tell me that the UI gave you a mild headache, I want to hear
-    it all."
+  m_text: "If (and when) you encounter any the horrors listed above, or any other
+    feedback you have, please gather it all and tell me all about it. \nDon't hold
+    back on anything. Whether you want to offer constructive criticism or just tell
+    me that the UI gave you a mild headache, I want to hear it all."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
@@ -27420,7 +27420,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -194}
+  m_AnchoredPosition: {x: 0, y: -235}
   m_SizeDelta: {x: 1563.0647, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1784680623

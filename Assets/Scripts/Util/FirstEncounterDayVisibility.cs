@@ -38,6 +38,8 @@ public class FirstEncounterDayVisibility : MonoBehaviour
 
         if (IsAlreadyConsumed())
             gameObject.SetActive(false);
+        else
+            gameObject.SetActive(true);
     }
 
     private void OnEnable()

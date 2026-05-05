@@ -29,13 +29,6 @@ public class CombatUIController : MonoBehaviour
     public TMP_Text powerText;
     public TMP_Text poolText;
 
-    [Header("Bust Panel")]
-    [Tooltip("Shown when the player busts; stays visible for bustResolveAfterSeconds, then bust clears automatically.")]
-    public GameObject bustPanel;
-    [SerializeField] [Min(0f)] private float bustResolveAfterSeconds = 2f;
-
-    private Coroutine _bustResolveRoutine;
-
     [Header("Die Tooltip (Fight Scene)")]
     [SerializeField] private GameObject dieTooltipPanel;
     [SerializeField] private Transform dieTooltipSlotContainer;
@@ -76,7 +69,6 @@ public class CombatUIController : MonoBehaviour
 
         CombatEvents.OnPowerChanged += UpdatePowerUI;
         CombatEvents.OnStoredActionsPoolUpdated += UpdateStoredActionsPoolSummaryText;
-        CombatEvents.OnBustOccurred += ShowBustPanel;
         CombatEvents.OnStateChanged += HandleStateChange;
         CombatEvents.OnRollsRemainingChanged += UpdateRollsUI;
         CombatEvents.OnRerollDieSelectionModeChanged += HandleRerollDieSelectionMode;
@@ -84,10 +76,8 @@ public class CombatUIController : MonoBehaviour
 
     private void OnDisable()
     {
-        StopBustResolveRoutine();
         CombatEvents.OnPowerChanged -= UpdatePowerUI;
         CombatEvents.OnStoredActionsPoolUpdated -= UpdateStoredActionsPoolSummaryText;
-        CombatEvents.OnBustOccurred -= ShowBustPanel;
         CombatEvents.OnStateChanged -= HandleStateChange;
         CombatEvents.OnRollsRemainingChanged -= UpdateRollsUI;
         CombatEvents.OnRerollDieSelectionModeChanged -= HandleRerollDieSelectionMode;
@@ -112,7 +102,6 @@ public class CombatUIController : MonoBehaviour
 
     private void Start()
     {
-        if (bustPanel != null) bustPanel.SetActive(false);
         HideDieTooltip();
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
@@ -548,39 +537,6 @@ public class CombatUIController : MonoBehaviour
         }
 
         poolText.text = string.Join("  |  ", parts);
-    }
-
-    private void ShowBustPanel(int currentDmg, int currentArm)
-    {
-        StopBustResolveRoutine();
-        _bustResolveRoutine = StartCoroutine(CoBustDisplayThenResolve());
-    }
-
-    private void StopBustResolveRoutine()
-    {
-        if (_bustResolveRoutine != null)
-        {
-            StopCoroutine(_bustResolveRoutine);
-            _bustResolveRoutine = null;
-        }
-        if (bustPanel != null)
-            bustPanel.SetActive(false);
-    }
-
-    private IEnumerator CoBustDisplayThenResolve()
-    {
-        if (bustPanel != null)
-            bustPanel.SetActive(true);
-
-        if (bustResolveAfterSeconds > 0f)
-            yield return new WaitForSeconds(bustResolveAfterSeconds);
-
-        CombatEvents.OnBustResolved?.Invoke();
-
-        if (bustPanel != null)
-            bustPanel.SetActive(false);
-
-        _bustResolveRoutine = null;
     }
 
     private void UpdateRollsUI(int remaining, int max)
