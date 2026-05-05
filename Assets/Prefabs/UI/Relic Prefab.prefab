@@ -130,6 +130,7 @@ MonoBehaviour:
   iconImage: {fileID: 2429217144537247222}
   benefitTextBackground: {fileID: 1727655445512271262}
   benefitText: {fileID: 5933963492165973454}
+  relicTooltipTrigger: {fileID: 0}
 --- !u!1 &3847672779128930050
 GameObject:
   m_ObjectHideFlags: 0
@@ -284,7 +285,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1440367322657368488
 RectTransform:
   m_ObjectHideFlags: 0

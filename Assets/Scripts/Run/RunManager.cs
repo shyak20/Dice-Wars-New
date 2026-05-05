@@ -247,6 +247,16 @@ public class RunManager : MonoBehaviour
         OnRunRelicsChanged?.Invoke();
     }
 
+    public bool RemoveRunRelic(RelicSO relic)
+    {
+        if (relic == null)
+            return false;
+        var removed = _runRelics.Remove(relic);
+        if (removed)
+            OnRunRelicsChanged?.Invoke();
+        return removed;
+    }
+
     void ClearRunRelics()
     {
         _runRelics.Clear();
@@ -482,11 +492,16 @@ public class RunManager : MonoBehaviour
         if (damage <= 0)
             return;
 
+        var reductionPercent = Mathf.Clamp(RelicActionRunner.QueryIntMax(RelicPhases.QueryMapCorruptionDamageReductionPercent), 0, 100);
+        var finalDamage = Mathf.Max(0, Mathf.CeilToInt(damage * (1f - reductionPercent / 100f)));
+        if (finalDamage <= 0)
+            return;
+
         EnsureRunVitalityBaseline();
-        _runCurrentHp = Mathf.Max(0, _runCurrentHp - damage);
+        _runCurrentHp = Mathf.Max(0, _runCurrentHp - finalDamage);
         NotifyRunVitalityChanged();
 
-        CombatEvents.OnPlayerDamageNumber?.Invoke(damage, damageNumberWorldAnchor);
+        CombatEvents.OnPlayerDamageNumber?.Invoke(finalDamage, damageNumberWorldAnchor);
 
         if (_runCurrentHp <= 0)
             EndRunFromPlayerDefeat();

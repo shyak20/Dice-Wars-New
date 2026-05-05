@@ -60,6 +60,7 @@ public static class RelicActionRunner
         ctx.RelicPhase = RelicPhases.TryConsumeFreeBust;
         ctx.RelicBoolAccumulator = false;
         ExecuteAllRelics(ctx);
+        TryDestroyPendingStormOrbRelic(ctx.RelicRuntime);
         return ctx.RelicBoolAccumulator;
     }
 
@@ -90,4 +91,14 @@ public static class RelicActionRunner
     }
 
     static GameActionContext BuildMapOnlyContext() => new GameActionContext();
+
+    static void TryDestroyPendingStormOrbRelic(RelicRuntimeState runtime)
+    {
+        if (runtime?.PendingDestroyRelicAfterBust == null || RunManager.Instance == null)
+            return;
+
+        var relic = runtime.PendingDestroyRelicAfterBust;
+        runtime.PendingDestroyRelicAfterBust = null;
+        RunManager.Instance.RemoveRunRelic(relic);
+    }
 }

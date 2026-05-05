@@ -1198,7 +1198,7 @@ MonoBehaviour:
   dieOfferPrefab: {fileID: 378967649032426248, guid: 0c149315d829d56499af46989932d6f6, type: 3}
   playerDiceContainer: {fileID: 647609996}
   playerDieButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
-  playerRelicsContainer: {fileID: 1032492668}
+  playerRelicsContainer: {fileID: 629293719}
   playerRelicSlotPrefab: {fileID: 5949446222804244489, guid: e340b9eb73e0c9c4593670a33081ce49, type: 3}
   dieTooltipOverlay: {fileID: 1037816753}
   shopGemHoverTooltipPanel: {fileID: 1021955734}
@@ -2512,7 +2512,6 @@ GameObject:
   - component: {fileID: 629293719}
   - component: {fileID: 629293721}
   - component: {fileID: 629293720}
-  - component: {fileID: 629293722}
   m_Layer: 0
   m_Name: Relics Layout
   m_TagString: Untagged
@@ -2578,21 +2577,6 @@ MonoBehaviour:
   m_Spacing: {x: 7, y: 7}
   m_Constraint: 0
   m_ConstraintCount: 2
---- !u!114 &629293722
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 629293718}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: caa5212ff838d764dbd4df05b53597e3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RunRelicBarUI
-  relicsParent: {fileID: 0}
-  iconParent: {fileID: 629293719}
-  slotPrefab: {fileID: 3198328362955386366, guid: e340b9eb73e0c9c4593670a33081ce49, type: 3}
 --- !u!1 &642922086
 GameObject:
   m_ObjectHideFlags: 0

@@ -53,11 +53,19 @@ public class UIShopWindow : MonoBehaviour
     void BuildOffers()
     {
         _face.Clear(); _gem.Clear(); _relic.Clear(); _die.Clear();
+        var shopDiscountPercent = Mathf.Clamp(RelicActionRunner.QueryIntMax(RelicPhases.QueryShopDiscountPercent), 0, 95);
         var preferred = BuildPreferredTypes();
-        if (faceLootTable != null) foreach (var f in faceLootTable.GetRandomRewards(faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = FacePriceUtility.GetFaceGoldPrice(f) });
-        if (gemLootTable != null) foreach (var g in gemLootTable.GetRandomGems(gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = GemPriceUtility.GetGemGoldPrice(g) });
-        if (relicLootTable != null) foreach (var r in relicLootTable.GetRandomRelics(relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = RelicPriceUtility.GetRelicGoldPrice(r) });
-        if (dieLootTable != null) foreach (var d in dieLootTable.GetRandomDice(dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = d.shopGoldPrice > 0 ? d.shopGoldPrice : fallbackDiePrice });
+        if (faceLootTable != null) foreach (var f in faceLootTable.GetRandomRewards(faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = ApplyDiscount(FacePriceUtility.GetFaceGoldPrice(f), shopDiscountPercent) });
+        if (gemLootTable != null) foreach (var g in gemLootTable.GetRandomGems(gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = ApplyDiscount(GemPriceUtility.GetGemGoldPrice(g), shopDiscountPercent) });
+        if (relicLootTable != null) foreach (var r in relicLootTable.GetRandomRelics(relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = ApplyDiscount(RelicPriceUtility.GetRelicGoldPrice(r), shopDiscountPercent) });
+        if (dieLootTable != null) foreach (var d in dieLootTable.GetRandomDice(dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = ApplyDiscount(d.shopGoldPrice > 0 ? d.shopGoldPrice : fallbackDiePrice, shopDiscountPercent) });
+    }
+
+    static int ApplyDiscount(int basePrice, int discountPercent)
+    {
+        if (basePrice <= 0) return 0;
+        if (discountPercent <= 0) return basePrice;
+        return Mathf.Max(1, Mathf.CeilToInt(basePrice * (1f - discountPercent / 100f)));
     }
 
     HashSet<DieType> BuildPreferredTypes()

@@ -10,20 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe6c96d825a320046b4015c149b8a136, type: 3}
-  m_Name: BulBul 3
+  m_Name: Spell Book
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
-  title: BulBul 3
-  description: This is Bulbul 3
-  rarity: 0
-  icon: {fileID: 21300000, guid: 16b4a2bc8995dfc46b9e3f50b36fd906, type: 3}
-  shopGoldPrice: 50
+  title: Spell Book
+  description: Perfect Strike multiply Outcome by 4
+  rarity: 1
+  icon: {fileID: 21300000, guid: 21fafb942e3818e45a5db58c229ca228, type: 3}
+  shopGoldPrice: 0
   barBenefitDisplayValue: 0
   actions:
-  - rid: 6494956229082480793
+  - rid: 6494956586993451283
   references:
     version: 2
     RefIds:
-    - rid: 6494956229082480793
-      type: {class: RelicMaxHpOnPerfectAction, ns: , asm: Assembly-CSharp}
+    - rid: 6494956586993451283
+      type: {class: RelicPerfectStrikeMultiplierAction, ns: , asm: Assembly-CSharp}
       data:
-        maxHpGain: 5
+        activateImmediately: 1
+        multiplier: 4

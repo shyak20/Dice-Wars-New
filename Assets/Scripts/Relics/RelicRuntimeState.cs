@@ -3,4 +3,8 @@ public sealed class RelicRuntimeState
 {
     public bool DoubleFivePrimed;
     public bool FreeBustConsumed;
+    public bool PerfectAtMaxPlusOneConsumed;
+    public bool RuneTabletConsumedThisTurn;
+    public int StormOrbStacksRemaining = -1;
+    public RelicSO PendingDestroyRelicAfterBust;
 }

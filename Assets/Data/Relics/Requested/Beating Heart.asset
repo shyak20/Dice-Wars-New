@@ -10,21 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe6c96d825a320046b4015c149b8a136, type: 3}
-  m_Name: BulBul 2
+  m_Name: Beating Heart
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
-  title: BulBul 2
-  description: This is Bulbul 2
-  rarity: 0
-  icon: {fileID: 21300000, guid: a9fcd22149f1cb6459935c4769d9baf5, type: 3}
-  shopGoldPrice: 50
+  title: Beating Heart
+  description: Gain 1 Max HP at the end of each combat
+  rarity: 1
+  icon: {fileID: 21300000, guid: 754a71786e905f747a1cbdf8dfc0bfac, type: 3}
+  shopGoldPrice: 0
   barBenefitDisplayValue: 0
   actions:
-  - rid: 6494956229082480792
+  - rid: 6494956586993451275
   references:
     version: 2
     RefIds:
-    - rid: 6494956229082480792
-      type: {class: RelicAddArmorOnFaceValueAction, ns: , asm: Assembly-CSharp}
+    - rid: 6494956586993451275
+      type: {class: RelicMaxHpOnCombatVictoryAction, ns: , asm: Assembly-CSharp}
       data:
-        faceValue: 3
-        bonusArmor: 3
+        activateImmediately: 1
+        maxHpGain: 1

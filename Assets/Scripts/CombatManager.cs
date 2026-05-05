@@ -190,6 +190,7 @@ public class CombatManager : MonoBehaviour
     }
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
     public bool IsResolvingFirstRollOfTurn() => currentBatchIsFirstRollOfTurn;
+    public int GetRollsRemaining() => rollsRemaining;
     public void AddBonusDamageFromAction(int amount)
     {
         if (amount <= 0) return;
@@ -470,7 +471,9 @@ public class CombatManager : MonoBehaviour
         _burnStacksPerArmorLostFromEnemyPhysical = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
-        maxRolls = playerData.maxRollsPerTurn;
+        maxRolls = playerData.maxRollsPerTurn + RelicActionRunner.QueryIntSum(RelicPhases.QueryMaxRollsBonus, this);
+        if (maxRolls < 1)
+            maxRolls = 1;
         rollsRemaining = maxRolls;
         currentBatchIsFirstRollOfTurn = false;
         CalculateMaxPower();
@@ -1272,7 +1275,9 @@ public class CombatManager : MonoBehaviour
         var perfectAtMax = currentPower == maxPower;
         var perfectAtMaxMinusOne = maxPower > 1 && currentPower == maxPower - 1 &&
                                    RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this);
-        if (perfectAtMax || perfectAtMaxMinusOne)
+        var perfectAtMaxPlusOne = currentPower == maxPower + 1 &&
+                                  RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this);
+        if (perfectAtMax || perfectAtMaxMinusOne || perfectAtMaxPlusOne)
         {
             var poolsBefore = SnapshotStoredActionsPool();
             appliedMultiplier = GetPerfectStrikeBaseMultiplier();
@@ -1464,6 +1469,8 @@ public class CombatManager : MonoBehaviour
         _afterPhysicalDeferredStatusPhaseCompleted = false;
         ChangeState(CombatState.TurnEnd);
         var ctx = BuildContext();
+
+        RelicActionRunner.RunPhase(this, RelicPhases.BeforeSubmitTurn);
 
         ExecuteDeferredTurnEndActionsForSubmitTurn(beforePlayerPhysicalDamage: true);
 
@@ -1788,6 +1795,7 @@ public class CombatManager : MonoBehaviour
             EnemyBonusRewardResolver.RollAndGrant(activeEnemy.enemyData);
         }
 
+        RelicActionRunner.RunPhase(this, RelicPhases.OnCombatVictory);
         CombatEvents.OnPlayerVictory?.Invoke();
         return true;
     }

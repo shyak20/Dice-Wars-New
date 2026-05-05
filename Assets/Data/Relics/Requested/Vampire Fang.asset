@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe6c96d825a320046b4015c149b8a136, type: 3}
+  m_Name: Vampire Fang
+  m_EditorClassIdentifier: Assembly-CSharp::RelicSO
+  title: Vampire Fang
+  description: While your HP is below 10% your attacks are doubled
+  rarity: 1
+  icon: {fileID: 21300000, guid: 5dcac4666954359489a3a9e4f5ac38ca, type: 3}
+  shopGoldPrice: 0
+  barBenefitDisplayValue: 0
+  actions:
+  - rid: 6494956586993451269
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956586993451269
+      type: {class: RelicDamageBelowHpPercentAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 1
+        hpThresholdPercent: 10
+        multiplier: 2

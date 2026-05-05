@@ -17,6 +17,8 @@ public sealed class ShopOfferTooltipBindings
 public class UIShopOfferCardView : MonoBehaviour
 {
     [SerializeField] Image iconImage;
+    [Tooltip("Optional shadow holder. When assigned, receives the same icon sprite/visibility as iconImage.")]
+    [SerializeField] GameObject iconShadowObject;
     [SerializeField] TMP_Text nameText;
     [SerializeField] TMP_Text descriptionText;
     [SerializeField] TMP_Text priceText;
@@ -32,9 +34,17 @@ public class UIShopOfferCardView : MonoBehaviour
     int _price;
     bool _sold;
     Action _onBuy;
+    Image _iconShadowImage;
 
     void Awake()
     {
+        if (iconShadowObject != null)
+        {
+            _iconShadowImage = iconShadowObject.GetComponent<Image>();
+            if (_iconShadowImage == null)
+                Debug.LogError("UIShopOfferCardView: iconShadowObject must have an Image component.", this);
+        }
+
         if (buyButton != null)
         {
             buyButton.onClick.AddListener(() => _onBuy?.Invoke());
@@ -81,6 +91,12 @@ public class UIShopOfferCardView : MonoBehaviour
             iconImage.sprite = icon;
             iconImage.enabled = icon != null;
             iconImage.color = icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+        }
+        if (_iconShadowImage != null)
+        {
+            _iconShadowImage.sprite = icon;
+            _iconShadowImage.enabled = icon != null;
+            _iconShadowImage.color = icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
         }
         if (nameText != null) nameText.text = title ?? "";
         if (descriptionText != null) descriptionText.text = desc ?? "";
