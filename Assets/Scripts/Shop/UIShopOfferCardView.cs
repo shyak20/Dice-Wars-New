@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 /// <summary>Optional hover data for shop offers (gem / relic / die). Wired from <see cref="UIShopWindow"/>.</summary>
 public sealed class ShopOfferTooltipBindings
@@ -51,6 +52,8 @@ public class UIShopOfferCardView : MonoBehaviour
             SetupBuyButtonHover();
         }
 
+        EnsureHoverVisualDoesNotBlockRaycasts();
+
         SetHoverVisible(false);
     }
 
@@ -80,6 +83,16 @@ public class UIShopOfferCardView : MonoBehaviour
             hoverOnBuyButton.SetActive(visible);
     }
 
+    void EnsureHoverVisualDoesNotBlockRaycasts()
+    {
+        if (hoverOnBuyButton == null) return;
+
+        var graphics = new List<Graphic>();
+        hoverOnBuyButton.GetComponentsInChildren(true, graphics);
+        for (var i = 0; i < graphics.Count; i++)
+            graphics[i].raycastTarget = false;
+    }
+
     public void Bind(string title, string desc, Sprite icon, int price, bool canAfford, bool sold, Action onBuy, ShopOfferTooltipBindings tooltips = null)
     {
         _price = price;
@@ -96,7 +109,6 @@ public class UIShopOfferCardView : MonoBehaviour
         {
             _iconShadowImage.sprite = icon;
             _iconShadowImage.enabled = icon != null;
-            _iconShadowImage.color = icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
         }
         if (nameText != null) nameText.text = title ?? "";
         if (descriptionText != null) descriptionText.text = desc ?? "";

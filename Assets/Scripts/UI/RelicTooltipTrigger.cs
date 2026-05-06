@@ -10,6 +10,8 @@ using UnityEngine.UI;
 public sealed class RelicTooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private RelicTooltipUI tooltipOverride;
+    [SerializeField] private bool showTooltipAboveReference;
+    [SerializeField] private Vector2 tooltipScreenOffset;
 
     private RelicSO _relic;
     private Graphic _graphic;
@@ -28,6 +30,11 @@ public sealed class RelicTooltipTrigger : MonoBehaviour, IPointerEnterHandler, I
     }
 
     public void SetRelic(RelicSO relic) => _relic = relic;
+    public void ConfigurePositioning(bool showAboveReference, Vector2 screenOffset)
+    {
+        showTooltipAboveReference = showAboveReference;
+        tooltipScreenOffset = screenOffset;
+    }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
@@ -39,10 +46,22 @@ public sealed class RelicTooltipTrigger : MonoBehaviour, IPointerEnterHandler, I
             return;
         }
 
-        t.Show(_relic, _graphic.rectTransform);
+        t.Show(_relic, _graphic.rectTransform, showTooltipAboveReference, tooltipScreenOffset);
     }
 
     public void OnPointerExit(PointerEventData eventData) => Resolve()?.Hide();
 
-    private RelicTooltipUI Resolve() => tooltipOverride != null ? tooltipOverride : RelicTooltipUI.Instance;
+    private RelicTooltipUI Resolve()
+    {
+        if (tooltipOverride != null)
+            return tooltipOverride;
+        if (RelicTooltipUI.Instance != null)
+            return RelicTooltipUI.Instance;
+
+        // Fallback for cases where singleton was not initialized yet (inactive UI root, scene load order).
+        var found = FindObjectOfType<RelicTooltipUI>(true);
+        if (found != null)
+            tooltipOverride = found;
+        return found;
+    }
 }

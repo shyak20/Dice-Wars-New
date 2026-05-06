@@ -131,6 +131,8 @@ MonoBehaviour:
   benefitTextBackground: {fileID: 1727655445512271262}
   benefitText: {fileID: 5933963492165973454}
   relicTooltipTrigger: {fileID: 0}
+  showTooltipAboveSlot: 1
+  tooltipScreenOffset: {x: 30, y: 65}
 --- !u!1 &3847672779128930050
 GameObject:
   m_ObjectHideFlags: 0

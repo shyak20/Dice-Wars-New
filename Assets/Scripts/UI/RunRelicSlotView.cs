@@ -10,6 +10,11 @@ public sealed class RunRelicSlotView : MonoBehaviour
     [SerializeField] private TMP_Text benefitText;
     [Tooltip("Optional; add RelicTooltipTrigger on this object or the icon Image. Hover shows RelicTooltipUI.")]
     [SerializeField] private RelicTooltipTrigger relicTooltipTrigger;
+    [Tooltip("When true, RunRelicSlotView hover shows tooltip above the slot instead of centered.")]
+    [SerializeField] private bool showTooltipAboveSlot = true;
+    [Tooltip("Screen-space pixel offset applied to tooltip when hovering RunRelicSlotView.")]
+    [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
+    private RelicTooltipTrigger _runtimeTooltipTrigger;
 
     public void Bind(RelicSO relic)
     {
@@ -33,7 +38,30 @@ public sealed class RunRelicSlotView : MonoBehaviour
                 benefitText.text = relic.barBenefitDisplayValue.ToString();
         }
 
+        var trigger = EnsureTooltipTrigger();
+        if (trigger != null)
+        {
+            trigger.ConfigurePositioning(showTooltipAboveSlot, tooltipScreenOffset);
+            trigger.SetRelic(relic);
+        }
+    }
+
+    private RelicTooltipTrigger EnsureTooltipTrigger()
+    {
+        if (_runtimeTooltipTrigger != null)
+            return _runtimeTooltipTrigger;
         if (relicTooltipTrigger != null)
-            relicTooltipTrigger.SetRelic(relic);
+        {
+            _runtimeTooltipTrigger = relicTooltipTrigger;
+            return _runtimeTooltipTrigger;
+        }
+
+        if (iconImage == null)
+            return null;
+
+        _runtimeTooltipTrigger = iconImage.GetComponent<RelicTooltipTrigger>() ??
+                                 iconImage.gameObject.AddComponent<RelicTooltipTrigger>();
+        relicTooltipTrigger = _runtimeTooltipTrigger;
+        return _runtimeTooltipTrigger;
     }
 }
