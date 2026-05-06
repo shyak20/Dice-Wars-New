@@ -25,6 +25,12 @@ public static class GameIconCatalog
     public static Sprite GetStatusIcon(StatusEffectSO effect) =>
         _active != null ? _active.GetStatusIcon(effect) : null;
 
+    public static Sprite GetEnemyActionIcon(string actionTypeName) =>
+        _active != null ? _active.GetEnemyActionIcon(actionTypeName) : null;
+
+    public static Sprite GetEnemyActionBackground(string actionTypeName) =>
+        _active != null ? _active.GetEnemyActionBackground(actionTypeName) : null;
+
     public static Sprite GetElementBackground(DieType type) =>
         _active != null ? _active.GetElementBackground(type) : null;
 

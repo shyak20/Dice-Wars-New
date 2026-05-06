@@ -17,6 +17,7 @@ public class HoverTooltipPanelUI : MonoBehaviour
     {
         if (panelRoot == null)
             panelRoot = gameObject;
+        EnsurePanelDoesNotBlockRaycasts();
         Hide();
     }
 
@@ -85,5 +86,13 @@ public class HoverTooltipPanelUI : MonoBehaviour
         }
 
         if (panelRoot != null) panelRoot.SetActive(false);
+    }
+
+    private void EnsurePanelDoesNotBlockRaycasts()
+    {
+        if (panelRoot == null) return;
+        var graphics = panelRoot.GetComponentsInChildren<Graphic>(true);
+        for (var i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
     }
 }

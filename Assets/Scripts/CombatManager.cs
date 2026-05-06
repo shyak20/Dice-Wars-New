@@ -51,6 +51,8 @@ public class CombatManager : MonoBehaviour
 
     private int currentPower;
     private int maxPower;
+    private int _enemyMaxPowerReductionThisCombat;
+    private int _enemyMaxPowerMinimumFloor = 1;
     private int overchargeBonus;
     private int appliedMultiplier;
     private int bonusDamageFromActions;
@@ -200,6 +202,20 @@ public class CombatManager : MonoBehaviour
     {
         if (amount <= 0) return;
         bonusArmorFromActions += amount;
+    }
+
+    /// <summary>
+    /// Enemy-intent debuff: reduce player's max power for this combat only.
+    /// Final max power = max(floor, computedBase - totalReduction).
+    /// </summary>
+    public void ApplyEnemyMaxPowerReductionForCombat(int reductionAmount, int minimumAllowedMaxPower)
+    {
+        if (reductionAmount <= 0)
+            return;
+
+        _enemyMaxPowerReductionThisCombat += reductionAmount;
+        _enemyMaxPowerMinimumFloor = Mathf.Max(_enemyMaxPowerMinimumFloor, Mathf.Max(1, minimumAllowedMaxPower));
+        CalculateMaxPower();
     }
 
     /// <summary>Run after enemy HP changes outside normal submit resolution (e.g. instant burn proc from a face action).</summary>
@@ -471,6 +487,8 @@ public class CombatManager : MonoBehaviour
         _burnStacksPerArmorLostFromEnemyPhysical = 0;
         pendingPrecisionChoices.Clear();
         currentPower = 0;
+        _enemyMaxPowerReductionThisCombat = 0;
+        _enemyMaxPowerMinimumFloor = 1;
         maxRolls = playerData.maxRollsPerTurn + RelicActionRunner.QueryIntSum(RelicPhases.QueryMaxRollsBonus, this);
         if (maxRolls < 1)
             maxRolls = 1;
@@ -556,6 +574,9 @@ public class CombatManager : MonoBehaviour
         }
 
         maxPower = PlayerMaxPowerForRun.Compute(playerData);
+        maxPower = Mathf.Max(_enemyMaxPowerMinimumFloor, maxPower - _enemyMaxPowerReductionThisCombat);
+        if (currentPower > maxPower)
+            currentPower = maxPower;
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
     }

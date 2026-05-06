@@ -25,6 +25,8 @@ public class GameIconIndexSO : ScriptableObject
 
     [Header("Actions (keys match ActionVisualId on each action class)")]
     [SerializeField] private List<ActionIconEntry> actionIcons = new List<ActionIconEntry>();
+    [Header("Enemy Actions (keys match action class names, e.g. HealAction)")]
+    [SerializeField] private List<EnemyActionIconEntry> enemyActionIcons = new List<EnemyActionIconEntry>();
 
     [Header("Status effects (buffs & debuffs)")]
     [SerializeField] private List<StatusEffectIconEntry> statusEffectIcons = new List<StatusEffectIconEntry>();
@@ -35,6 +37,15 @@ public class GameIconIndexSO : ScriptableObject
         public ActionVisualId id;
         public Sprite sprite;
         [Tooltip("Optional. Used by GetActionBackground; pool rows resolve backgrounds via die types or status entries (effect name = PoolRowKey).")]
+        public Sprite background;
+    }
+
+    [Serializable]
+    public struct EnemyActionIconEntry
+    {
+        [Tooltip("Selected from all IGameAction types in inspector (stored as type name).")]
+        public string actionTypeName;
+        public Sprite icon;
         public Sprite background;
     }
 
@@ -58,6 +69,8 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<ActionVisualId, Sprite> _actionLookup = new Dictionary<ActionVisualId, Sprite>();
     readonly Dictionary<StatusEffectSO, Sprite> _statusLookup = new Dictionary<StatusEffectSO, Sprite>();
     readonly Dictionary<ActionVisualId, Sprite> _actionBackgroundLookup = new Dictionary<ActionVisualId, Sprite>();
+    readonly Dictionary<string, Sprite> _enemyActionIconLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
+    readonly Dictionary<string, Sprite> _enemyActionBackgroundLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, Sprite> _poolRowBackgroundByStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, StatusEffectTarget> _statusTargetByPoolRowStableId = new Dictionary<string, StatusEffectTarget>(StringComparer.Ordinal);
 
@@ -69,6 +82,8 @@ public class GameIconIndexSO : ScriptableObject
     {
         _actionLookup.Clear();
         _actionBackgroundLookup.Clear();
+        _enemyActionIconLookup.Clear();
+        _enemyActionBackgroundLookup.Clear();
         _poolRowBackgroundByStableId.Clear();
         _statusTargetByPoolRowStableId.Clear();
         foreach (var e in actionIcons)
@@ -77,6 +92,26 @@ public class GameIconIndexSO : ScriptableObject
                 _actionLookup[e.id] = e.sprite;
             if (e.id != ActionVisualId.None && e.background != null)
                 _actionBackgroundLookup[e.id] = e.background;
+        }
+        foreach (var e in enemyActionIcons)
+        {
+            if (string.IsNullOrWhiteSpace(e.actionTypeName)) continue;
+            var key = e.actionTypeName.Trim();
+            if (e.icon != null)
+                _enemyActionIconLookup[key] = e.icon;
+            if (e.background != null)
+                _enemyActionBackgroundLookup[key] = e.background;
+
+            // Backward/forward compatibility: if key is a full type name, also map short type name.
+            var dot = key.LastIndexOf('.');
+            if (dot >= 0 && dot + 1 < key.Length)
+            {
+                var shortName = key.Substring(dot + 1);
+                if (e.icon != null && !_enemyActionIconLookup.ContainsKey(shortName))
+                    _enemyActionIconLookup[shortName] = e.icon;
+                if (e.background != null && !_enemyActionBackgroundLookup.ContainsKey(shortName))
+                    _enemyActionBackgroundLookup[shortName] = e.background;
+            }
         }
 
         _statusLookup.Clear();
@@ -137,6 +172,22 @@ public class GameIconIndexSO : ScriptableObject
         return _actionBackgroundLookup.TryGetValue(id, out var s) ? s : null;
     }
 
+    public Sprite GetEnemyActionIcon(string actionTypeName)
+    {
+        if (string.IsNullOrWhiteSpace(actionTypeName)) return null;
+        if (_enemyActionIconLookup.Count == 0 && enemyActionIcons.Count > 0)
+            RebuildLookups();
+        return _enemyActionIconLookup.TryGetValue(actionTypeName.Trim(), out var s) ? s : null;
+    }
+
+    public Sprite GetEnemyActionBackground(string actionTypeName)
+    {
+        if (string.IsNullOrWhiteSpace(actionTypeName)) return null;
+        if (_enemyActionBackgroundLookup.Count == 0 && enemyActionIcons.Count > 0)
+            RebuildLookups();
+        return _enemyActionBackgroundLookup.TryGetValue(actionTypeName.Trim(), out var s) ? s : null;
+    }
+
     /// <summary>
     /// Resolves a frame behind <see cref="StoredActionsPoolIcon"/> for this pool row
     /// (<see cref="DieType"/> rows or per-status <see cref="StatusEffectIconEntry.poolRowBackground"/> keyed by <c>effect.name</c> as <see cref="PoolRowKey.StableId"/>).
@@ -183,6 +234,14 @@ public class GameIconIndexSO : ScriptableObject
             });
             if (action.background != null)
                 entries.Add(new NamedIconEntry { key = $"Action.{action.id}.Background", sprite = action.background });
+        }
+        foreach (var enemyAction in enemyActionIcons)
+        {
+            if (string.IsNullOrWhiteSpace(enemyAction.actionTypeName))
+                continue;
+            entries.Add(new NamedIconEntry { key = $"EnemyAction.{enemyAction.actionTypeName}.Icon", sprite = enemyAction.icon });
+            if (enemyAction.background != null)
+                entries.Add(new NamedIconEntry { key = $"EnemyAction.{enemyAction.actionTypeName}.Background", sprite = enemyAction.background });
         }
 
         foreach (var status in statusEffectIcons)

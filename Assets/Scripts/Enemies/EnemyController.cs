@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -27,6 +28,8 @@ public class EnemyController : MonoBehaviour
     private int currentHealth;
     private int currentArmor;
     private int currentCycleIndex = 0;
+    private int _currentPhaseIndex;
+    private bool _pendingPhaseAdvance;
     public ReactiveProperty<EnemyActionSO> CurrentIntent = new();
 
     public StatusEffectManager StatusEffects { get; private set; }
@@ -58,6 +61,8 @@ public class EnemyController : MonoBehaviour
         currentHealth = data.maxHealth;
         currentArmor = data.startArmor;
         currentCycleIndex = 0;
+        _currentPhaseIndex = 0;
+        _pendingPhaseAdvance = false;
 
         if (nameText != null) nameText.text = data.enemyName;
 
@@ -146,6 +151,8 @@ public class EnemyController : MonoBehaviour
         {
             Debug.Log($"{enemyData.enemyName} defeated!");
         }
+        else
+            EvaluatePendingPhaseTransitionTrigger();
 
         if (amount > 0)
             CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
@@ -169,6 +176,8 @@ public class EnemyController : MonoBehaviour
         {
             Debug.Log($"{enemyData.enemyName} defeated!");
         }
+        else
+            EvaluatePendingPhaseTransitionTrigger();
 
         if (amount > 0)
             CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
@@ -180,6 +189,14 @@ public class EnemyController : MonoBehaviour
         UpdateUI();
     }
 
+    public void Heal(int amount)
+    {
+        if (amount <= 0 || enemyData == null)
+            return;
+        currentHealth = Mathf.Min(currentHealth + amount, enemyData.maxHealth);
+        UpdateUI();
+    }
+
     public void ResetArmor()
     {
         currentArmor = 0;
@@ -188,17 +205,19 @@ public class EnemyController : MonoBehaviour
 
     public void PrepareNextAction()
     {
-        if (enemyData.actionCycle.Count == 0) return;
+        ApplyPendingPhaseAdvanceIfAny();
+        var activeCycle = GetActiveActionCycle();
+        if (activeCycle == null || activeCycle.Count == 0) return;
 
         if (enemyData.isSequential)
         {
-            CurrentIntent.Value = enemyData.actionCycle[currentCycleIndex];
-            currentCycleIndex = (currentCycleIndex + 1) % enemyData.actionCycle.Count;
+            CurrentIntent.Value = activeCycle[currentCycleIndex];
+            currentCycleIndex = (currentCycleIndex + 1) % activeCycle.Count;
         }
         else
         {
-            int randomIndex = UnityEngine.Random.Range(0, enemyData.actionCycle.Count);
-            CurrentIntent.Value = enemyData.actionCycle[randomIndex];
+            int randomIndex = UnityEngine.Random.Range(0, activeCycle.Count);
+            CurrentIntent.Value = activeCycle[randomIndex];
         }
     }
 
@@ -241,4 +260,60 @@ public class EnemyController : MonoBehaviour
     }
 
     public EnemyActionSO GetCurrentAction() => CurrentIntent.Value;
+
+    private List<EnemyActionSO> GetActiveActionCycle()
+    {
+        if (enemyData == null) return null;
+        if (enemyData.HasConfiguredPhases)
+        {
+            var phases = enemyData.Phases;
+            var idx = Mathf.Clamp(_currentPhaseIndex, 0, phases.Count - 1);
+            return phases[idx].actionCycle;
+        }
+
+        return enemyData.actionCycle;
+    }
+
+    private void EvaluatePendingPhaseTransitionTrigger()
+    {
+        if (enemyData == null || !enemyData.HasConfiguredPhases || _pendingPhaseAdvance)
+            return;
+
+        var phases = enemyData.Phases;
+        var nextPhaseIndex = _currentPhaseIndex + 1;
+        if (nextPhaseIndex >= phases.Count)
+            return;
+
+        var next = phases[nextPhaseIndex];
+        if (next == null || next.actionCycle == null || next.actionCycle.Count == 0)
+            return;
+
+        if (currentHealth <= next.phaseTargetHealth)
+            _pendingPhaseAdvance = true;
+    }
+
+    private void ApplyPendingPhaseAdvanceIfAny()
+    {
+        if (!_pendingPhaseAdvance || enemyData == null || !enemyData.HasConfiguredPhases)
+            return;
+
+        var phases = enemyData.Phases;
+        var nextPhaseIndex = _currentPhaseIndex + 1;
+        if (nextPhaseIndex >= phases.Count)
+        {
+            _pendingPhaseAdvance = false;
+            return;
+        }
+
+        var next = phases[nextPhaseIndex];
+        if (next == null || next.actionCycle == null || next.actionCycle.Count == 0)
+        {
+            _pendingPhaseAdvance = false;
+            return;
+        }
+
+        _currentPhaseIndex = nextPhaseIndex;
+        currentCycleIndex = 0;
+        _pendingPhaseAdvance = false;
+    }
 }

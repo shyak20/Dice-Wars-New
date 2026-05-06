@@ -6,7 +6,13 @@ using UnityEngine;
 public class EnemyActionSO : ScriptableObject
 {
     public string actionName;
-    [TextArea] public string actionDescription;
+
+    [Serializable]
+    public class ActionTooltipEntry
+    {
+        public string title;
+        [TextArea] public string description;
+    }
 
     [Tooltip("Shown when this intent has no game actions, or none of them define an icon.")]
     public Sprite icon;
@@ -24,6 +30,8 @@ public class EnemyActionSO : ScriptableObject
     [Header("Game actions (same system as dice faces)")]
     [Tooltip("Optional. Executed after this intent's attacks and armor gain (same order as on a die face). Face-only modifiers are skipped.")]
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();
+    [Tooltip("Per-action tooltip text by action index. Entry 0 maps to actions[0], etc.")]
+    public List<ActionTooltipEntry> actionTooltips = new List<ActionTooltipEntry>();
 
     /// <summary>
     /// Intent portrait: first non-null icon from <see cref="actions"/> (same rules as dice faces).

@@ -7,6 +7,7 @@ namespace Enemies
     /// <summary>Single row on the enemy intent strip (prefab root). Wire icon + value text here.</summary>
     public class EnemyIntentSegmentView : MonoBehaviour
     {
+        [SerializeField] private Image backgroundImage;
         [SerializeField] private Image iconImage;
         [SerializeField] private TMP_Text valueText;
         [Header("Optional status tooltip")]
@@ -32,8 +33,14 @@ namespace Enemies
             hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
         }
 
-        public void Bind(Sprite icon, string value, string statusTitle = null, string statusDescription = null, bool enableTooltip = false)
+        public void Bind(Sprite icon, string value, string statusTitle = null, string statusDescription = null, bool enableTooltip = false, Sprite background = null)
         {
+            if (backgroundImage != null)
+            {
+                backgroundImage.sprite = background;
+                backgroundImage.enabled = background != null;
+            }
+
             if (iconImage != null)
             {
                 iconImage.sprite = icon;

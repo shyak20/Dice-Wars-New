@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
+  m_Name: Strength Nimue
+  m_EditorClassIdentifier: 
+  actionName: Eight-Fold Lash
+  icon: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  damage: 0
+  numberOfAttacks: 1
+  armor: 0
+  actionAnimatorStateName: Attack
+  actionAnimationLeadInSeconds: 0.2
+  actions:
+  - rid: 6494956586993451335
+  actionTooltips:
+  - title: Strength
+    description: Gain 1 Strength
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956586993451335
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        statusEffect: {fileID: 11400000, guid: ebf544cc10a2325409bf6d6ef50a8f63, type: 2}
+        stacks: 1

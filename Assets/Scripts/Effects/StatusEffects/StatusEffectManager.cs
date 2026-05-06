@@ -259,6 +259,53 @@ public class StatusEffectManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Reduces stacks on one random debuff that affects <paramref name="ownerTarget"/>.
+    /// Burn is always treated as a cleanseable debuff for this target even if asset type is misconfigured.
+    /// </summary>
+    public bool ReduceRandomDebuffStacksForTarget(int stacksToRemove, StatusEffectContext ctx, StatusEffectTarget ownerTarget)
+    {
+        if (stacksToRemove <= 0)
+            return false;
+
+        var debuffIndices = new List<int>();
+        for (var i = 0; i < effects.Count; i++)
+        {
+            var def = effects[i].Definition;
+            if (def == null) continue;
+            if (def.target != ownerTarget) continue;
+            var isDebuff = def.type == StatusEffectType.Debuff || def is BurnEffectSO;
+            if (isDebuff)
+                debuffIndices.Add(i);
+        }
+
+        if (debuffIndices.Count == 0)
+            return false;
+
+        var index = debuffIndices[Random.Range(0, debuffIndices.Count)];
+        var target = effects[index];
+        var before = target.Stacks;
+        target.RemoveStacks(stacksToRemove);
+        var removed = target.IsExpired;
+
+        if (removed)
+        {
+            target.Definition.OnRemove(target, ctx);
+            effects.RemoveAt(index);
+        }
+
+        if (GameActionDebug.Enabled)
+        {
+            var removedAmount = Mathf.Min(before, stacksToRemove);
+            Debug.Log(removed
+                ? $"[StatusEffect] Cleansed {removedAmount} stack(s) from {target.Definition.effectName} (removed)"
+                : $"[StatusEffect] Cleansed {removedAmount} stack(s) from {target.Definition.effectName} ({target.Stacks} remaining)");
+        }
+
+        NotifyChanged();
+        return true;
+    }
+
     public void ClearDebuffs(StatusEffectContext ctx)
     {
         for (var i = effects.Count - 1; i >= 0; i--)

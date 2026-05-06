@@ -53,6 +53,13 @@ MonoBehaviour:
   - id: 16
     sprite: {fileID: 0}
     background: {fileID: 0}
+  enemyActionIcons:
+  - actionTypeName: MultiplyPlayerBurnPoisonStacksAction
+    icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
+    background: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
+  - actionTypeName: ReducePlayerMaxPowerAction
+    icon: {fileID: 21300000, guid: f5c0b55348254fe4bbe8fe8159292a7d, type: 3}
+    background: {fileID: 0}
   statusEffectIcons:
   - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
     icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
@@ -80,4 +87,7 @@ MonoBehaviour:
     poolRowBackground: {fileID: 0}
   - effect: {fileID: 11400000, guid: 5566e5d6dc6943599c897d06a088c281, type: 2}
     icon: {fileID: 21300000, guid: 0aa3c0b0d176e3c498739a1a0e8b400c, type: 3}
+    poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
+  - effect: {fileID: 11400000, guid: eab92401621da2241a6640d43a76acb5, type: 2}
+    icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
     poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}

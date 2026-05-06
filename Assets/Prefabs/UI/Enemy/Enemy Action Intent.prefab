@@ -54,6 +54,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52b17e3de21a2274bb1bcd965ba8d6bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyIntentSegmentView
+  backgroundImage: {fileID: 0}
   iconImage: {fileID: 2890752652811520331}
   valueText: {fileID: 7206115334883055204}
   tooltipHoverTargetObject: {fileID: 8810192060997698084}
@@ -115,7 +116,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 4}
-  m_SizeDelta: {x: 34, y: 24.2334}
+  m_SizeDelta: {x: 56, y: 24.2334}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6212874519231497007
 CanvasRenderer:
@@ -176,7 +177,7 @@ MonoBehaviour:
   m_fontSizeBase: 28
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 16
+  m_fontSizeMin: 14
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 2

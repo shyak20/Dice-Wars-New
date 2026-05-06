@@ -88,6 +88,7 @@ public class WinLoseUIController : MonoBehaviour
 
     private void ShowGameOver()
     {
+        DisableObjectsForVictoryScreen();
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
     }
 

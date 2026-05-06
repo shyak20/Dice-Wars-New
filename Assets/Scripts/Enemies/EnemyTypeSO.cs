@@ -24,6 +24,17 @@ public class EnemyBonusRewardDrop
     [Min(1)] public int rolls = 1;
 }
 
+[System.Serializable]
+public class EnemyPhaseDefinition
+{
+    [Tooltip("Used for debugging/inspector readability.")]
+    public string phaseName = "Phase";
+    [Tooltip("Health threshold to ENTER this phase. Phase 1 ignores this value.")]
+    [Min(0)] public int phaseTargetHealth;
+    [Tooltip("Actions used while this phase is active.")]
+    public List<EnemyActionSO> actionCycle = new List<EnemyActionSO>();
+}
+
 [CreateAssetMenu(fileName = "NewEnemy", menuName = "DiceGame/EnemyType")]
 public class EnemyTypeSO : ScriptableObject
 {
@@ -60,6 +71,15 @@ public class EnemyTypeSO : ScriptableObject
     [Tooltip("Pool used by additionalRewardDrops when pool = Gems.")]
     public GemLootTableSO gemRewardPool;
 
+    [Header("Intent cycle (legacy single-phase)")]
     public bool isSequential = true; // Set this to TRUE for your cycle
-    public List<EnemyActionSO> actionCycle; // Rename for clarity
+    public List<EnemyActionSO> actionCycle; // Legacy fallback when phases are not configured
+
+    [Header("Intent phases (optional, up to 3)")]
+    [Tooltip("If set, enemy uses phase action lists instead of legacy actionCycle. Phase 2/3 transition when HP <= their target health.")]
+    [SerializeField] private List<EnemyPhaseDefinition> phases = new List<EnemyPhaseDefinition>();
+    public IReadOnlyList<EnemyPhaseDefinition> Phases => phases;
+
+    public bool HasConfiguredPhases => phases != null && phases.Count > 0 && phases[0] != null &&
+                                       phases[0].actionCycle != null && phases[0].actionCycle.Count > 0;
 }
