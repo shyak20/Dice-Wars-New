@@ -17,8 +17,11 @@ public class DiceSpawner : MonoBehaviour
     [SerializeField] private float delayBetweenDice = 0.12f;
 
     [Header("Visual Effects")]
-    public GameObject damageDestroyEffect;  // Renamed from attack
-    public GameObject armorDestroyEffect;   // Renamed from defense
+    public GameObject damageDestroyEffect;  // Damage dice
+    public GameObject armorDestroyEffect;   // Armor dice
+    public GameObject fireDestroyEffect;    // Fire dice
+    public GameObject iceDestroyEffect;     // Ice dice
+    public GameObject natureDestroyEffect;  // Nature dice
     public float effectLifetime = 2.0f;
 
     [Header("Throw Force")]
@@ -74,10 +77,7 @@ public class DiceSpawner : MonoBehaviour
                 DieVisualizer visualizer = die.GetComponent<DieVisualizer>();
                 if (visualizer != null && visualizer.dieData != null)
                 {
-                    // Logic updated for renamed types
-                    GameObject effectPrefab = (visualizer.dieData.dieType == DieType.Damage)
-                        ? damageDestroyEffect
-                        : armorDestroyEffect;
+                    var effectPrefab = GetDestroyEffectPrefab(visualizer.dieData.dieType);
 
                     if (effectPrefab != null)
                     {
@@ -147,5 +147,18 @@ public class DiceSpawner : MonoBehaviour
         rb.AddForce(throwDirection, ForceMode.Impulse);
         float torqueMagnitude = Random.Range(minTorque, maxTorque);
         rb.AddTorque(Random.insideUnitSphere * torqueMagnitude, ForceMode.Impulse);
+    }
+
+    private GameObject GetDestroyEffectPrefab(DieType dieType)
+    {
+        return dieType switch
+        {
+            DieType.Damage => damageDestroyEffect,
+            DieType.Armor => armorDestroyEffect,
+            DieType.Fire => fireDestroyEffect != null ? fireDestroyEffect : damageDestroyEffect,
+            DieType.Ice => iceDestroyEffect != null ? iceDestroyEffect : armorDestroyEffect,
+            DieType.Nature => natureDestroyEffect != null ? natureDestroyEffect : armorDestroyEffect,
+            _ => null
+        };
     }
 }

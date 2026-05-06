@@ -1474,6 +1474,9 @@ public class CombatManager : MonoBehaviour
 
     private void SubmitTurn()
     {
+        if (spawner != null)
+            spawner.ClearOldDice();
+
         _afterPhysicalDeferredStatusPhaseCompleted = false;
         ChangeState(CombatState.TurnEnd);
         var ctx = BuildContext();

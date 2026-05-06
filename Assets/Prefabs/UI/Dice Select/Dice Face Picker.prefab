@@ -879,8 +879,8 @@ MonoBehaviour:
   rewardSlotPrefab: {fileID: 4976156703028391988, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
   diceLayoutContainer: {fileID: 9122504314937541181}
   dieButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
-  diceLayoutSpacing: 16
-  pickTransitionSeconds: 1.5
+  diceLayoutSpacing: 30
+  pickTransitionSeconds: 0.5
   pickTransitionCurve:
     serializedVersion: 2
     m_Curve:
@@ -2392,6 +2392,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8673957129164526015, guid: f706b61b0a2028b43915f6e1a26af67d, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -1150.0001
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3109,6 +3113,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1006805908997535250, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 15.599998
+      objectReference: {fileID: 0}
     - target: {fileID: 1439178024441304285, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -3243,7 +3251,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5563483162476460602, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -155.59174
+      value: -155.59172
       objectReference: {fileID: 0}
     - target: {fileID: 5563483162476460602, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3360,6 +3368,18 @@ PrefabInstance:
     - target: {fileID: 8275754894085325192, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8400004721796679978, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 74
+      objectReference: {fileID: 0}
+    - target: {fileID: 8450614186425937284, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 3.1661987
+      objectReference: {fileID: 0}
+    - target: {fileID: 8450614186425937284, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -22.429996
       objectReference: {fileID: 0}
     - target: {fileID: 8571559483247581591, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3438,10 +3458,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5205080746642340651}
     m_Modifications:
-    - target: {fileID: 2823468766590328917, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 5563483162476460602, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3508,7 +3524,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5563483162476460602, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -155.59174
+      value: -155.59172
       objectReference: {fileID: 0}
     - target: {fileID: 5563483162476460602, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3525,10 +3541,6 @@ PrefabInstance:
     - target: {fileID: 6722824502667875733, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_Name
       value: Selected Die Tooltip
-      objectReference: {fileID: 0}
-    - target: {fileID: 8400004721796679978, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
