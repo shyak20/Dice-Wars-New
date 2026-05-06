@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
   m_Name: Poison Action Enemy
   m_EditorClassIdentifier: 
-  actionName: 
+  actionName: Attack & Poison
+  actionDescription: 'Deal <style=Attack>2</style>
+
+    Enemy will apply 2 stacks
+    of Poison'
   icon: {fileID: 21300000, guid: 618a26f22d6051543af8c274abf85fdf, type: 3}
   damage: 2
   numberOfAttacks: 1
@@ -27,5 +31,6 @@ MonoBehaviour:
     - rid: 6494956392264499752
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
+        activateImmediately: 0
         statusEffect: {fileID: 11400000, guid: 12b0a443afbbafe4fa0b3e6124092a36, type: 2}
         stacks: 2

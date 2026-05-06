@@ -57,7 +57,7 @@ namespace Enemies
             foreach (var row in _rowsScratch)
             {
                 var seg = Instantiate(segmentPrefab, segmentContainer);
-                seg.Bind(row.Icon, row.ValueText);
+                seg.Bind(row.Icon, row.ValueText, row.StatusTitle, row.StatusDescription, row.EnableTooltip);
             }
         }
 

@@ -12,8 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
   m_Name: Action 4
   m_EditorClassIdentifier: 
-  actionName: 
+  actionName: Shield
+  actionDescription: Add <style=Shield>10</style>
   icon: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   damage: 0
   numberOfAttacks: 0
   armor: 10
+  actionAnimatorStateName: 
+  actionAnimationLeadInSeconds: 0.2
+  actions: []
+  references:
+    version: 2
+    RefIds: []

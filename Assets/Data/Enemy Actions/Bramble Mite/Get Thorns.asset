@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
   m_Name: Get Thorns
   m_EditorClassIdentifier: 
-  actionName: 
+  actionName: Thorns
+  actionDescription: Enemy gets 5 Thorns
   icon: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   damage: 0
   numberOfAttacks: 0
@@ -27,6 +28,7 @@ MonoBehaviour:
     - rid: 6494956272364552442
       type: {class: ThornsAction, ns: , asm: Assembly-CSharp}
       data:
+        activateImmediately: 0
         amount: 2
         thornsDefinition: {fileID: 11400000, guid: c100a975ed88ecf478b21b6af88461fc, type: 2}
         poolRowKeyOverride: 

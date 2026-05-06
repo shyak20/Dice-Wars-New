@@ -6,6 +6,7 @@ using UnityEngine;
 public class EnemyActionSO : ScriptableObject
 {
     public string actionName;
+    [TextArea] public string actionDescription;
 
     [Tooltip("Shown when this intent has no game actions, or none of them define an icon.")]
     public Sprite icon;

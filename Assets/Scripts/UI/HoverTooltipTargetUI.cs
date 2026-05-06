@@ -9,6 +9,7 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     [SerializeField] private string tooltipTitle;
     [SerializeField, TextArea] private string tooltipDescription;
     [SerializeField] private HoverTooltipPanelUI tooltipPanel;
+    [SerializeField] private Vector2 tooltipScreenOffset;
     private Sprite _tooltipBackground;
 
     public void SetContent(string title, string description, Sprite tooltipBackground = null)
@@ -26,6 +27,8 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
         SetContent(title, description, tooltipBackground);
     }
 
+    public void SetTooltipScreenOffset(Vector2 screenOffset) => tooltipScreenOffset = screenOffset;
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (string.IsNullOrWhiteSpace(tooltipTitle) && string.IsNullOrWhiteSpace(tooltipDescription))
@@ -34,7 +37,10 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
         var panel = ResolvePanel();
         if (panel == null) return;
         panel.Show(tooltipTitle, tooltipDescription, _tooltipBackground);
-        panel.AlignPivotWorldXToRect(transform as RectTransform);
+        if (tooltipScreenOffset.sqrMagnitude > 0.0001f)
+            panel.AlignToRectWithScreenOffset(transform as RectTransform, tooltipScreenOffset);
+        else
+            panel.AlignPivotWorldXToRect(transform as RectTransform);
     }
 
     public void OnPointerExit(PointerEventData eventData)

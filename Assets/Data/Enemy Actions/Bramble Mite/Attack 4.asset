@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
   m_Name: Attack 4
   m_EditorClassIdentifier: 
-  actionName: 
+  actionName: Attack
+  actionDescription: Deal <style=Attack>4</>
   icon: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   damage: 4
   numberOfAttacks: 1

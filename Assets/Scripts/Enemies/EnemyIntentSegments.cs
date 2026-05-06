@@ -8,11 +8,17 @@ public static class EnemyIntentSegments
     {
         public readonly Sprite Icon;
         public readonly string ValueText;
+        public readonly string StatusTitle;
+        public readonly string StatusDescription;
+        public readonly bool EnableTooltip;
 
-        public Row(Sprite icon, string valueText)
+        public Row(Sprite icon, string valueText, string statusTitle = null, string statusDescription = null, bool enableTooltip = false)
         {
             Icon = icon;
             ValueText = valueText ?? "";
+            StatusTitle = statusTitle ?? "";
+            StatusDescription = statusDescription ?? "";
+            EnableTooltip = enableTooltip;
         }
     }
 
@@ -32,11 +38,11 @@ public static class EnemyIntentSegments
             if (enemy != null && combat != null)
                 computedPer = combat.PreviewEnemyPhysicalHitDamage(enemy, basePer);
             var label = FormatPhysicalIntentLabel(basePer, computedPer, hits, buffDamageColor);
-            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Damage), label));
+            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Damage), label, enableTooltip: false));
         }
 
         if (intent.armor > 0)
-            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Armor), intent.armor.ToString()));
+            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Armor), intent.armor.ToString(), enableTooltip: false));
 
         if (intent.actions == null)
             return;
@@ -45,7 +51,9 @@ public static class EnemyIntentSegments
         {
             if (a == null || a is FaceResolveModifierBase)
                 continue;
-            into.Add(new Row(GameActionIconUtility.GetDisplayIcon(a), DescribeActionAmount(a)));
+            var tooltipTitle = string.IsNullOrWhiteSpace(intent.actionName) ? "Action" : intent.actionName.Trim();
+            var tooltipDescription = string.IsNullOrWhiteSpace(intent.actionDescription) ? "" : intent.actionDescription.Trim();
+            into.Add(new Row(GameActionIconUtility.GetDisplayIcon(a), DescribeActionAmount(a), tooltipTitle, tooltipDescription, enableTooltip: true));
         }
     }
 
