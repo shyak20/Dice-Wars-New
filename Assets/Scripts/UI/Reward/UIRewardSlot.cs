@@ -229,7 +229,7 @@ public class UIRewardSlot : MonoBehaviour
         var effectNames = new List<string>();
         var descriptions = new List<string>();
         var seenStatuses = new HashSet<StatusEffectSO>();
-        var healAdded = false;
+        var seenActionVisualIds = new HashSet<ActionVisualId>();
 
         for (var i = 0; i < face.actions.Count; i++)
         {
@@ -247,11 +247,32 @@ public class UIRewardSlot : MonoBehaviour
                 continue;
             }
 
-            if (action is HealAction heal && !healAdded)
+            if (action is GameActionWithIcon gai)
             {
-                healAdded = true;
-                effectNames.Add("Heal");
-                descriptions.Add($"Heals {heal.Amount} HP at turn end.");
+                var id = gai.GetActionVisualId();
+                if (id == ActionVisualId.None) continue;
+                if (!seenActionVisualIds.Add(id)) continue;
+
+                GameIconCatalog.TryGetActionTooltip(id, out var catalogTitle, out var catalogDesc);
+
+                var namePart = !string.IsNullOrWhiteSpace(catalogTitle) ? catalogTitle.Trim() : (string)null;
+                var descPart = !string.IsNullOrWhiteSpace(catalogDesc) ? catalogDesc.Trim() : (string)null;
+
+                if (action is HealAction heal)
+                {
+                    if (namePart == null) namePart = "Heal";
+                    if (descPart == null) descPart = $"Heals {heal.Amount} HP at turn end.";
+                }
+
+                if (namePart == null && descPart == null)
+                    continue;
+
+                if (namePart == null)
+                    namePart = id.ToString();
+
+                effectNames.Add(namePart);
+                if (descPart != null)
+                    descriptions.Add(descPart);
             }
         }
 

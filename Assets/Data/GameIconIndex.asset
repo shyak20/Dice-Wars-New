@@ -20,39 +20,63 @@ MonoBehaviour:
   - id: 1
     sprite: {fileID: 21300000, guid: 32f5865e231bd304d88711f7f7dc357c, type: 3}
     background: {fileID: 21300000, guid: 0b1bb4264e52e46419e31c615c001f9c, type: 3}
+    title: <style=Heal>Heal</style>
+    description: Heal your HP by <style=Heal>1</style> per stack.
   - id: 2
     sprite: {fileID: 21300000, guid: 04af3842dc624e54b9b0a5ba199f4bf6, type: 3}
     background: {fileID: 21300000, guid: a10c78dc506c7aa4ca927f636550d589, type: 3}
+    title: <style=Cleanse>Cleanse</style>
+    description: Each stack removes 1 random debuff stack
   - id: 3
     sprite: {fileID: 0}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 5
     sprite: {fileID: 21300000, guid: 1a9b3b51a36f6b8419fb0fd7b44b5ddb, type: 3}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 6
     sprite: {fileID: 0}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 7
     sprite: {fileID: 0}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 8
     sprite: {fileID: 0}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 9
     sprite: {fileID: 0}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 10
     sprite: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 11
     sprite: {fileID: 21300000, guid: cf961ca66e8819a4b8f97c6c5b76f212, type: 3}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 13
     sprite: {fileID: 0}
     background: {fileID: 0}
+    title: 
+    description: 
   - id: 16
     sprite: {fileID: 0}
     background: {fileID: 0}
+    title: 
+    description: 
   enemyActionIcons:
   - actionTypeName: MultiplyPlayerBurnPoisonStacksAction
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}

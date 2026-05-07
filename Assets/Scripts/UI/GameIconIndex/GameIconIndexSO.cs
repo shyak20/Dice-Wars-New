@@ -38,6 +38,11 @@ public class GameIconIndexSO : ScriptableObject
         public Sprite sprite;
         [Tooltip("Optional. Used by GetActionBackground; pool rows resolve backgrounds via die types or status entries (effect name = PoolRowKey).")]
         public Sprite background;
+        [Tooltip("Optional. When set, face picker / shop / die tooltips use this instead of generated text for this action.")]
+        public string title;
+        [TextArea(2, 5)]
+        [Tooltip("Optional. When set, used as the effect description for this action on face tooltips.")]
+        public string description;
     }
 
     [Serializable]
@@ -67,6 +72,8 @@ public class GameIconIndexSO : ScriptableObject
     }
 
     readonly Dictionary<ActionVisualId, Sprite> _actionLookup = new Dictionary<ActionVisualId, Sprite>();
+    readonly Dictionary<ActionVisualId, string> _actionTooltipTitleLookup = new Dictionary<ActionVisualId, string>();
+    readonly Dictionary<ActionVisualId, string> _actionTooltipDescriptionLookup = new Dictionary<ActionVisualId, string>();
     readonly Dictionary<StatusEffectSO, Sprite> _statusLookup = new Dictionary<StatusEffectSO, Sprite>();
     readonly Dictionary<ActionVisualId, Sprite> _actionBackgroundLookup = new Dictionary<ActionVisualId, Sprite>();
     readonly Dictionary<string, Sprite> _enemyActionIconLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
@@ -81,6 +88,8 @@ public class GameIconIndexSO : ScriptableObject
     public void RebuildLookups()
     {
         _actionLookup.Clear();
+        _actionTooltipTitleLookup.Clear();
+        _actionTooltipDescriptionLookup.Clear();
         _actionBackgroundLookup.Clear();
         _enemyActionIconLookup.Clear();
         _enemyActionBackgroundLookup.Clear();
@@ -92,6 +101,10 @@ public class GameIconIndexSO : ScriptableObject
                 _actionLookup[e.id] = e.sprite;
             if (e.id != ActionVisualId.None && e.background != null)
                 _actionBackgroundLookup[e.id] = e.background;
+            if (e.id != ActionVisualId.None && !string.IsNullOrWhiteSpace(e.title))
+                _actionTooltipTitleLookup[e.id] = e.title.Trim();
+            if (e.id != ActionVisualId.None && !string.IsNullOrWhiteSpace(e.description))
+                _actionTooltipDescriptionLookup[e.id] = e.description.Trim();
         }
         foreach (var e in enemyActionIcons)
         {
@@ -170,6 +183,19 @@ public class GameIconIndexSO : ScriptableObject
         if (_actionBackgroundLookup.Count == 0 && actionIcons.Count > 0)
             RebuildLookups();
         return _actionBackgroundLookup.TryGetValue(id, out var s) ? s : null;
+    }
+
+    /// <summary>True if either title or description is configured for this <see cref="ActionVisualId"/>.</summary>
+    public bool TryGetActionTooltip(ActionVisualId id, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        if (id == ActionVisualId.None) return false;
+        if (_actionTooltipTitleLookup.Count == 0 && _actionTooltipDescriptionLookup.Count == 0 && actionIcons.Count > 0)
+            RebuildLookups();
+        var hasT = _actionTooltipTitleLookup.TryGetValue(id, out title);
+        var hasD = _actionTooltipDescriptionLookup.TryGetValue(id, out description);
+        return hasT || hasD;
     }
 
     public Sprite GetEnemyActionIcon(string actionTypeName)

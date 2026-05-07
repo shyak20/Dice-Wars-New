@@ -37,6 +37,13 @@ public static class GameIconCatalog
     public static Sprite GetActionBackground(ActionVisualId id) =>
         _active != null ? _active.GetActionBackground(id) : null;
 
+    public static bool TryGetActionTooltip(ActionVisualId id, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        return _active != null && _active.TryGetActionTooltip(id, out title, out description);
+    }
+
     public static Sprite TryGetPoolRowBackground(PoolRowKey key) =>
         _active != null ? _active.TryGetPoolRowBackground(key) : null;
 

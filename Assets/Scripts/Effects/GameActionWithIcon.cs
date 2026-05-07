@@ -15,6 +15,9 @@ public abstract class GameActionWithIcon : IGameAction
 
     protected virtual ActionVisualId VisualKey => ActionVisualId.None;
 
+    /// <summary>Key for <see cref="GameIconIndexSO"/> icons and optional tooltip copy.</summary>
+    public ActionVisualId GetActionVisualId() => VisualKey;
+
     public Sprite ResolveActionIcon() =>
         VisualKey == ActionVisualId.None ? null : GameIconCatalog.GetActionIcon(VisualKey);
 
