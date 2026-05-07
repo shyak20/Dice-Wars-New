@@ -17,7 +17,7 @@ public class UIShopWindow : MonoBehaviour
     [Header("Loot")] [SerializeField] FaceLootTableSO faceLootTable; [SerializeField] DieLootTableSO dieLootTable;
     [SerializeField] RelicLootTableSO relicLootTable; [SerializeField] GemLootTableSO gemLootTable;
     [Header("Counts")] [SerializeField, Min(0)] int faceOfferCount = 4; [SerializeField, Min(0)] int gemOfferCount = 2;
-    [SerializeField, Min(0)] int relicOfferCount = 2; [SerializeField, Min(0)] int dieOfferCount = 1; [SerializeField] int fallbackDiePrice = 100;
+    [SerializeField, Min(0)] int relicOfferCount = 2; [SerializeField, Min(0)] int dieOfferCount = 1;
     [Header("Header")] [SerializeField] TMP_Text goldHeaderText; [SerializeField] Button leaveShopButton;
     [Header("Offer Containers")] [SerializeField] Transform faceOffersContainer; [SerializeField] Transform gemOffersContainer;
     [SerializeField] Transform relicOffersContainer; [SerializeField] Transform dieOffersContainer;
@@ -25,6 +25,8 @@ public class UIShopWindow : MonoBehaviour
     [SerializeField] UIShopOfferCardView relicOfferPrefab; [SerializeField] UIShopOfferCardView dieOfferPrefab;
     [Header("Player Containers")] [SerializeField] Transform playerDiceContainer; [SerializeField] GameObject playerDieButtonPrefab;
     [SerializeField] Transform playerRelicsContainer; [SerializeField] RunRelicSlotView playerRelicSlotPrefab;
+    [Header("Pricing")]
+    [SerializeField] ShopPricingManager pricingManager;
     [Header("Tooltips")]
     [SerializeField] DieTooltipOverlayUI dieTooltipOverlay;
     [Tooltip("Hover text for gem shop offers. Leave empty to use the first HoverTooltipPanelUI in the scene.")]
@@ -37,6 +39,8 @@ public class UIShopWindow : MonoBehaviour
 
     void Start()
     {
+        if (pricingManager == null)
+            Debug.LogError("UIShopWindow: assign pricingManager.");
         if (leaveShopButton != null) leaveShopButton.onClick.AddListener(OnLeaveShop);
         RunEconomyManager.OnGoldChanged += OnGoldChanged;
         if (RunManager.Instance != null) RunManager.Instance.OnRunRelicsChanged += RebuildPlayerRelics;
@@ -53,12 +57,14 @@ public class UIShopWindow : MonoBehaviour
     void BuildOffers()
     {
         _face.Clear(); _gem.Clear(); _relic.Clear(); _die.Clear();
+        if (pricingManager == null)
+            return;
         var shopDiscountPercent = Mathf.Clamp(RelicActionRunner.QueryIntMax(RelicPhases.QueryShopDiscountPercent), 0, 95);
         var preferred = BuildPreferredTypes();
-        if (faceLootTable != null) foreach (var f in faceLootTable.GetRandomRewards(faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = ApplyDiscount(FacePriceUtility.GetFaceGoldPrice(f), shopDiscountPercent) });
-        if (gemLootTable != null) foreach (var g in gemLootTable.GetRandomGems(gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = ApplyDiscount(GemPriceUtility.GetGemGoldPrice(g), shopDiscountPercent) });
-        if (relicLootTable != null) foreach (var r in relicLootTable.GetRandomRelics(relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = ApplyDiscount(RelicPriceUtility.GetRelicGoldPrice(r), shopDiscountPercent) });
-        if (dieLootTable != null) foreach (var d in dieLootTable.GetRandomDice(dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = ApplyDiscount(d.shopGoldPrice > 0 ? d.shopGoldPrice : fallbackDiePrice, shopDiscountPercent) });
+        if (faceLootTable != null) foreach (var f in faceLootTable.GetRandomRewards(faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = ApplyDiscount(pricingManager.GetDieFacePrice(f), shopDiscountPercent) });
+        if (gemLootTable != null) foreach (var g in gemLootTable.GetRandomGems(gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = ApplyDiscount(pricingManager.GetGemPrice(g), shopDiscountPercent) });
+        if (relicLootTable != null) foreach (var r in relicLootTable.GetRandomRelics(relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = ApplyDiscount(pricingManager.GetRelicPrice(r), shopDiscountPercent) });
+        if (dieLootTable != null) foreach (var d in dieLootTable.GetRandomDice(dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = ApplyDiscount(pricingManager.GetDiePrice(d), shopDiscountPercent) });
     }
 
     static int ApplyDiscount(int basePrice, int discountPercent)

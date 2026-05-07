@@ -19,7 +19,8 @@ MonoBehaviour:
   enemyRank: 0
   maxHealth: 18
   startArmor: 0
-  goldReward: 50
+  minGoldReward: 30
+  maxGoldReward: 50
   additionalRewardDrops: []
   faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
   dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
@@ -29,3 +30,9 @@ MonoBehaviour:
   actionCycle:
   - {fileID: 11400000, guid: 0c2fe231434d99b4f920655f6b678ad8, type: 2}
   - {fileID: 11400000, guid: 33d83d183bfdedb4b8031e69e8588db4, type: 2}
+  phases: []
+  startingResistances: []
+  valueRolledListeners: []
+  references:
+    version: 2
+    RefIds: []

@@ -126,7 +126,6 @@ public static class RequestedRelicAssetGenerator
         relic.title = name;
         relic.description = description;
         relic.rarity = rarity;
-        relic.shopGoldPrice = 0;
         relic.barBenefitDisplayValue = barBenefitDisplayValue;
         relic.actions = actions;
         EditorUtility.SetDirty(relic);

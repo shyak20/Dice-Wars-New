@@ -8,8 +8,6 @@ public class RelicSO : ScriptableObject
     [TextArea] public string description;
     public FaceRarity rarity = FaceRarity.Common;
     public Sprite icon;
-    [Tooltip("Shop price; if 0, uses rarity-based default from RelicPriceUtility.")]
-    [Min(0)] public int shopGoldPrice;
 
     [Tooltip("When non-zero, the relic bar shows Text BG and this number (e.g. stack counter).")]
     public int barBenefitDisplayValue;

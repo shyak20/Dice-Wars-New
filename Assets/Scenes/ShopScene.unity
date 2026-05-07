@@ -1144,6 +1144,7 @@ GameObject:
   - component: {fileID: 308379231}
   - component: {fileID: 308379232}
   - component: {fileID: 308379233}
+  - component: {fileID: 308379234}
   m_Layer: 0
   m_Name: Shop Generator
   m_TagString: Untagged
@@ -1186,7 +1187,6 @@ MonoBehaviour:
   gemOfferCount: 2
   relicOfferCount: 2
   dieOfferCount: 2
-  fallbackDiePrice: 100
   goldHeaderText: {fileID: 1957574316}
   leaveShopButton: {fileID: 1501705633}
   faceOffersContainer: {fileID: 2127162005}
@@ -1201,6 +1201,7 @@ MonoBehaviour:
   playerDieButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
   playerRelicsContainer: {fileID: 629293719}
   playerRelicSlotPrefab: {fileID: 5949446222804244489, guid: e340b9eb73e0c9c4593670a33081ce49, type: 3}
+  pricingManager: {fileID: 308379234}
   dieTooltipOverlay: {fileID: 1037816753}
   shopGemHoverTooltipPanel: {fileID: 1021955734}
   dieChoicePopup: {fileID: 1954687249}
@@ -1219,6 +1220,34 @@ MonoBehaviour:
   settingsRoot: {fileID: 0}
   settingsPrefab: {fileID: 1835529854950792296, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
   settingsParent: {fileID: 394332462}
+--- !u!114 &308379234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 308379229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7281467ad01a15e45b82d17b656aa95e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShopPricingManager
+  dieFaceCommonPrice: 40
+  dieFaceRarePrice: 80
+  dieFaceLegendaryPrice: 120
+  gemCommonLevel1Price: 120
+  gemRareLevel1Price: 160
+  gemLegendaryLevel1Price: 200
+  gemCommonLevel2Price: 240
+  gemRareLevel2Price: 320
+  gemLegendaryLevel2Price: 400
+  gemCommonLevel3Price: 360
+  gemRareLevel3Price: 480
+  gemLegendaryLevel3Price: 600
+  relicCommonPrice: 160
+  relicRarePrice: 200
+  relicLegendaryPrice: 240
+  diePrice: 250
 --- !u!1 &310713529
 GameObject:
   m_ObjectHideFlags: 0

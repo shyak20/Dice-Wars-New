@@ -34,10 +34,6 @@ public class GemSO : ScriptableObject
 
     public FaceRarity rarity = FaceRarity.Common;
 
-    [Tooltip("Shop gold; if 0, uses rarity-based default from GemPriceUtility.")]
-    [Min(0)]
-    public int shopGoldPrice;
-
     [Range(1, 3)]
     public int level = 1;
 

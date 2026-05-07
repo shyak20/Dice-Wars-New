@@ -19,7 +19,8 @@ MonoBehaviour:
   enemyRank: 1
   maxHealth: 150
   startArmor: 20
-  goldReward: 400
+  minGoldReward: 110
+  maxGoldReward: 180
   additionalRewardDrops:
   - pool: 3
     dropChance: 0.5
