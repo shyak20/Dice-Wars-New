@@ -145,7 +145,13 @@ public class UIShopWindow : MonoBehaviour
         if (dieChoicePopup == null || o.Face == null) return;
         dieChoicePopup.ShowForFaceReplacement(o.Face, (die, idx) =>
         {
-            if (die == null || !SpendGold(o.Price)) return false;
+            if (die == null || !SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, o.Face))
+            {
+                dieTooltipOverlay?.ShowFaceReplacementRuleError();
+                return false;
+            }
+
+            if (!SpendGold(o.Price)) return false;
             try
             {
                 die.SwapFace(idx, o.Face);

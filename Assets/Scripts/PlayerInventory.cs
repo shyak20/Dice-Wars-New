@@ -21,8 +21,25 @@ public static class PlayerInventory
         return GetDiceMatchingElement(data, ElementTypeExtensions.FromDieType(face.type));
     }
 
+    /// <summary>
+    /// Dice that match the face's element and have at least one slot where equipping this face would not exceed
+    /// the act's <see cref="MapActDefinitionSO.maxSameNumericValueFacesPerDie"/>.
+    /// </summary>
+    public static List<DieAssetSO> GetDiceEligibleForFaceReplacement(PlayerDataSO data, DieFaceSO face)
+    {
+        if (face == null || data?.currentDeck == null) return new List<DieAssetSO>();
+        var list = new List<DieAssetSO>();
+        foreach (var d in data.currentDeck)
+        {
+            if (d != null && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(d, face))
+                list.Add(d);
+        }
+
+        return list;
+    }
+
     public static bool HasDieSupportingFace(PlayerDataSO data, DieFaceSO face) =>
-        face != null && data != null && GetDiceMatchingFace(data, face).Count > 0;
+        face != null && data != null && GetDiceEligibleForFaceReplacement(data, face).Count > 0;
 
     /// <summary>Deck dice that can still receive a permanent gem (at least one empty socket).</summary>
     public static List<DieAssetSO> GetDiceWithEmptyGemSocket(PlayerDataSO data)

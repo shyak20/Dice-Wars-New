@@ -59,6 +59,10 @@ public class MapActDefinitionSO : ScriptableObject
     [Tooltip("Unknown tiles minimum steps from start.")]
     [Min(0)] public int unknownMinStepsFromStart;
 
+    [Header("Deck building")]
+    [Tooltip("Max faces on a single die that may share the same numeric value (DieFaceSO.value). If the die already has this many copies of a value, a new face with that value may only replace one of those slots — not a different value.")]
+    [Min(1)] public int maxSameNumericValueFacesPerDie = 6;
+
     /// <summary>Non-allocating: clears <paramref name="into"/> then adds all non-null enemies matching <paramref name="rank"/>.</summary>
     public void CollectEnemiesForRank(EnemyRank rank, List<EnemyTypeSO> into)
     {
@@ -87,6 +91,7 @@ public class MapActDefinitionSO : ScriptableObject
         shrineMinStepsFromStart = Mathf.Max(0, shrineMinStepsFromStart);
         treasureMinStepsFromStart = Mathf.Max(0, treasureMinStepsFromStart);
         unknownMinStepsFromStart = Mathf.Max(0, unknownMinStepsFromStart);
+        maxSameNumericValueFacesPerDie = Mathf.Max(1, maxSameNumericValueFacesPerDie);
         WarnIfRankMissing(EnemyRank.Boss, "boss end tile");
         WarnIfRankMissing(EnemyRank.Normal, "normal combat tiles");
         WarnIfRankMissing(EnemyRank.Elite, "elite combat tiles");

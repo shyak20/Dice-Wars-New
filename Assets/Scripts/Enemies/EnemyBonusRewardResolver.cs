@@ -50,7 +50,7 @@ public static class EnemyBonusRewardResolver
 
         var data = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
         if (data == null) return;
-        var matchingDice = PlayerInventory.GetDiceMatchingFace(data, face);
+        var matchingDice = PlayerInventory.GetDiceEligibleForFaceReplacement(data, face);
         if (matchingDice == null || matchingDice.Count == 0)
         {
             Debug.Log($"Enemy bonus reward: rolled face '{face.name}' but no matching die in deck.");
@@ -59,7 +59,20 @@ public static class EnemyBonusRewardResolver
 
         var die = matchingDice[Random.Range(0, matchingDice.Count)];
         if (die == null || die.faces == null || die.faces.Length != 6) return;
-        var idx = Random.Range(0, die.faces.Length);
+        var valid = new List<int>(6);
+        for (var i = 0; i < die.faces.Length; i++)
+        {
+            if (SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, i, face))
+                valid.Add(i);
+        }
+
+        if (valid.Count == 0)
+        {
+            Debug.Log($"Enemy bonus reward: cannot install face '{face.name}' on die '{die.dieName}' — same-value face cap leaves no legal slot.");
+            return;
+        }
+
+        var idx = valid[Random.Range(0, valid.Count)];
         die.SwapFace(idx, face);
         Debug.Log($"Enemy bonus reward: installed face '{face.name}' into die '{die.dieName}' slot {idx}.");
     }

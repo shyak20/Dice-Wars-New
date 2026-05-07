@@ -207,7 +207,7 @@ public class FacePickerView : MonoBehaviour
             var captured = die;
             btn.onClick.AddListener(() => OnDieClicked(captured));
             RegisterDieHover(btn, captured);
-            SetDieButtonInteractable(captured, _selectedRewardFace != null && captured.CanAttachFace(_selectedRewardFace));
+            SetDieButtonInteractable(captured, _selectedRewardFace != null && DieCanReceiveSelectedRewardFace(captured));
         }
     }
 
@@ -287,7 +287,7 @@ public class FacePickerView : MonoBehaviour
         _pickTransitionRoutine = StartCoroutine(CoRewardPickedTransition(face));
 
         foreach (var kv in _diceButtons)
-            SetDieButtonInteractable(kv.Key, kv.Key.CanAttachFace(face));
+            SetDieButtonInteractable(kv.Key, DieCanReceiveRewardFace(kv.Key, face));
     }
 
     private IEnumerator CoRewardPickedTransition(DieFaceSO selectedFace)
@@ -343,7 +343,7 @@ public class FacePickerView : MonoBehaviour
 
         foreach (var kv in _diceButtons)
         {
-            if (!kv.Key.CanAttachFace(_selectedRewardFace)) continue;
+            if (!DieCanReceiveSelectedRewardFace(kv.Key)) continue;
             OnDieClicked(kv.Key);
             return;
         }
@@ -351,7 +351,7 @@ public class FacePickerView : MonoBehaviour
 
     private void OnDieClicked(DieAssetSO die)
     {
-        if (_selectedRewardFace == null || die == null || !die.CanAttachFace(_selectedRewardFace))
+        if (_selectedRewardFace == null || die == null || !DieCanReceiveSelectedRewardFace(die))
             return;
 
         _activeReplacementDie = die;
@@ -388,9 +388,22 @@ public class FacePickerView : MonoBehaviour
     private void ShowDieReplacementPanel(DieAssetSO die)
     {
         if (dieTooltipOverlay == null || die == null || _selectedRewardFace == null) return;
-        if (!die.CanAttachFace(_selectedRewardFace)) return;
-        dieTooltipOverlay.ShowDie(die, true, OnDieFaceReplacementClicked, GetDieIconRectForTooltip(die));
+        if (!DieCanReceiveSelectedRewardFace(die)) return;
+        dieTooltipOverlay.ShowDie(
+            die,
+            true,
+            OnDieFaceReplacementClicked,
+            GetDieIconRectForTooltip(die),
+            idx => SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, _selectedRewardFace));
     }
+
+    bool DieCanReceiveSelectedRewardFace(DieAssetSO die) =>
+        DieCanReceiveRewardFace(die, _selectedRewardFace);
+
+    static bool DieCanReceiveRewardFace(DieAssetSO die, DieFaceSO face) =>
+        die != null && face != null && die.CanAttachFace(face) && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, face);
+
+    public void NotifyFaceReplacementRuleError() => dieTooltipOverlay?.ShowFaceReplacementRuleError();
 
     private RectTransform GetDieIconRectForTooltip(DieAssetSO die)
     {

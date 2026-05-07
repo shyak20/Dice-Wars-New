@@ -113,7 +113,7 @@ public class FaceRewardManager : MonoBehaviour
     private void OnFaceChosen(DieFaceSO face)
     {
         chosenFace = face;
-        var matchingDice = PlayerInventory.GetDiceMatchingFace(PlayerDataContainer.Instance.RuntimeData, face);
+        var matchingDice = PlayerInventory.GetDiceEligibleForFaceReplacement(PlayerDataContainer.Instance.RuntimeData, face);
         if (matchingDice.Count == 0)
         {
             Debug.LogWarning("FaceRewardManager: No dice match the selected face element; closing reward flow.");
@@ -125,6 +125,12 @@ public class FaceRewardManager : MonoBehaviour
     {
         if (die == null || chosenFace == null)
             return;
+        if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slotIndex, chosenFace))
+        {
+            facePickerView?.NotifyFaceReplacementRuleError();
+            return;
+        }
+
         chosenDie = die;
 
         try

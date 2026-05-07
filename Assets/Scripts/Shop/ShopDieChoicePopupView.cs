@@ -75,7 +75,7 @@ public class ShopDieChoicePopupView : MonoBehaviour
             var die = deck[i];
             if (die == null) continue;
 
-            var faceCompatible = _targetFace != null && die.CanAttachFace(_targetFace);
+            var faceCompatible = _targetFace != null && die.CanAttachFace(_targetFace) && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, _targetFace);
             var gemCompatible = _targetGem != null && die.GetEmptyGemSocketCount() > 0;
             var compatible = faceCompatible || gemCompatible;
             if (!compatible) continue;
@@ -119,12 +119,17 @@ public class ShopDieChoicePopupView : MonoBehaviour
         foreach (var kv in _views) kv.Value.SetSelected(kv.Key == die);
         if (_targetFace != null)
         {
-            dieTooltipOverlay?.ShowDie(die, true, (slotIndex, _, slot) =>
-            {
-                if (_onFaceCommit == null || !_onFaceCommit(die, slotIndex))
-                    return;
-                StartCoroutine(CoCloseAfterFaceSwapPreview(slot, _targetFace));
-            }, GetIconRect(die));
+            dieTooltipOverlay?.ShowDie(
+                die,
+                true,
+                (slotIndex, _, slot) =>
+                {
+                    if (_onFaceCommit == null || !_onFaceCommit(die, slotIndex))
+                        return;
+                    StartCoroutine(CoCloseAfterFaceSwapPreview(slot, _targetFace));
+                },
+                GetIconRect(die),
+                idx => SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, _targetFace));
             return;
         }
 

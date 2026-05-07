@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -44,13 +46,46 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
     [SerializeField] private TMP_Text statusHoverTitleText;
     [SerializeField] private TMP_Text statusHoverDescriptionText;
 
+    [Header("Face replacement rules")]
+    [Tooltip("Shown when the player picks a face slot that would exceed the act's max same-value faces cap.")]
+    [SerializeField] private GameObject faceReplacementRuleErrorObject;
+    [Tooltip("Message shown on the error object. Use {0} where the act’s max same numeric value faces per die should appear (see MapActDefinitionSO.maxSameNumericValueFacesPerDie).")]
+    [SerializeField] private TMP_Text faceReplacementRuleErrorText;
+    [Tooltip("If set, this rect is shaken; otherwise the error GameObject’s RectTransform is used.")]
+    [SerializeField] private RectTransform faceReplacementRuleErrorShakeTarget;
+    [SerializeField, Min(0.05f)] private float replacementErrorShakeDuration = 0.32f;
+    [SerializeField, Min(0f)] private float replacementErrorShakeMaxHorizontalOffset = 14f;
+    [SerializeField, Min(0f)] private float replacementErrorShakeMaxVerticalOffset = 6f;
+    [SerializeField, Min(1f)] private float replacementErrorShakeWaves = 10f;
+
     public DieAssetSO CurrentDie { get; private set; }
 
     private readonly Vector3[] _worldCornersScratch = new Vector3[4];
+    private Coroutine _replacementErrorShakeRoutine;
+    private RectTransform _replacementErrorShakeRect;
+    private Vector2 _replacementErrorShakeBaseAnchoredPosition;
+    private string _faceReplacementRuleErrorTextTemplate;
+
+    void Awake()
+    {
+        if (faceReplacementRuleErrorText != null)
+            _faceReplacementRuleErrorTextTemplate = faceReplacementRuleErrorText.text;
+
+        if (faceReplacementRuleErrorObject == null)
+            return;
+        var rt = faceReplacementRuleErrorShakeTarget != null
+            ? faceReplacementRuleErrorShakeTarget
+            : faceReplacementRuleErrorObject.transform as RectTransform;
+        if (rt != null)
+            _replacementErrorShakeBaseAnchoredPosition = rt.anchoredPosition;
+    }
+
+    void OnDisable() => StopReplacementErrorShake(resetPosition: true);
 
     /// <param name="horizontalCenterReference">When set (e.g. die icon <see cref="RectTransform"/>), moves the tooltip panel so its pivot’s world X matches this rect’s horizontal center.</param>
     /// <param name="onFaceClicked">When faces are interactable, receives the clicked slot’s <see cref="UIRewardSlot"/> for swap confirmation UI.</param>
-    public void ShowDie(DieAssetSO die, bool facesInteractable, Action<int, DieFaceSO, UIRewardSlot> onFaceClicked = null, RectTransform horizontalCenterReference = null)
+    /// <param name="replacementSlotAllowed">When set, face slots call this before <paramref name="onFaceClicked"/>; if false, the click is ignored and <see cref="ShowFaceReplacementRuleError"/> runs.</param>
+    public void ShowDie(DieAssetSO die, bool facesInteractable, Action<int, DieFaceSO, UIRewardSlot> onFaceClicked = null, RectTransform horizontalCenterReference = null, Func<int, bool> replacementSlotAllowed = null)
     {
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
@@ -60,6 +95,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
+        HideFaceReplacementRuleError();
 
         foreach (Transform child in dieTooltipSlotContainer)
             Destroy(child.gameObject);
@@ -92,7 +128,19 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             }
 
             if (facesInteractable && onFaceClicked != null)
-                slot.Bind(face, _ => onFaceClicked.Invoke(faceIndex, face, slot));
+            {
+                var capturedIndex = faceIndex;
+                slot.Bind(face, _ =>
+                {
+                    if (replacementSlotAllowed != null && !replacementSlotAllowed.Invoke(capturedIndex))
+                    {
+                        ShowFaceReplacementRuleError();
+                        return;
+                    }
+
+                    onFaceClicked.Invoke(capturedIndex, face, slot);
+                });
+            }
             else
                 slot.Bind(face, null);
 
@@ -133,6 +181,97 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         DieTooltipBackgrounds.Clear(dieTooltipTypeBackground);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
+        HideFaceReplacementRuleError();
+    }
+
+    public void ShowFaceReplacementRuleError()
+    {
+        if (faceReplacementRuleErrorObject == null)
+            return;
+
+        ApplyFaceReplacementRuleErrorText();
+
+        EnsureReplacementErrorShakeRect();
+        StopReplacementErrorShake(resetPosition: true);
+        faceReplacementRuleErrorObject.SetActive(true);
+
+        if (_replacementErrorShakeRect == null)
+            return;
+
+        _replacementErrorShakeBaseAnchoredPosition = _replacementErrorShakeRect.anchoredPosition;
+        _replacementErrorShakeRoutine = StartCoroutine(CoShakeReplacementError());
+    }
+
+    void HideFaceReplacementRuleError()
+    {
+        StopReplacementErrorShake(resetPosition: true);
+        if (faceReplacementRuleErrorObject != null)
+            faceReplacementRuleErrorObject.SetActive(false);
+    }
+
+    void ApplyFaceReplacementRuleErrorText()
+    {
+        if (faceReplacementRuleErrorText == null)
+            return;
+
+        var template = _faceReplacementRuleErrorTextTemplate;
+        if (string.IsNullOrEmpty(template))
+            template = faceReplacementRuleErrorText.text;
+        if (string.IsNullOrEmpty(template))
+            return;
+
+        var cap = SameValueFaceCapUtility.GetMaxSameNumericValueFacesPerDie();
+        var displayCap = cap >= int.MaxValue / 2 ? 0 : cap;
+
+        if (template.IndexOf("{0}", StringComparison.Ordinal) >= 0)
+            faceReplacementRuleErrorText.text = string.Format(CultureInfo.InvariantCulture, template, displayCap);
+        else
+            faceReplacementRuleErrorText.text = template;
+    }
+
+    void EnsureReplacementErrorShakeRect()
+    {
+        _replacementErrorShakeRect = faceReplacementRuleErrorShakeTarget;
+        if (_replacementErrorShakeRect == null && faceReplacementRuleErrorObject != null)
+            _replacementErrorShakeRect = faceReplacementRuleErrorObject.transform as RectTransform;
+    }
+
+    void StopReplacementErrorShake(bool resetPosition)
+    {
+        if (_replacementErrorShakeRoutine != null)
+        {
+            StopCoroutine(_replacementErrorShakeRoutine);
+            _replacementErrorShakeRoutine = null;
+        }
+
+        if (resetPosition && _replacementErrorShakeRect != null)
+            _replacementErrorShakeRect.anchoredPosition = _replacementErrorShakeBaseAnchoredPosition;
+    }
+
+    IEnumerator CoShakeReplacementError()
+    {
+        var rt = _replacementErrorShakeRect;
+        if (rt == null)
+            yield break;
+
+        var basePos = _replacementErrorShakeBaseAnchoredPosition;
+        var duration = Mathf.Max(0.05f, replacementErrorShakeDuration);
+        var t = 0f;
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            var u = Mathf.Clamp01(t / duration);
+            var decay = 1f - u;
+            var angle = u * Mathf.PI * replacementErrorShakeWaves;
+            var ox = Mathf.Sin(angle) * replacementErrorShakeMaxHorizontalOffset * decay;
+            var oy = Mathf.Sin(angle * 1.13f) * replacementErrorShakeMaxVerticalOffset * decay;
+            rt.anchoredPosition = basePos + new Vector2(ox, oy);
+            yield return null;
+        }
+
+        rt.anchoredPosition = basePos;
+        _replacementErrorShakeRoutine = null;
     }
 
     private void RebuildTooltipGemIcons(DieAssetSO die)
