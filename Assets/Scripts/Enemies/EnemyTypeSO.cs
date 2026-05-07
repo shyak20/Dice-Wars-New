@@ -136,7 +136,5 @@ public class EnemyTypeSO : ScriptableObject
 
     private void OnValidate()
     {
-        if (maxGoldReward < minGoldReward)
-            maxGoldReward = minGoldReward;
     }
 }

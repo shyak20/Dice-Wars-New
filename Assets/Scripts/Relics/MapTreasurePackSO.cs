@@ -38,8 +38,6 @@ public class MapTreasurePackSO : ScriptableObject
         {
             var e = rewards[i];
             if (e.kind != TreasureRewardKind.Gold) continue;
-            if (e.goldMax < e.goldMin)
-                e.goldMax = e.goldMin;
             rewards[i] = e;
         }
     }

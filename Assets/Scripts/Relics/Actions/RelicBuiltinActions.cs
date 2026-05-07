@@ -412,6 +412,18 @@ public sealed class RelicBonusGoldOnCombatVictoryAction : RelicGameActionBase
     public override void Execute(GameActionContext ctx)
     {
         if (ctx.RelicPhase != RelicPhases.OnCombatVictory || bonusGold <= 0) return;
+        if (ctx.SourceRelic == null || RunManager.Instance == null) return;
+
+        var owned = false;
+        var runRelics = RunManager.Instance.RunRelics;
+        for (var i = 0; i < runRelics.Count; i++)
+        {
+            if (runRelics[i] != ctx.SourceRelic) continue;
+            owned = true;
+            break;
+        }
+
+        if (!owned) return;
         VictoryRewardBuffer.PendingGold += bonusGold;
     }
 }

@@ -16,8 +16,8 @@ MonoBehaviour:
   packDescription: Bulbul Gabol
   rewards:
   - kind: 0
-    goldMin: 300
-    goldMax: 400
+    goldMin: 200
+    goldMax: 300
   dieDropChance: 0.05
   dieDropLootTable: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
   relicDropChance: 0.2
