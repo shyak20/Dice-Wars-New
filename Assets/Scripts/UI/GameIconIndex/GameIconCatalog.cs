@@ -31,6 +31,19 @@ public static class GameIconCatalog
     public static Sprite GetEnemyActionBackground(string actionTypeName) =>
         _active != null ? _active.GetEnemyActionBackground(actionTypeName) : null;
 
+    public static Sprite GetEnemyResistanceIcon(EnemyResistanceElement resistanceElement) =>
+        _active != null ? _active.GetEnemyResistanceIcon(resistanceElement) : null;
+
+    public static Sprite GetEnemyResistanceBackground(EnemyResistanceElement resistanceElement) =>
+        _active != null ? _active.GetEnemyResistanceBackground(resistanceElement) : null;
+
+    public static bool TryGetEnemyResistanceTooltip(EnemyResistanceElement resistanceElement, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        return _active != null && _active.TryGetEnemyResistanceTooltip(resistanceElement, out title, out description);
+    }
+
     public static Sprite GetElementBackground(DieType type) =>
         _active != null ? _active.GetElementBackground(type) : null;
 

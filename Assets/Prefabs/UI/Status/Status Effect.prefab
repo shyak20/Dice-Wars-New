@@ -204,6 +204,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   iconImage: {fileID: 4755771994896841046}
   stackText: {fileID: 185855645565800569}
+  stackVisualRoot: {fileID: 1018481574301042869}
 --- !u!1 &7150691118504321116
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,9 +7,10 @@ public class StatusEffectBarUI : MonoBehaviour
     [SerializeField] private Transform iconContainer;
     [SerializeField] private GameObject statusEffectIconPrefab;
 
-    private readonly Dictionary<StatusEffectSO, StatusEffectIconUI> activeIcons = new();
+    private readonly Dictionary<string, StatusEffectIconUI> activeIcons = new();
 
     private StatusEffectManager trackedManager;
+    private EnemyController trackedEnemy;
     private bool _refreshFrozen;
     private bool _refreshQueued;
 
@@ -35,6 +36,12 @@ public class StatusEffectBarUI : MonoBehaviour
         }
 
         trackedManager.OnEffectsChanged += QueueRefresh;
+        QueueRefresh();
+    }
+
+    public void BindEnemyStartingBuffs(EnemyController enemy)
+    {
+        trackedEnemy = enemy;
         QueueRefresh();
     }
 
@@ -69,9 +76,9 @@ public class StatusEffectBarUI : MonoBehaviour
 
     private void RefreshNow()
     {
-        if (trackedManager == null) return;
+        if (trackedManager == null)
+            return;
 
-        // Clean up entries whose icon objects were destroyed externally.
         var nullIconKeys = activeIcons
             .Where(kvp => kvp.Value == null)
             .Select(kvp => kvp.Key)
@@ -79,42 +86,99 @@ public class StatusEffectBarUI : MonoBehaviour
         foreach (var key in nullIconKeys)
             activeIcons.Remove(key);
 
-        var currentEffects = new HashSet<StatusEffectSO>();
+        var activeKeys = new HashSet<string>();
 
         foreach (var effect in trackedManager.Effects)
         {
-            var definition = effect.Definition;
-            currentEffects.Add(definition);
+            if (effect?.Definition == null)
+                continue;
+            var key = $"status:{effect.Definition.GetInstanceID()}";
+            activeKeys.Add(key);
+            var icon = GetOrCreateIcon(key);
+            if (icon == null)
+                continue;
+            icon.Setup(effect);
+        }
 
-            if (activeIcons.TryGetValue(definition, out var existingIcon) && existingIcon != null)
+        if (trackedEnemy != null)
+        {
+            foreach (var pair in trackedEnemy.DamageResistances)
             {
-                if (!existingIcon.gameObject.activeSelf)
-                    existingIcon.gameObject.SetActive(true);
-                existingIcon.RefreshVisual(effect);
+                if (pair.Value <= 0f)
+                    continue;
+
+                var resistanceElement = pair.Key;
+                var key = $"resistance:{resistanceElement}";
+                activeKeys.Add(key);
+
+                var icon = GetOrCreateIcon(key);
+                if (icon == null)
+                    continue;
+
+                var iconSprite = GameIconCatalog.GetEnemyResistanceIcon(resistanceElement);
+                var bgSprite = GameIconCatalog.GetEnemyResistanceBackground(resistanceElement);
+                GameIconCatalog.TryGetEnemyResistanceTooltip(resistanceElement, out var title, out var description);
+
+                if (string.IsNullOrWhiteSpace(title))
+                    title = $"{resistanceElement} Resistance";
+                var lessPercentText = Mathf.RoundToInt(pair.Value);
+                var defaultDescription = $"Takes {lessPercentText}% less {resistanceElement.ToString().ToLowerInvariant()} damage.";
+                if (string.IsNullOrWhiteSpace(description))
+                    description = defaultDescription;
+                else if (!description.Contains("%"))
+                    description = $"{description}\n\n{defaultDescription}";
+
+                icon.SetupCustom(iconSprite, title, description, bgSprite);
             }
-            else
+
+            var listeners = trackedEnemy.ValueRolledListeners;
+            for (var i = 0; i < listeners.Count; i++)
             {
-                var iconObj = Instantiate(statusEffectIconPrefab, iconContainer);
-                var iconUI = iconObj.GetComponent<StatusEffectIconUI>();
+                var listener = listeners[i];
+                if (listener == null || listener.rolledValues == null || listener.rolledValues.Count == 0 || listener.icon == null)
+                    continue;
 
-                if (iconUI == null)
-                {
-                    Debug.LogError("StatusEffectBarUI: Prefab missing StatusEffectIconUI component!");
-                    Destroy(iconObj);
-                    return;
-                }
+                var key = $"roll-listener:{i}";
+                activeKeys.Add(key);
+                var icon = GetOrCreateIcon(key);
+                if (icon == null)
+                    continue;
 
-                iconUI.Setup(effect);
-                activeIcons[definition] = iconUI;
+                var title = string.IsNullOrWhiteSpace(listener.title) ? "Value Rolled Listener" : listener.title.Trim();
+                var rolledValuesText = string.Join(", ", listener.rolledValues);
+                var defaultDescription = $"If the player rolls {rolledValuesText}, this listener triggers immediately.";
+                var description = string.IsNullOrWhiteSpace(listener.description) ? defaultDescription : listener.description.Trim();
+                icon.SetupCustom(listener.icon, title, description);
             }
         }
 
-        // Keep created icons; hide when effect is currently inactive.
-        var staleKeys = activeIcons.Keys.Where(k => !currentEffects.Contains(k)).ToList();
+        var staleKeys = activeIcons.Keys.Where(k => !activeKeys.Contains(k)).ToList();
         foreach (var key in staleKeys)
         {
             if (activeIcons.TryGetValue(key, out var iconUi) && iconUi != null)
                 iconUi.gameObject.SetActive(false);
         }
+    }
+
+    private StatusEffectIconUI GetOrCreateIcon(string key)
+    {
+        if (activeIcons.TryGetValue(key, out var existingIcon) && existingIcon != null)
+        {
+            if (!existingIcon.gameObject.activeSelf)
+                existingIcon.gameObject.SetActive(true);
+            return existingIcon;
+        }
+
+        var iconObj = Instantiate(statusEffectIconPrefab, iconContainer);
+        var iconUI = iconObj.GetComponent<StatusEffectIconUI>();
+        if (iconUI == null)
+        {
+            Debug.LogError("StatusEffectBarUI: Prefab missing StatusEffectIconUI component!");
+            Destroy(iconObj);
+            return null;
+        }
+
+        activeIcons[key] = iconUI;
+        return iconUI;
     }
 }

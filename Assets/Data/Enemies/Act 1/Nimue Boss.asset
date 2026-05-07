@@ -17,8 +17,8 @@ MonoBehaviour:
   combatAnimatorController: {fileID: 9100000, guid: 0b94c6194a78f29418600ed8e986a8f8, type: 2}
   idleAnimatorStateName: Idle
   enemyRank: 2
-  maxHealth: 320
-  startArmor: 500
+  maxHealth: 400
+  startArmor: 40
   goldReward: 5000
   additionalRewardDrops: []
   faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
@@ -29,14 +29,14 @@ MonoBehaviour:
   actionCycle: []
   phases:
   - phaseName: Phase 1
-    phaseTargetHealth: 320
+    phaseTargetHealth: 400
     actionCycle:
     - {fileID: 11400000, guid: e1b5871608980b3498e541af067bd613, type: 2}
     - {fileID: 11400000, guid: e3c927f51b732ca40b129927b1572f9d, type: 2}
     - {fileID: 11400000, guid: 20d24c44fa367c1478da04e721d66fe5, type: 2}
     - {fileID: 11400000, guid: 53fba1c6227ea1740ab5e2a75cb34384, type: 2}
   - phaseName: Phase 2
-    phaseTargetHealth: 160
+    phaseTargetHealth: 200
     actionCycle:
     - {fileID: 11400000, guid: 5788c906776a4184b92bb1e1cb832959, type: 2}
     - {fileID: 11400000, guid: aad0a9a0f4f441144b0187220c39dfe2, type: 2}

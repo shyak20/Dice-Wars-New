@@ -35,6 +35,42 @@ public class EnemyPhaseDefinition
     public List<EnemyActionSO> actionCycle = new List<EnemyActionSO>();
 }
 
+public enum EnemyResistanceElement
+{
+    Physical,
+    Fire,
+    Ice,
+    Nature
+}
+
+[System.Serializable]
+public class EnemyStartingResistance
+{
+    public EnemyResistanceElement element = EnemyResistanceElement.Physical;
+    [Range(0f, 100f)]
+    public float lessDamagePercent = 0f;
+}
+
+[System.Serializable]
+public class EnemyValueRolledListener
+{
+    [Tooltip("Triggers when a resolved face value matches one of these numbers.")]
+    public List<int> rolledValues = new List<int>();
+
+    [Tooltip("Icon shown in enemy status bar for this listener.")]
+    public Sprite icon;
+
+    [Tooltip("Optional. Hover title for this value-roll listener.")]
+    public string title;
+    [TextArea(2, 5)]
+    [Tooltip("Optional. Hover body text for this value-roll listener.")]
+    public string description;
+
+    [Tooltip("Executes immediately when the condition matches.")]
+    [SerializeReference]
+    public List<IGameAction> actions = new List<IGameAction>();
+}
+
 [CreateAssetMenu(fileName = "NewEnemy", menuName = "DiceGame/EnemyType")]
 public class EnemyTypeSO : ScriptableObject
 {
@@ -79,6 +115,12 @@ public class EnemyTypeSO : ScriptableObject
     [Tooltip("If set, enemy uses phase action lists instead of legacy actionCycle. Phase 2/3 transition when HP <= their target health.")]
     [SerializeField] private List<EnemyPhaseDefinition> phases = new List<EnemyPhaseDefinition>();
     public IReadOnlyList<EnemyPhaseDefinition> Phases => phases;
+
+    [Header("Starting Buffs")]
+    [Tooltip("Flat damage resistance by incoming damage element.")]
+    public List<EnemyStartingResistance> startingResistances = new List<EnemyStartingResistance>();
+    [Tooltip("Immediate action triggers when player resolves matching rolled values.")]
+    public List<EnemyValueRolledListener> valueRolledListeners = new List<EnemyValueRolledListener>();
 
     public bool HasConfiguredPhases => phases != null && phases.Count > 0 && phases[0] != null &&
                                        phases[0].actionCycle != null && phases[0].actionCycle.Count > 0;

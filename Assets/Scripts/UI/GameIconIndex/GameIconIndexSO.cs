@@ -30,6 +30,8 @@ public class GameIconIndexSO : ScriptableObject
 
     [Header("Status effects (buffs & debuffs)")]
     [SerializeField] private List<StatusEffectIconEntry> statusEffectIcons = new List<StatusEffectIconEntry>();
+    [Header("Enemy Starting Buffs")]
+    [SerializeField] private List<EnemyResistanceIconEntry> enemyResistanceIcons = new List<EnemyResistanceIconEntry>();
 
     [Serializable]
     public struct ActionIconEntry
@@ -65,6 +67,19 @@ public class GameIconIndexSO : ScriptableObject
     }
 
     [Serializable]
+    public struct EnemyResistanceIconEntry
+    {
+        public EnemyResistanceElement resistanceElement;
+        public Sprite icon;
+        public Sprite background;
+        [Tooltip("Optional. Hover title for this resistance icon.")]
+        public string title;
+        [TextArea(2, 5)]
+        [Tooltip("Optional. Hover body text for this resistance icon.")]
+        public string description;
+    }
+
+    [Serializable]
     public struct NamedIconEntry
     {
         public string key;
@@ -80,6 +95,10 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<string, Sprite> _enemyActionBackgroundLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, Sprite> _poolRowBackgroundByStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, StatusEffectTarget> _statusTargetByPoolRowStableId = new Dictionary<string, StatusEffectTarget>(StringComparer.Ordinal);
+    readonly Dictionary<EnemyResistanceElement, Sprite> _enemyResistanceIconLookup = new Dictionary<EnemyResistanceElement, Sprite>();
+    readonly Dictionary<EnemyResistanceElement, Sprite> _enemyResistanceBackgroundLookup = new Dictionary<EnemyResistanceElement, Sprite>();
+    readonly Dictionary<EnemyResistanceElement, string> _enemyResistanceTooltipTitleLookup = new Dictionary<EnemyResistanceElement, string>();
+    readonly Dictionary<EnemyResistanceElement, string> _enemyResistanceTooltipDescriptionLookup = new Dictionary<EnemyResistanceElement, string>();
 
     private void OnEnable() => RebuildLookups();
 
@@ -95,6 +114,10 @@ public class GameIconIndexSO : ScriptableObject
         _enemyActionBackgroundLookup.Clear();
         _poolRowBackgroundByStableId.Clear();
         _statusTargetByPoolRowStableId.Clear();
+        _enemyResistanceIconLookup.Clear();
+        _enemyResistanceBackgroundLookup.Clear();
+        _enemyResistanceTooltipTitleLookup.Clear();
+        _enemyResistanceTooltipDescriptionLookup.Clear();
         foreach (var e in actionIcons)
         {
             if (e.id != ActionVisualId.None && e.sprite != null)
@@ -136,6 +159,18 @@ public class GameIconIndexSO : ScriptableObject
             _statusTargetByPoolRowStableId[e.effect.name] = e.effect.target;
             if (e.poolRowBackground != null)
                 _poolRowBackgroundByStableId[e.effect.name] = e.poolRowBackground;
+        }
+
+        foreach (var e in enemyResistanceIcons)
+        {
+            if (e.icon != null)
+                _enemyResistanceIconLookup[e.resistanceElement] = e.icon;
+            if (e.background != null)
+                _enemyResistanceBackgroundLookup[e.resistanceElement] = e.background;
+            if (!string.IsNullOrWhiteSpace(e.title))
+                _enemyResistanceTooltipTitleLookup[e.resistanceElement] = e.title.Trim();
+            if (!string.IsNullOrWhiteSpace(e.description))
+                _enemyResistanceTooltipDescriptionLookup[e.resistanceElement] = e.description.Trim();
         }
     }
 
@@ -214,6 +249,32 @@ public class GameIconIndexSO : ScriptableObject
         return _enemyActionBackgroundLookup.TryGetValue(actionTypeName.Trim(), out var s) ? s : null;
     }
 
+    public Sprite GetEnemyResistanceIcon(EnemyResistanceElement resistanceElement)
+    {
+        if (_enemyResistanceIconLookup.Count == 0 && enemyResistanceIcons.Count > 0)
+            RebuildLookups();
+        return _enemyResistanceIconLookup.TryGetValue(resistanceElement, out var s) ? s : null;
+    }
+
+    public Sprite GetEnemyResistanceBackground(EnemyResistanceElement resistanceElement)
+    {
+        if (_enemyResistanceBackgroundLookup.Count == 0 && enemyResistanceIcons.Count > 0)
+            RebuildLookups();
+        return _enemyResistanceBackgroundLookup.TryGetValue(resistanceElement, out var s) ? s : null;
+    }
+
+    /// <summary>True if either title or description is configured for this enemy resistance icon.</summary>
+    public bool TryGetEnemyResistanceTooltip(EnemyResistanceElement resistanceElement, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        if (_enemyResistanceTooltipTitleLookup.Count == 0 && _enemyResistanceTooltipDescriptionLookup.Count == 0 && enemyResistanceIcons.Count > 0)
+            RebuildLookups();
+        var hasT = _enemyResistanceTooltipTitleLookup.TryGetValue(resistanceElement, out title);
+        var hasD = _enemyResistanceTooltipDescriptionLookup.TryGetValue(resistanceElement, out description);
+        return hasT || hasD;
+    }
+
     /// <summary>
     /// Resolves a frame behind <see cref="StoredActionsPoolIcon"/> for this pool row
     /// (<see cref="DieType"/> rows or per-status <see cref="StatusEffectIconEntry.poolRowBackground"/> keyed by <c>effect.name</c> as <see cref="PoolRowKey.StableId"/>).
@@ -279,6 +340,21 @@ public class GameIconIndexSO : ScriptableObject
             });
             if (status.poolRowBackground != null && status.effect != null)
                 entries.Add(new NamedIconEntry { key = $"Status.{status.effect.name}.PoolRowBackground", sprite = status.poolRowBackground });
+        }
+
+        foreach (var resistance in enemyResistanceIcons)
+        {
+            entries.Add(new NamedIconEntry
+            {
+                key = $"EnemyResistance.{resistance.resistanceElement}.Icon",
+                sprite = resistance.icon
+            });
+            if (resistance.background != null)
+                entries.Add(new NamedIconEntry
+                {
+                    key = $"EnemyResistance.{resistance.resistanceElement}.Background",
+                    sprite = resistance.background
+                });
         }
 
         return entries;

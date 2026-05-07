@@ -528,7 +528,10 @@ public class CombatManager : MonoBehaviour
             playerStatusBar.Bind(player.StatusEffects);
 
         if (enemyStatusBar != null && activeEnemy != null && activeEnemy.StatusEffects != null)
+        {
             enemyStatusBar.Bind(activeEnemy.StatusEffects);
+            enemyStatusBar.BindEnemyStartingBuffs(activeEnemy);
+        }
 
         if (player != null && player.StatusEffects != null)
             player.StatusEffects.BindBattleContext(this, player);
@@ -945,6 +948,8 @@ public class CombatManager : MonoBehaviour
         }
 
         CollectValueWatcherRegistrationsFromFace(result);
+        if (activeEnemy != null)
+            activeEnemy.HandlePlayerFaceResolved(result, this);
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
         NotifyStoredActionsPoolUpdated();
@@ -1262,6 +1267,22 @@ public class CombatManager : MonoBehaviour
         };
     }
 
+    public GameActionContext BuildEnemyPassiveActionContext(FaceResult triggeringFace = null)
+    {
+        return new GameActionContext
+        {
+            CombatManager = this,
+            Player = player,
+            Enemy = activeEnemy,
+            ChanneledFaces = channeledFaces,
+            TriggeringFace = triggeringFace,
+            PlayerData = playerData,
+            RelicRuntime = _relicRuntime,
+            CurrentPower = currentPower,
+            MaxPower = maxPower
+        };
+    }
+
     private StatusEffectContext BuildStatusContext() => new StatusEffectContext { CombatManager = this, Player = player, Enemy = activeEnemy };
 
     /// <summary>Per-hit physical damage for enemy intent UI; matches <see cref="EnemyTurnRoutine"/> (Strength bonus, then Chill/Shattered/etc.).</summary>
@@ -1515,7 +1536,7 @@ public class CombatManager : MonoBehaviour
         pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
 
-        bool enemyDamageLine = pendingAttack > 0 || _turnRegistry.BurnAppliedThisTurn > 0;
+        bool enemyDamageLine = HasAnyPendingEnemyDamage() || _turnRegistry.BurnAppliedThisTurn > 0;
         bool skipOrbFlightThisSubmit = _skipPowerOrbFlightForNextSubmitTurn;
         _skipPowerOrbFlightForNextSubmitTurn = false;
 
@@ -1553,6 +1574,27 @@ public class CombatManager : MonoBehaviour
                     forceStartingVisibleScale));
             }
         }
+    }
+
+    private bool HasAnyPendingEnemyDamage()
+    {
+        if (bonusDamageFromActions > 0)
+            return true;
+        if (player != null)
+        {
+            var bonus = player.StatusEffects.GetTotalBonusAttack(BuildStatusContext());
+            if (bonus > 0)
+                return true;
+        }
+
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face != null && face.Damage > 0)
+                return true;
+        }
+
+        return false;
     }
 
     private IEnumerator CoSubmitTurnAfterOrbFlight(
@@ -1669,8 +1711,49 @@ public class CombatManager : MonoBehaviour
     /// <returns>False if defeat or victory ended combat.</returns>
     private bool ApplyPendingPlayerAttackFromTurn(int pendingAttack)
     {
-        if (pendingAttack <= 0) return true;
-        activeEnemy.TakeDamage(pendingAttack, EnemyDamagePresentationKind.Physical);
+        var statusCtx = BuildStatusContext();
+        var playerBonusAttack = player.StatusEffects.GetTotalBonusAttack(statusCtx);
+        var totalPhysical = Mathf.Max(0, bonusDamageFromActions + playerBonusAttack);
+        var totalFire = 0;
+        var totalIce = 0;
+        var totalNature = 0;
+
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face == null || face.Damage <= 0)
+                continue;
+
+            switch (face.Type)
+            {
+                case DieType.Damage:
+                    totalPhysical += face.TotalDamageContribution;
+                    break;
+                case DieType.Fire:
+                    totalFire += face.Damage;
+                    break;
+                case DieType.Ice:
+                    totalIce += face.Damage;
+                    break;
+                case DieType.Nature:
+                    totalNature += face.Damage;
+                    break;
+            }
+        }
+
+        totalPhysical = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalPhysical);
+        totalFire = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalFire);
+        totalIce = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalIce);
+        totalNature = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalNature);
+
+        if (totalPhysical > 0)
+            activeEnemy.TakeDamage(totalPhysical, DieType.Damage, EnemyDamagePresentationKind.Physical);
+        if (totalFire > 0)
+            activeEnemy.TakeDamage(totalFire, DieType.Fire, EnemyDamagePresentationKind.Physical);
+        if (totalIce > 0)
+            activeEnemy.TakeDamage(totalIce, DieType.Ice, EnemyDamagePresentationKind.Physical);
+        if (totalNature > 0)
+            activeEnemy.TakeDamage(totalNature, DieType.Nature, EnemyDamagePresentationKind.Physical);
 
         var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
         if (retaliate > 0 && player != null)

@@ -17,7 +17,7 @@ MonoBehaviour:
   combatAnimatorController: {fileID: 9100000, guid: 79c299600131ffe478e9c88abb6023f3, type: 2}
   idleAnimatorStateName: DIce Head Idle
   enemyRank: 1
-  maxHealth: 80
+  maxHealth: 150
   startArmor: 20
   goldReward: 400
   additionalRewardDrops:
@@ -34,7 +34,24 @@ MonoBehaviour:
   isSequential: 1
   actionCycle:
   - {fileID: 11400000, guid: def30f33406523248ae61118ad5315e3, type: 2}
-  - {fileID: 11400000, guid: f7a23b6f72a71af40b10e162337b73a2, type: 2}
-  - {fileID: 11400000, guid: 8fc5640a551fdb243a8415ef616a3c6a, type: 2}
-  - {fileID: 11400000, guid: ac4a610e35731154bab4b200214985b2, type: 2}
+  - {fileID: 11400000, guid: 75024acc8d694144182c9543cf9a59ee, type: 2}
   phases: []
+  startingResistances:
+  - element: 1
+    lessDamagePercent: 50
+  valueRolledListeners:
+  - rolledValues: 02000000
+    icon: {fileID: 21300000, guid: e89ed38bd3ed26e4eb12dddaeb23e71c, type: 3}
+    title: <style=Die2></style> Strength
+    description: Whenever you roll a <style=Die2></style> Dice Head will gain <style=strength>+1</style>
+    actions:
+    - rid: 6434882073453658180
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882073453658180
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 1
+        statusEffect: {fileID: 11400000, guid: ebf544cc10a2325409bf6d6ef50a8f63, type: 2}
+        stacks: 1

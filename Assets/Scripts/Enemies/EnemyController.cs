@@ -30,9 +30,13 @@ public class EnemyController : MonoBehaviour
     private int currentCycleIndex = 0;
     private int _currentPhaseIndex;
     private bool _pendingPhaseAdvance;
+    private readonly Dictionary<EnemyResistanceElement, float> _damageResistanceByElement = new Dictionary<EnemyResistanceElement, float>();
+    private readonly List<EnemyValueRolledListener> _valueRolledListeners = new List<EnemyValueRolledListener>();
     public ReactiveProperty<EnemyActionSO> CurrentIntent = new();
 
     public StatusEffectManager StatusEffects { get; private set; }
+    public IReadOnlyDictionary<EnemyResistanceElement, float> DamageResistances => _damageResistanceByElement;
+    public IReadOnlyList<EnemyValueRolledListener> ValueRolledListeners => _valueRolledListeners;
 
     public int GetCurrentHealth() => currentHealth;
     public int GetCurrentArmor() => currentArmor;
@@ -63,6 +67,7 @@ public class EnemyController : MonoBehaviour
         currentCycleIndex = 0;
         _currentPhaseIndex = 0;
         _pendingPhaseAdvance = false;
+        ConfigureStartingBuffs();
 
         if (nameText != null) nameText.text = data.enemyName;
 
@@ -91,6 +96,19 @@ public class EnemyController : MonoBehaviour
         PrepareNextAction();
     }
 
+    public int ApplyElementResistance(int amount, DieType damageType)
+    {
+        if (amount <= 0)
+            return 0;
+
+        var resistanceElement = ToResistanceElement(damageType);
+        if (!_damageResistanceByElement.TryGetValue(resistanceElement, out var lessPercent) || lessPercent <= 0f)
+            return amount;
+
+        var multiplier = Mathf.Clamp01(1f - (lessPercent / 100f));
+        return Mathf.Max(0, Mathf.RoundToInt(amount * multiplier));
+    }
+
     /// <summary>Wind-up before enemy damage/armor/game actions (see <see cref="EnemyActionSO.actionAnimationLeadInSeconds"/>).</summary>
     public IEnumerator CoPresentEnemyTurnActionIntro(EnemyActionSO action)
     {
@@ -107,6 +125,12 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(int amount, EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical)
     {
+        var inferredType = presentationKind == EnemyDamagePresentationKind.Burn ? DieType.Fire : DieType.Damage;
+        TakeDamage(amount, inferredType, presentationKind);
+    }
+
+    public void TakeDamage(int amount, DieType damageType, EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical)
+    {
         if (amount <= 0) return;
 
         if (presentationKind == EnemyDamagePresentationKind.Burn && StatusEffects != null)
@@ -115,6 +139,9 @@ public class EnemyController : MonoBehaviour
             amount = StatusEffects.ApplyBurnDamageModifiers(burnCtx, amount);
             if (amount <= 0) return;
         }
+
+        amount = ApplyElementResistance(amount, damageType);
+        if (amount <= 0) return;
 
         var damageRemaining = amount;
         var armorDamage = 0;
@@ -156,6 +183,30 @@ public class EnemyController : MonoBehaviour
 
         if (amount > 0)
             CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
+    }
+
+    public void HandlePlayerFaceResolved(FaceResult resolvedFace, CombatManager combatManager)
+    {
+        if (resolvedFace == null || combatManager == null || _valueRolledListeners.Count == 0)
+            return;
+
+        for (var i = 0; i < _valueRolledListeners.Count; i++)
+        {
+            var listener = _valueRolledListeners[i];
+            if (listener == null || listener.rolledValues == null || listener.actions == null)
+                continue;
+            if (!listener.rolledValues.Contains(resolvedFace.Value))
+                continue;
+
+            var ctx = combatManager.BuildEnemyPassiveActionContext(resolvedFace);
+            for (var a = 0; a < listener.actions.Count; a++)
+            {
+                var action = listener.actions[a];
+                if (action == null || action is FaceResolveModifierBase)
+                    continue;
+                action.Execute(ctx);
+            }
+        }
     }
 
     public Vector3 GetDamageNumberWorldPosition()
@@ -315,5 +366,54 @@ public class EnemyController : MonoBehaviour
         _currentPhaseIndex = nextPhaseIndex;
         currentCycleIndex = 0;
         _pendingPhaseAdvance = false;
+    }
+
+    private void ConfigureStartingBuffs()
+    {
+        _damageResistanceByElement.Clear();
+        _valueRolledListeners.Clear();
+
+        if (enemyData == null)
+            return;
+
+        if (enemyData.startingResistances != null)
+        {
+            for (var i = 0; i < enemyData.startingResistances.Count; i++)
+            {
+                var entry = enemyData.startingResistances[i];
+                if (entry == null || entry.lessDamagePercent <= 0f)
+                    continue;
+
+                var current = 0f;
+                _damageResistanceByElement.TryGetValue(entry.element, out current);
+                _damageResistanceByElement[entry.element] = Mathf.Clamp(current + entry.lessDamagePercent, 0f, 100f);
+            }
+        }
+
+        if (enemyData.valueRolledListeners != null)
+        {
+            for (var i = 0; i < enemyData.valueRolledListeners.Count; i++)
+            {
+                var listener = enemyData.valueRolledListeners[i];
+                if (listener == null || listener.rolledValues == null || listener.rolledValues.Count == 0 || listener.actions == null || listener.actions.Count == 0)
+                    continue;
+                _valueRolledListeners.Add(listener);
+            }
+        }
+    }
+
+    private static EnemyResistanceElement ToResistanceElement(DieType damageType)
+    {
+        switch (damageType)
+        {
+            case DieType.Fire:
+                return EnemyResistanceElement.Fire;
+            case DieType.Ice:
+                return EnemyResistanceElement.Ice;
+            case DieType.Nature:
+                return EnemyResistanceElement.Nature;
+            default:
+                return EnemyResistanceElement.Physical;
+        }
     }
 }
