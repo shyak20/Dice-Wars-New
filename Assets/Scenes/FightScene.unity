@@ -10016,7 +10016,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 85.78003, y: -36.669983}
+  m_AnchoredPosition: {x: 85.78003, y: -36.670044}
   m_SizeDelta: {x: 171.57, y: 73.33}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1286891664
@@ -10189,8 +10189,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -454.1, y: 413.2}
-  m_SizeDelta: {x: 371.2, y: 163.95}
+  m_AnchoredPosition: {x: -9, y: 323}
+  m_SizeDelta: {x: 404.49, y: 163.95}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1304960267
 MonoBehaviour:
@@ -17495,10 +17495,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1304960266}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 341.92, y: 133.26}
+  m_SizeDelta: {x: -30.079987, y: -30.740005}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1750714263
 MonoBehaviour:
@@ -17520,7 +17520,11 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: This is the enemy's Health, reduce it to 0 to win the fight
+  m_text: 'This is the enemy''s Health and the action he will be taking in his turn.
+
+
+    Reduce
+    his HP to 0 to win the fight.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}

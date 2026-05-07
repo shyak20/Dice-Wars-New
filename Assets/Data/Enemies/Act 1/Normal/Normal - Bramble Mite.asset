@@ -17,7 +17,7 @@ MonoBehaviour:
   combatAnimatorController: {fileID: 9100000, guid: 7ea95e0b0bdb425449d786d1a63097cc, type: 2}
   idleAnimatorStateName: Idle
   enemyRank: 0
-  maxHealth: 14
+  maxHealth: 20
   startArmor: 0
   minGoldReward: 30
   maxGoldReward: 50
