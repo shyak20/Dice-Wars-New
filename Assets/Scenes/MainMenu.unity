@@ -26672,7 +26672,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIOpenUrlButton
   button: {fileID: 1555290935}
-  url: https://discord.gg/etezFdpNcw
+  url: https://discord.gg/hAu4qcXQPn
 --- !u!114 &1557225169
 MonoBehaviour:
   m_ObjectHideFlags: 0
