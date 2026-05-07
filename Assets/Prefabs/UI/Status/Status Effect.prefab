@@ -205,6 +205,8 @@ MonoBehaviour:
   iconImage: {fileID: 4755771994896841046}
   stackText: {fileID: 185855645565800569}
   stackVisualRoot: {fileID: 1018481574301042869}
+  hoverTooltipPanel: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  tooltipScreenOffset: {x: 0, y: -50}
 --- !u!1 &7150691118504321116
 GameObject:
   m_ObjectHideFlags: 0

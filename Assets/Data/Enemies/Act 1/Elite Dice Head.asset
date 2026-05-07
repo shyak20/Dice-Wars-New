@@ -17,7 +17,7 @@ MonoBehaviour:
   combatAnimatorController: {fileID: 9100000, guid: 79c299600131ffe478e9c88abb6023f3, type: 2}
   idleAnimatorStateName: DIce Head Idle
   enemyRank: 1
-  maxHealth: 150
+  maxHealth: 100
   startArmor: 20
   minGoldReward: 110
   maxGoldReward: 180

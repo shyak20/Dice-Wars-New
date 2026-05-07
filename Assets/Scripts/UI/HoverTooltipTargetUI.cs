@@ -11,6 +11,7 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     [SerializeField] private HoverTooltipPanelUI tooltipPanel;
     [SerializeField] private Vector2 tooltipScreenOffset;
     private Sprite _tooltipBackground;
+    private bool _isPointerInside;
 
     public void SetContent(string title, string description, Sprite tooltipBackground = null)
     {
@@ -31,6 +32,36 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        _isPointerInside = true;
+        ShowTooltip();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _isPointerInside = false;
+        var panel = ResolvePanel();
+        if (panel == null) return;
+        panel.Hide();
+    }
+
+    private void OnDisable()
+    {
+        _isPointerInside = false;
+        var panel = tooltipPanel;
+        if (panel != null)
+            panel.Hide();
+    }
+
+    private void Update()
+    {
+        if (!_isPointerInside)
+            return;
+        // Defensive refresh: some rebuilt UI states miss the first enter/show; keep it visible while hovered.
+        ShowTooltip();
+    }
+
+    private void ShowTooltip()
+    {
         if (string.IsNullOrWhiteSpace(tooltipTitle) && string.IsNullOrWhiteSpace(tooltipDescription))
             return;
 
@@ -43,13 +74,6 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
             panel.AlignPivotWorldXToRect(transform as RectTransform);
     }
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        var panel = ResolvePanel();
-        if (panel == null) return;
-        panel.Hide();
-    }
-
     private HoverTooltipPanelUI ResolvePanel()
     {
         if (tooltipPanel != null) return tooltipPanel;
@@ -58,10 +82,4 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
         return tooltipPanel;
     }
 
-    private void OnDisable()
-    {
-        var panel = tooltipPanel;
-        if (panel != null)
-            panel.Hide();
-    }
 }

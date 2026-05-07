@@ -8,8 +8,14 @@ public class StatusEffectIconUI : MonoBehaviour
     [SerializeField] private TMP_Text stackText;
     [Tooltip("Optional root for the stack badge visuals (text/background). Hidden when stacks are 0.")]
     [SerializeField] private GameObject stackVisualRoot;
+    [Header("Tooltip")]
+    [Tooltip("Can be a scene instance or a prefab asset. If prefab, a runtime instance is created under this icon's Canvas.")]
+    [SerializeField] private HoverTooltipPanelUI hoverTooltipPanel;
+    [Tooltip("Tooltip offset in screen pixels relative to the hovered status icon.")]
+    [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
     private HoverTooltipTargetUI hoverTooltipTarget;
     private HoverTooltipTargetUI hoverTooltipTargetOnIcon;
+    private HoverTooltipPanelUI _runtimeTooltipPanel;
 
     private void Awake()
     {
@@ -19,9 +25,11 @@ public class StatusEffectIconUI : MonoBehaviour
             Debug.LogError($"StatusEffectIconUI on '{gameObject.name}': stackText is not assigned!");
 
         hoverTooltipTarget = GetComponent<HoverTooltipTargetUI>() ?? gameObject.AddComponent<HoverTooltipTargetUI>();
+        hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
         if (iconImage != null)
         {
             hoverTooltipTargetOnIcon = iconImage.gameObject.GetComponent<HoverTooltipTargetUI>() ?? iconImage.gameObject.AddComponent<HoverTooltipTargetUI>();
+            hoverTooltipTargetOnIcon.SetTooltipScreenOffset(tooltipScreenOffset);
             iconImage.raycastTarget = true;
         }
     }
@@ -29,6 +37,17 @@ public class StatusEffectIconUI : MonoBehaviour
     public void Setup(StatusEffectInstance effect)
     {
         RefreshVisual(effect);
+    }
+
+    public void SetTooltipPanelPrefab(HoverTooltipPanelUI panelPrefab)
+    {
+        if (panelPrefab == null)
+            return;
+        if (hoverTooltipPanel == panelPrefab)
+            return;
+
+        hoverTooltipPanel = panelPrefab;
+        _runtimeTooltipPanel = null;
     }
 
     public void SetupCustom(Sprite icon, string title, string description, Sprite tooltipBackground = null)
@@ -39,10 +58,7 @@ public class StatusEffectIconUI : MonoBehaviour
             iconImage.enabled = icon != null;
         }
 
-        if (hoverTooltipTarget != null)
-            hoverTooltipTarget.SetContent(title, description, tooltipBackground);
-        if (hoverTooltipTargetOnIcon != null)
-            hoverTooltipTargetOnIcon.SetContent(title, description, tooltipBackground);
+        ApplyTooltipContent(title, description, tooltipBackground);
 
         UpdateStacks(0);
     }
@@ -67,12 +83,7 @@ public class StatusEffectIconUI : MonoBehaviour
         if (hoverTooltipTarget != null)
         {
             var title = string.IsNullOrWhiteSpace(effect.Definition.effectName) ? effect.Definition.name : effect.Definition.effectName;
-            hoverTooltipTarget.SetContent(title, effect.Definition.description);
-        }
-        if (hoverTooltipTargetOnIcon != null)
-        {
-            var title = string.IsNullOrWhiteSpace(effect.Definition.effectName) ? effect.Definition.name : effect.Definition.effectName;
-            hoverTooltipTargetOnIcon.SetContent(title, effect.Definition.description);
+            ApplyTooltipContent(title, effect.Definition.description);
         }
         UpdateStacks(effect.Stacks);
     }
@@ -84,5 +95,42 @@ public class StatusEffectIconUI : MonoBehaviour
             stackText.text = hasStacks ? stacks.ToString() : string.Empty;
         if (stackVisualRoot != null)
             stackVisualRoot.SetActive(hasStacks);
+    }
+
+    private void ApplyTooltipContent(string title, string description, Sprite tooltipBackground = null)
+    {
+        var panel = ResolveTooltipPanel();
+        if (hoverTooltipTarget != null)
+        {
+            if (panel != null) hoverTooltipTarget.Configure(panel, title, description, tooltipBackground);
+            else hoverTooltipTarget.SetContent(title, description, tooltipBackground);
+        }
+
+        if (hoverTooltipTargetOnIcon != null)
+        {
+            if (panel != null) hoverTooltipTargetOnIcon.Configure(panel, title, description, tooltipBackground);
+            else hoverTooltipTargetOnIcon.SetContent(title, description, tooltipBackground);
+        }
+    }
+
+    private HoverTooltipPanelUI ResolveTooltipPanel()
+    {
+        if (_runtimeTooltipPanel != null)
+            return _runtimeTooltipPanel;
+        if (hoverTooltipPanel == null)
+            return null;
+
+        if (hoverTooltipPanel.gameObject.scene.IsValid())
+        {
+            _runtimeTooltipPanel = hoverTooltipPanel;
+            return _runtimeTooltipPanel;
+        }
+
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas == null)
+            return null;
+        _runtimeTooltipPanel = Instantiate(hoverTooltipPanel, canvas.transform);
+        _runtimeTooltipPanel.name = hoverTooltipPanel.name;
+        return _runtimeTooltipPanel;
     }
 }
