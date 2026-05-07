@@ -94,8 +94,10 @@ public class EnemyTypeSO : ScriptableObject
     public int startArmor;
 
     [Header("Rewards")]
-    [Tooltip("Gold granted when this enemy is defeated (run currency).")]
-    public int goldReward;
+    [Tooltip("Minimum gold granted when this enemy is defeated (run currency).")]
+    [Min(0)] public int minGoldReward;
+    [Tooltip("Maximum gold granted when this enemy is defeated (run currency).")]
+    [Min(0)] public int maxGoldReward;
     [Tooltip("Optional: extra reward rolls when this enemy dies.")]
     public List<EnemyBonusRewardDrop> additionalRewardDrops = new List<EnemyBonusRewardDrop>();
     [Tooltip("Pool used by additionalRewardDrops when pool = DieFaces.")]
@@ -124,4 +126,17 @@ public class EnemyTypeSO : ScriptableObject
 
     public bool HasConfiguredPhases => phases != null && phases.Count > 0 && phases[0] != null &&
                                        phases[0].actionCycle != null && phases[0].actionCycle.Count > 0;
+
+    public int RollGoldReward()
+    {
+        var min = Mathf.Max(0, minGoldReward);
+        var max = Mathf.Max(min, maxGoldReward);
+        return Random.Range(min, max + 1);
+    }
+
+    private void OnValidate()
+    {
+        if (maxGoldReward < minGoldReward)
+            maxGoldReward = minGoldReward;
+    }
 }

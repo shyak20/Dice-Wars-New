@@ -144,33 +144,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
                         }
                         break;
                     }
-                    case TreasureRewardKind.Die:
-                    {
-                        var die = e.dieLootTable != null ? e.dieLootTable.GetRandomDie() : null;
-                        if (die != null)
-                        {
-                            destination.Add(new RolledReward
-                            {
-                                Kind = RolledRewardKind.Die,
-                                Die = die
-                            });
-                        }
-                        break;
-                    }
-                    case TreasureRewardKind.Relic:
-                    {
-                        if (e.relicLootTable == null) break;
-                        var rolled = e.relicLootTable.GetRandomRelics(1);
-                        if (rolled.Count > 0 && rolled[0] != null)
-                        {
-                            destination.Add(new RolledReward
-                            {
-                                Kind = RolledRewardKind.Relic,
-                                Relic = rolled[0]
-                            });
-                        }
-                        break;
-                    }
                 }
             }
         }
@@ -200,6 +173,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
                 });
             }
         }
+
     }
 
     private void CollectReward(RolledReward reward)

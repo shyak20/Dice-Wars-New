@@ -18,9 +18,7 @@ MonoBehaviour:
   - kind: 0
     goldMin: 300
     goldMax: 500
-    dieLootTable: {fileID: 0}
-    relicLootTable: {fileID: 0}
-  dieDropChance: 0.1
+  dieDropChance: 0.05
   dieDropLootTable: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
-  relicDropChance: 0.1
+  relicDropChance: 0.2
   relicDropLootTable: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}

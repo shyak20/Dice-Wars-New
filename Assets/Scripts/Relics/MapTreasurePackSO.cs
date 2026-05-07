@@ -4,9 +4,7 @@ using UnityEngine;
 
 public enum TreasureRewardKind
 {
-    Gold,
-    Die,
-    Relic
+    Gold
 }
 
 [Serializable]
@@ -15,8 +13,6 @@ public struct TreasureRewardEntry
     public TreasureRewardKind kind;
     [Min(0)] public int goldMin;
     [Min(0)] public int goldMax;
-    public DieLootTableSO dieLootTable;
-    public RelicLootTableSO relicLootTable;
 }
 
 /// <summary>One treasure chest definition for map <see cref="MapEventType.Treasure"/> tiles; rolled per act from <see cref="MapActDefinitionSO"/>.</summary>

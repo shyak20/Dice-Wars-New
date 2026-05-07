@@ -1906,7 +1906,7 @@ public class CombatManager : MonoBehaviour
         VictoryRewardBuffer.PendingGold = 0;
         if (activeEnemy != null && activeEnemy.enemyData != null)
         {
-            VictoryRewardBuffer.PendingGold = Mathf.Max(0, activeEnemy.enemyData.goldReward);
+            VictoryRewardBuffer.PendingGold = activeEnemy.enemyData.RollGoldReward();
             EnemyBonusRewardResolver.RollAndGrant(activeEnemy.enemyData);
         }
 

@@ -27,4 +27,4 @@ MonoBehaviour:
   socketedGems:
   - {fileID: 0}
   - {fileID: 0}
-  maxPowerContribution: 0
+  maxPowerContribution: 2
