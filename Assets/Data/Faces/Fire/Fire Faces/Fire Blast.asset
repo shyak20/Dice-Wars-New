@@ -40,6 +40,6 @@ MonoBehaviour:
     - rid: 6494956586993451207
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
-        activateImmediately: 0
+        activateImmediately: 1
         statusEffect: {fileID: 11400000, guid: eab92401621da2241a6640d43a76acb5, type: 2}
         stacks: 3

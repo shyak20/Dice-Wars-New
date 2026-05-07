@@ -2582,8 +2582,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Gain<style=Shield> Shield 4</style>\nGain <style=Shield>4</style> \nDeal
     <style=Attack>5</style>\nGain <style=Strength>5</style>\nGain <style=Cleanse>5</style>\nGain
-    <style=Burn>5</style>\nGain <style=Heal>5</style>\nWhen you roll <style=die1>
-    <style=die2> <style=die3> <style=die4> <style=die5> <style=die6>"
+    <style=Burn>5</style>\nGain <style=Heal>5</style>\nGain <style=Poison>5</style>\nWhen
+    you roll <style=die1> <style=die2> <style=die3> <style=die4> <style=die5> <style=die6>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}
@@ -6159,8 +6159,8 @@ Transform:
   m_GameObject: {fileID: 945881027}
   serializedVersion: 2
   m_LocalRotation: {x: 0.23484026, y: -0, z: -0, w: 0.97203404}
-  m_LocalPosition: {x: -1.65, y: -2.96, z: 14.84}
-  m_LocalScale: {x: 1.8249929, y: 1.8249929, z: 1.8249929}
+  m_LocalPosition: {x: -0.78, y: -1.8, z: 15.44}
+  m_LocalScale: {x: 1.8706176, y: 1.8249929, z: 1.8249929}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -6427,7 +6427,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -52.8, y: -30.7}
+  m_SizeDelta: {x: -43.72, y: -30.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &970884749
 MonoBehaviour:
@@ -6451,8 +6451,12 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Be careful!
 
-    If you overshoot your max Cast Power then all your accumulated
-    elements gained will vanish and your turn will end instantly. '
+
+    If you overshoot your <color=yellow>Max Cast Power</color>,
+
+    all
+    your accumulated elements <color=orange>will vanish</color> and your turn will
+    end instantly. '
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
@@ -7829,7 +7833,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1137336290}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7840,8 +7844,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 9, y: -256}
-  m_SizeDelta: {x: 468.7, y: 163.9}
+  m_AnchoredPosition: {x: 9, y: -248.94}
+  m_SizeDelta: {x: 468.7, y: 178.03}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1137336292
 MonoBehaviour:
@@ -8241,11 +8245,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'The value of each die you roll will be added to your Cast Power.
+  m_text: 'The value of each die you roll will be added to your <color=yellow>Cast
+    Power</color>.
 
-    If
-    you manage to hit the exact number, all your accumulated elements will be multiplied
-    by x2.
+
+    If you manage to hit the Maximum Power Number, all your
+    accumulated elements will be multiplied by <color=yellow>x2</color>.
 
 '
   m_isRightToLeft: 0
@@ -19448,6 +19453,14 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 963194227}
+    - target: {fileID: 6465924198549717653, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -372
+      objectReference: {fileID: 0}
+    - target: {fileID: 6465924198549717653, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -81
+      objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -19467,6 +19480,18 @@ PrefabInstance:
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -48.6859
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092406887998814143, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092406887998814143, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8365422450391847375, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 423
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

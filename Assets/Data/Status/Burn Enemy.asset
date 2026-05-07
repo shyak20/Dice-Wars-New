@@ -13,10 +13,7 @@ MonoBehaviour:
   m_Name: Burn Enemy
   m_EditorClassIdentifier: 
   effectName: <style=Burn>Burn </style>
-  description: 'Deals 1 Damage per stack and reduce stack by 1
-
-    If you land a
-    perfect strike deal all stacks as damage. '
+  description: Before your turn, deal 1 Damage per stack and reduce stack by 1
   type: 1
   target: 0
   stackDecayPerTurn: 1
