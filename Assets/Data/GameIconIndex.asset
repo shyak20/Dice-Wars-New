@@ -28,10 +28,10 @@ MonoBehaviour:
     title: <style=Cleanse>Cleanse</style>
     description: Each stack removes 1 random debuff stack
   - id: 3
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 002547285b0aeaf4f83f2212fac9cc7b, type: 3}
     background: {fileID: 0}
-    title: 
-    description: 
+    title: Overcharge
+    description: Perfect Cast multiplies all elements by x3 instead of x2
   - id: 5
     sprite: {fileID: 21300000, guid: 1a9b3b51a36f6b8419fb0fd7b44b5ddb, type: 3}
     background: {fileID: 0}
@@ -121,5 +121,3 @@ MonoBehaviour:
     background: {fileID: 0}
     title: Burn Resistance
     description: Receive 50% of <style=burn>Burn</style> damage.
-  enemyRollConditionValue:
-    icon: {fileID: 0}

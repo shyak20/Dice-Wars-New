@@ -45,6 +45,19 @@ public class CombatManager : MonoBehaviour
     [Header("Reroll (RerollDie action)")]
     [Tooltip("When a face has Reroll Die, after the batch settles the player may pick a die to rethrow (or skip).")]
     [SerializeField] private RerollDieSelectionController rerollDieSelection;
+    [Header("Roll Platform Glow")]
+    [Tooltip("Optional. Platform renderer using a material with _SelfLitIntensity.")]
+    [SerializeField] private Renderer rollPlatformRenderer;
+    [Tooltip("How long the platform glow takes to reach target intensity while dice are rolling.")]
+    [SerializeField, Min(0f)] private float rollPlatformGlowRiseDurationSeconds = 0.35f;
+    [Tooltip("Wait this long after roll starts before beginning glow rise.")]
+    [SerializeField, Min(0f)] private float rollPlatformGlowStartDelaySeconds = 0f;
+    [Tooltip("Target _SelfLitIntensity value during rolling.")]
+    [SerializeField, Range(0f, 1f)] private float rollPlatformGlowTargetIntensity = 1f;
+    [Tooltip("Hard wait from roll start before fading platform glow out.")]
+    [SerializeField, Min(0f)] private float rollPlatformGlowFadeOutDelaySeconds = 0.25f;
+    [Tooltip("How long the platform glow takes to fade down to 0 after the delay.")]
+    [SerializeField, Min(0f)] private float rollPlatformGlowFadeOutDurationSeconds = 0.35f;
 
     private CombatState currentState;
     private List<DieAssetSO> selectedDice = new List<DieAssetSO>();
@@ -107,6 +120,12 @@ public class CombatManager : MonoBehaviour
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
     private int _faceResolveSequence;
     private bool _echoSkipsPowerThisBatch;
+    private Coroutine _rollPlatformGlowRoutine;
+    private Coroutine _rollPlatformFadeRoutine;
+    private MaterialPropertyBlock _rollPlatformGlowMpb;
+    private bool _rollPlatformGlowHasOriginal;
+    private float _rollPlatformGlowOriginalIntensity;
+    private float _rollPlatformCurrentIntensity;
 
     private struct PendingAfterPhysicalApplyStatus
     {
@@ -594,6 +613,7 @@ public class CombatManager : MonoBehaviour
     private void ExecuteBatchRoll()
     {
         if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
+        StartRollPlatformGlow();
         _rollBatchId++;
         _gemBonusRollChainActivationsByDieThisBatch.Clear();
         _gemScheduledBatchRerollIndices.Clear();
@@ -1939,6 +1959,7 @@ public class CombatManager : MonoBehaviour
 
     private void ResetTurn()
     {
+        EndRollPlatformGlow(forceImmediateReset: true);
         _sameTurnValueWatchers.Clear();
         _turnRegistry.ResetVolatile();
         channeledFaces.Clear();
@@ -1977,4 +1998,126 @@ public class CombatManager : MonoBehaviour
     }
 
     private void ChangeState(CombatState newState) { currentState = newState; CombatEvents.OnStateChanged?.Invoke(newState); }
+
+    private void StartRollPlatformGlow()
+    {
+        if (rollPlatformRenderer == null)
+            return;
+        if (!TryGetRollPlatformSelfLitOriginal(out var original))
+            return;
+
+        if (_rollPlatformGlowRoutine != null)
+            StopCoroutine(_rollPlatformGlowRoutine);
+        if (_rollPlatformFadeRoutine != null)
+            StopCoroutine(_rollPlatformFadeRoutine);
+
+        var target = Mathf.Clamp01(rollPlatformGlowTargetIntensity);
+        var startDelay = Mathf.Max(0f, rollPlatformGlowStartDelaySeconds);
+        var riseDuration = Mathf.Max(0f, rollPlatformGlowRiseDurationSeconds);
+        var fadeDelay = Mathf.Max(0f, rollPlatformGlowFadeOutDelaySeconds);
+        var fadeDuration = Mathf.Max(0f, rollPlatformGlowFadeOutDurationSeconds);
+        _rollPlatformGlowRoutine = StartCoroutine(CoRiseRollPlatformGlow(original, target, startDelay, riseDuration));
+        _rollPlatformFadeRoutine = StartCoroutine(CoFadeOutRollPlatformGlow(fadeDelay, fadeDuration));
+    }
+
+    private void EndRollPlatformGlow(bool forceImmediateReset = false)
+    {
+        if (_rollPlatformGlowRoutine != null)
+        {
+            StopCoroutine(_rollPlatformGlowRoutine);
+            _rollPlatformGlowRoutine = null;
+        }
+        if (_rollPlatformFadeRoutine != null)
+        {
+            StopCoroutine(_rollPlatformFadeRoutine);
+            _rollPlatformFadeRoutine = null;
+        }
+
+        if (rollPlatformRenderer == null || !_rollPlatformGlowHasOriginal)
+            return;
+        ApplyRollPlatformSelfLit(forceImmediateReset ? _rollPlatformGlowOriginalIntensity : 0f);
+    }
+
+    private IEnumerator CoRiseRollPlatformGlow(float from, float to, float delay, float duration)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        if (duration <= 0f)
+        {
+            ApplyRollPlatformSelfLit(to);
+            _rollPlatformGlowRoutine = null;
+            yield break;
+        }
+
+        var elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            var t = Mathf.Clamp01(elapsed / duration);
+            ApplyRollPlatformSelfLit(Mathf.Lerp(from, to, t));
+            yield return null;
+        }
+
+        ApplyRollPlatformSelfLit(to);
+        _rollPlatformGlowRoutine = null;
+    }
+
+    private IEnumerator CoFadeOutRollPlatformGlow(float delay, float duration)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        var from = _rollPlatformCurrentIntensity;
+        if (duration <= 0f)
+        {
+            ApplyRollPlatformSelfLit(0f);
+            _rollPlatformFadeRoutine = null;
+            yield break;
+        }
+
+        var elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            var t = Mathf.Clamp01(elapsed / duration);
+            ApplyRollPlatformSelfLit(Mathf.Lerp(from, 0f, t));
+            yield return null;
+        }
+
+        ApplyRollPlatformSelfLit(0f);
+        _rollPlatformFadeRoutine = null;
+    }
+
+    private bool TryGetRollPlatformSelfLitOriginal(out float intensity)
+    {
+        intensity = 0f;
+        if (rollPlatformRenderer == null)
+            return false;
+
+        var shared = rollPlatformRenderer.sharedMaterial;
+        if (shared == null || !shared.HasProperty("_SelfLitIntensity"))
+            return false;
+
+        if (!_rollPlatformGlowHasOriginal)
+        {
+            _rollPlatformGlowOriginalIntensity = shared.GetFloat("_SelfLitIntensity");
+            _rollPlatformGlowHasOriginal = true;
+            _rollPlatformCurrentIntensity = _rollPlatformGlowOriginalIntensity;
+        }
+
+        intensity = _rollPlatformGlowOriginalIntensity;
+        return true;
+    }
+
+    private void ApplyRollPlatformSelfLit(float intensity)
+    {
+        if (rollPlatformRenderer == null)
+            return;
+        _rollPlatformCurrentIntensity = intensity;
+        _rollPlatformGlowMpb ??= new MaterialPropertyBlock();
+        rollPlatformRenderer.GetPropertyBlock(_rollPlatformGlowMpb);
+        _rollPlatformGlowMpb.SetFloat("_SelfLitIntensity", intensity);
+        rollPlatformRenderer.SetPropertyBlock(_rollPlatformGlowMpb);
+    }
 }
