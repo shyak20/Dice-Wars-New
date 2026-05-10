@@ -33,6 +33,10 @@ public sealed class MapMovementManager : MonoBehaviour
     [SerializeField] private Transform overflowDamageNumberWorldAnchor;
     [Header("Presentation (map run)")]
     [SerializeField] private MapPresentationSO mapPresentation;
+    [Tooltip("Seconds to move the player marker to the new tile before firing map events / scene loads.")]
+    [SerializeField, Min(0f)] private float playerMarkerMoveDurationSeconds = 0.35f;
+    [Tooltip("Normalized time (0–1) → eased progress for the marker move.")]
+    [SerializeField] private AnimationCurve playerMarkerMoveCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
     [SerializeField] private MapShrineChoicePanel shrineChoicePanel;
     [SerializeField] private MapTreasurePanel treasurePanel;
     [SerializeField] private MapUnknownEventPanel unknownEventPanel;
@@ -178,9 +182,11 @@ public sealed class MapMovementManager : MonoBehaviour
         if (!_grid.HasExit(from.x, from.y, dir))
             return false;
 
+        var fromCell = from;
         PlayerGridPosition = target;
         MovesTaken++;
         OnPlayerMoved?.Invoke();
+        moveCounterUI?.Refresh();
 
         if (MovesTaken > _effectiveMoveLimit)
         {
@@ -201,13 +207,26 @@ public sealed class MapMovementManager : MonoBehaviour
             mapView?.RefreshAllTileExits();
         }
 
-        if (PlayerGridPosition == BossPosition)
-            OnBossReached?.Invoke();
+        var becameBoss = PlayerGridPosition == BossPosition;
 
-        ResolveTileAfterMoveIfMapRun();
+        void AfterPlayerMarkerArrived()
+        {
+            mapView?.RefreshPlayerStandingVisuals();
+            if (becameBoss)
+                OnBossReached?.Invoke();
+            ResolveTileAfterMoveIfMapRun();
+        }
 
-        mapView?.RefreshPlayerIcon();
-        moveCounterUI?.Refresh();
+        if (mapView != null)
+        {
+            var curve = playerMarkerMoveCurve != null && playerMarkerMoveCurve.keys.Length > 0
+                ? playerMarkerMoveCurve
+                : AnimationCurve.Linear(0f, 0f, 1f, 1f);
+            mapView.MovePlayerMarkerThen(fromCell, target, Mathf.Max(0f, playerMarkerMoveDurationSeconds), curve, AfterPlayerMarkerArrived);
+        }
+        else
+            AfterPlayerMarkerArrived();
+
         return true;
     }
 
@@ -218,6 +237,7 @@ public sealed class MapMovementManager : MonoBehaviour
         t.eventConsumed = true;
         _grid.SetTile(c.x, c.y, t);
         mapView?.RefreshTile(_grid, c);
+        mapView?.RefreshPlayerStandingVisuals();
     }
 
     private void ResolveTileAfterMoveIfMapRun()
@@ -301,6 +321,21 @@ public sealed class MapMovementManager : MonoBehaviour
     public bool IsBoss(Vector2Int cell) => cell == BossPosition;
 
     public bool IsStart(Vector2Int cell) => cell == StartPosition;
+
+    /// <summary>
+    /// True when <paramref name="target"/> is orthogonally adjacent to <see cref="PlayerGridPosition"/> and the current tile has a directed exit toward it (same checks as <see cref="TryMoveTo"/> before the move is applied).
+    /// </summary>
+    public bool IsValidOneStepMoveTarget(Vector2Int target)
+    {
+        if (_grid == null || !_grid.Contains(target))
+            return false;
+        var from = PlayerGridPosition;
+        if (from == target)
+            return false;
+        if (!IsOrthogonalAdjacent(from, target))
+            return false;
+        return _grid.HasExit(from.x, from.y, DirectionFromTo(from, target));
+    }
 
     /// <summary>
     /// Value for map move-counter tooltip <c>{0}</c>: while the next step would stay within <see cref="MoveLimit"/>, returns <see cref="overflowDamageBase"/> (first corruption hit). Once the next step would exceed the limit, returns the same total as <see cref="TryMoveTo"/> applies after that move.

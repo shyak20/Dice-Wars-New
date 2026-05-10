@@ -21,3 +21,4 @@ MonoBehaviour:
   unknownIcon: {fileID: 21300000, guid: 19618fabf9d74694897b81edd02a8375, type: 3}
   shrineIcon: {fileID: 21300000, guid: f1012328c13c09c4c88833e8b97a4af8, type: 3}
   treasureIcon: {fileID: 21300000, guid: 45340d43c09ffd843aa3306f764a4080, type: 3}
+  playerMarkerIcon: {fileID: 21300000, guid: 4fe5439326330174bb5ffdaf32f97770, type: 3}

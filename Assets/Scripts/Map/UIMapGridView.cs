@@ -1,19 +1,31 @@
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Spawns a tile UI per cell and tracks the player icon.</summary>
+/// <summary>Spawns a tile UI per cell and drives a separate player marker (sprite from <see cref="MapPresentationSO"/>).</summary>
 public class UIMapGridView : MonoBehaviour
 {
     [SerializeField] private RectTransform tilesParent;
     [SerializeField] private GridLayoutGroup gridLayout;
     [SerializeField] private UIMapTileView tilePrefab;
-    [SerializeField] private RectTransform playerIcon;
-    [Tooltip("Empty child on each tile where the player icon parents while standing on that cell.")]
-    [SerializeField] private string playerAnchorChildName = "PlayerAnchor";
+    [Header("Player marker")]
+    [Tooltip("RectTransform for the pawn; anchored position is driven to each tile’s center (sibling of the grid is typical).")]
+    [SerializeField] private RectTransform playerMarker;
+    [Tooltip("Optional. If unset, uses Image on playerMarker.")]
+    [SerializeField] private Image playerMarkerImage;
 
     private UIMapTileView[,] _tiles;
     private MapMovementManager _manager;
     private MapPresentationSO _presentation;
+    private Coroutine _markerMoveRoutine;
+    private Coroutine _markerLayoutSnapRoutine;
+    private RectTransform _markerParentRt;
+    private Canvas _canvas;
+    /// <summary>While the pawn animates, the Selected visual uses this cell (the click target), not <see cref="MapMovementManager.PlayerGridPosition"/>.</summary>
+    private Vector2Int? _tileStateSelectedCellOverride;
+    /// <summary>While the pawn animates, “standing here” background/arrows use this cell until the move completes.</summary>
+    private Vector2Int? _standingVisualCellOverride;
 
     private void Awake()
     {
@@ -25,6 +37,15 @@ public class UIMapGridView : MonoBehaviour
             gridLayout = tilesParent.GetComponent<GridLayoutGroup>();
         if (gridLayout == null)
             Debug.LogError("UIMapGridView: assign gridLayout (or add GridLayoutGroup to tilesParent).", this);
+
+        if (playerMarkerImage == null && playerMarker != null)
+            playerMarkerImage = playerMarker.GetComponent<Image>();
+
+        if (playerMarker != null)
+        {
+            _markerParentRt = playerMarker.parent as RectTransform;
+            _canvas = playerMarker.GetComponentInParent<Canvas>();
+        }
     }
 
     public void Present(MapGrid grid, MapMovementManager manager, MapPresentationSO presentation = null)
@@ -32,9 +53,21 @@ public class UIMapGridView : MonoBehaviour
         if (grid == null || manager == null || tilesParent == null || tilePrefab == null || gridLayout == null)
             return;
 
-        // Icon is under a tile child of tilesParent; ClearChildren would destroy it.
-        // Do not use `transform` here — it is often the same as tilesParent on the grid object.
-        DetachPlayerIconBeforeClearingTiles();
+        if (_markerMoveRoutine != null)
+        {
+            StopCoroutine(_markerMoveRoutine);
+            _markerMoveRoutine = null;
+        }
+
+        if (_markerLayoutSnapRoutine != null)
+        {
+            StopCoroutine(_markerLayoutSnapRoutine);
+            _markerLayoutSnapRoutine = null;
+        }
+
+        ClearMoveVisualOverrides();
+
+        DetachPlayerMarkerBeforeClearingTiles();
 
         _manager = manager;
         _presentation = presentation;
@@ -59,8 +92,19 @@ public class UIMapGridView : MonoBehaviour
             }
         }
 
+        ApplyPlayerMarkerSpriteFromPresentation();
         RefreshAllTileExits();
-        RefreshPlayerIcon();
+
+        if (tilesParent != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(tilesParent);
+        Canvas.ForceUpdateCanvases();
+
+        SnapPlayerMarkerToCell(manager.PlayerGridPosition);
+        RefreshPlayerStandingVisuals();
+
+        if (_markerLayoutSnapRoutine != null)
+            StopCoroutine(_markerLayoutSnapRoutine);
+        _markerLayoutSnapRoutine = StartCoroutine(CoSnapPlayerMarkerAfterLayout());
     }
 
     /// <summary>Re-applies tile visuals after <see cref="MapTile.eventConsumed"/> changes.</summary>
@@ -94,69 +138,212 @@ public class UIMapGridView : MonoBehaviour
                     v.RefreshExits(grid);
             }
         }
+
+        RefreshPlayerStandingVisuals();
     }
 
-    public void RefreshPlayerIcon()
+    /// <summary>Moves the marker from <paramref name="fromCell"/> to <paramref name="toCell"/>, then invokes <paramref name="onComplete"/>.</summary>
+    public void MovePlayerMarkerThen(Vector2Int fromCell, Vector2Int toCell, float durationSeconds, AnimationCurve moveCurve, Action onComplete)
     {
-        if (playerIcon == null || _manager == null || _tiles == null)
-            return;
-
-        var p = _manager.PlayerGridPosition;
-        if (p.x < 0 || p.x >= _tiles.GetLength(0) || p.y < 0 || p.y >= _tiles.GetLength(1))
-            return;
-
-        var tileView = _tiles[p.x, p.y];
-        if (tileView == null)
-            return;
-
-        Transform anchor = tileView.transform;
-        if (!string.IsNullOrEmpty(playerAnchorChildName))
+        if (_tiles == null || _manager == null)
         {
-            var found = tileView.transform.Find(playerAnchorChildName);
-            if (found != null)
-                anchor = found;
+            onComplete?.Invoke();
+            return;
         }
 
-        playerIcon.SetParent(anchor, false);
-        playerIcon.anchorMin = new Vector2(0.5f, 0.5f);
-        playerIcon.anchorMax = new Vector2(0.5f, 0.5f);
-        playerIcon.anchoredPosition = Vector2.zero;
-        playerIcon.localScale = Vector3.one;
+        var duration = Mathf.Max(0f, durationSeconds);
+        var animateMove = duration > 0f && fromCell != toCell;
+        _tileStateSelectedCellOverride = animateMove ? toCell : (Vector2Int?)null;
+        _standingVisualCellOverride = animateMove ? fromCell : (Vector2Int?)null;
 
-        RefreshArrowHighlights();
+        RefreshPlayerStandingVisuals();
+
+        if (playerMarker == null)
+        {
+            ClearMoveVisualOverrides();
+            onComplete?.Invoke();
+            return;
+        }
+
+        if (_markerMoveRoutine != null)
+        {
+            StopCoroutine(_markerMoveRoutine);
+            _markerMoveRoutine = null;
+        }
+
+        if (_markerLayoutSnapRoutine != null)
+        {
+            StopCoroutine(_markerLayoutSnapRoutine);
+            _markerLayoutSnapRoutine = null;
+        }
+
+        var curve = moveCurve != null && moveCurve.keys.Length > 0
+            ? moveCurve
+            : AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
+        if (!animateMove)
+        {
+            ClearMoveVisualOverrides();
+            SnapPlayerMarkerToCell(toCell);
+            RefreshPlayerStandingVisuals();
+            onComplete?.Invoke();
+            return;
+        }
+
+        _markerMoveRoutine = StartCoroutine(CoMovePlayerMarker(fromCell, toCell, duration, curve, onComplete));
     }
 
-    private void RefreshArrowHighlights()
+    private IEnumerator CoSnapPlayerMarkerAfterLayout()
     {
-        if (_manager == null || _tiles == null)
-            return;
+        yield return null;
+        if (_manager == null || _tiles == null || playerMarker == null)
+        {
+            _markerLayoutSnapRoutine = null;
+            yield break;
+        }
 
-        var p = _manager.PlayerGridPosition;
+        if (tilesParent != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(tilesParent);
+        Canvas.ForceUpdateCanvases();
+        SnapPlayerMarkerToCell(_manager.PlayerGridPosition);
+        _markerLayoutSnapRoutine = null;
+    }
+
+    private IEnumerator CoMovePlayerMarker(Vector2Int fromCell, Vector2Int toCell, float duration, AnimationCurve curve, Action onComplete)
+    {
         var w = _tiles.GetLength(0);
         var h = _tiles.GetLength(1);
+        if (fromCell.x < 0 || fromCell.x >= w || fromCell.y < 0 || fromCell.y >= h ||
+            toCell.x < 0 || toCell.x >= w || toCell.y < 0 || toCell.y >= h)
+        {
+            ClearMoveVisualOverrides();
+            SnapPlayerMarkerToCell(toCell);
+            _markerMoveRoutine = null;
+            onComplete?.Invoke();
+            yield break;
+        }
+
+        var start = GetCellCenterAnchoredInMarkerParent(fromCell);
+        var end = GetCellCenterAnchoredInMarkerParent(toCell);
+        playerMarker.anchoredPosition = start;
+
+        var t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            var u = Mathf.Clamp01(t / duration);
+            var k = curve.Evaluate(u);
+            playerMarker.anchoredPosition = Vector2.LerpUnclamped(start, end, k);
+            yield return null;
+        }
+
+        playerMarker.anchoredPosition = end;
+        _markerMoveRoutine = null;
+        ClearMoveVisualOverrides();
+        onComplete?.Invoke();
+    }
+
+    public void SnapPlayerMarkerToCell(Vector2Int cell)
+    {
+        if (playerMarker == null || _tiles == null || _manager == null)
+            return;
+        if (cell.x < 0 || cell.x >= _tiles.GetLength(0) || cell.y < 0 || cell.y >= _tiles.GetLength(1))
+            return;
+
+        playerMarker.anchoredPosition = GetCellCenterAnchoredInMarkerParent(cell);
+        playerMarker.SetAsLastSibling();
+    }
+
+    private void ApplyPlayerMarkerSpriteFromPresentation()
+    {
+        if (playerMarkerImage == null)
+            return;
+        var sp = _presentation != null ? _presentation.playerMarkerIcon : null;
+        playerMarkerImage.sprite = sp;
+        playerMarkerImage.enabled = sp != null;
+    }
+
+    private Vector2 GetCellCenterAnchoredInMarkerParent(Vector2Int cell)
+    {
+        var tileView = _tiles[cell.x, cell.y];
+        var tileRt = tileView != null ? tileView.transform as RectTransform : null;
+        if (tileRt == null || _markerParentRt == null)
+            return playerMarker != null ? playerMarker.anchoredPosition : Vector2.zero;
+
+        var worldCorners = new Vector3[4];
+        tileRt.GetWorldCorners(worldCorners);
+        var centerWorld = (worldCorners[0] + worldCorners[2]) * 0.5f;
+
+        Camera cam = null;
+        if (_canvas != null && _canvas.renderMode == RenderMode.ScreenSpaceCamera)
+            cam = _canvas.worldCamera;
+
+        Vector2 local;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            _markerParentRt,
+            RectTransformUtility.WorldToScreenPoint(cam, centerWorld),
+            cam,
+            out local);
+        return local;
+    }
+
+    /// <summary>Updates per-tile “standing here” visuals (background, arrows) after <see cref="MapMovementManager.PlayerGridPosition"/> changes.</summary>
+    public void RefreshPlayerStandingVisuals()
+    {
+        if (_manager == null || _tiles == null || _manager.Grid == null)
+            return;
+
+        var grid = _manager.Grid;
+        var w = grid.Width;
+        var h = grid.Height;
+        if (_tiles.GetLength(0) != w || _tiles.GetLength(1) != h)
+            return;
+
+        var pStand = _standingVisualCellOverride ?? _manager.PlayerGridPosition;
+        var pSelected = _tileStateSelectedCellOverride ?? _manager.PlayerGridPosition;
+
         for (var y = 0; y < h; y++)
         {
             for (var x = 0; x < w; x++)
             {
                 var v = _tiles[x, y];
-                if (v != null)
-                    v.SetPlayerStandingHere(p.x == x && p.y == y);
+                if (v == null)
+                    continue;
+
+                var standingHere = pStand.x == x && pStand.y == y;
+                MapTileUIViewState state;
+                if (pSelected.x == x && pSelected.y == y)
+                    state = MapTileUIViewState.Selected;
+                else if (_manager.IsValidOneStepMoveTarget(new Vector2Int(x, y)))
+                    state = MapTileUIViewState.Available;
+                else
+                    state = MapTileUIViewState.Idle;
+
+                v.ApplyPlayerStandingAndReachabilityVisual(standingHere, state);
             }
         }
     }
 
-    private void DetachPlayerIconBeforeClearingTiles()
+    private void ClearMoveVisualOverrides()
     {
-        if (playerIcon == null || tilesParent == null)
+        _tileStateSelectedCellOverride = null;
+        _standingVisualCellOverride = null;
+    }
+
+    private void DetachPlayerMarkerBeforeClearingTiles()
+    {
+        if (playerMarker == null || tilesParent == null)
             return;
 
         Transform safe = tilesParent.parent;
         if (safe == null)
             safe = transform.parent;
         if (safe == null || safe == tilesParent)
-            safe = playerIcon.root;
+            safe = playerMarker.root;
 
-        playerIcon.SetParent(safe, false);
+        playerMarker.SetParent(safe, false);
+        _markerParentRt = playerMarker.parent as RectTransform;
+        _canvas = playerMarker.GetComponentInParent<Canvas>();
     }
 
     private void ClearChildren()

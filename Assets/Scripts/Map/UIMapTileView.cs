@@ -3,6 +3,17 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
+/// <summary>Reachability / selection state for map tile UI (drives colors and optional available pulse).</summary>
+public enum MapTileUIViewState
+{
+    /// <summary>Not a valid one-step move from the player.</summary>
+    Idle = 0,
+    /// <summary>Orthogonal neighbor of the player with a directed exit from the player’s tile toward it.</summary>
+    Available = 1,
+    /// <summary>Tile the player is on, or the click target while the pawn is moving.</summary>
+    Selected = 2
+}
+
 /// <summary>One map cell: background color, optional node label, event icon, exit arrows, click to move.</summary>
 public class UIMapTileView : MonoBehaviour
 {
@@ -25,8 +36,12 @@ public class UIMapTileView : MonoBehaviour
     [Header("Arrow colors")]
     [SerializeField] private Color arrowColorCurrentTile = new Color(1f, 0.95f, 0.4f, 1f);
     [SerializeField] private Color arrowColorOtherTiles = new Color(0.55f, 0.55f, 0.6f, 0.9f);
-    [Header("Tile highlight")]
+    [Header("Tile background (standing only)")]
+    [Tooltip("Background tint on the tile the pawn is standing on; other tiles use the default background color.")]
     [SerializeField] private Color playerCurrentTileBackgroundColor = new Color(0.85f, 0.85f, 0.4f, 1f);
+    [Header("Event icon (reachability)")]
+    [SerializeField] private Color iconColorAvailable = new Color(0.35f, 0.95f, 0.45f, 1f);
+    [SerializeField] private Color iconColorNotAvailable = Color.white;
     [Header("One-way exit arrow sizing")]
     [Tooltip("Used when this tile has an exit in a direction and the adjacent tile does not have a return exit back.")]
     [SerializeField, Min(1f)] private float oneWayExitArrowWidth = 60f;
@@ -39,6 +54,11 @@ public class UIMapTileView : MonoBehaviour
     [Header("Boss tile")]
     [Tooltip("Uniform scale multiplier for the event icon on the boss / end cell only.")]
     [SerializeField, Min(0.01f)] private float bossTileEventIconScale = 1.2f;
+    [Header("Available tile pulse (optional)")]
+    [Tooltip("Stays active; scale loops from the curve only while this tile is Available (otherwise scale resets to base).")]
+    [SerializeField] private GameObject availablePulseTarget;
+    [SerializeField] private AnimationCurve availablePulseScaleCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
+    [SerializeField, Min(0.01f)] private float availablePulseLoopDurationSeconds = 1.2f;
 
     private Vector3 _eventIconBaseLocalScale = Vector3.one;
     private Vector3 _backgroundBaseLocalScale = Vector3.one;
@@ -57,6 +77,10 @@ public class UIMapTileView : MonoBehaviour
     private bool _eventIconActiveForTile;
     private bool _tileEventConsumed;
     private bool _isStartCell;
+    private MapTileUIViewState _reachabilityState = MapTileUIViewState.Idle;
+    private Transform _pulseTransform;
+    private Vector3 _pulseBaseScale = Vector3.one;
+    private float _pulsePhase;
 
     private void Awake()
     {
@@ -74,6 +98,31 @@ public class UIMapTileView : MonoBehaviour
         _exitArrowRightBaseWidth = ReadArrowWidth(exitArrowRight);
         _exitArrowBottomBaseWidth = ReadArrowWidth(exitArrowBottom);
         _exitArrowLeftBaseWidth = ReadArrowWidth(exitArrowLeft);
+
+        if (availablePulseTarget != null)
+        {
+            _pulseTransform = availablePulseTarget.transform;
+            _pulseBaseScale = _pulseTransform.localScale;
+            availablePulseTarget.SetActive(true);
+        }
+    }
+
+    private void Update()
+    {
+        UpdateAvailablePulseAnimation();
+    }
+
+    /// <summary>Applies standing (pawn) highlight, reachability colors, and arrow tint in one step.</summary>
+    public void ApplyPlayerStandingAndReachabilityVisual(bool standingHere, MapTileUIViewState reachabilityState)
+    {
+        _playerOnThisTile = standingHere;
+        _reachabilityState = reachabilityState;
+        ApplyBackgroundForStandingOnly();
+        ApplyBackgroundScaleForVisited();
+        ApplyEventIconVisibilityForStanding();
+        ApplyEventIconReachabilityTint();
+        ApplyArrowMasks(_lastExitMask, _lastIncomingMask, _lastOneWayExitMask);
+        SyncAvailablePulseObjectActive();
     }
 
     public void Setup(Vector2Int cell, MapTile tile, bool isStart, bool isBoss, MapMovementManager manager,
@@ -115,7 +164,6 @@ public class UIMapTileView : MonoBehaviour
                 if (sp != null)
                 {
                     eventIconImage.sprite = sp;
-                    eventIconImage.color = Color.white;
                     _eventIconActiveForTile = true;
                 }
             }
@@ -130,9 +178,23 @@ public class UIMapTileView : MonoBehaviour
         }
 
         _playerOnThisTile = manager != null && cell == manager.PlayerGridPosition;
-        ApplyBackgroundColorForStanding();
+        if (manager != null && manager.Grid != null && manager.Grid.Contains(cell))
+        {
+            var p = manager.PlayerGridPosition;
+            if (cell == p)
+                _reachabilityState = MapTileUIViewState.Selected;
+            else if (manager.IsValidOneStepMoveTarget(cell))
+                _reachabilityState = MapTileUIViewState.Available;
+            else
+                _reachabilityState = MapTileUIViewState.Idle;
+        }
+        else
+            _reachabilityState = MapTileUIViewState.Idle;
+
+        ApplyBackgroundForStandingOnly();
         ApplyBackgroundScaleForVisited();
         ApplyEventIconVisibilityForStanding();
+        ApplyEventIconReachabilityTint();
         var incomingMask = 0;
         var oneWayExitMask = 0;
         var currentGrid = manager != null ? manager.Grid : null;
@@ -142,19 +204,22 @@ public class UIMapTileView : MonoBehaviour
             oneWayExitMask = BuildOneWayExitMask(currentGrid, tile.exitMask);
         }
         ApplyArrowMasks(tile.exitMask, incomingMask, oneWayExitMask);
+        SyncAvailablePulseObjectActive();
     }
 
     /// <summary>Updates arrow tint for “standing here” vs other tiles (call when the player moves).</summary>
     public void SetPlayerStandingHere(bool standingHere)
     {
         _playerOnThisTile = standingHere;
-        ApplyBackgroundColorForStanding();
+        ApplyBackgroundForStandingOnly();
         ApplyBackgroundScaleForVisited();
         ApplyEventIconVisibilityForStanding();
+        ApplyEventIconReachabilityTint();
         ApplyArrowMasks(_lastExitMask, _lastIncomingMask, _lastOneWayExitMask);
+        SyncAvailablePulseObjectActive();
     }
 
-    private void ApplyBackgroundColorForStanding()
+    private void ApplyBackgroundForStandingOnly()
     {
         if (backgroundImage == null)
             return;
@@ -171,7 +236,15 @@ public class UIMapTileView : MonoBehaviour
             return;
         }
 
-        eventIconImage.enabled = !_playerOnThisTile;
+        eventIconImage.enabled = true;
+    }
+
+    private void ApplyEventIconReachabilityTint()
+    {
+        if (eventIconImage == null || !_eventIconActiveForTile || !eventIconImage.enabled)
+            return;
+        var available = _reachabilityState == MapTileUIViewState.Available;
+        eventIconImage.color = available ? iconColorAvailable : iconColorNotAvailable;
     }
 
     public void RefreshExits(MapGrid grid)
@@ -283,6 +356,38 @@ public class UIMapTileView : MonoBehaviour
             : useVisitedScale
             ? _backgroundBaseLocalScale * visitedBackgroundScale
             : _backgroundBaseLocalScale;
+    }
+
+    private void SyncAvailablePulseObjectActive()
+    {
+        if (availablePulseTarget == null || _pulseTransform == null)
+            return;
+        availablePulseTarget.SetActive(true);
+        var pulsing = !_playerOnThisTile && _reachabilityState == MapTileUIViewState.Available;
+        if (!pulsing)
+        {
+            _pulseTransform.localScale = _pulseBaseScale;
+            _pulsePhase = 0f;
+        }
+    }
+
+    private void UpdateAvailablePulseAnimation()
+    {
+        if (availablePulseTarget == null || _pulseTransform == null)
+            return;
+        if (_playerOnThisTile || _reachabilityState != MapTileUIViewState.Available)
+            return;
+
+        var period = availablePulseLoopDurationSeconds;
+        _pulsePhase += Time.unscaledDeltaTime / period;
+        if (_pulsePhase > 1f)
+            _pulsePhase -= Mathf.Floor(_pulsePhase);
+
+        var curve = availablePulseScaleCurve != null && availablePulseScaleCurve.length > 0
+            ? availablePulseScaleCurve
+            : AnimationCurve.Constant(0f, 1f, 1f);
+        var mult = curve.Evaluate(_pulsePhase);
+        _pulseTransform.localScale = _pulseBaseScale * mult;
     }
 
     private void OnClicked()

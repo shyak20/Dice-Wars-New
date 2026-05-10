@@ -18,6 +18,10 @@ public class MapPresentationSO : ScriptableObject
     public Sprite shrineIcon;
     public Sprite treasureIcon;
 
+    [Header("Player marker (map UI)")]
+    [Tooltip("Sprite for the pawn that moves between tile centers (separate from each tile’s event icon).")]
+    public Sprite playerMarkerIcon;
+
     public Sprite GetEventIcon(MapEventType eventType, bool isStart, bool isBossEnd)
     {
         if (isStart && startTileIcon != null)
