@@ -1,5 +1,7 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -48,6 +50,14 @@ public class UIMapTileView : MonoBehaviour
     [Header("Optional")]
     [SerializeField] private TMP_Text nodeTypeLabel;
     [SerializeField] private Image eventIconImage;
+    [Header("Button hover")]
+    [Tooltip("Shown while the pointer is over this tile’s Click Button. Requires an EventSystem in the scene.")]
+    [SerializeField] private GameObject buttonHoverHighlightObject;
+    [Tooltip("Optional. If unset, uses a CanvasGroup on the hover object or adds one to its root for alpha fades.")]
+    [SerializeField] private CanvasGroup buttonHoverHighlightCanvasGroup;
+    [Tooltip("Fade-out after pointer exit: X = normalized time 0→1 over the duration below; Y = alpha (1 = opaque, 0 = transparent).")]
+    [SerializeField] private AnimationCurve buttonHoverFadeOutCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+    [SerializeField, Min(0.01f)] private float buttonHoverFadeOutDurationSeconds = 0.25f;
     [Header("Visited tiles")]
     [Tooltip("Scale multiplier applied to background image when tile.eventConsumed is true, or when this is the start cell and the player has moved elsewhere.")]
     [SerializeField, Min(0.01f)] private float visitedBackgroundScale = 0.9f;
@@ -59,9 +69,15 @@ public class UIMapTileView : MonoBehaviour
     [SerializeField] private GameObject availablePulseTarget;
     [SerializeField] private AnimationCurve availablePulseScaleCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
     [SerializeField, Min(0.01f)] private float availablePulseLoopDurationSeconds = 1.2f;
+    [Header("Land on tile (one-shot scale)")]
+    [Tooltip("If unset, uses eventIconImage transform. Curve X = normalized time 0→1 over the duration; Y = uniform scale multiplier.")]
+    [SerializeField] private Transform landedScaleTarget;
+    [SerializeField] private AnimationCurve landedScaleCurve = AnimationCurve.Linear(0f, 1f, 1f, 0.85f);
+    [SerializeField, Min(0.01f)] private float landedScaleDurationSeconds = 0.35f;
 
     private Vector3 _eventIconBaseLocalScale = Vector3.one;
     private Vector3 _backgroundBaseLocalScale = Vector3.one;
+    private Vector3 _hoverHighlightBaseLocalScale = Vector3.one;
     private Color _baseBackgroundColor = Color.white;
     private float _exitArrowTopBaseWidth;
     private float _exitArrowRightBaseWidth;
@@ -81,6 +97,12 @@ public class UIMapTileView : MonoBehaviour
     private Transform _pulseTransform;
     private Vector3 _pulseBaseScale = Vector3.one;
     private float _pulsePhase;
+    private Transform _landedScaleAnimTransform;
+    private Vector3 _landedScaleBaseAtStart = Vector3.one;
+    private float _landedScaleAnimElapsed = -1f;
+    private bool _buttonHoverHandlersRegistered;
+    private CanvasGroup _resolvedHoverCanvasGroup;
+    private Coroutine _buttonHoverFadeOutRoutine;
 
     private void Awake()
     {
@@ -105,11 +127,155 @@ public class UIMapTileView : MonoBehaviour
             _pulseBaseScale = _pulseTransform.localScale;
             availablePulseTarget.SetActive(true);
         }
+
+        if (buttonHoverHighlightObject != null)
+            _hoverHighlightBaseLocalScale = buttonHoverHighlightObject.transform.localScale;
+
+        RegisterButtonHoverHighlightHandlers();
+    }
+
+    private void OnDisable()
+    {
+        StopButtonHoverFadeOutCoroutine();
+        if (buttonHoverHighlightObject != null)
+            buttonHoverHighlightObject.SetActive(false);
+        var cg = buttonHoverHighlightCanvasGroup != null ? buttonHoverHighlightCanvasGroup : _resolvedHoverCanvasGroup;
+        if (cg != null)
+            cg.alpha = 1f;
+    }
+
+    private void RegisterButtonHoverHighlightHandlers()
+    {
+        if (clickButton == null || buttonHoverHighlightObject == null || _buttonHoverHandlersRegistered)
+            return;
+
+        buttonHoverHighlightObject.SetActive(false);
+        var cgInit = ResolveHoverHighlightCanvasGroup();
+        if (cgInit != null)
+            cgInit.alpha = 1f;
+
+        var trigger = clickButton.gameObject.GetComponent<EventTrigger>();
+        if (trigger == null)
+            trigger = clickButton.gameObject.AddComponent<EventTrigger>();
+
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => OnButtonHoverPointerEnter());
+        trigger.triggers.Add(enter);
+
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => OnButtonHoverPointerExit());
+        trigger.triggers.Add(exit);
+
+        _buttonHoverHandlersRegistered = true;
+    }
+
+    private CanvasGroup ResolveHoverHighlightCanvasGroup()
+    {
+        if (buttonHoverHighlightObject == null)
+            return null;
+        if (buttonHoverHighlightCanvasGroup != null)
+            return buttonHoverHighlightCanvasGroup;
+        if (_resolvedHoverCanvasGroup == null)
+        {
+            _resolvedHoverCanvasGroup = buttonHoverHighlightObject.GetComponent<CanvasGroup>();
+            if (_resolvedHoverCanvasGroup == null)
+                _resolvedHoverCanvasGroup = buttonHoverHighlightObject.GetComponentInChildren<CanvasGroup>(true);
+            if (_resolvedHoverCanvasGroup == null)
+            {
+                _resolvedHoverCanvasGroup = buttonHoverHighlightObject.AddComponent<CanvasGroup>();
+                _resolvedHoverCanvasGroup.blocksRaycasts = false;
+                _resolvedHoverCanvasGroup.interactable = false;
+            }
+        }
+
+        return _resolvedHoverCanvasGroup;
+    }
+
+    private void StopButtonHoverFadeOutCoroutine()
+    {
+        if (_buttonHoverFadeOutRoutine == null)
+            return;
+        StopCoroutine(_buttonHoverFadeOutRoutine);
+        _buttonHoverFadeOutRoutine = null;
+    }
+
+    private void OnButtonHoverPointerEnter()
+    {
+        StopButtonHoverFadeOutCoroutine();
+        if (buttonHoverHighlightObject == null)
+            return;
+        var cg = ResolveHoverHighlightCanvasGroup();
+        if (cg != null)
+            cg.alpha = 1f;
+        buttonHoverHighlightObject.SetActive(true);
+    }
+
+    private void OnButtonHoverPointerExit()
+    {
+        if (buttonHoverHighlightObject == null || !buttonHoverHighlightObject.activeSelf)
+            return;
+        StopButtonHoverFadeOutCoroutine();
+        _buttonHoverFadeOutRoutine = StartCoroutine(CoButtonHoverFadeOut());
+    }
+
+    private IEnumerator CoButtonHoverFadeOut()
+    {
+        var cg = ResolveHoverHighlightCanvasGroup();
+        if (cg == null)
+        {
+            buttonHoverHighlightObject.SetActive(false);
+            _buttonHoverFadeOutRoutine = null;
+            yield break;
+        }
+
+        var duration = buttonHoverFadeOutDurationSeconds;
+        var curve = buttonHoverFadeOutCurve != null && buttonHoverFadeOutCurve.length > 0
+            ? buttonHoverFadeOutCurve
+            : AnimationCurve.Linear(0f, 1f, 1f, 0f);
+
+        if (duration <= 0f)
+        {
+            cg.alpha = Mathf.Clamp01(curve.Evaluate(1f));
+            buttonHoverHighlightObject.SetActive(false);
+            cg.alpha = 1f;
+            _buttonHoverFadeOutRoutine = null;
+            yield break;
+        }
+
+        var t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            var u = Mathf.Clamp01(t / duration);
+            cg.alpha = Mathf.Clamp01(curve.Evaluate(u));
+            yield return null;
+        }
+
+        cg.alpha = Mathf.Clamp01(curve.Evaluate(1f));
+        buttonHoverHighlightObject.SetActive(false);
+        cg.alpha = 1f;
+        _buttonHoverFadeOutRoutine = null;
     }
 
     private void Update()
     {
+        UpdateLandedScaleAnimation();
         UpdateAvailablePulseAnimation();
+    }
+
+    /// <summary>Starts the landing scale-down on this tile (call when the player finishes moving here).</summary>
+    public void PlayLandingScaleDown()
+    {
+        CancelLandedScaleAnimation(restoreScale: true);
+        var t = ResolveLandedScaleTransform();
+        if (t == null)
+            return;
+        if (landedScaleDurationSeconds <= 0f)
+            return;
+        _landedScaleAnimTransform = t;
+        _landedScaleBaseAtStart = t.localScale;
+        _landedScaleAnimElapsed = 0f;
+        ApplyEventIconReachabilityTint();
     }
 
     /// <summary>Applies standing (pawn) highlight, reachability colors, and arrow tint in one step.</summary>
@@ -128,6 +294,7 @@ public class UIMapTileView : MonoBehaviour
     public void Setup(Vector2Int cell, MapTile tile, bool isStart, bool isBoss, MapMovementManager manager,
         MapPresentationSO presentation)
     {
+        CancelLandedScaleAnimation(restoreScale: true);
         _cell = cell;
         _manager = manager;
         _tileEventConsumed = tile.eventConsumed;
@@ -243,8 +410,59 @@ public class UIMapTileView : MonoBehaviour
     {
         if (eventIconImage == null || !_eventIconActiveForTile || !eventIconImage.enabled)
             return;
-        var available = _reachabilityState == MapTileUIViewState.Available;
-        eventIconImage.color = available ? iconColorAvailable : iconColorNotAvailable;
+        var useAvailableTint = _reachabilityState == MapTileUIViewState.Available || IsLandingScaleAnimating();
+        eventIconImage.color = useAvailableTint ? iconColorAvailable : iconColorNotAvailable;
+    }
+
+    private bool IsLandingScaleAnimating() => _landedScaleAnimElapsed >= 0f;
+
+    private Transform ResolveLandedScaleTransform()
+    {
+        if (landedScaleTarget != null)
+            return landedScaleTarget;
+        return eventIconImage != null ? eventIconImage.transform : null;
+    }
+
+    private void CancelLandedScaleAnimation(bool restoreScale)
+    {
+        if (!IsLandingScaleAnimating())
+        {
+            _landedScaleAnimTransform = null;
+            _landedScaleAnimElapsed = -1f;
+            return;
+        }
+
+        if (restoreScale && _landedScaleAnimTransform != null)
+            _landedScaleAnimTransform.localScale = _landedScaleBaseAtStart;
+        _landedScaleAnimTransform = null;
+        _landedScaleAnimElapsed = -1f;
+    }
+
+    private void UpdateLandedScaleAnimation()
+    {
+        if (!IsLandingScaleAnimating() || _landedScaleAnimTransform == null)
+            return;
+
+        var duration = landedScaleDurationSeconds;
+        if (duration <= 0f)
+        {
+            CancelLandedScaleAnimation(restoreScale: false);
+            ApplyEventIconReachabilityTint();
+            return;
+        }
+
+        _landedScaleAnimElapsed += Time.unscaledDeltaTime;
+        var u = Mathf.Clamp01(_landedScaleAnimElapsed / duration);
+        var curve = landedScaleCurve != null && landedScaleCurve.length > 0
+            ? landedScaleCurve
+            : AnimationCurve.Linear(0f, 1f, 1f, 0.85f);
+        var mult = curve.Evaluate(u);
+        _landedScaleAnimTransform.localScale = _landedScaleBaseAtStart * mult;
+        if (u >= 1f)
+        {
+            CancelLandedScaleAnimation(restoreScale: false);
+            ApplyEventIconReachabilityTint();
+        }
     }
 
     public void RefreshExits(MapGrid grid)
@@ -347,15 +565,31 @@ public class UIMapTileView : MonoBehaviour
 
     private void ApplyBackgroundScaleForVisited()
     {
-        if (backgroundImage == null)
+        if (backgroundImage != null)
+        {
+            var leftStartVisuallyVisited = _isStartCell && !_playerOnThisTile;
+            var useVisitedScale = _tileEventConsumed || leftStartVisuallyVisited;
+            backgroundImage.transform.localScale = _playerOnThisTile
+                ? Vector3.one
+                : useVisitedScale
+                ? _backgroundBaseLocalScale * visitedBackgroundScale
+                : _backgroundBaseLocalScale;
+        }
+
+        ApplyHoverHighlightScaleForVisited();
+    }
+
+    private void ApplyHoverHighlightScaleForVisited()
+    {
+        if (buttonHoverHighlightObject == null)
             return;
         var leftStartVisuallyVisited = _isStartCell && !_playerOnThisTile;
         var useVisitedScale = _tileEventConsumed || leftStartVisuallyVisited;
-        backgroundImage.transform.localScale = _playerOnThisTile
+        buttonHoverHighlightObject.transform.localScale = _playerOnThisTile
             ? Vector3.one
             : useVisitedScale
-            ? _backgroundBaseLocalScale * visitedBackgroundScale
-            : _backgroundBaseLocalScale;
+            ? _hoverHighlightBaseLocalScale * visitedBackgroundScale
+            : _hoverHighlightBaseLocalScale;
     }
 
     private void SyncAvailablePulseObjectActive()

@@ -156,6 +156,7 @@ public class UIMapGridView : MonoBehaviour
         _tileStateSelectedCellOverride = animateMove ? toCell : (Vector2Int?)null;
         _standingVisualCellOverride = animateMove ? fromCell : (Vector2Int?)null;
 
+        PlayLandingScaleDownAt(toCell);
         RefreshPlayerStandingVisuals();
 
         if (playerMarker == null)
@@ -241,6 +242,19 @@ public class UIMapGridView : MonoBehaviour
         _markerMoveRoutine = null;
         ClearMoveVisualOverrides();
         onComplete?.Invoke();
+    }
+
+    /// <summary>Runs the landing scale-down on the destination tile when the player commits to a move (press).</summary>
+    public void PlayLandingScaleDownAt(Vector2Int cell)
+    {
+        if (_tiles == null || _manager == null)
+            return;
+        var grid = _manager.Grid;
+        if (grid == null || !grid.Contains(cell))
+            return;
+        if (cell.x < 0 || cell.x >= _tiles.GetLength(0) || cell.y < 0 || cell.y >= _tiles.GetLength(1))
+            return;
+        _tiles[cell.x, cell.y]?.PlayLandingScaleDown();
     }
 
     public void SnapPlayerMarkerToCell(Vector2Int cell)
