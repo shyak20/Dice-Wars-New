@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,10 +10,6 @@ public class WinLoseUIController : MonoBehaviour
 
     [Header("Face Reward (legacy if Win Stage not assigned)")]
     [SerializeField] private FaceRewardManager faceRewardManager;
-
-    [Header("Victory — hide in scene")]
-    [Tooltip("Set inactive as soon as victory is triggered (before win popup / face reward). Re-enable manually or reload the scene if needed.")]
-    [SerializeField] private List<GameObject> disableOnVictoryScreen = new List<GameObject>();
 
     [Header("Defeat UI")]
     public GameObject gameOverPanel;
@@ -46,8 +41,6 @@ public class WinLoseUIController : MonoBehaviour
 
     private void OnPlayerVictory()
     {
-        DisableObjectsForVictoryScreen();
-
         if (winStageFlow != null)
         {
             winStageFlow.BeginVictoryFlow();
@@ -88,7 +81,8 @@ public class WinLoseUIController : MonoBehaviour
 
     private void ShowGameOver()
     {
-        DisableObjectsForVictoryScreen();
+        if (winStageFlow != null)
+            winStageFlow.ApplyVictoryHideListImmediately();
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
     }
 
@@ -96,16 +90,5 @@ public class WinLoseUIController : MonoBehaviour
     {
         RunEncounterBuffer.AbortPendingMapCombatState();
         SceneManager.LoadScene("MainMenu");
-    }
-
-    private void DisableObjectsForVictoryScreen()
-    {
-        if (disableOnVictoryScreen == null) return;
-        for (var i = 0; i < disableOnVictoryScreen.Count; i++)
-        {
-            var go = disableOnVictoryScreen[i];
-            if (go != null)
-                go.SetActive(false);
-        }
     }
 }

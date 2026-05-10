@@ -23,6 +23,9 @@ public class WinStageFlowController : MonoBehaviour
     [FormerlySerializedAs("enemyHealthBarRoot")]
     [Tooltip("Root GameObject for the enemy in the fight (sprite, HP bar, intent UI, etc.). Hidden when the win stage appears.")]
     [SerializeField] private GameObject enemyRoot;
+    [Header("Victory — hide in scene")]
+    [Tooltip("Set inactive after Delay After Victory Seconds (with enemy root / win panel), not on the victory event itself.")]
+    [SerializeField] private List<GameObject> disableOnVictoryScreen = new List<GameObject>();
     [Header("Flow")]
     [SerializeField] private FaceRewardManager faceRewardManager;
 
@@ -80,6 +83,8 @@ public class WinStageFlowController : MonoBehaviour
     {
         if (delayAfterVictorySeconds > 0f)
             yield return new WaitForSeconds(delayAfterVictorySeconds);
+
+        DisableObjectsForVictoryScreen();
 
         if (enemyRoot != null)
             enemyRoot.SetActive(false);
@@ -213,5 +218,23 @@ public class WinStageFlowController : MonoBehaviour
             RunManager.Instance.CaptureRunVitalityFromPlayer(player);
 
         RunManager.Instance.HandleVictoryContinueFromCombat();
+    }
+
+    private void DisableObjectsForVictoryScreen()
+    {
+        if (disableOnVictoryScreen == null)
+            return;
+        for (var i = 0; i < disableOnVictoryScreen.Count; i++)
+        {
+            var go = disableOnVictoryScreen[i];
+            if (go != null)
+                go.SetActive(false);
+        }
+    }
+
+    /// <summary>Same list as post-delay victory hide; used e.g. on defeat when combat UI should drop immediately.</summary>
+    public void ApplyVictoryHideListImmediately()
+    {
+        DisableObjectsForVictoryScreen();
     }
 }
