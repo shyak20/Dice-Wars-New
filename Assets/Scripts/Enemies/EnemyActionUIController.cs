@@ -16,6 +16,7 @@ namespace Enemies
         [SerializeField] private Color intentBuffDamageColor = new Color(1f, 0.55f, 0.35f, 1f);
 
         private readonly List<EnemyIntentSegments.Row> _rowsScratch = new List<EnemyIntentSegments.Row>();
+        private readonly List<EnemyIntentSegmentView> _activeSegmentViews = new List<EnemyIntentSegmentView>();
         private CombatManager _combatManager;
 
         private void Start()
@@ -58,11 +59,26 @@ namespace Enemies
             {
                 var seg = Instantiate(segmentPrefab, segmentContainer);
                 seg.Bind(row.Icon, row.ValueText, row.StatusTitle, row.StatusDescription, row.EnableTooltip, row.Background);
+                _activeSegmentViews.Add(seg);
             }
+        }
+
+        /// <summary>Segment order matches <see cref="EnemyIntentSegments.BuildRows"/> (damage row, armor, each game action).</summary>
+        public bool TryGetSegment(int index, out EnemyIntentSegmentView segment)
+        {
+            if (index >= 0 && index < _activeSegmentViews.Count)
+            {
+                segment = _activeSegmentViews[index];
+                return segment != null;
+            }
+
+            segment = null;
+            return false;
         }
 
         private void ClearSegments()
         {
+            _activeSegmentViews.Clear();
             if (segmentContainer == null) return;
             for (var i = segmentContainer.childCount - 1; i >= 0; i--)
                 Destroy(segmentContainer.GetChild(i).gameObject);

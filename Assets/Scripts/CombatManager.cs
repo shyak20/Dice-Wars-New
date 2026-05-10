@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Enemies;
 
 public class CombatManager : MonoBehaviour
 {
@@ -24,9 +25,16 @@ public class CombatManager : MonoBehaviour
     [Header("Enemy turn intro")]
     [Tooltip("Sequence: player armor → orb VFX + physical (+ thorns) → TickTurnStart (burn, etc.) → enemy armor reset → this delay → Enemy Turn banner (optional) → Enemy Turn + pause → TickBeforeEnemyTurn → attacks.\nWaits after all damage to the enemy from the player round and related FX.")]
     [SerializeField, Min(0f)] private float enemyTurnIntroDelayAfterPlayerDamageSeconds = 0.35f;
-    [Tooltip("Optional. Enabled for Enemy Turn Intro Duration Seconds after the delay above, then disabled before enemy actions.")]
+    [Tooltip("Optional. Shown after the delay above; stays up during the enemy turn and fades out via Canvas Group when actions finish.")]
     [SerializeField] private GameObject enemyTurnIntroRoot;
-    [SerializeField, Min(0f)] private float enemyTurnIntroDurationSeconds = 2f;
+    [Tooltip("Required when Enemy Turn Intro Root is assigned. Typically on the same GameObject as the root.")]
+    [SerializeField] private CanvasGroup enemyTurnIntroCanvasGroup;
+    [SerializeField, Min(0f)] private float enemyTurnIntroFadeInSeconds = 0.2f;
+    [SerializeField, Min(0f)] private float enemyTurnIntroFadeOutSeconds = 0.35f;
+
+    [Header("Enemy turn intent")]
+    [Tooltip("Runs each physical hit, armor gain, and game action as separate steps with delay and intent-row scale pulse. If unassigned, uses legacy execution (0.4s only between multi-hits).")]
+    [SerializeField] private EnemyTurnIntentSequencePlayer enemyTurnIntentSequence;
 
     [Tooltip("After physical damage (+ thorns) to the enemy, wait this long before the first turn-start status damage tick (e.g. burn). Also waits this long between each subsequent status tick when multiple effects use OnTurnStart. Stack decay still runs once after all ticks, same as instant TickTurnStart.")]
     [SerializeField, Min(0f)] private float delaySecondsBetweenPhysicalAndEachEnemyStatusTick = 0f;
@@ -71,6 +79,7 @@ public class CombatManager : MonoBehaviour
     private int bonusDamageFromActions;
     private int bonusArmorFromActions;
     private bool bustProtected;
+    private bool _warnedMissingEnemyIntentSequence;
     private bool _skipPowerOrbFlightForNextSubmitTurn;
     private bool kineticShieldActive;
     private int kineticShieldBonus;
@@ -1270,7 +1279,7 @@ public class CombatManager : MonoBehaviour
         };
     }
 
-    private GameActionContext BuildEnemyActionContext(EnemyActionSO sourceIntent)
+    public GameActionContext BuildEnemyActionContext(EnemyActionSO sourceIntent)
     {
         return new GameActionContext
         {
@@ -1317,6 +1326,56 @@ public class CombatManager : MonoBehaviour
 
     /// <summary>Used by face resolve modifiers and status actions that need a status context.</summary>
     public StatusEffectContext BuildStatusContextForEffects() => BuildStatusContext();
+
+    /// <summary>One physical strike from the current enemy intent (buffs, immune cap, thorns).</summary>
+    public void ApplySingleEnemyPhysicalHitFromIntent(EnemyActionSO action)
+    {
+        if (action == null || action.damage <= 0 || activeEnemy == null || player == null)
+            return;
+
+        var statusCtx = BuildStatusContext();
+        var boosted = action.damage + activeEnemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
+        var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, boosted);
+        if (activeEnemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx)) activeEnemy.TakeDamage(damage);
+        else
+        {
+            var hadImmune = player.StatusEffects.GetStacks<ImmuneEffectSO>() > 0;
+            if (hadImmune)
+                damage = Mathf.Min(damage, 1);
+            player.TakeDamage(damage, PlayerDamageSource.EnemyPhysicalAttack);
+            if (hadImmune)
+                player.StatusEffects.ConsumeImmuneStackAfterHit(statusCtx);
+            var thornsRetaliate = player.StatusEffects.GetThornsRetaliateStacks();
+            if (thornsRetaliate > 0)
+                activeEnemy.TakeDamage(thornsRetaliate);
+        }
+    }
+
+    public void ApplyEnemyArmorFromIntent(EnemyActionSO action)
+    {
+        if (action != null && action.armor > 0 && activeEnemy != null)
+            activeEnemy.AddArmor(action.armor);
+    }
+
+    public void ExecuteEnemyIntentGameActionAtIndex(EnemyActionSO action, int actionListIndex)
+    {
+        if (action?.actions == null || actionListIndex < 0 || actionListIndex >= action.actions.Count || player == null)
+            return;
+
+        var gameAction = action.actions[actionListIndex];
+        if (gameAction == null || gameAction is FaceResolveModifierBase)
+            return;
+
+        var actionCtx = BuildEnemyActionContext(action);
+        gameAction.Execute(actionCtx);
+    }
+
+    public bool EvaluateEnemyTurnCombatEnded()
+    {
+        if (CheckVictory()) return true;
+        if (CheckDefeat()) return true;
+        return false;
+    }
 
     private void ProcessPrecisionQueue()
     {
@@ -1831,6 +1890,33 @@ public class CombatManager : MonoBehaviour
         SubmitTurn();
     }
 
+    private IEnumerator CoExecuteEnemyTurnIntentLegacy(EnemyActionSO action)
+    {
+        if (action.damage > 0)
+        {
+            for (var i = 0; i < action.numberOfAttacks; i++)
+            {
+                ApplySingleEnemyPhysicalHitFromIntent(action);
+                if (CheckVictory()) yield break;
+                if (CheckDefeat()) yield break;
+                if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
+            }
+        }
+
+        ApplyEnemyArmorFromIntent(action);
+
+        if (action.actions != null && action.actions.Count > 0 && player != null)
+        {
+            var actionCtx = BuildEnemyActionContext(action);
+            foreach (var gameAction in action.actions)
+            {
+                if (gameAction == null) continue;
+                if (gameAction is FaceResolveModifierBase) continue;
+                gameAction.Execute(actionCtx);
+            }
+        }
+    }
+
     private IEnumerator EnemyTurnRoutine()
     {
         _turnRegistry.ResetVolatile();
@@ -1838,10 +1924,12 @@ public class CombatManager : MonoBehaviour
         if (enemyTurnIntroDelayAfterPlayerDamageSeconds > 0f)
             yield return new WaitForSeconds(enemyTurnIntroDelayAfterPlayerDamageSeconds);
 
+        var enemyTurnIntroIsUp = false;
         if (enemyTurnIntroRoot != null)
         {
             ChangeState(CombatState.EnemyTurnIntro);
-            yield return CoEnemyTurnIntroPresentation();
+            yield return CoEnemyTurnIntroShow();
+            enemyTurnIntroIsUp = true;
         }
 
         ChangeState(CombatState.EnemyTurn);
@@ -1850,67 +1938,114 @@ public class CombatManager : MonoBehaviour
         {
             var statusCtx = BuildStatusContext();
             activeEnemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
-            if (CheckVictory()) yield break;
+            if (CheckVictory())
+            {
+                yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+                yield break;
+            }
 
             EnemyActionSO action = activeEnemy.GetCurrentAction();
             yield return activeEnemy.CoPresentEnemyTurnActionIntro(action);
 
-            if (action.damage > 0)
+            if (enemyTurnIntentSequence != null)
+                yield return enemyTurnIntentSequence.CoExecuteIntent(activeEnemy, action, this);
+            else
             {
-                for (int i = 0; i < action.numberOfAttacks; i++)
+                if (!_warnedMissingEnemyIntentSequence)
                 {
-                    var boosted = action.damage + activeEnemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
-                    var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, boosted);
-                    if (activeEnemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx)) activeEnemy.TakeDamage(damage);
-                    else
-                    {
-                        var hadImmune = player.StatusEffects.GetStacks<ImmuneEffectSO>() > 0;
-                        if (hadImmune)
-                            damage = Mathf.Min(damage, 1);
-                        player.TakeDamage(damage, PlayerDamageSource.EnemyPhysicalAttack);
-                        if (hadImmune)
-                            player.StatusEffects.ConsumeImmuneStackAfterHit(statusCtx);
-                        var thornsRetaliate = player.StatusEffects.GetThornsRetaliateStacks();
-                        if (thornsRetaliate > 0)
-                            activeEnemy.TakeDamage(thornsRetaliate);
-                    }
-                    if (CheckVictory()) yield break;
-                    if (CheckDefeat()) yield break;
-                    if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
+                    _warnedMissingEnemyIntentSequence = true;
+                    Debug.LogWarning(
+                        $"{nameof(CombatManager)} on '{name}': assign {nameof(enemyTurnIntentSequence)} for stepped enemy intent + UI pulse; using legacy enemy turn execution.",
+                        this);
                 }
-            }
-            if (action.armor > 0) activeEnemy.AddArmor(action.armor);
 
-            if (action.actions != null && action.actions.Count > 0 && player != null)
-            {
-                var actionCtx = BuildEnemyActionContext(action);
-                foreach (var gameAction in action.actions)
-                {
-                    if (gameAction == null) continue;
-                    if (gameAction is FaceResolveModifierBase) continue;
-                    gameAction.Execute(actionCtx);
-                }
+                yield return CoExecuteEnemyTurnIntentLegacy(action);
             }
 
             yield return activeEnemy.CoPresentEnemyTurnActionOutro();
 
             activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
             player.StatusEffects.TickAfterEnemyTurn(statusCtx);
-            if (CheckVictory()) yield break;
+            if (CheckVictory())
+            {
+                yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+                yield break;
+            }
+
             activeEnemy.PrepareNextAction();
         }
+
+        yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
         yield return new WaitForSeconds(1.0f);
         ResetTurn();
     }
 
-    private IEnumerator CoEnemyTurnIntroPresentation()
+    private IEnumerator CoEnemyTurnIntroShow()
     {
         if (enemyTurnIntroRoot == null)
             yield break;
 
+        if (enemyTurnIntroCanvasGroup == null)
+            throw new InvalidOperationException(
+                $"{nameof(CombatManager)} on '{name}': {nameof(enemyTurnIntroRoot)} is assigned but {nameof(enemyTurnIntroCanvasGroup)} is not. Add a Canvas Group to the intro UI and assign it.");
+
+        enemyTurnIntroCanvasGroup.alpha = 0f;
         enemyTurnIntroRoot.SetActive(true);
-        if (enemyTurnIntroDurationSeconds > 0f)
-            yield return new WaitForSeconds(enemyTurnIntroDurationSeconds);
+
+        if (enemyTurnIntroFadeInSeconds <= 0f)
+        {
+            enemyTurnIntroCanvasGroup.alpha = 1f;
+            yield break;
+        }
+
+        var t = 0f;
+        while (t < enemyTurnIntroFadeInSeconds)
+        {
+            t += Time.deltaTime;
+            enemyTurnIntroCanvasGroup.alpha = Mathf.Clamp01(t / enemyTurnIntroFadeInSeconds);
+            yield return null;
+        }
+
+        enemyTurnIntroCanvasGroup.alpha = 1f;
+    }
+
+    private IEnumerator CoTeardownEnemyTurnIntroIfShown(bool introWasRaised)
+    {
+        if (!introWasRaised)
+            yield break;
+
+        yield return CoFadeOutEnemyTurnIntroThenDisable();
+    }
+
+    private IEnumerator CoFadeOutEnemyTurnIntroThenDisable()
+    {
+        if (enemyTurnIntroRoot == null || !enemyTurnIntroRoot.activeSelf)
+            yield break;
+
+        if (enemyTurnIntroCanvasGroup == null)
+        {
+            enemyTurnIntroRoot.SetActive(false);
+            yield break;
+        }
+
+        if (enemyTurnIntroFadeOutSeconds <= 0f)
+        {
+            enemyTurnIntroCanvasGroup.alpha = 0f;
+            enemyTurnIntroRoot.SetActive(false);
+            yield break;
+        }
+
+        var startAlpha = enemyTurnIntroCanvasGroup.alpha;
+        var t = 0f;
+        while (t < enemyTurnIntroFadeOutSeconds)
+        {
+            t += Time.deltaTime;
+            var k = Mathf.Clamp01(t / enemyTurnIntroFadeOutSeconds);
+            enemyTurnIntroCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, k);
+            yield return null;
+        }
+
+        enemyTurnIntroCanvasGroup.alpha = 0f;
         enemyTurnIntroRoot.SetActive(false);
     }
 

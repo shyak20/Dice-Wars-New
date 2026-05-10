@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +21,7 @@ namespace Enemies
         [Tooltip("Tooltip offset in screen pixels relative to this segment's hover target.")]
         [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
         private HoverTooltipPanelUI _runtimeTooltipPanel;
+        private Vector3 _pulseBaseLocalScale = Vector3.one;
 
         private void Awake()
         {
@@ -31,6 +34,40 @@ namespace Enemies
             }
 
             hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
+            _pulseBaseLocalScale = transform.localScale;
+        }
+
+        /// <summary>
+        /// Ensures this row is active, scales to <paramref name="peakMultiplier"/> × base (optional rise), holds, invokes <paramref name="onAtPeak"/>, then hides this GameObject (e.g. next multi-hit on the same row re-shows for its pulse).
+        /// </summary>
+        public IEnumerator CoPerformScalePulseWithPeakCallback(float peakMultiplier, float riseSeconds, float peakHoldSeconds, Action onAtPeak)
+        {
+            if (peakMultiplier <= 0f)
+                peakMultiplier = 1f;
+
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+
+            transform.localScale = _pulseBaseLocalScale;
+            var peakScale = _pulseBaseLocalScale * peakMultiplier;
+            if (riseSeconds > 0f)
+            {
+                var t = 0f;
+                var start = transform.localScale;
+                while (t < riseSeconds)
+                {
+                    t += Time.deltaTime;
+                    var k = Mathf.Clamp01(t / riseSeconds);
+                    transform.localScale = Vector3.Lerp(start, peakScale, k);
+                    yield return null;
+                }
+            }
+
+            transform.localScale = peakScale;
+            if (peakHoldSeconds > 0f)
+                yield return new WaitForSeconds(peakHoldSeconds);
+            onAtPeak?.Invoke();
+            gameObject.SetActive(false);
         }
 
         public void Bind(Sprite icon, string value, string statusTitle = null, string statusDescription = null, bool enableTooltip = false, Sprite background = null)
@@ -72,6 +109,8 @@ namespace Enemies
                 hoverTooltipTarget.SetContent("", "");
                 hoverTooltipTarget.enabled = false;
             }
+
+            _pulseBaseLocalScale = transform.localScale;
         }
 
         private HoverTooltipPanelUI ResolveTooltipPanel()
