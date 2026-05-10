@@ -14,10 +14,29 @@ namespace Enemies
         [Header("Physical strike intent")]
         [Tooltip("TMP rich-text color for the per-hit damage number when it differs from the action asset (e.g. Strength).")]
         [SerializeField] private Color intentBuffDamageColor = new Color(1f, 0.55f, 0.35f, 1f);
+        [Header("Enemy turn overlay")]
+        [Tooltip("When on, intent rows refresh only when this object is enabled (screen appears). Reactive updates from the next PrepareNextAction are ignored until this object is disabled. Use on the enemy-turn UI that SetActive(false) between turns.")]
+        [SerializeField] private bool holdIntentRowsUntilDisabled = true;
 
         private readonly List<EnemyIntentSegments.Row> _rowsScratch = new List<EnemyIntentSegments.Row>();
         private readonly List<EnemyIntentSegmentView> _activeSegmentViews = new List<EnemyIntentSegmentView>();
         private CombatManager _combatManager;
+        private bool _deferIntentReactiveRefresh;
+
+        private void OnEnable()
+        {
+            if (!holdIntentRowsUntilDisabled)
+                return;
+            _deferIntentReactiveRefresh = true;
+            RebuildIntentRows(_enemyController != null ? _enemyController.CurrentIntent.Value : null);
+        }
+
+        private void OnDisable()
+        {
+            if (!holdIntentRowsUntilDisabled)
+                return;
+            _deferIntentReactiveRefresh = false;
+        }
 
         private void Start()
         {
@@ -48,6 +67,14 @@ namespace Enemies
         }
 
         private void OnCurrentIntentChanged(EnemyActionSO intent)
+        {
+            if (holdIntentRowsUntilDisabled && _deferIntentReactiveRefresh)
+                return;
+
+            RebuildIntentRows(intent);
+        }
+
+        private void RebuildIntentRows(EnemyActionSO intent)
         {
             ClearSegments();
 

@@ -2058,6 +2058,8 @@ public class CombatManager : MonoBehaviour
 
         ChangeState(CombatState.Victory);
 
+        SimulationSpeedController.ApplyRealtimeGlobally();
+
         VictoryRewardBuffer.PendingGold = 0;
         if (activeEnemy != null && activeEnemy.enemyData != null)
         {

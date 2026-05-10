@@ -104,6 +104,16 @@ public class UIMapTileView : MonoBehaviour
     private CanvasGroup _resolvedHoverCanvasGroup;
     private Coroutine _buttonHoverFadeOutRoutine;
 
+    private float _standingVisitedTransElapsed = -1f;
+    private float _standingVisitedTransDuration;
+    private Color _standingVisitedColorFrom;
+    private Color _standingVisitedColorTo;
+    private Vector3 _standingVisitedBgScaleFrom;
+    private Vector3 _standingVisitedBgScaleTo;
+    private Vector3 _standingVisitedHoverScaleFrom;
+    private Vector3 _standingVisitedHoverScaleTo;
+    private bool _standingVisitedTransIncludesHover;
+
     private void Awake()
     {
         if (backgroundImage == null)
@@ -259,8 +269,88 @@ public class UIMapTileView : MonoBehaviour
 
     private void Update()
     {
+        UpdateStandingVisitedBackgroundTransition();
         UpdateLandedScaleAnimation();
         UpdateAvailablePulseAnimation();
+    }
+
+    private void CancelStandingVisitedBackgroundTransition()
+    {
+        _standingVisitedTransElapsed = -1f;
+    }
+
+    /// <summary>
+    /// Linearly interpolates standing background tint and visited/standing background + hover scales toward the state
+    /// as if the pawn were already on <paramref name="standingHereEnd"/>. Call when the marker move starts (with current visuals already applied for the move-start snapshot).
+    /// </summary>
+    public void BeginStandingVisitedBackgroundTransition(bool standingHereEnd, float durationSeconds)
+    {
+        if (backgroundImage == null || durationSeconds <= 0f)
+            return;
+
+        CancelStandingVisitedBackgroundTransition();
+
+        _standingVisitedColorFrom = backgroundImage.color;
+        _standingVisitedBgScaleFrom = backgroundImage.transform.localScale;
+        _standingVisitedColorTo = GetTargetStandingBackgroundColor(standingHereEnd);
+        _standingVisitedBgScaleTo = GetTargetBackgroundScaleForVisited(standingHereEnd);
+
+        _standingVisitedTransIncludesHover = buttonHoverHighlightObject != null;
+        if (_standingVisitedTransIncludesHover)
+        {
+            _standingVisitedHoverScaleFrom = buttonHoverHighlightObject.transform.localScale;
+            _standingVisitedHoverScaleTo = GetTargetHoverHighlightScaleForVisited(standingHereEnd);
+        }
+
+        _standingVisitedTransDuration = durationSeconds;
+        _standingVisitedTransElapsed = 0f;
+    }
+
+    private void UpdateStandingVisitedBackgroundTransition()
+    {
+        if (_standingVisitedTransElapsed < 0f || backgroundImage == null)
+            return;
+
+        _standingVisitedTransElapsed += Time.unscaledDeltaTime;
+        var u = _standingVisitedTransDuration > 0f
+            ? Mathf.Clamp01(_standingVisitedTransElapsed / _standingVisitedTransDuration)
+            : 1f;
+
+        backgroundImage.color = Color.LerpUnclamped(_standingVisitedColorFrom, _standingVisitedColorTo, u);
+        backgroundImage.transform.localScale = Vector3.LerpUnclamped(_standingVisitedBgScaleFrom, _standingVisitedBgScaleTo, u);
+        if (_standingVisitedTransIncludesHover && buttonHoverHighlightObject != null)
+            buttonHoverHighlightObject.transform.localScale =
+                Vector3.LerpUnclamped(_standingVisitedHoverScaleFrom, _standingVisitedHoverScaleTo, u);
+
+        if (u >= 1f)
+            CancelStandingVisitedBackgroundTransition();
+    }
+
+    private Color GetTargetStandingBackgroundColor(bool standingHere)
+    {
+        return standingHere ? playerCurrentTileBackgroundColor : _baseBackgroundColor;
+    }
+
+    private Vector3 GetTargetBackgroundScaleForVisited(bool playerOnThisTileForScale)
+    {
+        var leftStartVisuallyVisited = _isStartCell && !playerOnThisTileForScale;
+        var useVisitedScale = _tileEventConsumed || leftStartVisuallyVisited;
+        return playerOnThisTileForScale
+            ? Vector3.one
+            : useVisitedScale
+                ? _backgroundBaseLocalScale * visitedBackgroundScale
+                : _backgroundBaseLocalScale;
+    }
+
+    private Vector3 GetTargetHoverHighlightScaleForVisited(bool playerOnThisTileForScale)
+    {
+        var leftStartVisuallyVisited = _isStartCell && !playerOnThisTileForScale;
+        var useVisitedScale = _tileEventConsumed || leftStartVisuallyVisited;
+        return playerOnThisTileForScale
+            ? Vector3.one
+            : useVisitedScale
+                ? _hoverHighlightBaseLocalScale * visitedBackgroundScale
+                : _hoverHighlightBaseLocalScale;
     }
 
     /// <summary>Starts the landing scale-down on this tile (call when the player finishes moving here).</summary>
@@ -281,6 +371,7 @@ public class UIMapTileView : MonoBehaviour
     /// <summary>Applies standing (pawn) highlight, reachability colors, and arrow tint in one step.</summary>
     public void ApplyPlayerStandingAndReachabilityVisual(bool standingHere, MapTileUIViewState reachabilityState)
     {
+        CancelStandingVisitedBackgroundTransition();
         _playerOnThisTile = standingHere;
         _reachabilityState = reachabilityState;
         ApplyBackgroundForStandingOnly();
@@ -294,6 +385,7 @@ public class UIMapTileView : MonoBehaviour
     public void Setup(Vector2Int cell, MapTile tile, bool isStart, bool isBoss, MapMovementManager manager,
         MapPresentationSO presentation)
     {
+        CancelStandingVisitedBackgroundTransition();
         CancelLandedScaleAnimation(restoreScale: true);
         _cell = cell;
         _manager = manager;
@@ -377,6 +469,7 @@ public class UIMapTileView : MonoBehaviour
     /// <summary>Updates arrow tint for “standing here” vs other tiles (call when the player moves).</summary>
     public void SetPlayerStandingHere(bool standingHere)
     {
+        CancelStandingVisitedBackgroundTransition();
         _playerOnThisTile = standingHere;
         ApplyBackgroundForStandingOnly();
         ApplyBackgroundScaleForVisited();

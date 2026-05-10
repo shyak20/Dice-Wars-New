@@ -14,6 +14,9 @@ public class UIMapGridView : MonoBehaviour
     [SerializeField] private RectTransform playerMarker;
     [Tooltip("Optional. If unset, uses Image on playerMarker.")]
     [SerializeField] private Image playerMarkerImage;
+    [Header("Move start visuals")]
+    [Tooltip("When the pawn starts moving, standing tile background color and visited/standing background scale (and hover scale) lerp toward their post-move state over this many seconds (linear).")]
+    [SerializeField, Min(0f)] private float standingVisitedBackgroundTransitionSeconds = 0.35f;
 
     private UIMapTileView[,] _tiles;
     private MapMovementManager _manager;
@@ -158,6 +161,8 @@ public class UIMapGridView : MonoBehaviour
 
         PlayLandingScaleDownAt(toCell);
         RefreshPlayerStandingVisuals();
+        if (animateMove && standingVisitedBackgroundTransitionSeconds > 0f)
+            BeginStandingVisitedBackgroundTransitionsForMove(toCell, standingVisitedBackgroundTransitionSeconds);
 
         if (playerMarker == null)
         {
@@ -255,6 +260,30 @@ public class UIMapGridView : MonoBehaviour
         if (cell.x < 0 || cell.x >= _tiles.GetLength(0) || cell.y < 0 || cell.y >= _tiles.GetLength(1))
             return;
         _tiles[cell.x, cell.y]?.PlayLandingScaleDown();
+    }
+
+    private void BeginStandingVisitedBackgroundTransitionsForMove(Vector2Int toCell, float durationSeconds)
+    {
+        if (_tiles == null || _manager == null || _manager.Grid == null)
+            return;
+
+        var grid = _manager.Grid;
+        var w = grid.Width;
+        var h = grid.Height;
+        if (_tiles.GetLength(0) != w || _tiles.GetLength(1) != h)
+            return;
+
+        for (var y = 0; y < h; y++)
+        {
+            for (var x = 0; x < w; x++)
+            {
+                var v = _tiles[x, y];
+                if (v == null)
+                    continue;
+                var standingEnd = toCell.x == x && toCell.y == y;
+                v.BeginStandingVisitedBackgroundTransition(standingEnd, durationSeconds);
+            }
+        }
     }
 
     public void SnapPlayerMarkerToCell(Vector2Int cell)
