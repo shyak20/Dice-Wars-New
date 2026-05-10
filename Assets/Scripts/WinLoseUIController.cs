@@ -95,7 +95,10 @@ public class WinLoseUIController : MonoBehaviour
     public void GoToMainMenu()
     {
         RunEncounterBuffer.AbortPendingMapCombatState();
-        SceneManager.LoadScene("MainMenu");
+        if (RunManager.Instance != null)
+            RunManager.Instance.LoadMainMenuScene();
+        else
+            SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 
     private void DisableObjectsForVictoryScreen()

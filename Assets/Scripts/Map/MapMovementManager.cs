@@ -127,7 +127,10 @@ public sealed class MapMovementManager : MonoBehaviour
         treasurePanel?.Hide();
         unknownEventPanel?.Hide();
         RunManager.Instance?.ClearPersistedMapState();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        if (RunManager.Instance != null)
+            RunManager.Instance.LoadMapScene();
+        else
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private void RegenerateMapInternal()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -30,6 +31,10 @@ public class RunManager : MonoBehaviour
     [Tooltip("Register once for shop/reward/menu scenes; combat can also assign on CombatManager.")]
     [SerializeField] private GameIconIndexSO gameIconIndex;
 
+    [Header("Scene loading")]
+    [Tooltip("When true, run flow loads one content scene at a time: unload every normal loaded scene (keeps DontDestroyOnLoad), then load the target additively and set it active.")]
+    [SerializeField] private bool useAdditiveContentScenes = true;
+
     private int currentRoomIndex;
     private bool _useMapBasedRun;
     private int _currentActIndex;
@@ -50,6 +55,9 @@ public class RunManager : MonoBehaviour
     private readonly List<UnknownMapEventSO> _unknownValidScratch = new List<UnknownMapEventSO>();
     private readonly List<UnknownMapEventSO> _unknownUnusedScratch = new List<UnknownMapEventSO>();
     private readonly List<RelicSO> _runRelics = new List<RelicSO>();
+
+    private Coroutine _runFlowLoadRoutine;
+    private string _pendingRunFlowScene;
 
     public bool UseMapBasedRun => _useMapBasedRun;
     public int CurrentActIndex => _currentActIndex;
@@ -118,6 +126,86 @@ public class RunManager : MonoBehaviour
             GameIconCatalog.Register(gameIconIndex);
     }
 
+    /// <summary>
+    /// Loads a gameplay/menu scene for the run. With additive mode, replaces the current content scene (see <see cref="useAdditiveContentScenes"/>).
+    /// </summary>
+    public void LoadRunFlowScene(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogError("RunManager.LoadRunFlowScene: scene name is null or empty.");
+            return;
+        }
+
+        if (_runFlowLoadRoutine != null)
+        {
+            _pendingRunFlowScene = sceneName;
+            return;
+        }
+
+        _runFlowLoadRoutine = StartCoroutine(CoLoadRunFlowScene(sceneName));
+    }
+
+    private void FinishRunFlowLoadAndDequeue()
+    {
+        _runFlowLoadRoutine = null;
+        if (string.IsNullOrEmpty(_pendingRunFlowScene))
+            return;
+        var next = _pendingRunFlowScene;
+        _pendingRunFlowScene = null;
+        LoadRunFlowScene(next);
+    }
+
+    /// <summary>Map scene as configured on this RunManager (for map regen / return-to-map).</summary>
+    public void LoadMapScene() => LoadRunFlowScene(mapSceneName);
+
+    /// <summary>Main menu scene as configured on this RunManager.</summary>
+    public void LoadMainMenuScene() => LoadRunFlowScene(mainMenuSceneName);
+
+    private IEnumerator CoLoadRunFlowScene(string sceneName)
+    {
+        if (!useAdditiveContentScenes)
+        {
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+            FinishRunFlowLoadAndDequeue();
+            yield break;
+        }
+
+        for (var i = SceneManager.sceneCount - 1; i >= 0; i--)
+        {
+            var s = SceneManager.GetSceneAt(i);
+            if (!s.isLoaded)
+                continue;
+            if (s.buildIndex < 0)
+                continue;
+
+            var opUnload = SceneManager.UnloadSceneAsync(s);
+            if (opUnload != null)
+                yield return opUnload;
+        }
+
+        var opLoad = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+        if (opLoad == null)
+        {
+            Debug.LogError($"RunManager: LoadSceneAsync failed for '{sceneName}'. Is it in Build Settings?", this);
+            FinishRunFlowLoadAndDequeue();
+            yield break;
+        }
+
+        yield return opLoad;
+
+        var loaded = SceneManager.GetSceneByName(sceneName);
+        if (!loaded.isLoaded)
+        {
+            Debug.LogError($"RunManager: scene '{sceneName}' did not load (GetSceneByName failed). Check exact scene file name.", this);
+            FinishRunFlowLoadAndDequeue();
+            yield break;
+        }
+
+        SceneManager.SetActiveScene(loaded);
+        FinishRunFlowLoadAndDequeue();
+    }
+
     public void StartRun()
     {
         if (RunEconomyManager.Instance != null)
@@ -182,11 +270,11 @@ public class RunManager : MonoBehaviour
                 return;
             }
 
-            SceneManager.LoadScene(diceSelectSceneName);
+            LoadRunFlowScene(diceSelectSceneName);
             return;
         }
 
-        SceneManager.LoadScene(mapSceneName);
+        LoadRunFlowScene(mapSceneName);
     }
 
     /// <summary>Called from <see cref="DiceSelectSceneController"/> after starting dice are written to <see cref="PlayerDataContainer"/>.</summary>
@@ -204,7 +292,7 @@ public class RunManager : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(mapSceneName);
+        LoadRunFlowScene(mapSceneName);
     }
 
     public MapGenerationEventsParams GetMapGenerationParamsForCurrentAct()
@@ -337,7 +425,7 @@ public class RunManager : MonoBehaviour
         var enemy = DrawEnemyForMapCombat(rank);
         SaveMapPersistence(grid, playerCell, movesTaken);
         RunEncounterBuffer.SetPendingCombat(enemy, isBossEndTile);
-        SceneManager.LoadScene(combatSceneName);
+        LoadRunFlowScene(combatSceneName);
     }
 
     public void PersistAndLoadShopScene(MapGrid grid, Vector2Int playerCell, int movesTaken)
@@ -355,7 +443,7 @@ public class RunManager : MonoBehaviour
         }
 
         SaveMapPersistence(grid, playerCell, movesTaken);
-        SceneManager.LoadScene(shopSceneName);
+        LoadRunFlowScene(shopSceneName);
     }
 
     public void ReturnToMapFromSubScene()
@@ -366,7 +454,7 @@ public class RunManager : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(mapSceneName);
+        LoadRunFlowScene(mapSceneName);
     }
 
     public EnemyTypeSO DrawEnemyForMapCombat(EnemyRank rank)
@@ -538,7 +626,7 @@ public class RunManager : MonoBehaviour
             _currentActIndex++;
             ClearMapPersistenceForNewAct();
             ClearMapEncounterDrawState();
-            SceneManager.LoadScene(mapSceneName);
+            LoadRunFlowScene(mapSceneName);
             return;
         }
 
@@ -610,7 +698,7 @@ public class RunManager : MonoBehaviour
                     Debug.LogError($"RunManager: Room {currentRoomIndex} is Combat but has no enemyType assigned!");
                     return;
                 }
-                SceneManager.LoadScene(combatSceneName);
+                LoadRunFlowScene(combatSceneName);
                 break;
 
             case RoomType.Shop:
@@ -619,7 +707,7 @@ public class RunManager : MonoBehaviour
                     Debug.LogError("RunManager: shopSceneName is not assigned for Shop rooms.");
                     return;
                 }
-                SceneManager.LoadScene(shopSceneName);
+                LoadRunFlowScene(shopSceneName);
                 break;
 
             default:
@@ -631,12 +719,12 @@ public class RunManager : MonoBehaviour
     private void EndRun()
     {
         Debug.Log("RunManager: Run complete!");
-        SceneManager.LoadScene(mainMenuSceneName);
+        LoadRunFlowScene(mainMenuSceneName);
     }
 
     private void EndRunFromPlayerDefeat()
     {
         Debug.LogError("RunManager: Game over — player HP reached 0.");
-        SceneManager.LoadScene(mainMenuSceneName);
+        LoadRunFlowScene(mainMenuSceneName);
     }
 }

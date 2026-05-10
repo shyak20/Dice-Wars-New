@@ -3,69 +3,70 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Plays a ordered list of music clips on one <see cref="AudioSource"/> and keeps playing across scene loads.
-/// When a clip finishes, the next clip plays; after the last clip, playback continues from the first.
+/// Scene-local playlist: uses two <see cref="AudioSource"/>s and crossfades when advancing tracks.
+/// Add this to a GameObject in each scene (or flow) that should drive its own music; it does not persist across loads.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class PersistentMusicPlaylist : MonoBehaviour
 {
-    public const string MusicMutedPlayerPrefKey = "DiceWars_MusicMuted";
-
-    public static PersistentMusicPlaylist Instance { get; private set; }
+    public const string MusicMutedPlayerPrefKey = MusicMuteStore.PlayerPrefKey;
 
     [SerializeField] private AudioClip[] tracks;
     [SerializeField] private bool playOnStart = true;
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
-    [Tooltip("When true, PlayerPrefs remembers mute across runs.")]
+    [Tooltip("Crossfade duration when switching to the next playlist clip.")]
+    [SerializeField, Min(0f)] private float crossfadeSeconds = 1f;
+    [Tooltip("When true, mute toggles are written to PlayerPrefs via MusicMuteStore.")]
     [SerializeField] private bool persistMutePreference = true;
 
-    private AudioSource _audio;
-    private int _nextIndex;
-    private Coroutine _sequence;
-    private bool _muted;
+    private AudioSource _primary;
+    private AudioSource _secondary;
+    private AudioSource _audible;
 
-    /// <summary>Fired after mute state changes (including on startup when loaded from PlayerPrefs).</summary>
+    private Coroutine _sequence;
+    private int _nextIndex;
+
+    /// <summary>Fired after mute state changes (including when MusicMuteStore broadcasts).</summary>
     public event Action<bool> MuteStateChanged;
 
-    public bool IsMuted => _muted;
+    public bool IsMuted => MusicMuteStore.IsMuted;
 
     private void Awake()
     {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-
-        // DontDestroyOnLoad only applies reliably to root objects; detach from parent first.
-        transform.SetParent(null, true);
-        DontDestroyOnLoad(gameObject);
-
-        _audio = GetComponent<AudioSource>();
-        if (_audio == null)
+        _primary = GetComponent<AudioSource>();
+        if (_primary == null)
         {
             Debug.LogError("PersistentMusicPlaylist: AudioSource missing despite RequireComponent.", this);
             enabled = false;
             return;
         }
 
-        _audio.playOnAwake = false;
-        _audio.loop = false;
-        _audio.spatialBlend = 0f;
+        ConfigureSource(_primary);
+        _secondary = gameObject.AddComponent<AudioSource>();
+        ConfigureSource(_secondary);
 
-        if (persistMutePreference && PlayerPrefs.GetInt(MusicMutedPlayerPrefKey, 0) != 0)
-            _muted = true;
-
-        ApplyMuteAndVolume();
-        MuteStateChanged?.Invoke(_muted);
+        MusicMuteStore.Changed += OnMuteStoreChanged;
+        SyncSourcesMuteFromStore();
 
         if (FindObjectOfType<AudioListener>() == null)
             Debug.LogError("PersistentMusicPlaylist: no AudioListener in the scene — add one (e.g. on the main camera).", this);
 
         if (tracks == null || tracks.Length == 0)
             Debug.LogError("PersistentMusicPlaylist: assign at least one AudioClip in Tracks.", this);
+
+        MuteStateChanged?.Invoke(MusicMuteStore.IsMuted);
+    }
+
+    private void OnDestroy()
+    {
+        MusicMuteStore.Changed -= OnMuteStoreChanged;
+    }
+
+    private static void ConfigureSource(AudioSource a)
+    {
+        a.playOnAwake = false;
+        a.loop = false;
+        a.spatialBlend = 0f;
     }
 
     private void Start()
@@ -75,10 +76,24 @@ public class PersistentMusicPlaylist : MonoBehaviour
         BeginPlaylist();
     }
 
-    private void OnDestroy()
+    private void OnMuteStoreChanged(bool muted)
     {
-        if (Instance == this)
-            Instance = null;
+        SyncSourcesMuteFromStore();
+        MuteStateChanged?.Invoke(muted);
+    }
+
+    private void SyncSourcesMuteFromStore()
+    {
+        if (_primary != null)
+        {
+            _primary.mute = MusicMuteStore.IsMuted;
+            _primary.volume = volume;
+        }
+        if (_secondary != null)
+        {
+            _secondary.mute = MusicMuteStore.IsMuted;
+            _secondary.volume = volume;
+        }
     }
 
     /// <summary>Begins or restarts the playlist from the current next index (0 on first run).</summary>
@@ -101,36 +116,24 @@ public class PersistentMusicPlaylist : MonoBehaviour
             _sequence = null;
         }
 
-        if (_audio != null)
-            _audio.Stop();
+        _primary.Stop();
+        _secondary.Stop();
+        _audible = null;
+        SyncSourcesMuteFromStore();
     }
 
     public void SetVolume(float normalized)
     {
         volume = Mathf.Clamp01(normalized);
-        ApplyMuteAndVolume();
+        SyncSourcesMuteFromStore();
     }
 
     public void SetMuted(bool muted)
     {
-        if (_muted == muted)
-            return;
-        _muted = muted;
-        if (persistMutePreference)
-            PlayerPrefs.SetInt(MusicMutedPlayerPrefKey, _muted ? 1 : 0);
-        ApplyMuteAndVolume();
-        MuteStateChanged?.Invoke(_muted);
+        MusicMuteStore.SetMuted(muted, persistMutePreference);
     }
 
-    public void ToggleMuted() => SetMuted(!_muted);
-
-    private void ApplyMuteAndVolume()
-    {
-        if (_audio == null)
-            return;
-        _audio.volume = volume;
-        _audio.mute = _muted;
-    }
+    public void ToggleMuted() => MusicMuteStore.ToggleMuted(persistMutePreference);
 
     private IEnumerator PlaySequence()
     {
@@ -139,29 +142,94 @@ public class PersistentMusicPlaylist : MonoBehaviour
             if (!TryAdvanceToNextNonNullTrack(out var clip))
                 yield break;
 
-            if (clip.loadState == AudioDataLoadState.Unloaded)
-                clip.LoadAudioData();
+            yield return CrossfadeTo(clip);
 
-            _audio.clip = clip;
-            _audio.Play();
-
-            // Unity often reports isPlaying == false for the first frame after Play(); waiting only on isPlaying skips the whole clip.
-            var waited = 0f;
-            const float giveUp = 2f;
-            while (!_audio.isPlaying && waited < giveUp)
+            var active = _audible;
+            if (active == null || !active.isPlaying)
             {
-                waited += Time.unscaledDeltaTime;
-                yield return null;
-            }
-
-            if (!_audio.isPlaying)
-            {
-                Debug.LogError($"PersistentMusicPlaylist: clip '{clip.name}' did not start playing (check import settings / AudioListener).", this);
+                Debug.LogError($"PersistentMusicPlaylist: clip '{clip.name}' did not stay playing (check import settings / AudioListener).", this);
                 continue;
             }
 
-            yield return new WaitWhile(() => _audio.isPlaying);
+            yield return new WaitWhile(() => active.isPlaying);
         }
+    }
+
+    private IEnumerator CrossfadeTo(AudioClip clip)
+    {
+        if (clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
+
+        var from = _audible;
+        var to = from == _primary ? _secondary : _primary;
+
+        to.clip = clip;
+        to.time = 0f;
+        to.volume = 0f;
+        to.Play();
+
+        var waited = 0f;
+        const float giveUp = 2f;
+        while (!to.isPlaying && waited < giveUp)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!to.isPlaying)
+        {
+            Debug.LogError($"PersistentMusicPlaylist: clip '{clip.name}' did not start playing (check import settings / AudioListener).", this);
+            yield break;
+        }
+
+        var targetVol = MusicMuteStore.IsMuted ? 0f : volume;
+        var dur = Mathf.Max(0f, crossfadeSeconds);
+
+        if (from == null || !from.isPlaying)
+        {
+            if (dur <= 0f)
+                to.volume = targetVol;
+            else
+            {
+                var t = 0f;
+                while (t < dur)
+                {
+                    t += Time.unscaledDeltaTime;
+                    var k = Mathf.Clamp01(t / dur);
+                    to.volume = Mathf.Lerp(0f, targetVol, k);
+                    yield return null;
+                }
+            }
+
+            to.volume = targetVol;
+            _audible = to;
+            yield break;
+        }
+
+        var fromStart = from.volume;
+        if (dur <= 0f)
+        {
+            from.Stop();
+            from.volume = volume;
+            to.volume = targetVol;
+            _audible = to;
+            yield break;
+        }
+
+        var elapsed = 0f;
+        while (elapsed < dur)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            var k = Mathf.Clamp01(elapsed / dur);
+            from.volume = Mathf.Lerp(fromStart, 0f, k);
+            to.volume = Mathf.Lerp(0f, targetVol, k);
+            yield return null;
+        }
+
+        from.Stop();
+        from.volume = volume;
+        to.volume = targetVol;
+        _audible = to;
     }
 
     private bool TryAdvanceToNextNonNullTrack(out AudioClip clip)
