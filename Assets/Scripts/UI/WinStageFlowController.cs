@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
-/// After victory: waits, hides the enemy root, shows win popup with rewards (gold collect + optional face reward row).
+/// After victory: waits, hides the enemy root, shows win popup with rewards (per-kind row prefabs + optional face offer).
 /// </summary>
 public class WinStageFlowController : MonoBehaviour
 {
@@ -13,12 +13,14 @@ public class WinStageFlowController : MonoBehaviour
     [Header("UI")]
     [SerializeField] private GameObject winStagePanel;
     [SerializeField] private Transform rewardsLayout;
+    [Header("Reward row prefabs")]
+    [FormerlySerializedAs("rewardRowPrefab")]
+    [Tooltip("Row prefab for gold; tune presentation on WinStageRewardRow on that prefab.")]
     [SerializeField] private GameObject goldRewardRowPrefab;
-    [Tooltip("Reward row with WinStageGemRewardRow + Collect button; sockets the gem reward into a random die with a free socket.")]
     [SerializeField] private GameObject gemRewardRowPrefab;
-    [Tooltip("Reward row with WinStageFaceRewardRow + Select button; opens FaceRewardManager when pressed.")]
+    [SerializeField] private GameObject relicRewardRowPrefab;
     [SerializeField] private GameObject faceRewardRowPrefab;
-    [SerializeField] private string faceRewardRowLabel = "New face";
+    [SerializeField] private GameObject dieRewardRowPrefab;
     [SerializeField] private Button continueButton;
     [FormerlySerializedAs("enemyHealthBarRoot")]
     [Tooltip("Root GameObject for the enemy in the fight (sprite, HP bar, intent UI, etc.). Hidden when the win stage appears.")]
@@ -31,8 +33,14 @@ public class WinStageFlowController : MonoBehaviour
 
     private int _uncollectedGold;
     private int _uncollectedGemRewards;
+    private int _uncollectedRelicRewards;
+    private int _uncollectedDieRewards;
     private readonly List<GemSO> _pendingGemRewards = new List<GemSO>();
+    private readonly List<RelicSO> _pendingRelicRewards = new List<RelicSO>();
+    private readonly List<DieAssetSO> _pendingDieRewards = new List<DieAssetSO>();
     private bool _faceFlowComplete = true;
+    /// <summary>True while the optional face-offer row is still in the layout (not consumed).</summary>
+    private bool _faceRewardRowPending;
     private Coroutine _flowRoutine;
     /// <summary>True after the post-victory intro (delay + first layout) has run for this fight.</summary>
     private bool _victoryIntroCompletedForCurrentFight;
@@ -72,7 +80,13 @@ public class WinStageFlowController : MonoBehaviour
         _uncollectedGold = VictoryRewardBuffer.PendingGold;
         _pendingGemRewards.Clear();
         _pendingGemRewards.AddRange(VictoryRewardBuffer.PendingGems);
+        _pendingRelicRewards.Clear();
+        _pendingRelicRewards.AddRange(VictoryRewardBuffer.PendingRelics);
+        _pendingDieRewards.Clear();
+        _pendingDieRewards.AddRange(VictoryRewardBuffer.PendingDice);
         _uncollectedGemRewards = 0;
+        _uncollectedRelicRewards = 0;
+        _uncollectedDieRewards = 0;
         VictoryRewardBuffer.Clear();
         _faceFlowComplete = true;
 
@@ -93,8 +107,8 @@ public class WinStageFlowController : MonoBehaviour
             winStagePanel.SetActive(true);
 
         RebuildRewardsLayout();
-        UpdateContinueInteractable();
         _victoryIntroCompletedForCurrentFight = true;
+        UpdateContinueInteractable();
         _flowRoutine = null;
     }
 
@@ -108,26 +122,14 @@ public class WinStageFlowController : MonoBehaviour
         foreach (Transform c in rewardsLayout)
             Destroy(c.gameObject);
 
-        if (_uncollectedGold > 0 && goldRewardRowPrefab != null)
+        _faceRewardRowPending = false;
+
+        if (_uncollectedGold > 0)
         {
-            var go = Instantiate(goldRewardRowPrefab, rewardsLayout);
-            var row = go.GetComponent<WinStageGoldRewardRow>();
-            if (row == null)
-            {
-                Debug.LogError("WinStageFlowController: goldRewardRowPrefab needs WinStageGoldRewardRow.");
-                Destroy(go);
-            }
-            else
-            {
-                row.Setup(_uncollectedGold, () =>
-                {
-                    _uncollectedGold = 0;
-                    UpdateContinueInteractable();
-                });
-            }
+            InstantiateGoldRow();
         }
 
-        if (_pendingGemRewards.Count > 0 && gemRewardRowPrefab != null && faceRewardManager != null)
+        if (_pendingGemRewards.Count > 0 && faceRewardManager != null)
         {
             for (var i = 0; i < _pendingGemRewards.Count; i++)
             {
@@ -135,17 +137,13 @@ public class WinStageFlowController : MonoBehaviour
                 if (gem == null) continue;
                 _uncollectedGemRewards++;
 
-                var go = Instantiate(gemRewardRowPrefab, rewardsLayout);
-                var row = go.GetComponent<WinStageGemRewardRow>();
-                if (row == null)
+                if (!TryInstantiateRow(gemRewardRowPrefab, "gem", out var row))
                 {
-                    Debug.LogError("WinStageFlowController: gemRewardRowPrefab needs WinStageGemRewardRow.");
                     _uncollectedGemRewards = Mathf.Max(0, _uncollectedGemRewards - 1);
-                    Destroy(go);
                     continue;
                 }
 
-                row.Setup(this, faceRewardManager, gem, () =>
+                row.SetupGem(gem, this, faceRewardManager, () =>
                 {
                     _uncollectedGemRewards = Mathf.Max(0, _uncollectedGemRewards - 1);
                     UpdateContinueInteractable();
@@ -153,26 +151,91 @@ public class WinStageFlowController : MonoBehaviour
             }
         }
 
-        if (faceRewardManager != null && faceRewardRowPrefab != null)
+        for (var i = 0; i < _pendingRelicRewards.Count; i++)
         {
-            var go = Instantiate(faceRewardRowPrefab, rewardsLayout);
-            var faceRow = go.GetComponent<WinStageFaceRewardRow>();
-            if (faceRow == null)
+            var relic = _pendingRelicRewards[i];
+            if (relic == null) continue;
+            _uncollectedRelicRewards++;
+
+            if (!TryInstantiateRow(relicRewardRowPrefab, "relic", out var row))
             {
-                Debug.LogError("WinStageFlowController: faceRewardRowPrefab needs WinStageFaceRewardRow.");
-                Destroy(go);
+                _uncollectedRelicRewards = Mathf.Max(0, _uncollectedRelicRewards - 1);
+                continue;
             }
-            else
-                faceRow.Setup(this, faceRewardManager, faceRewardRowLabel);
+
+            row.SetupRelic(relic, () =>
+            {
+                _uncollectedRelicRewards = Mathf.Max(0, _uncollectedRelicRewards - 1);
+                UpdateContinueInteractable();
+            });
         }
+
+        if (faceRewardManager != null)
+        {
+            if (TryInstantiateRow(faceRewardRowPrefab, "face", out var faceRow))
+            {
+                faceRow.SetupFace(this, faceRewardManager);
+                _faceRewardRowPending = true;
+            }
+        }
+
+        for (var i = 0; i < _pendingDieRewards.Count; i++)
+        {
+            var die = _pendingDieRewards[i];
+            if (die == null) continue;
+            _uncollectedDieRewards++;
+
+            if (!TryInstantiateRow(dieRewardRowPrefab, "die", out var row))
+            {
+                _uncollectedDieRewards = Mathf.Max(0, _uncollectedDieRewards - 1);
+                continue;
+            }
+
+            row.SetupDie(die, () =>
+            {
+                _uncollectedDieRewards = Mathf.Max(0, _uncollectedDieRewards - 1);
+                UpdateContinueInteractable();
+            });
+        }
+    }
+
+    private void InstantiateGoldRow()
+    {
+        if (!TryInstantiateRow(goldRewardRowPrefab, "gold", out var row))
+            return;
+
+        row.SetupGold(_uncollectedGold, () =>
+        {
+            _uncollectedGold = 0;
+            UpdateContinueInteractable();
+        });
+    }
+
+    private bool TryInstantiateRow(GameObject prefab, string rewardKindLabel, out WinStageRewardRow row)
+    {
+        row = null;
+        if (prefab == null)
+        {
+            Debug.LogError($"WinStageFlowController: assign {rewardKindLabel} reward row prefab.");
+            return false;
+        }
+
+        var go = Instantiate(prefab, rewardsLayout);
+        row = go.GetComponent<WinStageRewardRow>();
+        if (row == null)
+        {
+            Debug.LogError($"WinStageFlowController: {rewardKindLabel} reward prefab needs WinStageRewardRow.");
+            Destroy(go);
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>Called when the player opens the face picker from the reward row.</summary>
     public void NotifyFacePickerOpening()
     {
         _faceFlowComplete = false;
-        if (winStagePanel != null)
-            winStagePanel.SetActive(false);
         UpdateContinueInteractable();
     }
 
@@ -188,6 +251,7 @@ public class WinStageFlowController : MonoBehaviour
     /// <summary>Called when the face reward row is consumed (Skip, swap finished, or no-match close).</summary>
     public void NotifyFaceRewardRowRemoved()
     {
+        _faceRewardRowPending = false;
         _faceFlowComplete = true;
         if (winStagePanel != null)
             winStagePanel.SetActive(true);
@@ -198,9 +262,26 @@ public class WinStageFlowController : MonoBehaviour
     {
         if (continueButton == null) return;
         continueButton.interactable = true;
+        TryAutoCompleteVictoryIfReady();
     }
 
-    private void OnContinueClicked()
+    private void TryAutoCompleteVictoryIfReady()
+    {
+        if (!_victoryIntroCompletedForCurrentFight)
+            return;
+        if (!IsWinStageVisible)
+            return;
+        if (_uncollectedGold > 0 || _uncollectedGemRewards > 0 || _uncollectedRelicRewards > 0 || _uncollectedDieRewards > 0)
+            return;
+        if (_faceRewardRowPending)
+            return;
+
+        AdvanceVictoryAfterWinStage();
+    }
+
+    private void OnContinueClicked() => AdvanceVictoryAfterWinStage();
+
+    private void AdvanceVictoryAfterWinStage()
     {
         _victoryIntroCompletedForCurrentFight = false;
 

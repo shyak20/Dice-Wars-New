@@ -79,20 +79,20 @@ public static class EnemyBonusRewardResolver
 
     private static void GrantRandomDie(EnemyTypeSO enemy)
     {
-        if (enemy.dieRewardPool == null || PlayerDataContainer.Instance == null) return;
+        if (enemy.dieRewardPool == null) return;
         var roll = enemy.dieRewardPool.GetRandomDice(1, null, 0f, uniqueInBatch: false);
         if (roll.Count == 0 || roll[0] == null) return;
-        PlayerDataContainer.Instance.AddDieToDeck(roll[0]);
-        Debug.Log($"Enemy bonus reward: granted die '{roll[0].name}'.");
+        VictoryRewardBuffer.PendingDice.Add(roll[0]);
+        Debug.Log($"Enemy bonus reward: queued die '{roll[0].name}' for win-stage collection.");
     }
 
     private static void GrantRandomRelic(EnemyTypeSO enemy)
     {
-        if (enemy.relicRewardPool == null || RunManager.Instance == null) return;
+        if (enemy.relicRewardPool == null) return;
         var roll = enemy.relicRewardPool.GetRandomRelics(1);
         if (roll.Count == 0 || roll[0] == null) return;
-        RunManager.Instance.AddRunRelic(roll[0]);
-        Debug.Log($"Enemy bonus reward: granted relic '{roll[0].title}'.");
+        VictoryRewardBuffer.PendingRelics.Add(roll[0]);
+        Debug.Log($"Enemy bonus reward: queued relic '{roll[0].title}' for win-stage collection.");
     }
 
     private static void GrantRandomGem(EnemyTypeSO enemy)

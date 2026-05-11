@@ -62,6 +62,24 @@ TextureImporter:
   - first:
       213: 5790224405844098233
     second: Die Icon Face 6
+  - first:
+      213: 6193896771624642122
+    second: Arcane Sigil
+  - first:
+      213: 4443186488756482793
+    second: Burn Icon BG
+  - first:
+      213: 633350421133112441
+    second: Power Icon
+  - first:
+      213: 4992097004056903889
+    second: Bonfire_loop_04
+  - first:
+      213: 6158000368922251447
+    second: Burn Resistance Icon
+  - first:
+      213: 3945471451079132055
+    second: Coin Icon
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -173,10 +191,10 @@ TextureImporter:
       name: Attack Icon
       rect:
         serializedVersion: 2
-        x: 727
-        y: 1618
-        width: 341
-        height: 356
+        x: 681
+        y: 1208
+        width: 255
+        height: 267
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -195,10 +213,10 @@ TextureImporter:
       name: Shield Icon
       rect:
         serializedVersion: 2
-        x: 1780
-        y: 568
-        width: 252
-        height: 306
+        x: 944
+        y: 904
+        width: 189
+        height: 229
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -217,10 +235,10 @@ TextureImporter:
       name: Attack Icon BG 2
       rect:
         serializedVersion: 2
-        x: 1099
+        x: 825
         y: 0
-        width: 384
-        height: 378
+        width: 288
+        height: 283
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -239,10 +257,10 @@ TextureImporter:
       name: Defence Icon BG 2
       rect:
         serializedVersion: 2
-        x: 1485
+        x: 1115
         y: 0
-        width: 384
-        height: 378
+        width: 288
+        height: 283
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -261,10 +279,10 @@ TextureImporter:
       name: Heal Icon
       rect:
         serializedVersion: 2
-        x: 1422
-        y: 1559
-        width: 281
-        height: 294
+        x: 944
+        y: 682
+        width: 210
+        height: 220
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -283,10 +301,10 @@ TextureImporter:
       name: Heal Icon BG
       rect:
         serializedVersion: 2
-        x: 341
-        y: 568
-        width: 384
-        height: 378
+        x: 1405
+        y: 0
+        width: 288
+        height: 283
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -305,10 +323,10 @@ TextureImporter:
       name: Cleanse Icon
       rect:
         serializedVersion: 2
-        x: 341
-        y: 1328
-        width: 367
-        height: 339
+        x: 416
+        y: 426
+        width: 275
+        height: 254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -327,10 +345,10 @@ TextureImporter:
       name: Green Icon BG
       rect:
         serializedVersion: 2
-        x: 341
-        y: 948
-        width: 384
-        height: 378
+        x: 1695
+        y: 0
+        width: 288
+        height: 283
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -346,13 +364,35 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: Arcane Sigil
+      rect:
+        serializedVersion: 2
+        x: 825
+        y: 285
+        width: 123
+        height: 127
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4620201c4425f550800000000000000
+      internalID: 6193896771624642122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: Kinetic Shield Icon
       rect:
         serializedVersion: 2
-        x: 1078
-        y: 1268
-        width: 342
-        height: 315
+        x: 956
+        y: 426
+        width: 256
+        height: 236
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -371,10 +411,10 @@ TextureImporter:
       name: Thorns Icon
       rect:
         serializedVersion: 2
-        x: 1426
-        y: 918
-        width: 349
-        height: 327
+        x: 693
+        y: 426
+        width: 261
+        height: 245
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -393,10 +433,10 @@ TextureImporter:
       name: Max HP Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1262
-        width: 333
-        height: 303
+        x: 1214
+        y: 426
+        width: 249
+        height: 227
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -412,13 +452,79 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: Burn Icon
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 1477
+        width: 259
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1181b3f1f8b0bf90800000000000000
+      internalID: -6939843676462808804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Burn Icon BG
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1405
+        width: 279
+        height: 288
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e2352d029e59ad30800000000000000
+      internalID: 4443186488756482793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Power Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1695
+        width: 275
+        height: 288
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 974bbf53adc1ac800800000000000000
+      internalID: 633350421133112441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: Strength Icon
       rect:
         serializedVersion: 2
-        x: 1422
-        y: 1268
-        width: 286
-        height: 289
+        x: 1695
+        y: 426
+        width: 214
+        height: 216
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -439,8 +545,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 660
-        height: 566
+        width: 495
+        height: 424
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -459,10 +565,10 @@ TextureImporter:
       name: Freeze Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1567
-        width: 304
-        height: 309
+        x: 1465
+        y: 426
+        width: 228
+        height: 231
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -478,35 +584,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Burn Icon
-      rect:
-        serializedVersion: 2
-        x: 1078
-        y: 918
-        width: 346
-        height: 348
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c1181b3f1f8b0bf90800000000000000
-      internalID: -6939843676462808804
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Vulnerable Icon
       rect:
         serializedVersion: 2
-        x: 662
+        x: 497
         y: 0
-        width: 435
-        height: 422
+        width: 326
+        height: 316
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -526,9 +610,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 568
-        width: 339
-        height: 692
+        y: 884
+        width: 254
+        height: 519
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -547,10 +631,10 @@ TextureImporter:
       name: Poison Icon
       rect:
         serializedVersion: 2
-        x: 1078
-        y: 1585
-        width: 254
-        height: 362
+        x: 681
+        y: 1740
+        width: 190
+        height: 271
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -566,13 +650,57 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: Bonfire_loop_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 426
+        width: 414
+        height: 456
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d08a13a6cd774540800000000000000
+      internalID: 4992097004056903889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Burn Resistance Icon
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 682
+        width: 263
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b0d55485bc957550800000000000000
+      internalID: 6158000368922251447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: Die Icon Face 1
       rect:
         serializedVersion: 2
-        x: 341
-        y: 1669
-        width: 349
-        height: 348
+        x: 416
+        y: 945
+        width: 261
+        height: 261
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -591,10 +719,10 @@ TextureImporter:
       name: Die Icon Face 2
       rect:
         serializedVersion: 2
-        x: 727
-        y: 568
-        width: 349
-        height: 348
+        x: 416
+        y: 1208
+        width: 261
+        height: 261
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -613,10 +741,10 @@ TextureImporter:
       name: Die Icon Face 3
       rect:
         serializedVersion: 2
-        x: 1078
-        y: 568
-        width: 349
-        height: 348
+        x: 416
+        y: 1471
+        width: 261
+        height: 261
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -635,10 +763,10 @@ TextureImporter:
       name: Die Icon Face 4
       rect:
         serializedVersion: 2
-        x: 1429
-        y: 568
-        width: 349
-        height: 348
+        x: 416
+        y: 1734
+        width: 261
+        height: 261
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -657,10 +785,10 @@ TextureImporter:
       name: Die Icon Face 5
       rect:
         serializedVersion: 2
-        x: 727
-        y: 918
-        width: 349
-        height: 348
+        x: 681
+        y: 682
+        width: 261
+        height: 261
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -679,10 +807,10 @@ TextureImporter:
       name: Die Icon Face 6
       rect:
         serializedVersion: 2
-        x: 727
-        y: 1268
-        width: 349
-        height: 348
+        x: 681
+        y: 945
+        width: 261
+        height: 261
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -693,6 +821,28 @@ TextureImporter:
       bones: []
       spriteID: 9bc72205b620b5050800000000000000
       internalID: 5790224405844098233
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Coin Icon
+      rect:
+        serializedVersion: 2
+        x: 497
+        y: 318
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7934409716121c630800000000000000
+      internalID: 3945471451079132055
       vertices: []
       indices: 
       edges: []
@@ -711,10 +861,15 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
+      Arcane Sigil: 6193896771624642122
       Attack Icon: 486815761338871706
       Attack Icon BG 2: 200187152838841157
+      Bonfire_loop_04: 4992097004056903889
       Burn Icon: -6939843676462808804
+      Burn Icon BG: 4443186488756482793
+      Burn Resistance Icon: 6158000368922251447
       Cleanse Icon: -5647151390834640249
+      Coin Icon: 3945471451079132055
       Defence Icon BG 2: 299225067176281671
       Die Icon Face 1: -951324242474890380
       Die Icon Face 2: 5030406608479721366
@@ -729,6 +884,7 @@ TextureImporter:
       Kinetic Shield Icon: -4952386477903569170
       Max HP Icon: 7705429973175227790
       Poison Icon: 6346943658632662112
+      Power Icon: 633350421133112441
       Shield Icon: -5171152565747068557
       Strength Icon: -8130133584056446798
       Thorns Icon: 5248542921010066017
