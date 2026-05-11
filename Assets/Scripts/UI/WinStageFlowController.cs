@@ -7,7 +7,7 @@ using UnityEngine.UI;
 /// <summary>
 /// After victory: waits, hides the enemy root, shows win popup with rewards (per-kind row prefabs + optional face offer).
 /// </summary>
-public class WinStageFlowController : MonoBehaviour
+public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
 {
     [SerializeField, Min(0f)] private float delayAfterVictorySeconds = 2f;
     [Header("UI")]
@@ -15,7 +15,7 @@ public class WinStageFlowController : MonoBehaviour
     [SerializeField] private Transform rewardsLayout;
     [Header("Reward row prefabs")]
     [FormerlySerializedAs("rewardRowPrefab")]
-    [Tooltip("Row prefab for gold; tune presentation on WinStageRewardRow on that prefab.")]
+    [Tooltip("Row prefab for gold; tune presentation on RunRewardOfferRow on that prefab.")]
     [SerializeField] private GameObject goldRewardRowPrefab;
     [SerializeField] private GameObject gemRewardRowPrefab;
     [SerializeField] private GameObject relicRewardRowPrefab;
@@ -211,7 +211,7 @@ public class WinStageFlowController : MonoBehaviour
         });
     }
 
-    private bool TryInstantiateRow(GameObject prefab, string rewardKindLabel, out WinStageRewardRow row)
+    private bool TryInstantiateRow(GameObject prefab, string rewardKindLabel, out RunRewardOfferRow row)
     {
         row = null;
         if (prefab == null)
@@ -221,10 +221,10 @@ public class WinStageFlowController : MonoBehaviour
         }
 
         var go = Instantiate(prefab, rewardsLayout);
-        row = go.GetComponent<WinStageRewardRow>();
+        row = go.GetComponent<RunRewardOfferRow>();
         if (row == null)
         {
-            Debug.LogError($"WinStageFlowController: {rewardKindLabel} reward prefab needs WinStageRewardRow.");
+            Debug.LogError($"WinStageFlowController: {rewardKindLabel} reward prefab needs RunRewardOfferRow.");
             Destroy(go);
             return false;
         }

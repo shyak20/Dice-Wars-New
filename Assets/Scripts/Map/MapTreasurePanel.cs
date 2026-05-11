@@ -2,19 +2,29 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Map treasure tile: shows a rolled <see cref="MapTreasurePackSO"/> and grants rewards on collect.</summary>
+/// <summary>Map treasure tile: shows a rolled <see cref="MapTreasurePackSO"/> and grants rewards on collect (gold / die / relic rows only — no faces or gems).</summary>
 public sealed class MapTreasurePanel : MonoBehaviour
 {
     [SerializeField] private GameObject root;
     [Header("Rewards list")]
     [SerializeField] private Transform rewardsLayout;
-    [SerializeField] private GameObject rewardItemPrefab;
-    [Header("Reward icons")]
-    [SerializeField] private Sprite goldRewardIcon;
+    [Header("Reward row prefabs (each root must have RunRewardOfferRow)")]
+    [SerializeField] private GameObject goldRewardRowPrefab;
+    [SerializeField] private GameObject relicRewardRowPrefab;
+    [SerializeField] private GameObject dieRewardRowPrefab;
+    [Header("UI")]
     [SerializeField] private Button closeButton;
+    [Header("Open chest (optional)")]
+    [Tooltip("When assigned, a click applies the two lists below, then the button is disabled until the panel closes.")]
+    [SerializeField] private Button openButton;
+    [Tooltip("Set active true when Open is pressed.")]
+    [SerializeField] private List<GameObject> activateWhenOpenPressed = new List<GameObject>();
+    [Tooltip("Set active false when Open is pressed.")]
+    [SerializeField] private List<GameObject> deactivateWhenOpenPressed = new List<GameObject>();
 
     private MapTreasurePackSO _currentPack;
     private readonly List<RolledReward> _rolledRewards = new List<RolledReward>();
+    private int _pendingRowCompletions;
 
     private enum RolledRewardKind
     {
@@ -38,6 +48,46 @@ public sealed class MapTreasurePanel : MonoBehaviour
         root.SetActive(false);
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
+        if (openButton != null)
+            openButton.onClick.AddListener(OnOpenButtonPressed);
+    }
+
+    private void OnDestroy()
+    {
+        if (closeButton != null)
+            closeButton.onClick.RemoveListener(Close);
+        if (openButton != null)
+            openButton.onClick.RemoveListener(OnOpenButtonPressed);
+    }
+
+    private void OnOpenButtonPressed()
+    {
+        ApplyOpenPressedVisuals();
+        if (openButton != null)
+            openButton.interactable = false;
+    }
+
+    private void ApplyOpenPressedVisuals()
+    {
+        for (var i = 0; i < activateWhenOpenPressed.Count; i++)
+        {
+            var go = activateWhenOpenPressed[i];
+            if (go != null)
+                go.SetActive(true);
+        }
+
+        for (var i = 0; i < deactivateWhenOpenPressed.Count; i++)
+        {
+            var go = deactivateWhenOpenPressed[i];
+            if (go != null)
+                go.SetActive(false);
+        }
+    }
+
+    private void ResetOpenButtonState()
+    {
+        if (openButton != null)
+            openButton.interactable = true;
     }
 
     public bool TryOpen(MapTreasurePackSO pack)
@@ -60,6 +110,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
 
         ActivateSelfAndAncestors(root.transform);
         root.SetActive(true);
+        ResetOpenButtonState();
 
         RollRewards(pack, _rolledRewards);
         RebuildRewardsLayout(_rolledRewards);
@@ -78,43 +129,69 @@ public sealed class MapTreasurePanel : MonoBehaviour
         for (var i = rewardsLayout.childCount - 1; i >= 0; i--)
             Destroy(rewardsLayout.GetChild(i).gameObject);
 
+        _pendingRowCompletions = 0;
+
         if (rewards == null || rewards.Count == 0)
             return;
 
         foreach (var reward in rewards)
         {
-            if (rewardItemPrefab == null)
+            switch (reward.Kind)
             {
-                Debug.LogError("MapTreasurePanel: assign rewardItemPrefab.", this);
-                return;
+                case RolledRewardKind.Gold:
+                {
+                    if (!TryInstantiateRow(goldRewardRowPrefab, "gold", out var row))
+                        return;
+                    row.SetupGold(reward.GoldAmount, OnOneRewardRowDone);
+                    _pendingRowCompletions++;
+                    break;
+                }
+                case RolledRewardKind.Relic:
+                {
+                    if (!TryInstantiateRow(relicRewardRowPrefab, "relic", out var row))
+                        return;
+                    row.SetupRelic(reward.Relic, OnOneRewardRowDone);
+                    _pendingRowCompletions++;
+                    break;
+                }
+                case RolledRewardKind.Die:
+                {
+                    if (!TryInstantiateRow(dieRewardRowPrefab, "die", out var row))
+                        return;
+                    row.SetupDie(reward.Die, OnOneRewardRowDone);
+                    _pendingRowCompletions++;
+                    break;
+                }
             }
-
-            var go = Instantiate(rewardItemPrefab, rewardsLayout);
-            var item = go.GetComponent<MapTreasureRewardItemView>();
-            if (item == null)
-            {
-                Debug.LogError("MapTreasurePanel: rewardItemPrefab must have MapTreasureRewardItemView.", go);
-                Destroy(go);
-                continue;
-            }
-
-            item.Setup(
-                IconForReward(reward),
-                reward.Kind == RolledRewardKind.Relic ? reward.Relic : null,
-                reward.Kind == RolledRewardKind.Gold ? reward.GoldAmount : 0,
-                () => CollectReward(reward));
         }
     }
 
-    private Sprite IconForReward(RolledReward reward)
+    private bool TryInstantiateRow(GameObject prefab, string rewardKindLabel, out RunRewardOfferRow row)
     {
-        return reward.Kind switch
+        row = null;
+        if (prefab == null)
         {
-            RolledRewardKind.Gold => goldRewardIcon,
-            RolledRewardKind.Die => reward.Die != null ? reward.Die.uiIcon : null,
-            RolledRewardKind.Relic => reward.Relic != null ? reward.Relic.icon : null,
-            _ => null
-        };
+            Debug.LogError($"MapTreasurePanel: assign {rewardKindLabel} reward row prefab.", this);
+            return false;
+        }
+
+        var go = Instantiate(prefab, rewardsLayout);
+        row = go.GetComponent<RunRewardOfferRow>();
+        if (row == null)
+        {
+            Debug.LogError($"MapTreasurePanel: {rewardKindLabel} prefab must have RunRewardOfferRow.", go);
+            Destroy(go);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void OnOneRewardRowDone()
+    {
+        _pendingRowCompletions = Mathf.Max(0, _pendingRowCompletions - 1);
+        if (_pendingRowCompletions == 0)
+            Close();
     }
 
     private static void RollRewards(MapTreasurePackSO pack, List<RolledReward> destination)
@@ -142,6 +219,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
                                 GoldAmount = amount
                             });
                         }
+
                         break;
                     }
                 }
@@ -173,30 +251,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
                 });
             }
         }
-
-    }
-
-    private void CollectReward(RolledReward reward)
-    {
-        switch (reward.Kind)
-        {
-            case RolledRewardKind.Gold:
-                if (reward.GoldAmount > 0 && RunEconomyManager.Instance != null)
-                    RunEconomyManager.Instance.GrantGold(reward.GoldAmount, null);
-                break;
-            case RolledRewardKind.Die:
-                if (reward.Die != null && PlayerDataContainer.Instance != null)
-                    PlayerDataContainer.Instance.AddDieToDeck(reward.Die);
-                break;
-            case RolledRewardKind.Relic:
-                if (reward.Relic != null && RunManager.Instance != null)
-                    RunManager.Instance.AddRunRelic(reward.Relic);
-                break;
-        }
-
-        _rolledRewards.Remove(reward);
-        if (_rolledRewards.Count == 0)
-            Close();
     }
 
     private void Close() => Hide();
@@ -206,6 +260,8 @@ public sealed class MapTreasurePanel : MonoBehaviour
     {
         _currentPack = null;
         _rolledRewards.Clear();
+        _pendingRowCompletions = 0;
+        ResetOpenButtonState();
         if (root != null)
             root.SetActive(false);
     }
