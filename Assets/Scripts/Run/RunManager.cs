@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -50,6 +51,24 @@ public class RunManager : MonoBehaviour
     private readonly List<UnknownMapEventSO> _unknownValidScratch = new List<UnknownMapEventSO>();
     private readonly List<UnknownMapEventSO> _unknownUnusedScratch = new List<UnknownMapEventSO>();
     private readonly List<RelicSO> _runRelics = new List<RelicSO>();
+
+    [Header("Map subscene preload (additive)")]
+    [Tooltip("When the map scene loads, Fight and Shop are loaded additively with roots hidden so the first transition avoids a cold load. On show, each root’s active state is restored to how it was right after load (matches scene defaults).")]
+    [SerializeField] private bool preloadFightAndShopWhileOnMap = true;
+
+    private Coroutine _preloadMapSubscenesRoutine;
+    private bool _fightScenePreloadedForMapRun;
+    private bool _shopScenePreloadedForMapRun;
+    private readonly List<SceneRootActiveSnapshot> _fightRootDefaultActives = new List<SceneRootActiveSnapshot>();
+    private readonly List<SceneRootActiveSnapshot> _shopRootDefaultActives = new List<SceneRootActiveSnapshot>();
+    /// <summary>Map root actives stashed when opening fight/shop so the map scene stays loaded but hidden (mirrors subscene hiding on the map).</summary>
+    private readonly List<SceneRootActiveSnapshot> _mapRootStashedWhenLeavingForSubScene = new List<SceneRootActiveSnapshot>();
+
+    private struct SceneRootActiveSnapshot
+    {
+        public GameObject Root;
+        public bool DefaultActiveSelf;
+    }
 
     public bool UseMapBasedRun => _useMapBasedRun;
     public int CurrentActIndex => _currentActIndex;
@@ -116,6 +135,60 @@ public class RunManager : MonoBehaviour
 
         if (gameIconIndex != null)
             GameIconCatalog.Register(gameIconIndex);
+
+        SceneManager.activeSceneChanged += OnActiveSceneChanged;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+        if (Instance == this)
+            Instance = null;
+    }
+
+    private void OnActiveSceneChanged(Scene previous, Scene next)
+    {
+        if (!next.IsValid())
+            return;
+
+        var nextName = next.name;
+        if (!string.IsNullOrEmpty(mapSceneName) && nextName == mapSceneName)
+        {
+            ResetGlobalTimeScaleToOne();
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(combatSceneName) && nextName == combatSceneName)
+            ApplyFightSceneSimulationSpeedFromLoadedScene();
+    }
+
+    private static void ResetGlobalTimeScaleToOne()
+    {
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+    }
+
+    private void ApplyFightSceneSimulationSpeedFromLoadedScene()
+    {
+        if (string.IsNullOrEmpty(combatSceneName))
+            return;
+
+        var fightScene = SceneManager.GetSceneByName(combatSceneName);
+        if (!fightScene.IsValid())
+            return;
+
+        var controllers = FindObjectsOfType<SimulationSpeedController>(true);
+        for (var i = 0; i < controllers.Length; i++)
+        {
+            var c = controllers[i];
+            if (c != null && c.gameObject.scene == fightScene)
+            {
+                c.ApplyConfiguredDefaultSpeed();
+                return;
+            }
+        }
+
+        ResetGlobalTimeScaleToOne();
     }
 
     public void StartRun()
@@ -186,6 +259,7 @@ public class RunManager : MonoBehaviour
             return;
         }
 
+        ClearMapSubsceneTransitionSnapshot();
         SceneManager.LoadScene(mapSceneName);
     }
 
@@ -204,6 +278,7 @@ public class RunManager : MonoBehaviour
             return;
         }
 
+        ClearMapSubsceneTransitionSnapshot();
         SceneManager.LoadScene(mapSceneName);
     }
 
@@ -328,15 +403,30 @@ public class RunManager : MonoBehaviour
     public void PersistAndLoadFightScene(MapGrid grid, Vector2Int playerCell, int movesTaken, EnemyRank rank,
         bool isBossEndTile)
     {
+        var enemy = DrawEnemyForMapCombat(rank);
+        PersistAndLoadFightSceneWithEnemy(grid, playerCell, movesTaken, enemy, isBossEndTile);
+    }
+
+    /// <summary>Map combat with an explicit enemy (e.g. Unknown tile event with <see cref="UnknownMapEventSO.specificEnemy"/>).</summary>
+    public void PersistAndLoadFightSceneWithEnemy(MapGrid grid, Vector2Int playerCell, int movesTaken,
+        EnemyTypeSO enemy, bool isBossEndTile)
+    {
         if (!_useMapBasedRun)
         {
-            Debug.LogError("RunManager.PersistAndLoadFightScene: not in map-based run.");
+            Debug.LogError("RunManager.PersistAndLoadFightSceneWithEnemy: not in map-based run.");
             return;
         }
 
-        var enemy = DrawEnemyForMapCombat(rank);
+        if (enemy == null)
+        {
+            Debug.LogError("RunManager.PersistAndLoadFightSceneWithEnemy: enemy is null.");
+            return;
+        }
+
         SaveMapPersistence(grid, playerCell, movesTaken);
         RunEncounterBuffer.SetPendingCombat(enemy, isBossEndTile);
+        if (TryEnterPreloadedCombatFromMap())
+            return;
         SceneManager.LoadScene(combatSceneName);
     }
 
@@ -355,7 +445,194 @@ public class RunManager : MonoBehaviour
         }
 
         SaveMapPersistence(grid, playerCell, movesTaken);
+        if (TryEnterPreloadedShopFromMap())
+            return;
         SceneManager.LoadScene(shopSceneName);
+    }
+
+    /// <summary>
+    /// Called when the map scene has finished its own setup so Fight/Shop can be additively preloaded in the background.
+    /// </summary>
+    public void NotifyMapSceneReadyForSubscenePreload()
+    {
+        if (!_useMapBasedRun || !preloadFightAndShopWhileOnMap)
+            return;
+        if (string.IsNullOrEmpty(combatSceneName) || string.IsNullOrEmpty(shopSceneName))
+        {
+            Debug.LogError("RunManager.NotifyMapSceneReadyForSubscenePreload: combatSceneName and shopSceneName must be set.");
+            return;
+        }
+
+        if (_preloadMapSubscenesRoutine != null)
+            StopCoroutine(_preloadMapSubscenesRoutine);
+        _preloadMapSubscenesRoutine = StartCoroutine(CoPreloadFightAndShopAdditiveForMapRun());
+    }
+
+    private IEnumerator CoPreloadFightAndShopAdditiveForMapRun()
+    {
+        _fightScenePreloadedForMapRun = false;
+        _shopScenePreloadedForMapRun = false;
+        _fightRootDefaultActives.Clear();
+        _shopRootDefaultActives.Clear();
+        yield return null;
+
+        if (!IsSceneLoadedByName(combatSceneName))
+        {
+            var op = SceneManager.LoadSceneAsync(combatSceneName, LoadSceneMode.Additive);
+            if (op == null)
+            {
+                Debug.LogError($"RunManager: could not start additive load of '{combatSceneName}' — is it in Build Settings?", this);
+                _preloadMapSubscenesRoutine = null;
+                yield break;
+            }
+
+            while (!op.isDone)
+                yield return null;
+
+            var combatScene = SceneManager.GetSceneByName(combatSceneName);
+            if (combatScene.IsValid() && combatScene.isLoaded)
+                CaptureRootActivesThenHideScene(combatScene, _fightRootDefaultActives);
+        }
+        else
+        {
+            var combatScene = SceneManager.GetSceneByName(combatSceneName);
+            if (combatScene.IsValid() && combatScene.isLoaded && _fightRootDefaultActives.Count == 0)
+                CaptureRootActivesThenHideScene(combatScene, _fightRootDefaultActives);
+        }
+
+        _fightScenePreloadedForMapRun = IsSceneLoadedByName(combatSceneName) && _fightRootDefaultActives.Count > 0;
+
+        if (!IsSceneLoadedByName(shopSceneName))
+        {
+            var opShop = SceneManager.LoadSceneAsync(shopSceneName, LoadSceneMode.Additive);
+            if (opShop == null)
+            {
+                Debug.LogError($"RunManager: could not start additive load of '{shopSceneName}' — is it in Build Settings?", this);
+                _preloadMapSubscenesRoutine = null;
+                yield break;
+            }
+
+            while (!opShop.isDone)
+                yield return null;
+
+            var shopScene = SceneManager.GetSceneByName(shopSceneName);
+            if (shopScene.IsValid() && shopScene.isLoaded)
+                CaptureRootActivesThenHideScene(shopScene, _shopRootDefaultActives);
+        }
+        else
+        {
+            var shopScene = SceneManager.GetSceneByName(shopSceneName);
+            if (shopScene.IsValid() && shopScene.isLoaded && _shopRootDefaultActives.Count == 0)
+                CaptureRootActivesThenHideScene(shopScene, _shopRootDefaultActives);
+        }
+
+        _shopScenePreloadedForMapRun = IsSceneLoadedByName(shopSceneName) && _shopRootDefaultActives.Count > 0;
+        _preloadMapSubscenesRoutine = null;
+    }
+
+    private bool TryEnterPreloadedCombatFromMap()
+    {
+        if (!_fightScenePreloadedForMapRun || _fightRootDefaultActives.Count == 0)
+            return false;
+        var combatScene = SceneManager.GetSceneByName(combatSceneName);
+        if (!combatScene.IsValid() || !combatScene.isLoaded)
+            return false;
+
+        StashAndDeactivateMapSceneRoots();
+        RestoreSceneRootsToCapturedDefaults(_fightRootDefaultActives);
+        SceneManager.SetActiveScene(combatScene);
+        return true;
+    }
+
+    private bool TryEnterPreloadedShopFromMap()
+    {
+        if (!_shopScenePreloadedForMapRun || _shopRootDefaultActives.Count == 0)
+            return false;
+        var shopScene = SceneManager.GetSceneByName(shopSceneName);
+        if (!shopScene.IsValid() || !shopScene.isLoaded)
+            return false;
+
+        StashAndDeactivateMapSceneRoots();
+        RestoreSceneRootsToCapturedDefaults(_shopRootDefaultActives);
+        SceneManager.SetActiveScene(shopScene);
+        return true;
+    }
+
+    private void ClearMapSubsceneTransitionSnapshot()
+    {
+        _mapRootStashedWhenLeavingForSubScene.Clear();
+    }
+
+    /// <summary>Records each map root’s <see cref="GameObject.activeSelf"/> then deactivates roots so fight/shop can become active without unloading the map.</summary>
+    private void StashAndDeactivateMapSceneRoots()
+    {
+        _mapRootStashedWhenLeavingForSubScene.Clear();
+        if (string.IsNullOrEmpty(mapSceneName))
+            return;
+        var mapScene = SceneManager.GetSceneByName(mapSceneName);
+        if (!mapScene.IsValid() || !mapScene.isLoaded)
+            return;
+        var roots = mapScene.GetRootGameObjects();
+        for (var i = 0; i < roots.Length; i++)
+        {
+            var root = roots[i];
+            if (root == null)
+                continue;
+            _mapRootStashedWhenLeavingForSubScene.Add(new SceneRootActiveSnapshot
+            {
+                Root = root,
+                DefaultActiveSelf = root.activeSelf
+            });
+            root.SetActive(false);
+        }
+    }
+
+    private static void DeactivateCapturedRoots(List<SceneRootActiveSnapshot> captured)
+    {
+        for (var i = 0; i < captured.Count; i++)
+        {
+            var e = captured[i];
+            if (e.Root != null)
+                e.Root.SetActive(false);
+        }
+    }
+
+    private static bool IsSceneLoadedByName(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+            return false;
+        var s = SceneManager.GetSceneByName(sceneName);
+        return s.IsValid() && s.isLoaded;
+    }
+
+    /// <summary>
+    /// Right after additive load: record each root’s <see cref="GameObject.activeSelf"/> (matches scene file defaults before gameplay),
+    /// then deactivate every root so the scene stays hidden on the map.
+    /// </summary>
+    private static void CaptureRootActivesThenHideScene(Scene scene, List<SceneRootActiveSnapshot> into)
+    {
+        if (!scene.IsValid())
+            return;
+        into.Clear();
+        var roots = scene.GetRootGameObjects();
+        for (var i = 0; i < roots.Length; i++)
+        {
+            var root = roots[i];
+            if (root == null)
+                continue;
+            into.Add(new SceneRootActiveSnapshot { Root = root, DefaultActiveSelf = root.activeSelf });
+            root.SetActive(false);
+        }
+    }
+
+    private static void RestoreSceneRootsToCapturedDefaults(List<SceneRootActiveSnapshot> captured)
+    {
+        for (var i = 0; i < captured.Count; i++)
+        {
+            var e = captured[i];
+            if (e.Root != null)
+                e.Root.SetActive(e.DefaultActiveSelf);
+        }
     }
 
     public void ReturnToMapFromSubScene()
@@ -365,6 +642,38 @@ public class RunManager : MonoBehaviour
             Debug.LogError("RunManager: mapSceneName is not assigned.");
             return;
         }
+
+        StartCoroutine(CoReturnToMapFromSubScene());
+    }
+
+    private IEnumerator CoReturnToMapFromSubScene()
+    {
+        var mapScene = SceneManager.GetSceneByName(mapSceneName);
+        if (mapScene.IsValid() && mapScene.isLoaded && _mapRootStashedWhenLeavingForSubScene.Count > 0)
+        {
+            DeactivateCapturedRoots(_fightRootDefaultActives);
+            DeactivateCapturedRoots(_shopRootDefaultActives);
+            RestoreSceneRootsToCapturedDefaults(_mapRootStashedWhenLeavingForSubScene);
+            _mapRootStashedWhenLeavingForSubScene.Clear();
+            SceneManager.SetActiveScene(mapScene);
+            _fightScenePreloadedForMapRun = IsSceneLoadedByName(combatSceneName) && _fightRootDefaultActives.Count > 0;
+            _shopScenePreloadedForMapRun = IsSceneLoadedByName(shopSceneName) && _shopRootDefaultActives.Count > 0;
+            yield break;
+        }
+
+        var combatScene = SceneManager.GetSceneByName(combatSceneName);
+        if (combatScene.IsValid() && combatScene.isLoaded)
+            yield return SceneManager.UnloadSceneAsync(combatScene);
+
+        var shopScene = SceneManager.GetSceneByName(shopSceneName);
+        if (shopScene.IsValid() && shopScene.isLoaded)
+            yield return SceneManager.UnloadSceneAsync(shopScene);
+
+        _fightRootDefaultActives.Clear();
+        _shopRootDefaultActives.Clear();
+        _fightScenePreloadedForMapRun = false;
+        _shopScenePreloadedForMapRun = false;
+        ClearMapSubsceneTransitionSnapshot();
 
         SceneManager.LoadScene(mapSceneName);
     }
@@ -538,6 +847,7 @@ public class RunManager : MonoBehaviour
             _currentActIndex++;
             ClearMapPersistenceForNewAct();
             ClearMapEncounterDrawState();
+            ClearMapSubsceneTransitionSnapshot();
             SceneManager.LoadScene(mapSceneName);
             return;
         }

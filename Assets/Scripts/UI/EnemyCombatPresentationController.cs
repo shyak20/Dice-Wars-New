@@ -63,6 +63,44 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         if (orbImpactIndicator != null) orbImpactIndicator.SetActive(false);
     }
 
+    /// <summary>Stops indicator/flash coroutines and hides transient UI (e.g. new fight after returning from map).</summary>
+    public void ResetTransientDamagePresentation()
+    {
+        if (_orbRoutine != null)
+        {
+            StopCoroutine(_orbRoutine);
+            _orbRoutine = null;
+        }
+
+        if (_physicalRoutine != null)
+        {
+            StopCoroutine(_physicalRoutine);
+            _physicalRoutine = null;
+        }
+
+        if (_burnRoutine != null)
+        {
+            StopCoroutine(_burnRoutine);
+            _burnRoutine = null;
+        }
+
+        if (_spriteFlashRoutine != null)
+        {
+            StopCoroutine(_spriteFlashRoutine);
+            _spriteFlashRoutine = null;
+        }
+
+        if (physicalDamageIndicator != null) physicalDamageIndicator.SetActive(false);
+        if (burnDamageIndicator != null) burnDamageIndicator.SetActive(false);
+        if (orbImpactIndicator != null) orbImpactIndicator.SetActive(false);
+
+        if (_enemyMaterial != null)
+        {
+            _enemyMaterial.SetFloat(FlashAmountID, 0f);
+            _enemyMaterial.SetColor(FlashColorID, physicalSpriteFlashColor);
+        }
+    }
+
     /// <summary>Called from <see cref="EnemyController.Initialize"/> to apply art from <see cref="EnemyTypeSO"/>.</summary>
     public void ApplyDisplaySprite(Sprite sprite)
     {

@@ -1,8 +1,24 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>Shared world → canvas spawn for <see cref="PlayerFloatingDamageNumberController"/> and <see cref="EnemyFloatingDamageNumberController"/>.</summary>
 public static class FloatingDamageNumberSpawner
 {
+    public static void DestroyAllInstancesInScene(Scene scene)
+    {
+        if (!scene.IsValid())
+            return;
+
+        var instances = Object.FindObjectsOfType<FloatingDamageNumberInstance>(true);
+        for (var i = 0; i < instances.Length; i++)
+        {
+            var inst = instances[i];
+            if (inst == null || inst.gameObject.scene != scene)
+                continue;
+            Object.Destroy(inst.gameObject);
+        }
+    }
+
     /// <param name="spawnAtSpawnParentCenter">
     /// When true, ignores <paramref name="worldPosition"/> and places the instance at the spawn parent's local center
     /// (<c>anchoredPosition</c> 0,0). Use for HUD regions where world projection does not match the layout.

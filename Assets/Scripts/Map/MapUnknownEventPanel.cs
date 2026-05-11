@@ -11,6 +11,9 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     [SerializeField] private Button continueButton;
 
     private UnknownMapEventSO _currentEvent;
+    private MapGrid _pendingGrid;
+    private Vector2Int _pendingPlayerCell;
+    private int _pendingMovesTaken;
 
     private void Awake()
     {
@@ -25,7 +28,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     /// Shows Unknown Event UI for the drawn event.
     /// Returns false if run state is invalid (tile should stay unconsumed).
     /// </summary>
-    public bool TryOpenPanel(UnknownMapEventSO unknownEvent)
+    public bool TryOpenPanel(UnknownMapEventSO unknownEvent, MapGrid grid, Vector2Int playerCell, int movesTaken)
     {
         if (RunManager.Instance == null)
         {
@@ -40,6 +43,9 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
         }
 
         _currentEvent = unknownEvent;
+        _pendingGrid = grid;
+        _pendingPlayerCell = playerCell;
+        _pendingMovesTaken = movesTaken;
         if (_currentEvent != null)
             Debug.Log($"Unknown tile: {_currentEvent.DisplayLabel}" + (string.IsNullOrEmpty(_currentEvent.description) ? "" : $" — {_currentEvent.description}"));
         else
@@ -53,12 +59,36 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
         return true;
     }
 
-    private void Close() => Hide();
+    private void Close()
+    {
+        if (_currentEvent != null
+            && _currentEvent.triggersCombat
+            && RunManager.Instance != null
+            && RunManager.Instance.UseMapBasedRun
+            && _pendingGrid != null)
+        {
+            var enemy = _currentEvent.ResolveEnemyForCombat(RunManager.Instance);
+            if (enemy != null)
+            {
+                RunManager.Instance.PersistAndLoadFightSceneWithEnemy(
+                    _pendingGrid,
+                    _pendingPlayerCell,
+                    _pendingMovesTaken,
+                    enemy,
+                    _currentEvent.countsAsBossTileForRunProgression);
+            }
+            else
+                Debug.LogError("MapUnknownEventPanel: Unknown event triggers combat but no enemy could be resolved.", this);
+        }
+
+        Hide();
+    }
 
     /// <summary>Closes the panel (e.g. map regenerated).</summary>
     public void Hide()
     {
         _currentEvent = null;
+        _pendingGrid = null;
         if (root != null)
             root.SetActive(false);
     }

@@ -26,10 +26,23 @@ public class SimulationSpeedController : MonoBehaviour
         {
             speedSlider.minValue = minSpeed;
             speedSlider.maxValue = maxSpeed;
-            speedSlider.value = defaultSpeed;
+            speedSlider.SetValueWithoutNotify(defaultSpeed);
         }
 
+        if (speedLabel != null)
+            speedLabel.text = "Speed: " + defaultSpeed.ToString("0.0") + "x";
+
+        // Map runs: RunManager applies default when FightScene becomes active (additive preload avoids touching time scale early).
+        if (RunManager.Instance == null)
+            ApplyConfiguredDefaultSpeed();
+    }
+
+    /// <summary>Applies <see cref="defaultSpeed"/> and syncs UI (used when FightScene is set active).</summary>
+    public void ApplyConfiguredDefaultSpeed()
+    {
         SetSimulationSpeed(defaultSpeed);
+        if (speedSlider != null)
+            speedSlider.SetValueWithoutNotify(defaultSpeed);
     }
 
     public void SetSimulationSpeed(float speed)

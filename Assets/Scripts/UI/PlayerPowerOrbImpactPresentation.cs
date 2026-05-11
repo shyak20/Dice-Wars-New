@@ -13,6 +13,13 @@ public sealed class PlayerPowerOrbImpactPresentation : MonoBehaviour
     private void OnEnable() => CombatEvents.OnPowerOrbImpact += OnOrbImpact;
     private void OnDisable() => CombatEvents.OnPowerOrbImpact -= OnOrbImpact;
 
+    public void ResetTransientOrbPresentation()
+    {
+        StopAllCoroutines();
+        if (orbImpactIndicator != null)
+            orbImpactIndicator.SetActive(false);
+    }
+
     private void OnOrbImpact(PowerOrbImpactPayload payload)
     {
         if (payload.Target != PowerOrbImpactTarget.PlayerSupport) return;

@@ -395,6 +395,8 @@ public class CombatManager : MonoBehaviour
     }
 
     private PlayerDataSO playerData;
+    private bool _mapCombatBootstrapped;
+    private bool _mapPendingEnemyCoroutineRunning;
 
     private void Awake()
     {
@@ -404,41 +406,104 @@ public class CombatManager : MonoBehaviour
             GameIconCatalog.Register(gameIconIndex);
     }
 
-    private void Start()
+    private void Start() => TryBootstrapMapCombatIfNeeded();
+
+    /// <summary>
+    /// Map handoff may arrive after this scene is additively loaded, or while roots are disabled (coroutines stop).
+    /// OnEnable + Start both call this so the first moment pending enemy exists we bootstrap once.
+    /// </summary>
+    private void TryBootstrapMapCombatIfNeeded()
     {
-        InitializeEnemy();
-        InitializeCombat();
+        if (_mapCombatBootstrapped)
+            return;
+
+        if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+        {
+            if (RunEncounterBuffer.PendingEnemyType == null)
+            {
+                if (!_mapPendingEnemyCoroutineRunning)
+                {
+                    _mapPendingEnemyCoroutineRunning = true;
+                    StartCoroutine(CoWaitForPendingMapEnemyThenInit());
+                }
+
+                return;
+            }
+
+            if (InitializeEnemy())
+            {
+                InitializeCombat();
+                _mapCombatBootstrapped = true;
+            }
+
+            return;
+        }
+
+        if (InitializeEnemy())
+        {
+            InitializeCombat();
+            _mapCombatBootstrapped = true;
+        }
     }
 
-    private void InitializeEnemy()
+    private IEnumerator CoWaitForPendingMapEnemyThenInit()
+    {
+        const int maxFrames = 3600;
+        var frames = 0;
+        while (RunEncounterBuffer.PendingEnemyType == null)
+        {
+            if (++frames > maxFrames || RunManager.Instance == null || !RunManager.Instance.UseMapBasedRun)
+            {
+                Debug.LogError(
+                    "CombatManager: Map-based run — RunEncounterBuffer never received a pending enemy (e.g. fight scene started without map handoff).");
+                _mapPendingEnemyCoroutineRunning = false;
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        if (InitializeEnemy())
+        {
+            InitializeCombat();
+            _mapCombatBootstrapped = true;
+        }
+
+        _mapPendingEnemyCoroutineRunning = false;
+    }
+
+    /// <returns>False when combat should not start (e.g. map handoff missing).</returns>
+    private bool InitializeEnemy()
     {
         if (RunEncounterBuffer.TryConsumePendingEnemy(out var mapEnemy))
         {
             activeEnemy.Initialize(mapEnemy);
             BindStatusBars();
-            return;
+            return true;
         }
 
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
         {
             Debug.LogError("CombatManager: Map-based run expected a pending enemy from RunEncounterBuffer.");
-            return;
+            return false;
         }
 
         if (RunManager.Instance != null)
         {
             var room = RunManager.Instance.CurrentRoom;
-            if (room == null || room.roomType != RoomType.Combat) return;
+            if (room == null || room.roomType != RoomType.Combat) return false;
             activeEnemy.Initialize(room.enemyType);
             BindStatusBars();
-            return;
+            return true;
         }
         if (activeEnemy.enemyData != null) activeEnemy.Initialize(activeEnemy.enemyData);
         BindStatusBars();
+        return true;
     }
 
     private void OnEnable()
     {
+        TryBootstrapMapCombatIfNeeded();
         CombatEvents.OnDieToggled += HandleDieToggle;
         CombatEvents.OnRollCommand += ExecuteBatchRoll;
         CombatEvents.OnBustResolved += ResolveBust;
@@ -450,6 +515,9 @@ public class CombatManager : MonoBehaviour
 
     private void OnDisable()
     {
+        // Fight scene stays loaded with roots toggled off between map visits; must re-bootstrap on next activation.
+        _mapCombatBootstrapped = false;
+        _mapPendingEnemyCoroutineRunning = false;
         CombatEvents.OnDieToggled -= HandleDieToggle;
         CombatEvents.OnRollCommand -= ExecuteBatchRoll;
         CombatEvents.OnBustResolved -= ResolveBust;
@@ -461,6 +529,8 @@ public class CombatManager : MonoBehaviour
 
     private void InitializeCombat()
     {
+        FightScenePresentationCleanup.Apply(gameObject.scene);
+
         if (PlayerDataContainer.Instance == null) return;
         playerData = PlayerDataContainer.Instance.RuntimeData;
         ApplyTestStartingFaces();

@@ -33,7 +33,7 @@ public sealed class MapMovementManager : MonoBehaviour
     [SerializeField] private Transform overflowDamageNumberWorldAnchor;
     [Header("Presentation (map run)")]
     [SerializeField] private MapPresentationSO mapPresentation;
-    [Tooltip("Seconds to move the player marker to the new tile before firing map events / scene loads.")]
+    [Tooltip("Seconds to move the player marker to the new tile. When this elapses, map events run and combat/shop loads immediately (no extra delay after the move).")]
     [SerializeField, Min(0f)] private float playerMarkerMoveDurationSeconds = 0.35f;
     [Tooltip("Normalized time (0–1) → eased progress for the marker move.")]
     [SerializeField] private AnimationCurve playerMarkerMoveCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -109,10 +109,12 @@ public sealed class MapMovementManager : MonoBehaviour
             MovesTaken = moves;
             mapView?.Present(_grid, this, mapPresentation);
             moveCounterUI?.Bind(this);
+            RunManager.Instance.NotifyMapSceneReadyForSubscenePreload();
             return;
         }
 
         RegenerateMap();
+        RunManager.Instance?.NotifyMapSceneReadyForSubscenePreload();
     }
 
     /// <summary>Rebuilds grid and resets player at start. Act 1+ may use <see cref="mapModeAfterBossReach"/>.</summary>
@@ -211,10 +213,11 @@ public sealed class MapMovementManager : MonoBehaviour
 
         void AfterPlayerMarkerArrived()
         {
-            mapView?.RefreshPlayerStandingVisuals();
             if (becameBoss)
                 OnBossReached?.Invoke();
+            // Resolve first so combat/shop loads without doing a full standing refresh on a scene we are about to unload.
             ResolveTileAfterMoveIfMapRun();
+            mapView?.RefreshPlayerStandingVisuals();
         }
 
         if (mapView != null)
@@ -307,7 +310,7 @@ public sealed class MapMovementManager : MonoBehaviour
                     return;
                 }
 
-                if (!unknownEventPanel.TryOpenPanel(unknown))
+                if (!unknownEventPanel.TryOpenPanel(unknown, _grid.Clone(), PlayerGridPosition, MovesTaken))
                     return;
 
                 MarkCurrentTileConsumedAndRefresh();
