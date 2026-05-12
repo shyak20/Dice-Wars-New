@@ -183,6 +183,8 @@ AnimationClip:
       value: {fileID: 934974670, guid: ffacb8c45b20ab7498f64adcd63ca9ba, type: 3}
     - time: 0.53333336
       value: {fileID: -857785255, guid: ffacb8c45b20ab7498f64adcd63ca9ba, type: 3}
+    - time: 0.6
+      value: {fileID: -1417962044, guid: ffacb8c45b20ab7498f64adcd63ca9ba, type: 3}
     attribute: m_Sprite
     path: Chest Animation
     classID: 114
@@ -259,6 +261,7 @@ AnimationClip:
     - {fileID: -759305762, guid: ffacb8c45b20ab7498f64adcd63ca9ba, type: 3}
     - {fileID: 934974670, guid: ffacb8c45b20ab7498f64adcd63ca9ba, type: 3}
     - {fileID: -857785255, guid: ffacb8c45b20ab7498f64adcd63ca9ba, type: 3}
+    - {fileID: -1417962044, guid: ffacb8c45b20ab7498f64adcd63ca9ba, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}

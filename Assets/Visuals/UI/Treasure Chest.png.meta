@@ -166,8 +166,8 @@ TextureImporter:
       name: Treasure Chest_3
       rect:
         serializedVersion: 2
-        x: 0
-        y: 480
+        x: 1440
+        y: 960
         width: 480
         height: 480
       alignment: 0
@@ -188,7 +188,7 @@ TextureImporter:
       name: Treasure Chest_4
       rect:
         serializedVersion: 2
-        x: 480
+        x: 0
         y: 480
         width: 480
         height: 480
@@ -210,7 +210,7 @@ TextureImporter:
       name: Treasure Chest_5
       rect:
         serializedVersion: 2
-        x: 960
+        x: 480
         y: 480
         width: 480
         height: 480
@@ -232,8 +232,8 @@ TextureImporter:
       name: Treasure Chest_6
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 960
+        y: 480
         width: 480
         height: 480
       alignment: 0
@@ -254,8 +254,8 @@ TextureImporter:
       name: Treasure Chest_7
       rect:
         serializedVersion: 2
-        x: 480
-        y: 0
+        x: 1440
+        y: 480
         width: 480
         height: 480
       alignment: 0
@@ -276,7 +276,7 @@ TextureImporter:
       name: Treasure Chest_8
       rect:
         serializedVersion: 2
-        x: 960
+        x: 0
         y: 0
         width: 480
         height: 480
@@ -290,6 +290,28 @@ TextureImporter:
       bones: []
       spriteID: 3b8550aa13609c7469445a331c8730b8
       internalID: -857785255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Treasure Chest_9
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 0
+        width: 480
+        height: 480
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 954671041287c4e468dc423deea1361b
+      internalID: -1417962044
       vertices: []
       indices: 
       edges: []
@@ -308,7 +330,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":3.0},"gridSpriteSize":{"x":480.0,"y":480.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":4.0,"y":3.0},"gridSpriteSize":{"x":480.0,"y":480.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Treasure Chest_0: 1931516095
       Treasure Chest_1: 1924219558
@@ -319,6 +341,7 @@ TextureImporter:
       Treasure Chest_6: -759305762
       Treasure Chest_7: 934974670
       Treasure Chest_8: -857785255
+      Treasure Chest_9: -1417962044
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

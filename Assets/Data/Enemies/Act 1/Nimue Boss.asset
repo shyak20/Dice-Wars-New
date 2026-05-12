@@ -17,7 +17,7 @@ MonoBehaviour:
   combatAnimatorController: {fileID: 9100000, guid: 0b94c6194a78f29418600ed8e986a8f8, type: 2}
   idleAnimatorStateName: Idle
   enemyRank: 2
-  maxHealth: 400
+  maxHealth: 300
   startArmor: 40
   minGoldReward: 300
   maxGoldReward: 350
@@ -30,7 +30,7 @@ MonoBehaviour:
   actionCycle: []
   phases:
   - phaseName: Phase 1
-    phaseTargetHealth: 400
+    phaseTargetHealth: 300
     actionCycle:
     - {fileID: 11400000, guid: e1b5871608980b3498e541af067bd613, type: 2}
     - {fileID: 11400000, guid: e3c927f51b732ca40b129927b1572f9d, type: 2}
