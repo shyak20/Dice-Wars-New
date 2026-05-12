@@ -23,6 +23,12 @@ public class GameIconIndexSO : ScriptableObject
     [Tooltip("Panel behind armour pool row icons (not die tooltips).")]
     [SerializeField] private Sprite defenceBackground;
 
+    [Tooltip("Icon for curse / self-damage pool rows and curse face type chip.")]
+    [SerializeField] private Sprite selfDamage;
+
+    [Tooltip("Panel behind curse / self-damage pool row icons (not die tooltips).")]
+    [SerializeField] private Sprite selfDamageBackground;
+
     [Header("Actions (keys match ActionVisualId on each action class)")]
     [SerializeField] private List<ActionIconEntry> actionIcons = new List<ActionIconEntry>();
     [Header("Enemy Actions (keys match action class names, e.g. HealAction)")]
@@ -174,13 +180,14 @@ public class GameIconIndexSO : ScriptableObject
         }
     }
 
-    /// <summary>Icons for <see cref="DieType.Damage"/> / <see cref="DieType.Armor"/> pool rows and face chips; element types have no base icon here.</summary>
+    /// <summary>Icons for <see cref="DieType.Damage"/> / <see cref="DieType.Armor"/> / <see cref="DieType.Curse"/> pool rows and face chips; other element types have no base icon here.</summary>
     public Sprite GetElementIcon(DieType type)
     {
         switch (type)
         {
             case DieType.Damage: return attack;
             case DieType.Armor: return defence;
+            case DieType.Curse: return selfDamage;
             default: return null;
         }
     }
@@ -208,6 +215,7 @@ public class GameIconIndexSO : ScriptableObject
         {
             case DieType.Damage: return attackBackground;
             case DieType.Armor: return defenceBackground;
+            case DieType.Curse: return selfDamageBackground;
             default: return null;
         }
     }
@@ -305,12 +313,15 @@ public class GameIconIndexSO : ScriptableObject
         {
             new NamedIconEntry { key = "BaseAction.Attack", sprite = attack },
             new NamedIconEntry { key = "BaseAction.Defence", sprite = defence },
+            new NamedIconEntry { key = "BaseAction.SelfDamage", sprite = selfDamage },
         };
 
         if (attackBackground != null)
             entries.Add(new NamedIconEntry { key = "BaseAction.AttackBackground", sprite = attackBackground });
         if (defenceBackground != null)
             entries.Add(new NamedIconEntry { key = "BaseAction.DefenceBackground", sprite = defenceBackground });
+        if (selfDamageBackground != null)
+            entries.Add(new NamedIconEntry { key = "BaseAction.SelfDamageBackground", sprite = selfDamageBackground });
 
         foreach (var action in actionIcons)
         {

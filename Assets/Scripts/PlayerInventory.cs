@@ -18,6 +18,12 @@ public static class PlayerInventory
     public static List<DieAssetSO> GetDiceMatchingFace(PlayerDataSO data, DieFaceSO face)
     {
         if (face == null || data == null) return new List<DieAssetSO>();
+        if (face.type == DieType.Curse)
+        {
+            if (data.currentDeck == null) return new List<DieAssetSO>();
+            return data.currentDeck.Where(d => d != null).ToList();
+        }
+
         return GetDiceMatchingElement(data, ElementTypeExtensions.FromDieType(face.type));
     }
 

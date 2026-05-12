@@ -14,7 +14,7 @@ public class DieFaceSO : ScriptableObject
     public int value; // Keeping this for the Power Bar calculation
     public DieType type;
 
-    /// <summary>Socketing element (maps from <see cref="type"/>; Physical = Damage, Defense = Armor).</summary>
+    /// <summary>Socketing element (maps from <see cref="type"/>). Curse faces match any die via <see cref="ElementTypeExtensions.MatchesDie"/>.</summary>
     public ElementType Element => ElementTypeExtensions.FromDieType(type);
     public Material faceMaterial;
     public FaceRarity rarity;
@@ -24,12 +24,14 @@ public class DieFaceSO : ScriptableObject
     [Tooltip("For attack faces only: pending physical uses (final damage after Strength/modifiers) × this many hits. Ignored when type is not Damage.")]
     [Min(1)]
     public int damageAttackTimes = 1;
+    [Min(0)]
     public int armor;  // New independent armor value
+    [Tooltip("Curse faces only: HP damage you take when this turn is submitted (shown in the stored-actions pool).")]
+    [Min(0)]
+    public int selfDamage;
 
     [Header("UI (card/picker/shop)")]
     public Sprite uiIcon;
-
-    [Tooltip("Frame / panel art for this face in tooltips and face cards (e.g. UIRewardSlot when wired).")]
     public Sprite uiTooltipBackground;
 
     [Header("Game Actions")]

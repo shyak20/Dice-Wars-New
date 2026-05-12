@@ -130,7 +130,9 @@ public class CombatUIController : MonoBehaviour
         foreach (DieAssetSO die in PlayerDataContainer.Instance.RuntimeData.currentDeck)
         {
             // Logic updated for renamed types
-            GameObject prefab = (die.dieType == DieType.Damage) ? damageButtonPrefab : armorButtonPrefab;
+            GameObject prefab = die.dieType == DieType.Damage || die.dieType == DieType.Curse
+                ? damageButtonPrefab
+                : armorButtonPrefab;
             GameObject btnObj = Instantiate(prefab, diceButtonContainer);
 
             TMP_Text txt = btnObj.GetComponentInChildren<TMP_Text>();

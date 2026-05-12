@@ -158,6 +158,7 @@ public class DiceSpawner : MonoBehaviour
             DieType.Fire => fireDestroyEffect != null ? fireDestroyEffect : damageDestroyEffect,
             DieType.Ice => iceDestroyEffect != null ? iceDestroyEffect : armorDestroyEffect,
             DieType.Nature => natureDestroyEffect != null ? natureDestroyEffect : armorDestroyEffect,
+            DieType.Curse => damageDestroyEffect,
             _ => null
         };
     }

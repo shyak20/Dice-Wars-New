@@ -110,7 +110,7 @@ public class DieAssetSO : ScriptableObject
     public bool CanAttachFace(DieFaceSO face)
     {
         if (face == null) return false;
-        return ElementTypeExtensions.FromDieType(dieType) == ElementTypeExtensions.FromDieType(face.type);
+        return face.MatchesDie(this);
     }
 
     /// <summary>Replaces one face and returns the previous face (for scrap / undo).</summary>

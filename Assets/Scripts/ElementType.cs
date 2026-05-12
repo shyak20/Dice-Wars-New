@@ -1,7 +1,7 @@
 using System;
 
 /// <summary>
-/// Semantic element for socketing faces onto dice. Maps 1:1 with <see cref="DieType"/> (Physical = Damage, Defense = Armor).
+/// Semantic element for socketing faces onto dice. Maps from <see cref="DieType"/> (Physical = Damage, Defense = Armor, Curse = wildcard curse faces/dice).
 /// </summary>
 public enum ElementType
 {
@@ -9,7 +9,8 @@ public enum ElementType
     Defense,
     Fire,
     Ice,
-    Nature
+    Nature,
+    Curse
 }
 
 public static class ElementTypeExtensions
@@ -23,6 +24,7 @@ public static class ElementTypeExtensions
             case DieType.Fire: return ElementType.Fire;
             case DieType.Ice: return ElementType.Ice;
             case DieType.Nature: return ElementType.Nature;
+            case DieType.Curse: return ElementType.Curse;
             default: throw new ArgumentOutOfRangeException(nameof(t), t, null);
         }
     }
@@ -36,6 +38,7 @@ public static class ElementTypeExtensions
             case ElementType.Fire: return DieType.Fire;
             case ElementType.Ice: return DieType.Ice;
             case ElementType.Nature: return DieType.Nature;
+            case ElementType.Curse: return DieType.Curse;
             default: throw new ArgumentOutOfRangeException(nameof(e), e, null);
         }
     }
@@ -43,6 +46,8 @@ public static class ElementTypeExtensions
     public static bool MatchesDie(this DieFaceSO face, DieAssetSO die)
     {
         if (face == null || die == null) return false;
+        if (face.type == DieType.Curse || die.dieType == DieType.Curse)
+            return true;
         return FromDieType(die.dieType) == FromDieType(face.type);
     }
 }

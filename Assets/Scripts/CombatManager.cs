@@ -173,6 +173,7 @@ public class CombatManager : MonoBehaviour
         {
             Add(PoolRowKey.FromDieType(DieType.Damage), face.TotalDamageContribution);
             Add(PoolRowKey.FromDieType(DieType.Armor), face.Armor);
+            Add(PoolRowKey.FromDieType(DieType.Curse), face.TotalSelfDamageContribution);
 
             if (face.ActionPoolContributions == null) continue;
             foreach (var extra in face.ActionPoolContributions)
@@ -933,7 +934,7 @@ public class CombatManager : MonoBehaviour
         var statusCtx = BuildStatusContext();
         var modifiedValue = player.StatusEffects.ModifyFaceValue(statusCtx, face.value);
         var rolledDamage = face.damage;
-        if (rolledDamage > 0)
+        if (rolledDamage > 0 && face.type != DieType.Curse)
             rolledDamage += player.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
 
         var result = new FaceResult
@@ -941,9 +942,10 @@ public class CombatManager : MonoBehaviour
             Face = face,
             Value = modifiedValue,
             Type = face.type,
-            Damage = rolledDamage,
+            Damage = face.type == DieType.Curse ? 0 : rolledDamage,
             DamageAttackTimes = face.type == DieType.Damage ? Mathf.Max(1, face.damageAttackTimes) : 1,
-            Armor = face.armor,
+            Armor = face.type == DieType.Curse ? 0 : face.armor,
+            SelfDamage = face.type == DieType.Curse ? Mathf.Max(0, face.selfDamage) : 0,
         };
         if (face.actions != null)
         {
@@ -1269,6 +1271,7 @@ public class CombatManager : MonoBehaviour
 
         Hint(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage));
         Hint(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
+        Hint(PoolRowKey.FromDieType(DieType.Curse), result.TotalSelfDamageContribution, GameIconCatalog.GetElementIcon(DieType.Curse));
 
         if (result.ActionPoolContributions == null) return;
         foreach (var extra in result.ActionPoolContributions)
@@ -1287,6 +1290,7 @@ public class CombatManager : MonoBehaviour
 
         AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage));
         AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
+        AddLine(PoolRowKey.FromDieType(DieType.Curse), result.TotalSelfDamageContribution, GameIconCatalog.GetElementIcon(DieType.Curse));
 
         if (result.ActionPoolContributions != null)
         {
@@ -1481,6 +1485,8 @@ public class CombatManager : MonoBehaviour
             {
                 face.Damage *= appliedMultiplier;
                 face.Armor *= appliedMultiplier;
+                if (face.Type == DieType.Curse)
+                    face.SelfDamage *= appliedMultiplier;
             }
 
             MultiplyPendingStrikeScaledPoolContributions(channeledFaces, appliedMultiplier);
@@ -1858,8 +1864,32 @@ public class CombatManager : MonoBehaviour
 
     /// <summary>Enemy damage and thorns from the player turn; does not apply armor or start the enemy turn.</summary>
     /// <returns>False if defeat or victory ended combat.</returns>
+    private bool ApplyCurseSelfDamageFromChanneledFaces()
+    {
+        if (player == null || channeledFaces == null)
+            return true;
+
+        var total = 0;
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var f = channeledFaces[i];
+            if (f == null || f.Type != DieType.Curse)
+                continue;
+            total += Mathf.Max(0, f.SelfDamage);
+        }
+
+        if (total <= 0)
+            return true;
+
+        player.TakeDamage(total, PlayerDamageSource.CurseFace);
+        return !CheckDefeat();
+    }
+
     private bool ApplyPendingPlayerAttackFromTurn(int pendingAttack)
     {
+        if (!ApplyCurseSelfDamageFromChanneledFaces())
+            return false;
+
         var statusCtx = BuildStatusContext();
         var playerBonusAttack = player.StatusEffects.GetTotalBonusAttack(statusCtx);
         var totalPhysical = Mathf.Max(0, bonusDamageFromActions + playerBonusAttack);

@@ -274,6 +274,7 @@ public class StoredActionsPoolIcon : MonoBehaviour
                 DieType.Fire => "Deferred fire from this face — resolves to a status when the turn ends (if configured on the action).",
                 DieType.Ice => "Deferred ice from this face — resolves when the turn ends.",
                 DieType.Nature => "Deferred nature from this face — resolves when the turn ends.",
+                DieType.Curse => "Self-damage from this curse face — applied to you when you end the turn.",
                 _ => "Deferred value from this face."
             };
         }
