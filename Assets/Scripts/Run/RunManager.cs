@@ -663,6 +663,59 @@ public class RunManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Clears additive preload bookkeeping after fight/shop scenes unload so the next preload captures fresh root actives
+    /// (nested UI like the element pool is not restored by <see cref="RestoreSceneRootsToCapturedDefaults"/> alone).
+    /// </summary>
+    private void ClearFightShopAdditivePreloadSnapshots()
+    {
+        _fightRootDefaultActives.Clear();
+        _shopRootDefaultActives.Clear();
+        _fightScenePreloadedForMapRun = false;
+        _shopScenePreloadedForMapRun = false;
+    }
+
+    private IEnumerator CoUnloadFightAndShopScenesIfLoaded()
+    {
+        var combatScene = SceneManager.GetSceneByName(combatSceneName);
+        if (combatScene.IsValid() && combatScene.isLoaded)
+        {
+            var op = SceneManager.UnloadSceneAsync(combatScene);
+            if (op != null)
+            {
+                while (!op.isDone)
+                    yield return null;
+            }
+        }
+
+        var shopScene = SceneManager.GetSceneByName(shopSceneName);
+        if (shopScene.IsValid() && shopScene.isLoaded)
+        {
+            var opShop = SceneManager.UnloadSceneAsync(shopScene);
+            if (opShop != null)
+            {
+                while (!opShop.isDone)
+                    yield return null;
+            }
+        }
+    }
+
+    private IEnumerator CoWaitUntilMapFightShopPreloadFinishedOrTimeout()
+    {
+        if (!_useMapBasedRun || !preloadFightAndShopWhileOnMap)
+            yield break;
+
+        const int maxFrames = 6000;
+        var frames = 0;
+        while (!IsMapFightShopPreloadFinishedForIntro() && frames++ < maxFrames)
+            yield return null;
+
+        if (!IsMapFightShopPreloadFinishedForIntro())
+            Debug.LogError(
+                $"RunManager: timed out waiting for additive preload of '{combatSceneName}' / '{shopSceneName}' after returning to the map. The next tile fight may fall back to a single-scene load.",
+                this);
+    }
+
     public void ReturnToMapFromSubScene()
     {
         if (string.IsNullOrEmpty(mapSceneName))
@@ -681,11 +734,23 @@ public class RunManager : MonoBehaviour
         {
             DeactivateCapturedRoots(_fightRootDefaultActives);
             DeactivateCapturedRoots(_shopRootDefaultActives);
+
+            if (_useMapBasedRun && preloadFightAndShopWhileOnMap)
+            {
+                yield return CoUnloadFightAndShopScenesIfLoaded();
+                ClearFightShopAdditivePreloadSnapshots();
+                NotifyMapSceneReadyForSubscenePreload();
+                yield return CoWaitUntilMapFightShopPreloadFinishedOrTimeout();
+            }
+            else
+            {
+                _fightScenePreloadedForMapRun = IsSceneLoadedByName(combatSceneName) && _fightRootDefaultActives.Count > 0;
+                _shopScenePreloadedForMapRun = IsSceneLoadedByName(shopSceneName) && _shopRootDefaultActives.Count > 0;
+            }
+
             RestoreSceneRootsToCapturedDefaults(_mapRootStashedWhenLeavingForSubScene);
             _mapRootStashedWhenLeavingForSubScene.Clear();
             SceneManager.SetActiveScene(mapScene);
-            _fightScenePreloadedForMapRun = IsSceneLoadedByName(combatSceneName) && _fightRootDefaultActives.Count > 0;
-            _shopScenePreloadedForMapRun = IsSceneLoadedByName(shopSceneName) && _shopRootDefaultActives.Count > 0;
             yield break;
         }
 

@@ -32768,7 +32768,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Closed Alpha
 
-    v0.1'
+    v0.13'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}

@@ -37,6 +37,7 @@ public class StoredActionsPoolIcon : MonoBehaviour
     private PoolRowKey configuredKey;
     private Vector3 _valueBgBaseScale = Vector3.one;
     private Coroutine _valueRevealCoroutine;
+    private MonoBehaviour _valueRevealCoroutineRunner;
     private bool _jackpotPostMultiplyRevealInProgress;
     private bool _jackpotPostMultiplyValueTextApplied;
     private readonly Dictionary<Transform, bool> _defaultChildActiveStates = new Dictionary<Transform, bool>();
@@ -112,23 +113,49 @@ public class StoredActionsPoolIcon : MonoBehaviour
     /// After <paramref name="delayAfterJackpotStart"/> (from when the row's jackpot was shown), scales the value
     /// background up, sets the post-multiply amount, then scales the background back down. Uses unscaled time.
     /// </summary>
-    public void ScheduleJackpotPostMultiplyValueReveal(int newValue, float delayAfterJackpotStart)
+    /// <param name="coroutineRunner">
+    /// Host for <see cref="MonoBehaviour.StartCoroutine"/> when this icon is not <see cref="GameObject.activeInHierarchy"/>
+    /// (Unity cannot start coroutines on inactive objects). Pass the active presentation driver, e.g. <see cref="JackpotPresentationController"/>.
+    /// </param>
+    public void ScheduleJackpotPostMultiplyValueReveal(int newValue, float delayAfterJackpotStart, MonoBehaviour coroutineRunner = null)
     {
-        if (_valueRevealCoroutine != null)
-            StopCoroutine(_valueRevealCoroutine);
+        var runner = coroutineRunner;
+        if (runner == null || !runner.gameObject.activeInHierarchy)
+        {
+            if (gameObject.activeInHierarchy)
+                runner = this;
+            else
+                runner = GetComponentInParent<StoredActionsPoolDisplay>();
+        }
+
+        if (runner == null || !runner.gameObject.activeInHierarchy)
+        {
+            Debug.LogError(
+                $"StoredActionsPoolIcon on '{name}': cannot start jackpot value reveal — no active coroutine host (assign {nameof(coroutineRunner)} or activate this hierarchy). Applying value immediately.",
+                this);
+            _jackpotPostMultiplyRevealInProgress = false;
+            _jackpotPostMultiplyValueTextApplied = true;
+            SetValueUnchecked(newValue);
+            return;
+        }
+
+        if (_valueRevealCoroutine != null && _valueRevealCoroutineRunner != null)
+            _valueRevealCoroutineRunner.StopCoroutine(_valueRevealCoroutine);
         _jackpotPostMultiplyRevealInProgress = true;
         _jackpotPostMultiplyValueTextApplied = false;
-        _valueRevealCoroutine = StartCoroutine(CoJackpotPostMultiplyValueReveal(newValue, delayAfterJackpotStart));
+        _valueRevealCoroutineRunner = runner;
+        _valueRevealCoroutine = runner.StartCoroutine(CoJackpotPostMultiplyValueReveal(newValue, delayAfterJackpotStart));
     }
 
     public void CancelJackpotValueReveal()
     {
         _jackpotPostMultiplyRevealInProgress = false;
         _jackpotPostMultiplyValueTextApplied = false;
-        if (_valueRevealCoroutine != null)
+        if (_valueRevealCoroutine != null && _valueRevealCoroutineRunner != null)
         {
-            StopCoroutine(_valueRevealCoroutine);
+            _valueRevealCoroutineRunner.StopCoroutine(_valueRevealCoroutine);
             _valueRevealCoroutine = null;
+            _valueRevealCoroutineRunner = null;
         }
 
         RestoreValueBackgroundScale();
@@ -242,6 +269,7 @@ public class StoredActionsPoolIcon : MonoBehaviour
 
         _jackpotPostMultiplyRevealInProgress = false;
         _valueRevealCoroutine = null;
+        _valueRevealCoroutineRunner = null;
     }
 
     private void SetValueUnchecked(int value)

@@ -98,7 +98,7 @@ public class JackpotPresentationController : MonoBehaviour
             var icon = icons[i];
             icon.ShowJackpotMultiplierBadge(multiplier);
             if (poolsAfter != null && poolsAfter.TryGetValue(icon.RowKey, out var postMultiply))
-                icon.ScheduleJackpotPostMultiplyValueReveal(postMultiply, valueRevealDelayAfterRowJackpotStart);
+                icon.ScheduleJackpotPostMultiplyValueReveal(postMultiply, valueRevealDelayAfterRowJackpotStart, this);
         }
 
         while (AnyScheduledJackpotValueTextStillPending(icons, poolsAfter))

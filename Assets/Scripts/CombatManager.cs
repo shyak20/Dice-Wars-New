@@ -543,6 +543,7 @@ public class CombatManager : MonoBehaviour
         ResetStats();
         RelicActionRunner.RunPhase(this, RelicPhases.CombatStart);
         ChangeState(CombatState.WaitingForRoll);
+        CombatEvents.OnCombatSessionInitialized?.Invoke();
     }
 
     public GameActionContext BuildRelicContext(FaceResult face)

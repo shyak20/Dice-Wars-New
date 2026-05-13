@@ -118,8 +118,13 @@ public class DieAssetSO : ScriptableObject
     /// <exception cref="InvalidOperationException">New face element does not match this die.</exception>
     public DieFaceSO SwapFace(int index, DieFaceSO newFace)
     {
-        if (faces == null || faces.Length != 6)
-            throw new InvalidOperationException($"Die '{dieName}' must have exactly 6 face slots.");
+        if (faces == null || faces.Length < 6)
+            throw new InvalidOperationException($"Die '{dieName}' must have at least 6 face slots.");
+        if (faces.Length > 6)
+            Debug.LogWarning(
+                $"Die '{dieName}' has {faces.Length} face entries; gameplay uses only indices 0–5. Trim the array in the inspector when convenient.",
+                this);
+
         if (index < 0 || index >= 6)
             throw new ArgumentOutOfRangeException(nameof(index), index, "Face index must be 0–5.");
         if (newFace != null && !CanAttachFace(newFace))

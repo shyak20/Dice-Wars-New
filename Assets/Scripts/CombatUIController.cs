@@ -72,6 +72,7 @@ public class CombatUIController : MonoBehaviour
         CombatEvents.OnStateChanged += HandleStateChange;
         CombatEvents.OnRollsRemainingChanged += UpdateRollsUI;
         CombatEvents.OnRerollDieSelectionModeChanged += HandleRerollDieSelectionMode;
+        CombatEvents.OnCombatSessionInitialized += HandleCombatSessionInitialized;
     }
 
     private void OnDisable()
@@ -81,6 +82,13 @@ public class CombatUIController : MonoBehaviour
         CombatEvents.OnStateChanged -= HandleStateChange;
         CombatEvents.OnRollsRemainingChanged -= UpdateRollsUI;
         CombatEvents.OnRerollDieSelectionModeChanged -= HandleRerollDieSelectionMode;
+        CombatEvents.OnCombatSessionInitialized -= HandleCombatSessionInitialized;
+    }
+
+    private void HandleCombatSessionInitialized()
+    {
+        CancelInvoke(nameof(InitializeDiceButtons));
+        InitializeDiceButtons();
     }
 
     private void HandleRerollDieSelectionMode(bool active)

@@ -73,11 +73,38 @@ public class DiceRoller : MonoBehaviour
             }
         }
 
-        if (visualizer != null && visualizer.dieData != null)
+        if (visualizer == null || visualizer.dieData == null || manager == null)
+            return;
+
+        var faces = visualizer.dieData.faces;
+        if (faces == null || faces.Length < 6)
+            return;
+
+        var resultFace = faces[closestIndex];
+        if (resultFace == null)
         {
-            // Pick the SO from the matching index in our faces array
-            DieFaceSO resultFace = visualizer.dieData.faces[closestIndex];
-            manager.OnDiePhysicsSettled(BatchIndex, resultFace, transform);
+            for (var i = 0; i < 6; i++)
+            {
+                if (faces[i] != null)
+                {
+                    resultFace = faces[i];
+                    break;
+                }
+            }
+
+            if (resultFace == null)
+            {
+                Debug.LogError(
+                    $"DiceRoller on '{name}': die '{visualizer.dieData.name}' has no non-null faces — cannot finish the roll.",
+                    this);
+                return;
+            }
+
+            Debug.LogError(
+                $"DiceRoller on '{name}': die '{visualizer.dieData.name}' landed on face index {closestIndex} but that slot is null; using '{resultFace.name}' so the roll can finish. Fix the die asset.",
+                this);
         }
+
+        manager.OnDiePhysicsSettled(BatchIndex, resultFace, transform);
     }
 }

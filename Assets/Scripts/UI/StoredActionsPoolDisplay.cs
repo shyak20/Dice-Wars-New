@@ -176,7 +176,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         var visible = new List<(PoolRowKey key, StoredActionsPoolIcon icon)>();
         foreach (var kvp in iconMap)
         {
-            if (kvp.Value == null || !kvp.Value.gameObject.activeSelf) continue;
+            if (kvp.Value == null || !kvp.Value.gameObject.activeInHierarchy) continue;
             visible.Add((kvp.Key, kvp.Value));
         }
 
@@ -210,7 +210,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         foreach (var kvp in iconMap)
         {
             var icon = kvp.Value;
-            if (icon == null || !icon.gameObject.activeSelf) continue;
+            if (icon == null || !icon.gameObject.activeInHierarchy) continue;
             list.Add(icon);
         }
 

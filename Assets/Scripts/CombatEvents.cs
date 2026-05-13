@@ -98,4 +98,10 @@ public static class CombatEvents
 
     /// <summary>True while the reroll-die picker is active (block tray / use physics pick on dice).</summary>
     public static Action<bool> OnRerollDieSelectionModeChanged;
+
+    /// <summary>
+    /// Fired when <see cref="CombatManager"/> finishes combat setup for a session (deck, HP, turn state).
+    /// Map runs with additive fight: fires each time a fight begins so UI (e.g. dice tray) can resync to <see cref="PlayerDataContainer.RuntimeData"/>.
+    /// </summary>
+    public static Action OnCombatSessionInitialized;
 }
