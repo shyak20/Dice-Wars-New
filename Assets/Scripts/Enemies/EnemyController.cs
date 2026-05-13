@@ -23,7 +23,18 @@ public class EnemyController : MonoBehaviour
     [Tooltip("World position for damage popups; defaults to enemy sprite or this transform.")]
     [SerializeField] private Transform damageNumberWorldAnchor;
 
+    [Header("Canvas UI (optional)")]
+    [Tooltip("Rect on a Canvas whose anchoredPosition.y follows the top of the enemy presentation sprite.")]
+    [SerializeField] private RectTransform spriteTopFollowRect;
+    [Tooltip("Added to screen Y after projecting the sprite top (typically a few pixels to sit above the art).")]
+    [SerializeField] private float spriteTopFollowScreenYOffset;
+    [Tooltip("Camera used to project the sprite into screen space. When null, uses Camera.main.")]
+    [SerializeField] private Camera worldCameraForSpriteTopFollow;
+
     private EnemyCombatPresentationController _presentation;
+    private Canvas _spriteTopFollowCanvas;
+    private RectTransform _spriteTopFollowParentRect;
+    private bool _loggedSpriteTopFollowCameraMissing;
 
     private int currentHealth;
     private int currentArmor;
@@ -57,6 +68,16 @@ public class EnemyController : MonoBehaviour
             Debug.LogError("EnemyController: Missing StatusEffectManager component!");
 
         _presentation = GetComponentInChildren<EnemyCombatPresentationController>(true);
+    }
+
+    private void OnEnable()
+    {
+        CacheSpriteTopFollowUi();
+    }
+
+    private void LateUpdate()
+    {
+        UpdateSpriteTopFollowRectY();
     }
 
     public void Initialize(EnemyTypeSO data)
@@ -415,5 +436,73 @@ public class EnemyController : MonoBehaviour
             default:
                 return EnemyResistanceElement.Physical;
         }
+    }
+
+    private void CacheSpriteTopFollowUi()
+    {
+        _spriteTopFollowCanvas = null;
+        _spriteTopFollowParentRect = null;
+        if (spriteTopFollowRect == null)
+            return;
+
+        _spriteTopFollowCanvas = spriteTopFollowRect.GetComponentInParent<Canvas>();
+        _spriteTopFollowParentRect = spriteTopFollowRect.parent as RectTransform;
+
+        if (_spriteTopFollowCanvas == null)
+            Debug.LogError(
+                $"EnemyController on '{name}': {nameof(spriteTopFollowRect)} must sit under a Canvas.",
+                this);
+
+        if (_spriteTopFollowParentRect == null)
+            Debug.LogError(
+                $"EnemyController on '{name}': {nameof(spriteTopFollowRect)} must have a RectTransform parent.",
+                this);
+    }
+
+    private void UpdateSpriteTopFollowRectY()
+    {
+        if (spriteTopFollowRect == null || _spriteTopFollowParentRect == null || _spriteTopFollowCanvas == null)
+            return;
+
+        var sprite = _presentation != null ? _presentation.EnemySprite : null;
+        if (sprite == null || !sprite.enabled)
+            return;
+
+        var bounds = sprite.bounds;
+        var worldTop = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
+
+        var cam = worldCameraForSpriteTopFollow != null ? worldCameraForSpriteTopFollow : Camera.main;
+        if (cam == null)
+        {
+            if (!_loggedSpriteTopFollowCameraMissing)
+            {
+                _loggedSpriteTopFollowCameraMissing = true;
+                Debug.LogError(
+                    $"EnemyController on '{name}': assign {nameof(worldCameraForSpriteTopFollow)} or tag a Main Camera to drive {nameof(spriteTopFollowRect)}.",
+                    this);
+            }
+            return;
+        }
+
+        var screen = cam.WorldToScreenPoint(worldTop);
+        if (screen.z <= 0f)
+            return;
+
+        screen.y += spriteTopFollowScreenYOffset;
+
+        var eventCam = _spriteTopFollowCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : (_spriteTopFollowCanvas.worldCamera != null ? _spriteTopFollowCanvas.worldCamera : cam);
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _spriteTopFollowParentRect,
+                new Vector2(screen.x, screen.y),
+                eventCam,
+                out var localInParent))
+            return;
+
+        var ap = spriteTopFollowRect.anchoredPosition;
+        ap.y = localInParent.y;
+        spriteTopFollowRect.anchoredPosition = ap;
     }
 }

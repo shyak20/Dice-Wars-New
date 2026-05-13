@@ -23,7 +23,7 @@ MonoBehaviour:
   - rid: 6494956392264499752
   actionTooltips:
   - title: <style=Poison>Poison</style>
-    description: The enemy will add <style=Poison>2</style>
+    description: Lose 1 HP per Stack (ignores Armor)
   references:
     version: 2
     RefIds:
