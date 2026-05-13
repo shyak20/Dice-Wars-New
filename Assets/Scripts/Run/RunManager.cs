@@ -71,6 +71,7 @@ public class RunManager : MonoBehaviour
     }
 
     public bool UseMapBasedRun => _useMapBasedRun;
+    public bool PreloadsFightShopOnMap => preloadFightAndShopWhileOnMap;
     public int CurrentActIndex => _currentActIndex;
     public int RunShrineBonusMaxPower => _runShrineBonusMaxPower;
 
@@ -104,6 +105,12 @@ public class RunManager : MonoBehaviour
 
     public event Action OnRunRelicsChanged;
 
+    /// <summary>Fired first when fight + shop preload completes — enable map visuals (e.g. intro roots) so UI under them is active before bootstrap.</summary>
+    public event Action OnMapFightShopPreloadUnhideVisuals;
+
+    /// <summary>Fired after <see cref="OnMapFightShopPreloadUnhideVisuals"/> when additive fight + shop loads have finished for the map run.</summary>
+    public event Action OnMapFightShopPreloadFinished;
+
     public RoomDefinition CurrentRoom
     {
         get
@@ -118,6 +125,21 @@ public class RunManager : MonoBehaviour
     }
 
     public bool HasNextRoom => encounterList != null && currentRoomIndex < encounterList.rooms.Count - 1;
+
+    public bool IsMapFightShopPreloadFinishedForIntro()
+    {
+        if (!_useMapBasedRun)
+            return true;
+        if (!preloadFightAndShopWhileOnMap)
+            return true;
+        return _fightScenePreloadedForMapRun && _shopScenePreloadedForMapRun;
+    }
+
+    private void RaiseMapFightShopPreloadFinished()
+    {
+        OnMapFightShopPreloadUnhideVisuals?.Invoke();
+        OnMapFightShopPreloadFinished?.Invoke();
+    }
 
     private void Awake()
     {
@@ -457,6 +479,8 @@ public class RunManager : MonoBehaviour
     {
         if (!_useMapBasedRun || !preloadFightAndShopWhileOnMap)
             return;
+        if (IsMapFightShopPreloadFinishedForIntro())
+            return;
         if (string.IsNullOrEmpty(combatSceneName) || string.IsNullOrEmpty(shopSceneName))
         {
             Debug.LogError("RunManager.NotifyMapSceneReadyForSubscenePreload: combatSceneName and shopSceneName must be set.");
@@ -464,7 +488,8 @@ public class RunManager : MonoBehaviour
         }
 
         if (_preloadMapSubscenesRoutine != null)
-            StopCoroutine(_preloadMapSubscenesRoutine);
+            return;
+
         _preloadMapSubscenesRoutine = StartCoroutine(CoPreloadFightAndShopAdditiveForMapRun());
     }
 
@@ -483,6 +508,7 @@ public class RunManager : MonoBehaviour
             {
                 Debug.LogError($"RunManager: could not start additive load of '{combatSceneName}' — is it in Build Settings?", this);
                 _preloadMapSubscenesRoutine = null;
+                RaiseMapFightShopPreloadFinished();
                 yield break;
             }
 
@@ -509,6 +535,7 @@ public class RunManager : MonoBehaviour
             {
                 Debug.LogError($"RunManager: could not start additive load of '{shopSceneName}' — is it in Build Settings?", this);
                 _preloadMapSubscenesRoutine = null;
+                RaiseMapFightShopPreloadFinished();
                 yield break;
             }
 
@@ -528,6 +555,7 @@ public class RunManager : MonoBehaviour
 
         _shopScenePreloadedForMapRun = IsSceneLoadedByName(shopSceneName) && _shopRootDefaultActives.Count > 0;
         _preloadMapSubscenesRoutine = null;
+        RaiseMapFightShopPreloadFinished();
     }
 
     private bool TryEnterPreloadedCombatFromMap()

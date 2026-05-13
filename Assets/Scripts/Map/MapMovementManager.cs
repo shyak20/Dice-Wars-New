@@ -50,6 +50,8 @@ public sealed class MapMovementManager : MonoBehaviour
     private int _effectiveGridHeight;
     private int _effectiveMoveLimit;
 
+    private Action _mapFightShopPreloadFinishedHandler;
+
     public int MovesTaken { get; private set; }
     public int MoveLimit => _effectiveMoveLimit;
     /// <summary>Inspector / act value: added to overflow damage for each move beyond the first over-limit step.</summary>
@@ -101,6 +103,34 @@ public sealed class MapMovementManager : MonoBehaviour
 
         RefreshEffectiveMapLayoutFromActOrDefaults();
 
+        var rm = RunManager.Instance;
+        if (rm != null && rm.UseMapBasedRun && rm.PreloadsFightShopOnMap && !rm.IsMapFightShopPreloadFinishedForIntro())
+        {
+            rm.NotifyMapSceneReadyForSubscenePreload();
+            _mapFightShopPreloadFinishedHandler = CompleteMapBootstrapAfterFightShopPreload;
+            rm.OnMapFightShopPreloadFinished += _mapFightShopPreloadFinishedHandler;
+            return;
+        }
+
+        CompleteMapBootstrapAfterFightShopPreload();
+        RunManager.Instance?.NotifyMapSceneReadyForSubscenePreload();
+    }
+
+    private void OnDestroy()
+    {
+        if (RunManager.Instance != null && _mapFightShopPreloadFinishedHandler != null)
+            RunManager.Instance.OnMapFightShopPreloadFinished -= _mapFightShopPreloadFinishedHandler;
+        _mapFightShopPreloadFinishedHandler = null;
+    }
+
+    private void CompleteMapBootstrapAfterFightShopPreload()
+    {
+        if (RunManager.Instance != null && _mapFightShopPreloadFinishedHandler != null)
+        {
+            RunManager.Instance.OnMapFightShopPreloadFinished -= _mapFightShopPreloadFinishedHandler;
+            _mapFightShopPreloadFinishedHandler = null;
+        }
+
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun &&
             RunManager.Instance.TryRestorePersistedMap(out var restoredGrid, out var playerCell, out var moves))
         {
@@ -109,12 +139,10 @@ public sealed class MapMovementManager : MonoBehaviour
             MovesTaken = moves;
             mapView?.Present(_grid, this, mapPresentation);
             moveCounterUI?.Bind(this);
-            RunManager.Instance.NotifyMapSceneReadyForSubscenePreload();
             return;
         }
 
         RegenerateMap();
-        RunManager.Instance?.NotifyMapSceneReadyForSubscenePreload();
     }
 
     /// <summary>Rebuilds grid and resets player at start. Act 1+ may use <see cref="mapModeAfterBossReach"/>.</summary>
