@@ -53,7 +53,7 @@ public class PlayerStatus : MonoBehaviour
     public void ApplyRunVitality(int hp, int maxHp)
     {
         maxHealth = Mathf.Max(1, maxHp);
-        currentHealth = Mathf.Clamp(hp, 1, maxHealth);
+        currentHealth = Mathf.Clamp(hp, 0, maxHealth);
         UpdateUI();
     }
 

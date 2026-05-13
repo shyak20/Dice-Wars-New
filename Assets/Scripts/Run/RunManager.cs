@@ -855,11 +855,31 @@ public class RunManager : MonoBehaviour
         return pick;
     }
 
+    /// <summary>
+    /// Map runs: sync <see cref="PlayerStatus"/> from persisted run HP. Always safe to call after <see cref="EnsureRunVitalityBaseline"/>.
+    /// Non-map runs: no-op (combat uses <see cref="PlayerStatus.ApplyStartingHealthFromPlayerData"/> only).
+    /// </summary>
     public void ApplyRunVitalityToPlayerIfAny(PlayerStatus player)
     {
-        if (player == null || !_runVitalityInitialized)
+        if (player == null || !_useMapBasedRun)
             return;
+        EnsureRunVitalityBaseline();
+        ReconcileRunVitalityIfAwakeDefaultPoisoned();
         player.ApplyRunVitality(_runCurrentHp, _runMaxHp);
+    }
+
+    /// <summary>
+    /// If run vitality was captured before first combat init, <see cref="PlayerStatus"/> Awake defaults (max 1) could have been stored — repair using PlayerData baseline.
+    /// </summary>
+    private void ReconcileRunVitalityIfAwakeDefaultPoisoned()
+    {
+        var baseline = ReadStartingMaxHealthFromPlayerData();
+        if (baseline <= 1 || _runMaxHp != 1)
+            return;
+        _runMaxHp = baseline;
+        _runCurrentHp = Mathf.Clamp(_runCurrentHp, 0, _runMaxHp);
+        if (_runCurrentHp < 1)
+            _runCurrentHp = _runMaxHp;
     }
 
     public void CaptureRunVitalityFromPlayer(PlayerStatus player)
@@ -869,6 +889,7 @@ public class RunManager : MonoBehaviour
         _runCurrentHp = player.GetCurrentHealth();
         _runMaxHp = player.maxHealth;
         _runVitalityInitialized = true;
+        NotifyRunVitalityChanged();
     }
 
     public void ApplyShrineHeal(int amount)

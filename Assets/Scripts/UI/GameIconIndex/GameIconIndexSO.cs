@@ -44,7 +44,7 @@ public class GameIconIndexSO : ScriptableObject
     {
         public ActionVisualId id;
         public Sprite sprite;
-        [Tooltip("Optional. Used by GetActionBackground; pool rows resolve backgrounds via die types or status entries (effect name = PoolRowKey).")]
+        [Tooltip("Optional. Used by GetActionBackground and TryGetPoolRowBackground when PoolRowKey matches this entry's id (enum name, e.g. Heal) or known aliases (see GameIconIndexSO).")]
         public Sprite background;
         [Tooltip("Optional. When set, face picker / shop / die tooltips use this instead of generated text for this action.")]
         public string title;
@@ -285,7 +285,8 @@ public class GameIconIndexSO : ScriptableObject
 
     /// <summary>
     /// Resolves a frame behind <see cref="StoredActionsPoolIcon"/> for this pool row
-    /// (<see cref="DieType"/> rows or per-status <see cref="StatusEffectIconEntry.poolRowBackground"/> keyed by <c>effect.name</c> as <see cref="PoolRowKey.StableId"/>).
+    /// (<see cref="DieType"/> rows, per-status <see cref="StatusEffectIconEntry.poolRowBackground"/> keyed by <c>effect.name</c>,
+    /// then <see cref="ActionVisualId"/> / deferred-gem row ids mapped to <see cref="ActionIconEntry.background"/>).
     /// </summary>
     public Sprite TryGetPoolRowBackground(PoolRowKey key)
     {
@@ -293,7 +294,79 @@ public class GameIconIndexSO : ScriptableObject
             return GetElementBackground(dt);
         if (_poolRowBackgroundByStableId.Count == 0 && (actionIcons.Count > 0 || statusEffectIcons.Count > 0))
             RebuildLookups();
-        return _poolRowBackgroundByStableId.TryGetValue(key.StableId, out var bg) ? bg : null;
+        if (_poolRowBackgroundByStableId.TryGetValue(key.StableId, out var statusBg) && statusBg != null)
+            return statusBg;
+
+        if (TryMapPoolRowStableIdToActionVisualId(key.StableId, out var actionVisualId))
+        {
+            var actionBg = GetActionBackground(actionVisualId);
+            if (actionBg != null)
+                return actionBg;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Maps custom <see cref="PoolRowKey.StableId"/> strings to <see cref="ActionVisualId"/> so pool rows use the same
+    /// action backgrounds as face tooltips (e.g. Heal, MaxHp default row id "Max HP", gem deferred rows).
+    /// </summary>
+    static bool TryMapPoolRowStableIdToActionVisualId(string stableId, out ActionVisualId id)
+    {
+        id = ActionVisualId.None;
+        if (string.IsNullOrWhiteSpace(stableId))
+            return false;
+
+        var s = stableId.Trim();
+        if (Enum.TryParse<ActionVisualId>(s, true, out var parsed) && parsed != ActionVisualId.None)
+        {
+            id = parsed;
+            return true;
+        }
+
+        if (s.Equals("Max HP", StringComparison.OrdinalIgnoreCase))
+        {
+            id = ActionVisualId.MaxHp;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Heal, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.Heal;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Cleanse, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.Cleanse;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.MaxHp, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.MaxHp;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Power, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.AddPower;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Gold, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.AddValueBasedOnRoll;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Burn, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.InstantBurnProcFromStacks;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>Resolves whether a pool row key belongs to a known status effect and returns its target side.</summary>

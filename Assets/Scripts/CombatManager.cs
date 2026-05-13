@@ -220,6 +220,25 @@ public class CombatManager : MonoBehaviour
         pendingPrecisionChoices.Enqueue(new PrecisionChoiceEntry { Amount = amount, Presentation = presentation });
     }
     public void QueueTurnEndAction(Action<GameActionContext> action) => turnEndActions.Add(action);
+
+    /// <summary>
+    /// Invokes and clears <see cref="turnEndActions"/> (heal, cleanse, max HP grant, gems).
+    /// Deferred face <see cref="ExecuteDeferredTurnEndActionsForSubmitTurn"/> can enqueue after the first drain when
+    /// <paramref name="beforePlayerPhysicalDamage"/> is false — call again after that pass.
+    /// </summary>
+    private void DrainQueuedTurnEndActions(GameActionContext ctx)
+    {
+        if (turnEndActions == null || turnEndActions.Count == 0)
+            return;
+
+        for (var guard = 0; guard < 8 && turnEndActions.Count > 0; guard++)
+        {
+            var batch = new List<Action<GameActionContext>>(turnEndActions);
+            turnEndActions.Clear();
+            for (var i = 0; i < batch.Count; i++)
+                batch[i]?.Invoke(ctx);
+        }
+    }
     public bool IsResolvingFirstRollOfTurn() => currentBatchIsFirstRollOfTurn;
     public int GetRollsRemaining() => rollsRemaining;
     public void AddBonusDamageFromAction(int amount)
@@ -516,6 +535,10 @@ public class CombatManager : MonoBehaviour
 
     private void OnDisable()
     {
+        // Do not capture before InitializeCombat — additive preload hides the fight scene while PlayerStatus is still at Awake defaults (1/1).
+        if (_mapCombatBootstrapped && player != null && RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+            RunManager.Instance.CaptureRunVitalityFromPlayer(player);
+
         // Fight scene stays loaded with roots toggled off between map visits; must re-bootstrap on next activation.
         _mapCombatBootstrapped = false;
         _mapPendingEnemyCoroutineRunning = false;
@@ -536,9 +559,12 @@ public class CombatManager : MonoBehaviour
         playerData = PlayerDataContainer.Instance.RuntimeData;
         ApplyTestStartingFaces();
         if (player != null && playerData != null)
-            player.ApplyStartingHealthFromPlayerData(playerData);
-        if (RunManager.Instance != null)
-            RunManager.Instance.ApplyRunVitalityToPlayerIfAny(player);
+        {
+            if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+                RunManager.Instance.ApplyRunVitalityToPlayerIfAny(player);
+            else
+                player.ApplyStartingHealthFromPlayerData(playerData);
+        }
         _relicRuntime = new RelicRuntimeState();
         ResetStats();
         RelicActionRunner.RunPhase(this, RelicPhases.CombatStart);
@@ -1110,6 +1136,8 @@ public class CombatManager : MonoBehaviour
                 valueBonus.AppendPoolContributionIfAny(result, player);
             if (a is ThornsAction thorns)
                 thorns.AppendPoolContributionIfAny(result, thorns.ActivateImmediately);
+            if (a is HealAction heal)
+                heal.AppendPoolContributionIfAny(result);
         }
     }
 
@@ -1276,7 +1304,14 @@ public class CombatManager : MonoBehaviour
 
         if (result.ActionPoolContributions == null) return;
         foreach (var extra in result.ActionPoolContributions)
+        {
             Hint(extra.PoolKey, extra.Amount, extra.Icon);
+            var bg = extra.PoolRowBackground != null
+                ? extra.PoolRowBackground
+                : GameIconCatalog.TryGetPoolRowBackground(extra.PoolKey);
+            if (extra.Amount > 0 && bg != null)
+                CombatEvents.OnRuntimePoolRowBackgroundForRow?.Invoke(extra.PoolKey, bg);
+        }
     }
 
     private static List<RollOutcomeVisualLine> BuildRollVisualLines(FaceResult result, bool kineticArmorThisRoll)
@@ -1298,11 +1333,15 @@ public class CombatManager : MonoBehaviour
             foreach (var extra in result.ActionPoolContributions)
             {
                 if (extra.Amount <= 0) continue;
+                var rowBg = extra.PoolRowBackground != null
+                    ? extra.PoolRowBackground
+                    : GameIconCatalog.TryGetPoolRowBackground(extra.PoolKey);
                 lines.Add(new RollOutcomeVisualLine
                 {
                     RowKey = extra.PoolKey,
                     Amount = extra.Amount,
                     IconOverride = extra.Icon,
+                    BackgroundOverride = rowBg,
                     IsVisualFlyoutOnly = extra.VisualFlyoutOnly
                 });
             }
@@ -1683,8 +1722,7 @@ public class CombatManager : MonoBehaviour
 
         ExecuteDeferredTurnEndActionsForSubmitTurn(beforePlayerPhysicalDamage: true);
 
-        foreach (var action in turnEndActions) action.Invoke(ctx);
-        turnEndActions.Clear();
+        DrainQueuedTurnEndActions(ctx);
 
         var statusCtx = BuildStatusContext();
         int pendingAttack = GetPendingAttack();
@@ -1859,6 +1897,8 @@ public class CombatManager : MonoBehaviour
         _pendingAfterPhysicalApplyStatuses.Clear();
 
         ExecuteDeferredTurnEndActionsForSubmitTurn(beforePlayerPhysicalDamage: false);
+
+        DrainQueuedTurnEndActions(BuildContext());
 
         NotifyStoredActionsPoolUpdated();
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -306,6 +307,9 @@ public class StoredActionsPoolIcon : MonoBehaviour
                 _ => "Deferred value from this face."
             };
         }
+
+        if (string.Equals(key.StableId, "Heal", StringComparison.OrdinalIgnoreCase))
+            return "Heal from a rolled face — restores HP when you end the turn.";
 
         return "Deferred action from a die — runs when you end the turn; may become a status effect.";
     }

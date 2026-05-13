@@ -20,6 +20,7 @@ public sealed class MapRunVitalityHUD : MonoBehaviour
     {
         if (RunManager.Instance != null)
             RunManager.Instance.OnRunVitalityChanged += Refresh;
+        Refresh();
     }
 
     private void OnDisable()
@@ -27,8 +28,6 @@ public sealed class MapRunVitalityHUD : MonoBehaviour
         if (RunManager.Instance != null)
             RunManager.Instance.OnRunVitalityChanged -= Refresh;
     }
-
-    private void Start() => Refresh();
 
     private void Refresh()
     {

@@ -5,9 +5,27 @@ using UnityEngine;
 public class HealAction : GameActionWithIcon
 {
     [SerializeField] private int amount = 1;
+    [Tooltip("Element pool row id (same id merges across dice).")]
+    [SerializeField] private string poolRowId = "Heal";
+
     public int Amount => amount;
 
     protected override ActionVisualId VisualKey => ActionVisualId.Heal;
+
+    /// <summary>Filled when the face resolves so flyouts / element bar show pending heal for the turn.</summary>
+    public void AppendPoolContributionIfAny(FaceResult result)
+    {
+        if (result == null || amount <= 0)
+            return;
+        var row = string.IsNullOrWhiteSpace(poolRowId) ? "Heal" : poolRowId.Trim();
+        result.ActionPoolContributions.Add(new FacePoolExtraContribution
+        {
+            PoolKey = PoolRowKey.FromInspectorString(row),
+            Amount = amount,
+            Icon = ResolveActionIcon(),
+            PoolRowBackground = GameIconCatalog.GetActionBackground(GetActionVisualId())
+        });
+    }
 
     public override void Execute(GameActionContext context)
     {

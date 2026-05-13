@@ -22,6 +22,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     private Dictionary<PoolRowKey, StoredActionsPoolIcon> iconMap;
     private Dictionary<PoolRowKey, int> displayedPools;
     private readonly Dictionary<PoolRowKey, Sprite> runtimeRowIcons = new Dictionary<PoolRowKey, Sprite>();
+    private readonly Dictionary<PoolRowKey, Sprite> runtimeRowBackgrounds = new Dictionary<PoolRowKey, Sprite>();
 
     private void Awake()
     {
@@ -40,6 +41,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         CombatEvents.OnStoredActionsPoolIconsFullResync += ApplyFullPoolSync;
         CombatEvents.OnStoredActionsPoolRuntimeIconsClear += ClearRuntimeRowIcons;
         CombatEvents.OnRuntimePoolIconForRow += OnRuntimePoolIconForRow;
+        CombatEvents.OnRuntimePoolRowBackgroundForRow += OnRuntimePoolRowBackgroundForRow;
         if (!incrementPoolIconsWithFlyouts)
             CombatEvents.OnStoredActionsPoolUpdated += ApplyFullPoolSync;
     }
@@ -49,6 +51,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         CombatEvents.OnStoredActionsPoolIconsFullResync -= ApplyFullPoolSync;
         CombatEvents.OnStoredActionsPoolRuntimeIconsClear -= ClearRuntimeRowIcons;
         CombatEvents.OnRuntimePoolIconForRow -= OnRuntimePoolIconForRow;
+        CombatEvents.OnRuntimePoolRowBackgroundForRow -= OnRuntimePoolRowBackgroundForRow;
         if (!incrementPoolIconsWithFlyouts)
             CombatEvents.OnStoredActionsPoolUpdated -= ApplyFullPoolSync;
     }
@@ -57,6 +60,13 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     {
         if (sprite == null) return;
         runtimeRowIcons[key] = sprite;
+        RefreshIcon(key);
+    }
+
+    private void OnRuntimePoolRowBackgroundForRow(PoolRowKey key, Sprite sprite)
+    {
+        if (sprite == null) return;
+        runtimeRowBackgrounds[key] = sprite;
         RefreshIcon(key);
     }
 
@@ -105,15 +115,22 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         return null;
     }
 
-    public Sprite GetPoolRowBackground(PoolRowKey key) => GameIconCatalog.TryGetPoolRowBackground(key);
+    public Sprite GetPoolRowBackground(PoolRowKey key)
+    {
+        if (runtimeRowBackgrounds.TryGetValue(key, out var runtimeBg) && runtimeBg != null)
+            return runtimeBg;
+        return GameIconCatalog.TryGetPoolRowBackground(key);
+    }
 
-    public void ApplyPoolDelta(PoolRowKey key, int delta, Sprite lineIconOverride = null)
+    public void ApplyPoolDelta(PoolRowKey key, int delta, Sprite lineIconOverride = null, Sprite lineRowBackgroundOverride = null)
     {
         if (delta == 0) return;
         displayedPools.TryGetValue(key, out var cur);
         displayedPools[key] = cur + delta;
         if (lineIconOverride != null)
             runtimeRowIcons[key] = lineIconOverride;
+        if (lineRowBackgroundOverride != null)
+            runtimeRowBackgrounds[key] = lineRowBackgroundOverride;
         RefreshRow(key, displayedPools[key]);
         ReorderPoolIcons();
     }
@@ -121,6 +138,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     public void ClearRuntimeRowIcons()
     {
         runtimeRowIcons.Clear();
+        runtimeRowBackgrounds.Clear();
         foreach (var k in iconMap.Keys.ToList())
             RefreshIcon(k);
     }

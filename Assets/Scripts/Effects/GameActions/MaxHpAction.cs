@@ -40,6 +40,7 @@ public class MaxHpAction : GameActionWithIcon
             PoolKey = PoolRowKey.FromInspectorString(row),
             Amount = amount,
             Icon = ResolveActionIcon(),
+            PoolRowBackground = GameIconCatalog.GetActionBackground(GetActionVisualId()),
             MaxHpPoolSource = this
         });
     }

@@ -9,6 +9,8 @@ public struct RollOutcomeVisualLine
     public int Amount;
     /// <summary>Deferred action icon when set; otherwise catalog art from <see cref="PoolRowKey"/>.</summary>
     public Sprite IconOverride;
+    /// <summary>Row frame behind the icon; when null, <see cref="StoredActionsPoolDisplay"/> uses <see cref="GameIconCatalog.TryGetPoolRowBackground"/>.</summary>
+    public Sprite BackgroundOverride;
     /// <summary>True for immediate status rows used only for flyout; triggers delayed stored-pool resync after landing.</summary>
     public bool IsVisualFlyoutOnly;
 }
@@ -60,6 +62,8 @@ public static class CombatEvents
     public static Action OnStoredActionsPoolRuntimeIconsClear;
     /// <summary>When a turn-end face resolves, set pool bar art for each element type that gained value (non-flyout mode).</summary>
     public static Action<PoolRowKey, Sprite> OnRuntimePoolIconForRow;
+    /// <summary>When a deferred action row resolves, set the row frame sprite from <see cref="GameIconIndexSO"/> (non-flyout mode).</summary>
+    public static Action<PoolRowKey, Sprite> OnRuntimePoolRowBackgroundForRow;
 
     // Interaction
     public static Action<DieAssetSO> OnDieToggled;

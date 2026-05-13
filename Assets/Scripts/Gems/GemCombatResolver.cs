@@ -4,12 +4,6 @@ using UnityEngine;
 public static class GemCombatResolver
 {
     const int DefaultGemBatchRerollProcCapPerRoll = 3;
-    const string GemPoolRowBurn = "Gem Burn";
-    const string GemPoolRowHeal = "Gem Heal";
-    const string GemPoolRowCleanse = "Gem Cleanse";
-    const string GemPoolRowGold = "Gem Gold";
-    const string GemPoolRowMaxHp = "Gem Max HP";
-    const string GemPoolRowPower = "Gem Power";
     static int _nextDeferredHandleId = 1;
 
     private static int NextDeferredHandleId() => _nextDeferredHandleId++;
@@ -209,9 +203,10 @@ public static class GemCombatResolver
                 var handle = NextDeferredHandleId();
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
                 {
-                    PoolKey = PoolRowKey.Custom(GemPoolRowHeal),
+                    PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Heal),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetActionIcon(ActionVisualId.Heal),
+                    PoolRowBackground = GameIconCatalog.GetActionBackground(ActionVisualId.Heal),
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true
@@ -235,9 +230,11 @@ public static class GemCombatResolver
                 var handle = NextDeferredHandleId();
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
                 {
-                    PoolKey = PoolRowKey.Custom(GemPoolRowBurn),
+                    PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Burn),
                     Amount = baseStacks,
                     Icon = GameIconCatalog.GetStatusIcon(entry.burnDefinition),
+                    PoolRowBackground = GameIconCatalog.TryGetPoolRowBackground(PoolRowKey.Custom(entry.burnDefinition.name))
+                        ?? GameIconCatalog.GetActionBackground(ActionVisualId.InstantBurnProcFromStacks),
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyDamage = true
@@ -256,9 +253,10 @@ public static class GemCombatResolver
                 var handle = NextDeferredHandleId();
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
                 {
-                    PoolKey = PoolRowKey.Custom(GemPoolRowPower),
+                    PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Power),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetActionIcon(ActionVisualId.AddPower),
+                    PoolRowBackground = GameIconCatalog.GetActionBackground(ActionVisualId.AddPower),
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyDamage = true
@@ -277,9 +275,10 @@ public static class GemCombatResolver
                 var handle = NextDeferredHandleId();
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
                 {
-                    PoolKey = PoolRowKey.Custom(GemPoolRowCleanse),
+                    PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Cleanse),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetActionIcon(ActionVisualId.Cleanse),
+                    PoolRowBackground = GameIconCatalog.GetActionBackground(ActionVisualId.Cleanse),
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true
@@ -304,9 +303,10 @@ public static class GemCombatResolver
                 var handle = NextDeferredHandleId();
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
                 {
-                    PoolKey = PoolRowKey.Custom(GemPoolRowGold),
+                    PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Gold),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetActionIcon(ActionVisualId.AddValueBasedOnRoll),
+                    PoolRowBackground = GameIconCatalog.GetActionBackground(ActionVisualId.AddValueBasedOnRoll),
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true
@@ -326,9 +326,10 @@ public static class GemCombatResolver
                 var handle = NextDeferredHandleId();
                 result.ActionPoolContributions.Add(new FacePoolExtraContribution
                 {
-                    PoolKey = PoolRowKey.Custom(GemPoolRowMaxHp),
+                    PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.MaxHp),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetActionIcon(ActionVisualId.MaxHp),
+                    PoolRowBackground = GameIconCatalog.GetActionBackground(ActionVisualId.MaxHp),
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true

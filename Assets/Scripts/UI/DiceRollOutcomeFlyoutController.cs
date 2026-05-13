@@ -345,7 +345,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
         rt.anchoredPosition = end;
         if (applyPoolDeltaOnLanding && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
-            storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride);
+            storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
         Destroy(rt.gameObject);
     }
 
