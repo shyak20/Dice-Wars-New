@@ -47,6 +47,8 @@ public class RunManager : MonoBehaviour
     private readonly System.Random _enemyDrawRng = new System.Random();
     private readonly Dictionary<EnemyRank, HashSet<EnemyTypeSO>> _drawnUniquesThisMap = new Dictionary<EnemyRank, HashSet<EnemyTypeSO>>();
     private readonly HashSet<UnknownMapEventSO> _drawnUnknownThisMap = new HashSet<UnknownMapEventSO>();
+    private readonly HashSet<string> _drawnUnknownEventIdsThisMap = new HashSet<string>(StringComparer.Ordinal);
+    private readonly HashSet<string> _completedUnknownMapEventIds = new HashSet<string>(StringComparer.Ordinal);
     private readonly List<EnemyTypeSO> _enemyDrawScratch = new List<EnemyTypeSO>();
     private readonly List<UnknownMapEventSO> _unknownValidScratch = new List<UnknownMapEventSO>();
     private readonly List<UnknownMapEventSO> _unknownUnusedScratch = new List<UnknownMapEventSO>();
@@ -220,6 +222,7 @@ public class RunManager : MonoBehaviour
 
         ClearRunRelics();
         _runVitalityInitialized = false;
+        _completedUnknownMapEventIds.Clear();
 
         if (useMapInsteadOfEncounterList)
         {
@@ -385,6 +388,7 @@ public class RunManager : MonoBehaviour
             return;
         _drawnUniquesThisMap.Clear();
         _drawnUnknownThisMap.Clear();
+        _drawnUnknownEventIdsThisMap.Clear();
     }
 
     public void SaveMapPersistence(MapGrid gridClone, Vector2Int playerCell, int movesTaken)
@@ -812,13 +816,44 @@ public class RunManager : MonoBehaviour
     {
         _drawnUniquesThisMap.Clear();
         _drawnUnknownThisMap.Clear();
+        _drawnUnknownEventIdsThisMap.Clear();
+    }
+
+    /// <summary>True if an unknown map event id was registered completed this run (see <see cref="RegisterUnknownMapEventCompleted"/>).</summary>
+    public bool IsUnknownMapEventCompleted(string eventId)
+    {
+        if (string.IsNullOrWhiteSpace(eventId))
+            return false;
+        return _completedUnknownMapEventIds.Contains(eventId.Trim());
+    }
+
+    /// <summary>Marks an unknown event id as completed for this run (Clear Event chains, visibility conditions).</summary>
+    public void RegisterUnknownMapEventCompleted(string eventId)
+    {
+        if (string.IsNullOrWhiteSpace(eventId))
+        {
+            Debug.LogWarning("RunManager.RegisterUnknownMapEventCompleted: event id is empty — ignored.");
+            return;
+        }
+
+        _completedUnknownMapEventIds.Add(eventId.Trim());
     }
 
     /// <summary>
     /// Picks an unknown event for the current act (unique entries preferred until the pool is exhausted).
+    /// Uses a minimal evaluation context (no grid). Prefer <see cref="DrawUnknownMapEvent(MapGrid, Vector2Int, int)"/> from the map when conditions may depend on position later.
     /// Returns null if the act defines no unknown events.
     /// </summary>
-    public UnknownMapEventSO DrawUnknownMapEvent()
+    public UnknownMapEventSO DrawUnknownMapEvent() =>
+        DrawUnknownMapEventInternal(new UnknownMapEventEvaluationContext(this, null, default, 0));
+
+    /// <summary>
+    /// Same as <see cref="DrawUnknownMapEvent"/> with full <see cref="UnknownMapEventEvaluationContext"/> for visibility / option rules that read map state.
+    /// </summary>
+    public UnknownMapEventSO DrawUnknownMapEvent(MapGrid grid, Vector2Int playerCell, int movesTaken) =>
+        DrawUnknownMapEventInternal(new UnknownMapEventEvaluationContext(this, grid, playerCell, movesTaken));
+
+    private UnknownMapEventSO DrawUnknownMapEventInternal(UnknownMapEventEvaluationContext evalCtx)
     {
         var act = GetActDefinitionOrThrow();
         _unknownValidScratch.Clear();
@@ -826,19 +861,30 @@ public class RunManager : MonoBehaviour
         {
             foreach (var u in act.possibleUnknownEvents)
             {
-                if (u != null)
-                    _unknownValidScratch.Add(u);
+                if (u == null)
+                    continue;
+                if (u.excludeFromDrawIfCompletedThisRun && IsUnknownMapEventCompleted(u.ResolvedEventId))
+                    continue;
+                if (!UnknownMapEventConditionEvaluator.AllPass(u.visibilityConditions, evalCtx))
+                    continue;
+                _unknownValidScratch.Add(u);
             }
         }
 
         if (_unknownValidScratch.Count == 0)
+        {
+            Debug.LogWarning("RunManager.DrawUnknownMapEvent: no unknown events pass act/visibility for this act.");
             return null;
+        }
 
         _unknownUnusedScratch.Clear();
         foreach (var u in _unknownValidScratch)
         {
-            if (!_drawnUnknownThisMap.Contains(u))
-                _unknownUnusedScratch.Add(u);
+            if (_drawnUnknownThisMap.Contains(u))
+                continue;
+            if (_drawnUnknownEventIdsThisMap.Contains(u.ResolvedEventId))
+                continue;
+            _unknownUnusedScratch.Add(u);
         }
 
         UnknownMapEventSO pick;
@@ -846,6 +892,7 @@ public class RunManager : MonoBehaviour
         {
             pick = _unknownUnusedScratch[_enemyDrawRng.Next(_unknownUnusedScratch.Count)];
             _drawnUnknownThisMap.Add(pick);
+            _drawnUnknownEventIdsThisMap.Add(pick.ResolvedEventId);
         }
         else
         {
@@ -897,6 +944,76 @@ public class RunManager : MonoBehaviour
         if (amount <= 0)
             return;
         EnsureRunVitalityBaseline();
+        _runCurrentHp = Mathf.Min(_runCurrentHp + amount, _runMaxHp);
+        NotifyRunVitalityChanged();
+    }
+
+    /// <summary>Map runs: set current run HP to max.</summary>
+    public void HealRunVitalityToFull()
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.HealRunVitalityToFull: not in map-based run.");
+            return;
+        }
+
+        EnsureRunVitalityBaseline();
+        _runCurrentHp = _runMaxHp;
+        NotifyRunVitalityChanged();
+    }
+
+    /// <summary>Map runs: change current run HP by <paramref name="delta"/> (negative = damage). Game over at 0.</summary>
+    public void ApplyRunCurrentHpDelta(int delta)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.ApplyRunCurrentHpDelta: not in map-based run.");
+            return;
+        }
+
+        if (delta == 0)
+            return;
+
+        EnsureRunVitalityBaseline();
+        _runCurrentHp = Mathf.Clamp(_runCurrentHp + delta, 0, _runMaxHp);
+        NotifyRunVitalityChanged();
+
+        if (_runCurrentHp <= 0)
+            EndRunFromPlayerDefeat();
+    }
+
+    /// <summary>Map runs: change max HP only (current HP is clamped to the new max).</summary>
+    public void ApplyRunMaxHpDelta(int delta)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.ApplyRunMaxHpDelta: not in map-based run.");
+            return;
+        }
+
+        if (delta == 0)
+            return;
+
+        EnsureRunVitalityBaseline();
+        _runMaxHp = Mathf.Max(1, _runMaxHp + delta);
+        _runCurrentHp = Mathf.Clamp(_runCurrentHp, 0, _runMaxHp);
+        NotifyRunVitalityChanged();
+    }
+
+    /// <summary>Map runs: raise max HP and heal current by the same amount (e.g. +3 → +3 current capped at new max).</summary>
+    public void ApplyRunMaxHpIncreaseAndHeal(int amount)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.ApplyRunMaxHpIncreaseAndHeal: not in map-based run.");
+            return;
+        }
+
+        if (amount <= 0)
+            return;
+
+        EnsureRunVitalityBaseline();
+        _runMaxHp = Mathf.Max(1, _runMaxHp + amount);
         _runCurrentHp = Mathf.Min(_runCurrentHp + amount, _runMaxHp);
         NotifyRunVitalityChanged();
     }

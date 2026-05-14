@@ -14,4 +14,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: This is an Event
   description: Test Test Test
-  icon: {fileID: 0}
+  eventArt: {fileID: 21300000, guid: 946859e4d95ded54481bcdcb45a26228, type: 3}
+  visibilityConditions: []
+  excludeFromDrawIfCompletedThisRun: 0
+  choices:
+  - label: Bla Test Max Hp +500
+    enabledWhen: []
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882215894319359
+  - label: Leave
+    enabledWhen: []
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: -2
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 6434882215894319359
+      type: {class: UnknownMapEventOutcomeApplyRunMaxHpDelta, ns: , asm: Assembly-CSharp}
+      data:
+        maxHpDelta: 500

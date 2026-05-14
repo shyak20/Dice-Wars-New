@@ -53,6 +53,56 @@ public class PlayerDataContainer : MonoBehaviour
         OnRuntimeDeckChanged?.Invoke();
     }
 
+    /// <summary>Removes the first deck die whose <see cref="DieAssetSO.dieType"/> matches <paramref name="dieType"/>.</summary>
+    public bool TryRemoveFirstDieOfTypeFromDeck(DieType dieType)
+    {
+        if (RuntimeData?.currentDeck == null)
+        {
+            Debug.LogError("PlayerDataContainer.TryRemoveFirstDieOfTypeFromDeck: RuntimeData or deck is null.");
+            return false;
+        }
+
+        for (var i = 0; i < RuntimeData.currentDeck.Count; i++)
+        {
+            var d = RuntimeData.currentDeck[i];
+            if (d == null || d.dieType != dieType)
+                continue;
+            Destroy(d);
+            RuntimeData.currentDeck.RemoveAt(i);
+            OnRuntimeDeckChanged?.Invoke();
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Removes one random non-null die from the deck.</summary>
+    public bool TryRemoveRandomDieFromDeck()
+    {
+        if (RuntimeData?.currentDeck == null)
+        {
+            Debug.LogError("PlayerDataContainer.TryRemoveRandomDieFromDeck: RuntimeData or deck is null.");
+            return false;
+        }
+
+        var indices = new List<int>();
+        for (var i = 0; i < RuntimeData.currentDeck.Count; i++)
+        {
+            if (RuntimeData.currentDeck[i] != null)
+                indices.Add(i);
+        }
+
+        if (indices.Count == 0)
+            return false;
+
+        var pick = indices[UnityEngine.Random.Range(0, indices.Count)];
+        var die = RuntimeData.currentDeck[pick];
+        Destroy(die);
+        RuntimeData.currentDeck.RemoveAt(pick);
+        OnRuntimeDeckChanged?.Invoke();
+        return true;
+    }
+
     private void CloneDeckForRuntime()
     {
         RuntimeData = Instantiate(sourcePlayerData);

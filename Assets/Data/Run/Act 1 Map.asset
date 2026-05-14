@@ -31,8 +31,8 @@ MonoBehaviour:
   shopMaxOnMap: 2
   shrineMinOnMap: 2
   shrineMaxOnMap: 2
-  unknownMinOnMap: 1
-  unknownMaxOnMap: 1
+  unknownMinOnMap: 2
+  unknownMaxOnMap: 2
   treasureMinOnMap: 1
   treasureMaxOnMap: 1
   eliteMinStepsFromStart: 3

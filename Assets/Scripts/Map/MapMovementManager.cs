@@ -331,7 +331,7 @@ public sealed class MapMovementManager : MonoBehaviour
                 return;
             case MapEventType.Unknown:
             {
-                var unknown = RunManager.Instance.DrawUnknownMapEvent();
+                var unknown = RunManager.Instance.DrawUnknownMapEvent(_grid, PlayerGridPosition, MovesTaken);
                 if (unknownEventPanel == null)
                 {
                     Debug.LogError("MapMovementManager: assign unknownEventPanel for Unknown tiles.", this);
