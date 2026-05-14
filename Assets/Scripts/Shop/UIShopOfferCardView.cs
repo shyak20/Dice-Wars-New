@@ -5,16 +5,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-/// <summary>Optional hover data for shop offers (gem / relic / die). Wired from <see cref="UIShopWindow"/>.</summary>
-public sealed class ShopOfferTooltipBindings
-{
-    public RelicSO Relic;
-    public GemSO Gem;
-    public DieAssetSO DieOffer;
-    public DieTooltipOverlayUI DieTooltipOverlay;
-    public HoverTooltipPanelUI HoverTooltipPanel;
-}
-
 public class UIShopOfferCardView : MonoBehaviour
 {
     [SerializeField] Image iconImage;
@@ -29,8 +19,6 @@ public class UIShopOfferCardView : MonoBehaviour
     [SerializeField] GameObject soldStamp;
     [Tooltip("Shown while the pointer hovers the buy button (requires raycast target on the button Image).")]
     [SerializeField] GameObject hoverOnBuyButton;
-    [Tooltip("Optional. If unset, tooltips use the Buy Button’s Target Graphic (typical full-card hit area), then the Icon Image. Assign only when your layout needs a custom hover region.")]
-    [SerializeField] Graphic tooltipHoverTarget;
 
     int _price;
     bool _sold;
@@ -55,7 +43,7 @@ public class UIShopOfferCardView : MonoBehaviour
 
     /// <summary>
     /// Resolves the shadow <see cref="Image"/> from <see cref="iconShadowObject"/> (root or child). Called from Awake and
-    /// every <see cref="Bind"/> so shop rebuilds still pick up the shadow after Instantiate / layout.
+    /// every <see cref="Bind"/> so shop refreshes still pick it up.
     /// </summary>
     void EnsureIconShadowImageResolved()
     {
@@ -120,7 +108,23 @@ public class UIShopOfferCardView : MonoBehaviour
             graphics[i].raycastTarget = false;
     }
 
-    public void Bind(string title, string desc, Sprite icon, int price, bool canAfford, bool sold, Action onBuy, ShopOfferTooltipBindings tooltips = null)
+    /// <summary>Graphic <see cref="UIShopWindow"/> uses for relic / gem / die hover wiring (buy target graphic, else icon).</summary>
+    public Graphic GetOfferHoverGraphic()
+    {
+        if (buyButton != null && buyButton.targetGraphic is Graphic targetGraphic)
+            return targetGraphic;
+        return iconImage;
+    }
+
+    /// <summary>Alignment rect for die overlay hovers (icon rect when available).</summary>
+    public RectTransform GetDieTooltipAlignRect(Graphic hit)
+    {
+        if (iconImage != null)
+            return iconImage.rectTransform;
+        return hit != null ? hit.rectTransform : null;
+    }
+
+    public void Bind(string title, string desc, Sprite icon, int price, bool canAfford, bool sold, Action onBuy)
     {
         _price = price;
         _sold = sold;
@@ -147,7 +151,6 @@ public class UIShopOfferCardView : MonoBehaviour
         if (buyButton != null) buyButton.interactable = !sold && canAfford;
         if (priceText != null) priceText.color = sold || canAfford ? affordablePriceColor : unaffordablePriceColor;
         SetHoverVisible(false);
-        ApplyOfferTooltips(tooltips);
     }
 
     public void RefreshAffordability()
@@ -155,72 +158,5 @@ public class UIShopOfferCardView : MonoBehaviour
         var canAfford = RunEconomyManager.Instance != null && RunEconomyManager.Instance.CanAfford(_price);
         if (buyButton != null) buyButton.interactable = !_sold && canAfford;
         if (priceText != null) priceText.color = _sold || canAfford ? affordablePriceColor : unaffordablePriceColor;
-    }
-
-    Graphic ResolveTooltipHitGraphic()
-    {
-        if (tooltipHoverTarget != null)
-            return tooltipHoverTarget;
-        if (buyButton != null && buyButton.targetGraphic is Graphic targetGraphic)
-            return targetGraphic;
-        return iconImage;
-    }
-
-    RectTransform ResolveDieTooltipAlignRect(Graphic hit)
-    {
-        if (iconImage != null)
-            return iconImage.rectTransform;
-        return hit != null ? hit.rectTransform : null;
-    }
-
-    void ApplyOfferTooltips(ShopOfferTooltipBindings t)
-    {
-        if (t == null)
-            return;
-
-        var hit = ResolveTooltipHitGraphic();
-        if (hit == null)
-            return;
-
-        hit.raycastTarget = true;
-
-        if (t.Relic != null)
-        {
-            var go = hit.gameObject;
-            var trigger = go.GetComponent<RelicTooltipTrigger>() ?? go.AddComponent<RelicTooltipTrigger>();
-            trigger.SetRelic(t.Relic);
-            return;
-        }
-
-        if (t.Gem != null)
-        {
-            var panel = t.HoverTooltipPanel != null ? t.HoverTooltipPanel : FindObjectOfType<HoverTooltipPanelUI>(true);
-            if (panel == null)
-            {
-                Debug.LogError("UIShopOfferCardView: gem tooltip needs HoverTooltipPanelUI in the scene or assigned on UIShopWindow.", this);
-                return;
-            }
-
-            var go = hit.gameObject;
-            var hover = go.GetComponent<HoverTooltipTargetUI>() ?? go.AddComponent<HoverTooltipTargetUI>();
-            hover.Configure(panel, t.Gem.DisplayLabel, t.Gem.description);
-            return;
-        }
-
-        if (t.DieOffer != null && t.DieTooltipOverlay != null)
-            RegisterDieOfferIconHover(t.DieOffer, t.DieTooltipOverlay, hit);
-    }
-
-    void RegisterDieOfferIconHover(DieAssetSO die, DieTooltipOverlayUI overlay, Graphic hit)
-    {
-        var go = hit.gameObject;
-        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
-        var align = ResolveDieTooltipAlignRect(hit);
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => overlay.ShowDie(die, false, null, align));
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ => overlay.Hide());
-        et.triggers.Add(enter);
-        et.triggers.Add(exit);
     }
 }

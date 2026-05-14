@@ -2,30 +2,26 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// Attach to any UI object that should show the shared hover tooltip.
+/// Attach to any UI object that should show the shared hover tooltip via <see cref="HoverTooltipManager"/>.
 /// </summary>
 public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private string tooltipTitle;
     [SerializeField, TextArea] private string tooltipDescription;
-    [SerializeField] private HoverTooltipPanelUI tooltipPanel;
     [SerializeField] private Vector2 tooltipScreenOffset;
     private Sprite _tooltipBackground;
+    private ScriptableObject _scriptableSource;
     private bool _isPointerInside;
+    private bool _warnedMissingManager;
+
+    /// <summary>When set, hover uses <see cref="HoverTooltipManager.TryGetTooltipContent"/> instead of manual title/description.</summary>
+    public void SetScriptableSource(ScriptableObject source) => _scriptableSource = source;
 
     public void SetContent(string title, string description, Sprite tooltipBackground = null)
     {
         tooltipTitle = title ?? string.Empty;
         tooltipDescription = description ?? string.Empty;
         _tooltipBackground = tooltipBackground;
-    }
-
-    /// <summary>Optional panel wiring for runtime setup (e.g. <see cref="UIMapMoveCounterUI"/>).</summary>
-    public void Configure(HoverTooltipPanelUI panel, string title, string description, Sprite tooltipBackground = null)
-    {
-        if (panel != null)
-            tooltipPanel = panel;
-        SetContent(title, description, tooltipBackground);
     }
 
     public void SetTooltipScreenOffset(Vector2 screenOffset) => tooltipScreenOffset = screenOffset;
@@ -39,47 +35,55 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     public void OnPointerExit(PointerEventData eventData)
     {
         _isPointerInside = false;
-        var panel = ResolvePanel();
-        if (panel == null) return;
-        panel.Hide();
+        HoverTooltipManager.Instance?.Hide();
     }
 
     private void OnDisable()
     {
         _isPointerInside = false;
-        var panel = tooltipPanel;
-        if (panel != null)
-            panel.Hide();
+        HoverTooltipManager.Instance?.Hide();
     }
 
     private void Update()
     {
         if (!_isPointerInside)
             return;
-        // Defensive refresh: some rebuilt UI states miss the first enter/show; keep it visible while hovered.
         ShowTooltip();
     }
 
     private void ShowTooltip()
     {
+        var anchor = transform as RectTransform;
+        if (anchor == null)
+            return;
+
+        var mgr = HoverTooltipManager.Instance;
+        if (mgr == null || !mgr.HasValidPrefab)
+        {
+            if (!_warnedMissingManager)
+            {
+                _warnedMissingManager = true;
+                Debug.LogError(
+                    "HoverTooltipTargetUI: add an enabled HoverTooltipManager with panelPrefab to the scene (or a persistent bootstrap).",
+                    this);
+            }
+
+            return;
+        }
+
+        if (_scriptableSource != null)
+        {
+            if (!HoverTooltipManager.TryGetTooltipContent(_scriptableSource, out var t, out var d, out var bg))
+                return;
+            if (string.IsNullOrWhiteSpace(t) && string.IsNullOrWhiteSpace(d))
+                return;
+            mgr.Show(anchor, tooltipScreenOffset, t, d, bg);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(tooltipTitle) && string.IsNullOrWhiteSpace(tooltipDescription))
             return;
 
-        var panel = ResolvePanel();
-        if (panel == null) return;
-        panel.Show(tooltipTitle, tooltipDescription, _tooltipBackground);
-        if (tooltipScreenOffset.sqrMagnitude > 0.0001f)
-            panel.AlignToRectWithScreenOffset(transform as RectTransform, tooltipScreenOffset);
-        else
-            panel.AlignPivotWorldXToRect(transform as RectTransform);
+        mgr.Show(anchor, tooltipScreenOffset, tooltipTitle, tooltipDescription, _tooltipBackground);
     }
-
-    private HoverTooltipPanelUI ResolvePanel()
-    {
-        if (tooltipPanel != null) return tooltipPanel;
-
-        tooltipPanel = FindObjectOfType<HoverTooltipPanelUI>(true);
-        return tooltipPanel;
-    }
-
 }

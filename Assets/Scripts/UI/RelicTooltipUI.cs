@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Scene UI singleton: shows <see cref="RelicSO.title"/> and <see cref="RelicSO.description"/>.
-/// Horizontal position matches the hover target’s center (same rule as <see cref="HoverTooltipPanelUI.AlignPivotWorldXToRect"/>).
+/// Horizontal position matches the hover target’s center (same rule as <see cref="HoverTooltipPanelUI.AlignPivotWorldXToRect"/> on the relic panel prefab).
 /// </summary>
 public sealed class RelicTooltipUI : MonoBehaviour
 {

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// <summary>
 /// Single reward row: icon, title, optional coin amount line, action button, optional hover tooltip.
 /// One prefab per reward kind (win screen, map treasure, etc.). Gem, relic, and die titles come from ScriptableObjects at runtime.
-/// Assign a <see cref="tooltipPanelPrefab"/> (asset or scene instance); prefab assets are instantiated once under this row's Canvas.
+/// Hover text uses <see cref="HoverTooltipManager"/> via <see cref="HoverTooltipTargetUI"/> (assign <see cref="tooltipScreenOffset"/> as needed).
 /// </summary>
 public class RunRewardOfferRow : MonoBehaviour
 {
@@ -18,23 +18,19 @@ public class RunRewardOfferRow : MonoBehaviour
     [SerializeField] private string numberFormat = "";
 
     [Header("Tooltip")]
-    [Tooltip("HoverTooltipPanelUI prefab asset or scene instance. Prefab assets are instantiated under the nearest Canvas.")]
-    [SerializeField] private HoverTooltipPanelUI tooltipPanelPrefab;
+    [Tooltip("Hover target for tooltips. If unset, tries icon then this GameObject.")]
+    [SerializeField] private HoverTooltipTargetUI tooltipTarget;
+    [SerializeField] private GameObject tooltipHoverArea;
+    [SerializeField] private Vector2 tooltipScreenOffset;
 
     [Header("UI")]
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text titleTextField;
     [SerializeField] private TMP_Text numberTextField;
     [SerializeField] private Button actionButton;
-    [Tooltip("Hover target for tooltips. If unset, tries icon then this GameObject.")]
-    [SerializeField] private HoverTooltipTargetUI tooltipTarget;
-    [SerializeField] private GameObject tooltipHoverArea;
-    [SerializeField] private Vector2 tooltipScreenOffset;
 
     private IRewardOfferFlowHost _host;
     private FaceRewardManager _faceRewards;
-    private HoverTooltipPanelUI _runtimeTooltipPanel;
-    private bool _ownsRuntimeTooltipPanel;
 
     private int _goldAmount;
     private GemSO _gem;
@@ -54,8 +50,6 @@ public class RunRewardOfferRow : MonoBehaviour
     {
         if (_faceFlowSubscribed)
             FaceRewardEvents.OnFaceRewardCompleted -= OnFaceRewardFlowCompletedOnce;
-        if (_ownsRuntimeTooltipPanel && _runtimeTooltipPanel != null)
-            Destroy(_runtimeTooltipPanel.gameObject);
     }
 
     public void SetupGold(int amount, Action onCollected)
@@ -193,35 +187,6 @@ public class RunRewardOfferRow : MonoBehaviour
         numberTextField.gameObject.SetActive(false);
     }
 
-    private HoverTooltipPanelUI ResolveTooltipPanel()
-    {
-        if (_runtimeTooltipPanel != null)
-            return _runtimeTooltipPanel;
-
-        if (tooltipPanelPrefab == null)
-            return null;
-
-        if (tooltipPanelPrefab.gameObject.scene.IsValid())
-        {
-            _runtimeTooltipPanel = tooltipPanelPrefab;
-            return _runtimeTooltipPanel;
-        }
-
-        var canvas = GetComponentInParent<Canvas>();
-        if (canvas == null)
-        {
-            Debug.LogError(
-                $"{nameof(RunRewardOfferRow)} on '{name}': Tooltip Panel Prefab is an asset but no Canvas was found in parents — cannot instantiate.",
-                this);
-            return null;
-        }
-
-        _runtimeTooltipPanel = Instantiate(tooltipPanelPrefab, canvas.transform);
-        _runtimeTooltipPanel.name = tooltipPanelPrefab.name;
-        _ownsRuntimeTooltipPanel = true;
-        return _runtimeTooltipPanel;
-    }
-
     private void DisableTooltipTarget()
     {
         var t = ResolveTooltipTarget();
@@ -244,23 +209,11 @@ public class RunRewardOfferRow : MonoBehaviour
             return;
         }
 
-        var panel = ResolveTooltipPanel();
-        if (panel == null)
-        {
-            Debug.LogError(
-                $"{nameof(RunRewardOfferRow)} on '{name}': assign Tooltip Panel Prefab to show gem tooltip.",
-                this);
-            t.enabled = false;
-            t.SetContent("", "");
-            return;
-        }
-
         t.enabled = true;
         var ttl = gem.DisplayLabel;
         var body = gem.description ?? "";
-        t.Configure(panel, ttl, body);
-        if (tooltipScreenOffset.sqrMagnitude > 0.0001f)
-            t.SetTooltipScreenOffset(tooltipScreenOffset);
+        t.SetTooltipScreenOffset(tooltipScreenOffset);
+        t.SetContent(ttl, body);
     }
 
     private void ApplyTooltipRelic(RelicSO relic)
@@ -276,23 +229,11 @@ public class RunRewardOfferRow : MonoBehaviour
             return;
         }
 
-        var panel = ResolveTooltipPanel();
-        if (panel == null)
-        {
-            Debug.LogError(
-                $"{nameof(RunRewardOfferRow)} on '{name}': assign Tooltip Panel Prefab to show relic tooltip.",
-                this);
-            t.enabled = false;
-            t.SetContent("", "");
-            return;
-        }
-
         t.enabled = true;
         var ttl = string.IsNullOrEmpty(relic.title) ? relic.name : relic.title;
         var body = relic.description ?? "";
-        t.Configure(panel, ttl, body);
-        if (tooltipScreenOffset.sqrMagnitude > 0.0001f)
-            t.SetTooltipScreenOffset(tooltipScreenOffset);
+        t.SetTooltipScreenOffset(tooltipScreenOffset);
+        t.SetContent(ttl, body);
     }
 
     private void ApplyTooltipDie(DieAssetSO die)
@@ -308,23 +249,11 @@ public class RunRewardOfferRow : MonoBehaviour
             return;
         }
 
-        var panel = ResolveTooltipPanel();
-        if (panel == null)
-        {
-            Debug.LogError(
-                $"{nameof(RunRewardOfferRow)} on '{name}': assign Tooltip Panel Prefab to show die tooltip.",
-                this);
-            t.enabled = false;
-            t.SetContent("", "");
-            return;
-        }
-
         t.enabled = true;
         var ttl = string.IsNullOrEmpty(die.dieName) ? die.name : die.dieName;
         var body = "";
-        t.Configure(panel, ttl, body);
-        if (tooltipScreenOffset.sqrMagnitude > 0.0001f)
-            t.SetTooltipScreenOffset(tooltipScreenOffset);
+        t.SetTooltipScreenOffset(tooltipScreenOffset);
+        t.SetContent(ttl, body);
     }
 
     private HoverTooltipTargetUI ResolveTooltipTarget()

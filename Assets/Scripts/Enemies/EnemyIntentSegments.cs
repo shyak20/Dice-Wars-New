@@ -9,17 +9,20 @@ public static class EnemyIntentSegments
         public readonly Sprite Icon;
         public readonly Sprite Background;
         public readonly string ValueText;
-        public readonly string StatusTitle;
-        public readonly string StatusDescription;
+        /// <summary>When set, hover uses <see cref="HoverTooltipManager.TryGetTooltipContent"/> (status definition).</summary>
+        public readonly StatusEffectSO TooltipStatusEffect;
+        public readonly string TooltipTitle;
+        public readonly string TooltipDescription;
         public readonly bool EnableTooltip;
 
-        public Row(Sprite icon, string valueText, string statusTitle = null, string statusDescription = null, bool enableTooltip = false, Sprite background = null)
+        public Row(Sprite icon, string valueText, StatusEffectSO tooltipStatusEffect, string tooltipTitle, string tooltipDescription, bool enableTooltip, Sprite background = null)
         {
             Icon = icon;
             Background = background;
             ValueText = valueText ?? "";
-            StatusTitle = statusTitle ?? "";
-            StatusDescription = statusDescription ?? "";
+            TooltipStatusEffect = tooltipStatusEffect;
+            TooltipTitle = tooltipTitle ?? "";
+            TooltipDescription = tooltipDescription ?? "";
             EnableTooltip = enableTooltip;
         }
     }
@@ -40,11 +43,11 @@ public static class EnemyIntentSegments
             if (enemy != null && combat != null)
                 computedPer = combat.PreviewEnemyPhysicalHitDamage(enemy, basePer);
             var label = FormatPhysicalIntentLabel(basePer, computedPer, hits, buffDamageColor);
-            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Damage), label, enableTooltip: false, background: GameIconCatalog.GetElementBackground(DieType.Damage)));
+            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Damage), label, null, null, null, false, GameIconCatalog.GetElementBackground(DieType.Damage)));
         }
 
         if (intent.armor > 0)
-            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Armor), intent.armor.ToString(), enableTooltip: false, background: GameIconCatalog.GetElementBackground(DieType.Armor)));
+            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Armor), intent.armor.ToString(), null, null, null, false, GameIconCatalog.GetElementBackground(DieType.Armor)));
 
         if (intent.actions == null)
             return;
@@ -55,24 +58,52 @@ public static class EnemyIntentSegments
             if (a == null || a is FaceResolveModifierBase)
                 continue;
 
-            var tooltipTitle = "Action";
-            var tooltipDescription = "";
-            if (intent.actionTooltips != null && i < intent.actionTooltips.Count && intent.actionTooltips[i] != null)
-            {
-                var t = intent.actionTooltips[i];
-                if (!string.IsNullOrWhiteSpace(t.title))
-                    tooltipTitle = t.title.Trim();
-                if (!string.IsNullOrWhiteSpace(t.description))
-                    tooltipDescription = t.description.Trim();
-            }
-            else if (!string.IsNullOrWhiteSpace(intent.actionName))
-                tooltipTitle = intent.actionName.Trim();
-
             var actionTypeName = a.GetType().FullName ?? a.GetType().Name;
             var icon = GameIconCatalog.GetEnemyActionIcon(actionTypeName) ?? GameActionIconUtility.GetDisplayIcon(a);
             var bg = GameIconCatalog.GetEnemyActionBackground(actionTypeName);
-            into.Add(new Row(icon, DescribeActionAmount(a), tooltipTitle, tooltipDescription, enableTooltip: true, background: bg));
+
+            if (a is ApplyStatusEffectAction apply && apply.StatusEffectDefinition != null)
+            {
+                into.Add(new Row(icon, DescribeActionAmount(a), apply.StatusEffectDefinition, null, null, true, bg));
+                continue;
+            }
+
+            ResolveNonStatusActionTooltip(intent, i, a, out var tooltipTitle, out var tooltipDescription);
+            into.Add(new Row(icon, DescribeActionAmount(a), null, tooltipTitle, tooltipDescription, true, bg));
         }
+    }
+
+    static void ResolveNonStatusActionTooltip(EnemyActionSO intent, int actionIndex, IGameAction a, out string title, out string description)
+    {
+        title = "Action";
+        description = "";
+        if (intent.actionTooltips != null && actionIndex < intent.actionTooltips.Count && intent.actionTooltips[actionIndex] != null)
+        {
+            var entry = intent.actionTooltips[actionIndex];
+            if (!string.IsNullOrWhiteSpace(entry.title))
+                title = entry.title.Trim();
+            if (!string.IsNullOrWhiteSpace(entry.description))
+                description = entry.description.Trim();
+            return;
+        }
+
+        if (a is GameActionWithIcon gai)
+        {
+            var id = gai.GetActionVisualId();
+            if (id != ActionVisualId.None && GameIconCatalog.TryGetActionTooltip(id, out var catalogTitle, out var catalogDesc))
+            {
+                if (!string.IsNullOrWhiteSpace(catalogTitle))
+                    title = catalogTitle.Trim();
+                else
+                    title = id.ToString();
+                if (!string.IsNullOrWhiteSpace(catalogDesc))
+                    description = catalogDesc.Trim();
+                return;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(intent.actionName))
+            title = intent.actionName.Trim();
     }
 
     static string DescribeActionAmount(IGameAction a)

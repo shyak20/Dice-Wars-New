@@ -28,8 +28,6 @@ public class FacePickerView : MonoBehaviour
 
     [Header("Shared die tooltip")]
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
-    [Tooltip("Optional. If assigned, reward-face status hovers use this panel (same behavior as fight scene status tooltip).")]
-    [SerializeField] private HoverTooltipPanelUI statusHoverTooltipPanel;
 
     [Header("Phase Objects")]
     [Tooltip("Active only in phase B: face reward selection (before choosing a reward face).")]
@@ -144,7 +142,6 @@ public class FacePickerView : MonoBehaviour
                 continue;
             }
 
-            slot.SetStatusHoverTooltipPanel(statusHoverTooltipPanel);
             slot.Bind(face, OnRewardFaceClicked);
             slot.SetInteractable(true);
             slot.EnsureStandaloneHoverReveal();

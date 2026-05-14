@@ -8,17 +8,17 @@ public sealed class RunRelicSlotView : MonoBehaviour
     [SerializeField] private Image iconImage;
     [SerializeField] private GameObject benefitTextBackground;
     [SerializeField] private TMP_Text benefitText;
-    [Tooltip("Optional; add RelicTooltipTrigger on this object or the icon Image. Hover shows RelicTooltipUI.")]
-    [SerializeField] private RelicTooltipTrigger relicTooltipTrigger;
-    [Tooltip("When true, RunRelicSlotView hover shows tooltip above the slot instead of centered.")]
+    [Tooltip("When true, adds extra upward screen offset so the shared hover tooltip reads above the slot.")]
     [SerializeField] private bool showTooltipAboveSlot = true;
-    [Tooltip("Screen-space pixel offset applied to tooltip when hovering RunRelicSlotView.")]
+    [Tooltip("Screen-space pixel offset passed to HoverTooltipManager (added to manager global offset).")]
     [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
-    private RelicTooltipTrigger _runtimeTooltipTrigger;
+
+    HoverTooltipTargetUI _cachedHoverTarget;
 
     public void Bind(RelicSO relic)
     {
-        if (relic == null) return;
+        if (relic == null)
+            return;
 
         if (iconImage != null)
         {
@@ -38,30 +38,37 @@ public sealed class RunRelicSlotView : MonoBehaviour
                 benefitText.text = relic.barBenefitDisplayValue.ToString();
         }
 
-        var trigger = EnsureTooltipTrigger();
-        if (trigger != null)
-        {
-            trigger.ConfigurePositioning(showTooltipAboveSlot, tooltipScreenOffset);
-            trigger.SetRelic(relic);
-        }
+        EnsureHoverTooltipForRelic(relic);
     }
 
-    private RelicTooltipTrigger EnsureTooltipTrigger()
+    void EnsureHoverTooltipForRelic(RelicSO relic)
     {
-        if (_runtimeTooltipTrigger != null)
-            return _runtimeTooltipTrigger;
-        if (relicTooltipTrigger != null)
-        {
-            _runtimeTooltipTrigger = relicTooltipTrigger;
-            return _runtimeTooltipTrigger;
-        }
-
         if (iconImage == null)
-            return null;
+            return;
 
-        _runtimeTooltipTrigger = iconImage.GetComponent<RelicTooltipTrigger>() ??
-                                 iconImage.gameObject.AddComponent<RelicTooltipTrigger>();
-        relicTooltipTrigger = _runtimeTooltipTrigger;
-        return _runtimeTooltipTrigger;
+        StripLegacyRelicTooltips(gameObject);
+        var go = iconImage.gameObject;
+        StripLegacyRelicTooltips(go);
+
+        if (_cachedHoverTarget == null || _cachedHoverTarget.gameObject != go)
+            _cachedHoverTarget = go.GetComponent<HoverTooltipTargetUI>() ?? go.AddComponent<HoverTooltipTargetUI>();
+
+        var offset = tooltipScreenOffset;
+        if (showTooltipAboveSlot)
+            offset.y += 24f;
+
+        _cachedHoverTarget.SetTooltipScreenOffset(offset);
+        _cachedHoverTarget.SetScriptableSource(relic);
+    }
+
+    static void StripLegacyRelicTooltips(GameObject target)
+    {
+        if (target == null)
+            return;
+        foreach (var legacy in target.GetComponents<RelicTooltipTrigger>())
+        {
+            if (legacy != null)
+                Destroy(legacy);
+        }
     }
 }

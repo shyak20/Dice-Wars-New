@@ -6,9 +6,6 @@ public class StatusEffectBarUI : MonoBehaviour
 {
     [SerializeField] private Transform iconContainer;
     [SerializeField] private GameObject statusEffectIconPrefab;
-    [Header("Tooltip")]
-    [Tooltip("Assign a HoverTooltipPanelUI prefab asset. Status icons instantiate/use this at runtime instead of scene lookup.")]
-    [SerializeField] private HoverTooltipPanelUI statusTooltipPanelPrefab;
 
     private readonly Dictionary<string, StatusEffectIconUI> activeIcons = new();
 
@@ -167,7 +164,6 @@ public class StatusEffectBarUI : MonoBehaviour
     {
         if (activeIcons.TryGetValue(key, out var existingIcon) && existingIcon != null)
         {
-            existingIcon.SetTooltipPanelPrefab(statusTooltipPanelPrefab);
             if (!existingIcon.gameObject.activeSelf)
                 existingIcon.gameObject.SetActive(true);
             return existingIcon;
@@ -182,7 +178,6 @@ public class StatusEffectBarUI : MonoBehaviour
             return null;
         }
 
-        iconUI.SetTooltipPanelPrefab(statusTooltipPanelPrefab);
         activeIcons[key] = iconUI;
         return iconUI;
     }

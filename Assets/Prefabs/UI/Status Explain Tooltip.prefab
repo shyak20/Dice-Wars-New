@@ -86,6 +86,7 @@ GameObject:
   - component: {fileID: 7019382877085822306}
   - component: {fileID: 4347350993658855120}
   - component: {fileID: 6651844007766589498}
+  - component: {fileID: 5988435817838878782}
   m_Layer: 0
   m_Name: Status Explain Tooltip
   m_TagString: Untagged
@@ -155,6 +156,29 @@ MonoBehaviour:
   titleText: {fileID: 6003087190861710556}
   descriptionText: {fileID: 6928276046804571106}
   tooltipBackgroundImage: {fileID: 7925926128205253391}
+--- !u!223 &5988435817838878782
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2178087498563358608}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 548
+  m_TargetDisplay: 0
 --- !u!1 &3694773606399478266
 GameObject:
   m_ObjectHideFlags: 0

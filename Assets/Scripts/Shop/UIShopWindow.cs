@@ -24,18 +24,14 @@ public class UIShopWindow : MonoBehaviour
     [Header("Offer Prefabs")] [SerializeField] UIShopOfferCardView dieFaceOfferPrefab; [SerializeField] UIShopOfferCardView gemOfferPrefab;
     [SerializeField] UIShopOfferCardView relicOfferPrefab; [SerializeField] UIShopOfferCardView dieOfferPrefab;
     [Header("Player Containers")] [SerializeField] Transform playerDiceContainer; [SerializeField] GameObject playerDieButtonPrefab;
-    [SerializeField] Transform playerRelicsContainer; [SerializeField] RunRelicSlotView playerRelicSlotPrefab;
     [Header("Pricing")]
     [SerializeField] ShopPricingManager pricingManager;
     [Header("Tooltips")]
     [SerializeField] DieTooltipOverlayUI dieTooltipOverlay;
-    [Tooltip("Hover text for gem shop offers. Leave empty to use the first HoverTooltipPanelUI in the scene.")]
-    [SerializeField] HoverTooltipPanelUI shopGemHoverTooltipPanel;
     [Header("Popup")] [SerializeField] ShopDieChoicePopupView dieChoicePopup;
 
     readonly List<OfferData> _face = new(); readonly List<OfferData> _gem = new(); readonly List<OfferData> _relic = new(); readonly List<OfferData> _die = new();
     readonly List<UIShopOfferCardView> _cards = new();
-    readonly List<RunRelicSlotView> _spawnedPlayerRelicSlots = new();
 
     void Start()
     {
@@ -43,15 +39,15 @@ public class UIShopWindow : MonoBehaviour
             Debug.LogError("UIShopWindow: assign pricingManager.");
         if (leaveShopButton != null) leaveShopButton.onClick.AddListener(OnLeaveShop);
         RunEconomyManager.OnGoldChanged += OnGoldChanged;
-        if (RunManager.Instance != null) RunManager.Instance.OnRunRelicsChanged += RebuildPlayerRelics;
-        BuildOffers(); RebuildOfferUi(); RebuildPlayerDice(); RebuildPlayerRelics();
+        if (RunManager.Instance != null) RunManager.Instance.OnRunRelicsChanged += OnRunRelicsChangedForShop;
+        BuildOffers(); RebuildOfferUi(); RebuildPlayerDice();
         if (RunEconomyManager.Instance != null) OnGoldChanged(RunEconomyManager.Instance.CurrentGold);
     }
 
     void OnDestroy()
     {
         RunEconomyManager.OnGoldChanged -= OnGoldChanged;
-        if (RunManager.Instance != null) RunManager.Instance.OnRunRelicsChanged -= RebuildPlayerRelics;
+        if (RunManager.Instance != null) RunManager.Instance.OnRunRelicsChanged -= OnRunRelicsChangedForShop;
     }
 
     void BuildOffers()
@@ -74,6 +70,49 @@ public class UIShopWindow : MonoBehaviour
         return Mathf.Max(1, Mathf.CeilToInt(basePrice * (1f - discountPercent / 100f)));
     }
 
+    void OnRunRelicsChangedForShop()
+    {
+        RefreshShopPricesFromRelics();
+        RebuildOfferUi();
+    }
+
+    /// <summary>Recompute listed prices from current relic modifiers (e.g. shop discount relic) without re-rolling offers.</summary>
+    void RefreshShopPricesFromRelics()
+    {
+        if (pricingManager == null)
+            return;
+        var shopDiscountPercent = Mathf.Clamp(RelicActionRunner.QueryIntMax(RelicPhases.QueryShopDiscountPercent), 0, 95);
+        foreach (var o in _face)
+            RepriceOffer(o, shopDiscountPercent);
+        foreach (var o in _gem)
+            RepriceOffer(o, shopDiscountPercent);
+        foreach (var o in _relic)
+            RepriceOffer(o, shopDiscountPercent);
+        foreach (var o in _die)
+            RepriceOffer(o, shopDiscountPercent);
+    }
+
+    void RepriceOffer(OfferData o, int shopDiscountPercent)
+    {
+        if (o == null || o.Sold || pricingManager == null)
+            return;
+        switch (o.Kind)
+        {
+            case OfferKind.Face when o.Face != null:
+                o.Price = ApplyDiscount(pricingManager.GetDieFacePrice(o.Face), shopDiscountPercent);
+                break;
+            case OfferKind.Gem when o.Gem != null:
+                o.Price = ApplyDiscount(pricingManager.GetGemPrice(o.Gem), shopDiscountPercent);
+                break;
+            case OfferKind.Relic when o.Relic != null:
+                o.Price = ApplyDiscount(pricingManager.GetRelicPrice(o.Relic), shopDiscountPercent);
+                break;
+            case OfferKind.Die when o.Die != null:
+                o.Price = ApplyDiscount(pricingManager.GetDiePrice(o.Die), shopDiscountPercent);
+                break;
+        }
+    }
+
     HashSet<DieType> BuildPreferredTypes()
     {
         var set = new HashSet<DieType>(); var runtime = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
@@ -93,24 +132,58 @@ public class UIShopWindow : MonoBehaviour
         {
             var v = Instantiate(prefab, parent); _cards.Add(v);
             var canAfford = RunEconomyManager.Instance != null && RunEconomyManager.Instance.CanAfford(o.Price);
-            v.Bind(NameOf(o), DescOf(o), IconOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o), BuildOfferTooltipBindings(o));
+            v.Bind(NameOf(o), DescOf(o), IconOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o));
+            RegisterShopOfferHover(v, o);
         }
     }
 
-    ShopOfferTooltipBindings BuildOfferTooltipBindings(OfferData o)
+    void RegisterShopOfferHover(UIShopOfferCardView card, OfferData o)
     {
-        if (o == null) return null;
+        if (card == null || o == null)
+            return;
+
+        var hit = card.GetOfferHoverGraphic();
+        if (hit == null)
+            return;
+
+        hit.raycastTarget = true;
+
         switch (o.Kind)
         {
-            case OfferKind.Relic when o.Relic != null:
-                return new ShopOfferTooltipBindings { Relic = o.Relic };
+            case OfferKind.Face when o.Face != null:
             case OfferKind.Gem when o.Gem != null:
-                return new ShopOfferTooltipBindings { Gem = o.Gem, HoverTooltipPanel = shopGemHoverTooltipPanel };
-            case OfferKind.Die when o.Die != null:
-                return new ShopOfferTooltipBindings { DieOffer = o.Die, DieTooltipOverlay = dieTooltipOverlay };
-            default:
-                return null;
+            case OfferKind.Relic when o.Relic != null:
+            {
+                var go = hit.gameObject;
+                var hover = go.GetComponent<HoverTooltipTargetUI>() ?? go.AddComponent<HoverTooltipTargetUI>();
+                hover.SetTooltipScreenOffset(Vector2.zero);
+                ScriptableObject src = o.Kind switch
+                {
+                    OfferKind.Face => o.Face,
+                    OfferKind.Gem => o.Gem,
+                    OfferKind.Relic => o.Relic,
+                    _ => null
+                };
+                hover.SetScriptableSource(src);
+                break;
+            }
+            case OfferKind.Die when o.Die != null && dieTooltipOverlay != null:
+                RegisterShopDieOfferHover(card, o.Die, hit);
+                break;
         }
+    }
+
+    void RegisterShopDieOfferHover(UIShopOfferCardView card, DieAssetSO die, Graphic hit)
+    {
+        var go = hit.gameObject;
+        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
+        var align = card.GetDieTooltipAlignRect(hit);
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => dieTooltipOverlay.ShowDie(die, false, null, align));
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => dieTooltipOverlay.Hide());
+        et.triggers.Add(enter);
+        et.triggers.Add(exit);
     }
 
     static string NameOf(OfferData o) => o.Kind switch { OfferKind.Face => o.Face != null ? o.Face.Title : "Face", OfferKind.Gem => o.Gem != null ? o.Gem.DisplayLabel : "Gem", OfferKind.Relic => o.Relic != null ? o.Relic.title : "Relic", OfferKind.Die => o.Die != null ? o.Die.dieName : "Die", _ => "" };
@@ -187,7 +260,14 @@ public class UIShopWindow : MonoBehaviour
         }, null);
     }
 
-    void BuyRelic(OfferData o) { if (o.Relic == null || !SpendGold(o.Price) || RunManager.Instance == null) return; RunManager.Instance.AddRunRelic(o.Relic); o.Sold = true; RebuildOfferUi(); RebuildPlayerRelics(); }
+    void BuyRelic(OfferData o)
+    {
+        if (o.Relic == null || !SpendGold(o.Price) || RunManager.Instance == null)
+            return;
+        o.Sold = true;
+        RunManager.Instance.AddRunRelic(o.Relic);
+        // OnRunRelicsChangedForShop refreshes prices (new discount relic), offer UI, and player relic row.
+    }
     void BuyDie(OfferData o) { if (o.Die == null || !SpendGold(o.Price) || PlayerDataContainer.Instance == null) return; PlayerDataContainer.Instance.AddDieToDeck(o.Die); o.Sold = true; RebuildOfferUi(); RebuildPlayerDice(); }
     bool SpendGold(int amount) { var eco = RunEconomyManager.Instance; return eco != null && eco.CanAfford(amount) && eco.TrySpend(amount); }
 
@@ -217,25 +297,6 @@ public class UIShopWindow : MonoBehaviour
         exit.callback.AddListener(_ => dieTooltipOverlay.Hide());
         et.triggers.Add(enter);
         et.triggers.Add(exit);
-    }
-
-    void RebuildPlayerRelics()
-    {
-        if (playerRelicsContainer == null || playerRelicSlotPrefab == null || RunManager.Instance == null) return;
-        foreach (var slot in _spawnedPlayerRelicSlots)
-        {
-            if (slot != null)
-                Destroy(slot.gameObject);
-        }
-
-        _spawnedPlayerRelicSlots.Clear();
-        foreach (var relic in RunManager.Instance.RunRelics)
-        {
-            if (relic == null) continue;
-            var slot = Instantiate(playerRelicSlotPrefab, playerRelicsContainer);
-            slot.Bind(relic);
-            _spawnedPlayerRelicSlots.Add(slot);
-        }
     }
 
     void OnGoldChanged(int gold) { if (goldHeaderText != null) goldHeaderText.text = gold.ToString(); RebuildOfferUi(); }

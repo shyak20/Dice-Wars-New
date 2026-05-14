@@ -12,30 +12,18 @@ namespace Enemies
         [SerializeField] private Image backgroundImage;
         [SerializeField] private Image iconImage;
         [SerializeField] private TMP_Text valueText;
-        [Header("Optional status tooltip")]
-        [Tooltip("Optional custom hover target. If unset, uses iconImage GameObject, then this GameObject.")]
+        [Header("Hover (HoverTooltipManager)")]
+        [Tooltip("Optional full-cell hit target. If it uses an Image with no sprite, raycasts may miss — when tooltips are on and the action icon has a sprite, the icon is used for hover instead.")]
         [SerializeField] private GameObject tooltipHoverTargetObject;
-        [SerializeField] private HoverTooltipTargetUI hoverTooltipTarget;
-        [Tooltip("Can be a scene instance or a prefab asset. If prefab, a runtime instance is created under this segment's Canvas.")]
-        [SerializeField] private HoverTooltipPanelUI hoverTooltipPanel;
-        [Tooltip("Tooltip offset in screen pixels relative to this segment's hover target.")]
+        [Tooltip("Screen-space offset passed to HoverTooltipManager for this row.")]
         [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
-        private HoverTooltipPanelUI _runtimeTooltipPanel;
-        private Vector3 _pulseBaseLocalScale = Vector3.one;
 
-        private void Awake()
-        {
-            if (hoverTooltipTarget == null)
-            {
-                var hoverGo = tooltipHoverTargetObject != null
-                    ? tooltipHoverTargetObject
-                    : (iconImage != null ? iconImage.gameObject : gameObject);
-                hoverTooltipTarget = hoverGo.GetComponent<HoverTooltipTargetUI>() ?? hoverGo.AddComponent<HoverTooltipTargetUI>();
-            }
+        HoverTooltipTargetUI _hoverTooltipTarget;
+        Vector3 _pulseBaseLocalScale = Vector3.one;
 
-            hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
-            _pulseBaseLocalScale = transform.localScale;
-        }
+        static Sprite _hoverRaycastSprite;
+
+        void Awake() => _pulseBaseLocalScale = transform.localScale;
 
         /// <summary>
         /// Ensures this row is active, scales to <paramref name="peakMultiplier"/> × base (optional rise), holds, invokes <paramref name="onAtPeak"/>, then hides this GameObject (e.g. next multi-hit on the same row re-shows for its pulse).
@@ -70,7 +58,8 @@ namespace Enemies
             gameObject.SetActive(false);
         }
 
-        public void Bind(Sprite icon, string value, string statusTitle = null, string statusDescription = null, bool enableTooltip = false, Sprite background = null)
+        /// <param name="tooltipStatusEffect">When set, hover uses <see cref="HoverTooltipManager"/> with this status asset.</param>
+        public void Bind(Sprite icon, string value, StatusEffectSO tooltipStatusEffect, string tooltipTitle, string tooltipDescription, bool enableTooltip, Sprite background = null)
         {
             if (backgroundImage != null)
             {
@@ -90,52 +79,80 @@ namespace Enemies
                 valueText.text = value ?? "";
             }
 
-            if (hoverTooltipTarget == null)
-                return;
+            EnsureHoverTooltipTarget(enableTooltip);
 
-            if (enableTooltip)
+            if (!enableTooltip)
             {
-                var title = string.IsNullOrWhiteSpace(statusTitle) ? "Action" : statusTitle;
-                var description = statusDescription ?? "";
-                var panel = ResolveTooltipPanel();
-                if (panel != null)
-                    hoverTooltipTarget.Configure(panel, title, description);
-                else
-                    hoverTooltipTarget.SetContent(title, description);
-                hoverTooltipTarget.enabled = true;
+                _hoverTooltipTarget.SetScriptableSource(null);
+                _hoverTooltipTarget.SetContent(string.Empty, string.Empty);
+                _hoverTooltipTarget.enabled = false;
+                _pulseBaseLocalScale = transform.localScale;
+                return;
+            }
+
+            _hoverTooltipTarget.enabled = true;
+            if (tooltipStatusEffect != null)
+            {
+                _hoverTooltipTarget.SetScriptableSource(tooltipStatusEffect);
+                _hoverTooltipTarget.SetContent(string.Empty, string.Empty);
             }
             else
             {
-                hoverTooltipTarget.SetContent("", "");
-                hoverTooltipTarget.enabled = false;
+                _hoverTooltipTarget.SetScriptableSource(null);
+                var title = string.IsNullOrWhiteSpace(tooltipTitle) ? "Action" : tooltipTitle;
+                var description = tooltipDescription ?? string.Empty;
+                _hoverTooltipTarget.SetContent(title, description);
             }
 
             _pulseBaseLocalScale = transform.localScale;
         }
 
-        private HoverTooltipPanelUI ResolveTooltipPanel()
+        void EnsureHoverTooltipTarget(bool wantTooltip)
         {
-            if (_runtimeTooltipPanel != null)
-                return _runtimeTooltipPanel;
-
-            if (hoverTooltipPanel == null)
-                return null;
-
-            // Scene object assigned directly.
-            if (hoverTooltipPanel.gameObject.scene.IsValid())
+            var hoverGo = ResolveHoverGameObject(wantTooltip);
+            if (_hoverTooltipTarget != null && _hoverTooltipTarget.gameObject != hoverGo)
             {
-                _runtimeTooltipPanel = hoverTooltipPanel;
-                return _runtimeTooltipPanel;
+                Destroy(_hoverTooltipTarget);
+                _hoverTooltipTarget = null;
             }
 
-            // Prefab asset assigned in inspector: instantiate once under closest canvas.
-            var canvas = GetComponentInParent<Canvas>();
-            if (canvas == null)
-                return null;
+            if (_hoverTooltipTarget == null || _hoverTooltipTarget.gameObject != hoverGo)
+                _hoverTooltipTarget = hoverGo.GetComponent<HoverTooltipTargetUI>() ?? hoverGo.AddComponent<HoverTooltipTargetUI>();
 
-            _runtimeTooltipPanel = Instantiate(hoverTooltipPanel, canvas.transform);
-            _runtimeTooltipPanel.name = hoverTooltipPanel.name;
-            return _runtimeTooltipPanel;
+            EnsureGraphicReceivesPointerHover(hoverGo, wantTooltip);
+            _hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
+        }
+
+        GameObject ResolveHoverGameObject(bool wantTooltip)
+        {
+            if (wantTooltip && iconImage != null && iconImage.sprite != null)
+                return iconImage.gameObject;
+            if (tooltipHoverTargetObject != null)
+                return tooltipHoverTargetObject;
+            return iconImage != null ? iconImage.gameObject : gameObject;
+        }
+
+        static void EnsureGraphicReceivesPointerHover(GameObject hoverGo, bool wantTooltip)
+        {
+            if (hoverGo == null || !wantTooltip)
+                return;
+            var graphic = hoverGo.GetComponent<Graphic>();
+            if (graphic == null)
+                return;
+            graphic.raycastTarget = true;
+            if (graphic is Image image && image.sprite == null)
+            {
+                if (_hoverRaycastSprite == null)
+                {
+                    var tex = Texture2D.whiteTexture;
+                    _hoverRaycastSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+                }
+
+                image.sprite = _hoverRaycastSprite;
+                var c = image.color;
+                if (c.a <= 0f)
+                    image.color = new Color(c.r, c.g, c.b, 0.02f);
+            }
         }
     }
 }

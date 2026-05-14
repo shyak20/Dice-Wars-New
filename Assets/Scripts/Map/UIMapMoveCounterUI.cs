@@ -14,8 +14,8 @@ public class UIMapMoveCounterUI : MonoBehaviour
     [Header("Optional hover tooltip")]
     [Tooltip("Graphic that receives pointer hover (e.g. full-rect Image behind the moves text).")]
     [SerializeField] private Graphic tooltipPointerTarget;
-    [Tooltip("Leave empty to use the first HoverTooltipPanelUI in the scene.")]
-    [SerializeField] private HoverTooltipPanelUI hoverTooltipPanel;
+    [Tooltip("Screen-space offset for the hover panel relative to the tooltip target.")]
+    [SerializeField] private Vector2 hoverTooltipScreenOffset = new Vector2(0f, 24f);
     [SerializeField] private string hoverTooltipTitle = "Moves";
     [SerializeField, TextArea] private string hoverTooltipDescription = "";
 
@@ -64,13 +64,6 @@ public class UIMapMoveCounterUI : MonoBehaviour
         if (string.IsNullOrWhiteSpace(hoverTooltipTitle) && string.IsNullOrWhiteSpace(hoverTooltipDescription))
             return;
 
-        var panel = hoverTooltipPanel != null ? hoverTooltipPanel : FindObjectOfType<HoverTooltipPanelUI>(true);
-        if (panel == null)
-        {
-            Debug.LogError("UIMapMoveCounterUI: hover tooltip text is set but no HoverTooltipPanelUI exists in the scene.", this);
-            return;
-        }
-
         var go = tooltipPointerTarget.gameObject;
         var legacy = go.GetComponent<HoverTooltipTargetUI>();
         if (legacy != null)
@@ -79,6 +72,7 @@ public class UIMapMoveCounterUI : MonoBehaviour
         var dynamicTip = go.GetComponent<UIMapMovesHoverTooltip>();
         if (dynamicTip == null)
             dynamicTip = go.AddComponent<UIMapMovesHoverTooltip>();
-        dynamicTip.Initialize(panel, _manager, hoverTooltipTitle, hoverTooltipDescription);
+        var anchor = tooltipPointerTarget.rectTransform;
+        dynamicTip.Initialize(anchor, _manager, hoverTooltipTitle, hoverTooltipDescription, hoverTooltipScreenOffset);
     }
 }

@@ -427,7 +427,7 @@ MonoBehaviour:
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   overLimitColor: {r: 0.95, g: 0.2, b: 0.2, a: 1}
   tooltipPointerTarget: {fileID: 607561254}
-  hoverTooltipPanel: {fileID: 3882740210426421348}
+  hoverTooltipScreenOffset: {x: 0, y: 24}
   hoverTooltipTitle: Moves
   hoverTooltipDescription: "When exceeding the moves, take <Style=Damage>{0}</style>
     damage. \nIncrease that damage by <Style=Damage>{1}</style> every move."
@@ -7862,6 +7862,7 @@ GameObject:
   - component: {fileID: 755979339}
   - component: {fileID: 755979340}
   - component: {fileID: 755979341}
+  - component: {fileID: 755979342}
   m_Layer: 0
   m_Name: Map Manager
   m_TagString: Untagged
@@ -8052,6 +8053,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapIntroWaitForFightShopPreload
   introRootsToEnableAfterPreload:
   - {fileID: 1726355647}
+--- !u!114 &755979342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755979335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60dce03366490204a96b34ad2599df9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoverTooltipManager
+  panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  fallbackCanvas: {fileID: 219642502}
+  hoverTooltipScreenOffset: {x: 50, y: -120}
 --- !u!1 &765258605
 GameObject:
   m_ObjectHideFlags: 0

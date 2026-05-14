@@ -423,6 +423,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIShopOfferCardView
   iconImage: {fileID: 6098667529676642019}
+  iconShadowObject: {fileID: 0}
   nameText: {fileID: 8563295902042333479}
   descriptionText: {fileID: 5079719312575018914}
   priceText: {fileID: 955915631920301487}

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Shared hover tooltip panel for UI icons (status, element pool, etc.).
+/// Visual root for hover text. Instantiate only via <see cref="HoverTooltipManager"/> (do not place in scenes as the primary tooltip).
 /// </summary>
 public class HoverTooltipPanelUI : MonoBehaviour
 {

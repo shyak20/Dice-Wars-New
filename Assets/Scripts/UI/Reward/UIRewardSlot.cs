@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -29,7 +28,6 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private GameObject newFacePickedRevealRoot;
     [SerializeField] private Image newFacePickedPreviewImage;
 
-    private HoverTooltipPanelUI _statusHoverTooltipPanel;
     private bool _hoverRevealEnabled = true;
     private DieFaceSO _face;
     public DieFaceSO Face => _face;
@@ -128,14 +126,6 @@ public class UIRewardSlot : MonoBehaviour
             hoverRevealObject.SetActive(false);
     }
 
-    /// <summary>Optional explicit panel used by status hover on this slot; falls back to scene lookup when null.</summary>
-    public void SetStatusHoverTooltipPanel(HoverTooltipPanelUI panel)
-    {
-        _statusHoverTooltipPanel = panel;
-        if (_face != null)
-            SetupStatusHoverTooltip(_face);
-    }
-
     /// <summary>
     /// <see cref="DieTooltipOverlayUI"/> drives status copy via its own panel; disable the standalone
     /// <see cref="HoverTooltipTargetUI"/> so it does not compete with overlay <see cref="EventTrigger"/> hovers.
@@ -213,71 +203,16 @@ public class UIRewardSlot : MonoBehaviour
         statusHoverTooltipTarget = target;
 
         BuildEffectTooltip(face, out var title, out var description);
-        if (_statusHoverTooltipPanel != null)
-            target.Configure(_statusHoverTooltipPanel, title, description);
-        else
-            target.SetContent(title, description);
+        target.SetContent(title, description);
     }
 
     /// <summary>Shared by reward slots and <see cref="DieTooltipOverlayUI"/> status line (ApplyStatus, Heal, etc.).</summary>
     public static void BuildEffectTooltip(DieFaceSO face, out string title, out string description)
     {
-        title = string.Empty;
-        description = string.Empty;
-        if (face?.actions == null || face.actions.Count == 0) return;
-
-        var effectNames = new List<string>();
-        var descriptions = new List<string>();
-        var seenStatuses = new HashSet<StatusEffectSO>();
-        var seenActionVisualIds = new HashSet<ActionVisualId>();
-
-        for (var i = 0; i < face.actions.Count; i++)
+        if (!DieFaceGameIconOnlyTooltipText.TryBuild(face, out title, out description))
         {
-            var action = face.actions[i];
-            if (action is ApplyStatusEffectAction apply)
-            {
-                var def = apply.StatusEffectDefinition;
-                if (def == null || !seenStatuses.Add(def)) continue;
-
-                var effectName = string.IsNullOrWhiteSpace(def.effectName) ? def.name : def.effectName;
-                if (!string.IsNullOrWhiteSpace(effectName))
-                    effectNames.Add(effectName.Trim());
-                if (!string.IsNullOrWhiteSpace(def.description))
-                    descriptions.Add(def.description.Trim());
-                continue;
-            }
-
-            if (action is GameActionWithIcon gai)
-            {
-                var id = gai.GetActionVisualId();
-                if (id == ActionVisualId.None) continue;
-                if (!seenActionVisualIds.Add(id)) continue;
-
-                GameIconCatalog.TryGetActionTooltip(id, out var catalogTitle, out var catalogDesc);
-
-                var namePart = !string.IsNullOrWhiteSpace(catalogTitle) ? catalogTitle.Trim() : (string)null;
-                var descPart = !string.IsNullOrWhiteSpace(catalogDesc) ? catalogDesc.Trim() : (string)null;
-
-                if (action is HealAction heal)
-                {
-                    if (namePart == null) namePart = "Heal";
-                    if (descPart == null) descPart = $"Heals {heal.Amount} HP at turn end.";
-                }
-
-                if (namePart == null && descPart == null)
-                    continue;
-
-                if (namePart == null)
-                    namePart = id.ToString();
-
-                effectNames.Add(namePart);
-                if (descPart != null)
-                    descriptions.Add(descPart);
-            }
+            title = string.Empty;
+            description = string.Empty;
         }
-
-        if (effectNames.Count == 0 && descriptions.Count == 0) return;
-        title = effectNames.Count > 0 ? string.Join(" · ", effectNames) : "Effect";
-        description = descriptions.Count > 0 ? string.Join("\n\n", descriptions) : string.Empty;
     }
 }
