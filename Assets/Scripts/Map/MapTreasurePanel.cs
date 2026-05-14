@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +23,16 @@ public sealed class MapTreasurePanel : MonoBehaviour
     [Tooltip("Set active false when Open is pressed.")]
     [SerializeField] private List<GameObject> deactivateWhenOpenPressed = new List<GameObject>();
 
+    [Header("Chest open shake")]
+    [Tooltip("When a CameraShake component exists on the map/combat camera, its transform is offset for this long (world units magnitude).")]
+    [SerializeField, Min(0f)] private float openCameraShakeDuration = 0.28f;
+    [SerializeField, Min(0f)] private float openCameraShakeMagnitude = 0.14f;
+    [Tooltip("Optional UI root to shake in anchored pixels (use for Screen Space Overlay, or in addition to camera). If unset, uses Root when it is a RectTransform.")]
+    [SerializeField] private RectTransform canvasShakeTarget;
+    [SerializeField, Min(0.05f)] private float canvasShakeDuration = 0.38f;
+    [SerializeField, Min(0f)] private float canvasShakeMaxOffset = 22f;
+    [SerializeField, Min(1f)] private float canvasShakeWaves = 12f;
+
     private MapTreasurePackSO _currentPack;
     private readonly List<RolledReward> _rolledRewards = new List<RolledReward>();
     private int _pendingRowCompletions;
@@ -41,16 +52,25 @@ public sealed class MapTreasurePanel : MonoBehaviour
         public RelicSO Relic;
     }
 
+    private Coroutine _canvasShakeRoutine;
+    private Vector2 _canvasShakeBaseAnchoredPosition;
+
     private void Awake()
     {
         if (root == null)
             root = gameObject;
         root.SetActive(false);
+        if (canvasShakeTarget == null && root != null)
+            canvasShakeTarget = root.transform as RectTransform;
+        if (canvasShakeTarget != null)
+            _canvasShakeBaseAnchoredPosition = canvasShakeTarget.anchoredPosition;
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
         if (openButton != null)
             openButton.onClick.AddListener(OnOpenButtonPressed);
     }
+
+    private void OnDisable() => StopCanvasShake(resetPosition: true);
 
     private void OnDestroy()
     {
@@ -62,9 +82,65 @@ public sealed class MapTreasurePanel : MonoBehaviour
 
     private void OnOpenButtonPressed()
     {
+        PlayChestOpenShake();
         ApplyOpenPressedVisuals();
         if (openButton != null)
             openButton.interactable = false;
+    }
+
+    void PlayChestOpenShake()
+    {
+        if (openCameraShakeDuration > 0f && openCameraShakeMagnitude > 0f && CameraShake.Instance != null)
+            CameraShake.Instance.Shake(openCameraShakeDuration, openCameraShakeMagnitude);
+
+        if (canvasShakeTarget != null && canvasShakeDuration > 0f && canvasShakeMaxOffset > 0f)
+        {
+            StopCanvasShake(resetPosition: true);
+            _canvasShakeRoutine = StartCoroutine(CoShakeCanvasOpen());
+        }
+    }
+
+    void StopCanvasShake(bool resetPosition)
+    {
+        if (_canvasShakeRoutine != null)
+        {
+            StopCoroutine(_canvasShakeRoutine);
+            _canvasShakeRoutine = null;
+        }
+
+        if (resetPosition && canvasShakeTarget != null)
+            canvasShakeTarget.anchoredPosition = _canvasShakeBaseAnchoredPosition;
+    }
+
+    IEnumerator CoShakeCanvasOpen()
+    {
+        var rt = canvasShakeTarget;
+        if (rt == null)
+        {
+            _canvasShakeRoutine = null;
+            yield break;
+        }
+
+        _canvasShakeBaseAnchoredPosition = rt.anchoredPosition;
+        var duration = canvasShakeDuration;
+        var maxOff = canvasShakeMaxOffset;
+        var waves = canvasShakeWaves;
+        var t = 0f;
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            var u = Mathf.Clamp01(t / duration);
+            var decay = 1f - u;
+            var angle = u * Mathf.PI * waves;
+            var ox = Mathf.Sin(angle) * maxOff * decay;
+            var oy = Mathf.Sin(angle * 1.11f) * maxOff * 0.65f * decay;
+            rt.anchoredPosition = _canvasShakeBaseAnchoredPosition + new Vector2(ox, oy);
+            yield return null;
+        }
+
+        rt.anchoredPosition = _canvasShakeBaseAnchoredPosition;
+        _canvasShakeRoutine = null;
     }
 
     private void ApplyOpenPressedVisuals()
@@ -114,6 +190,9 @@ public sealed class MapTreasurePanel : MonoBehaviour
 
         RollRewards(pack, _rolledRewards);
         RebuildRewardsLayout(_rolledRewards);
+
+        if (canvasShakeTarget != null)
+            _canvasShakeBaseAnchoredPosition = canvasShakeTarget.anchoredPosition;
 
         return true;
     }
@@ -258,6 +337,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
     /// <summary>Closes the panel and clears pending rewards UI (e.g. map regenerated).</summary>
     public void Hide()
     {
+        StopCanvasShake(resetPosition: true);
         _currentPack = null;
         _rolledRewards.Clear();
         _pendingRowCompletions = 0;

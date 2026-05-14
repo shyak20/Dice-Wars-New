@@ -17,12 +17,12 @@ MonoBehaviour:
   uiIcon: {fileID: 21300000, guid: eca18e2cf14c282488edf3fe654b1805, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: 1086363c2a90d07439f392d72ef1197e, type: 3}
   faces:
-  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
-  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
-  - {fileID: 11400000, guid: 616b60bb7347f4a438662d249d3a82ff, type: 2}
-  - {fileID: 11400000, guid: 3d9b777c454a3974e98bf6d5b6018ec4, type: 2}
-  - {fileID: 11400000, guid: f760bc552e9fddb478ea495adb18fc3c, type: 2}
-  - {fileID: 11400000, guid: 1c3b340afa77e7c4395c8913616755f7, type: 2}
+  - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
+  - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
+  - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
+  - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
+  - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
+  - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
   socketedGems:
   - {fileID: 0}
   - {fileID: 11400000, guid: 944a0a8b0b558994fb0c39cf5e504a55, type: 2}

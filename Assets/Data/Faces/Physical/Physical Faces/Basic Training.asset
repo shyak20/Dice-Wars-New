@@ -16,11 +16,11 @@ MonoBehaviour:
   description: Harness 1 Damage \nHarness +1 Strength
   descriptionLines:
   - Deal <style=Attack>2</style>
-  - Gain <style=Strength>2</style> <style=Strength>Strength
+  - Gain <style=Strength>2</style> (Instant)
   value: 2
   type: 0
   faceMaterial: {fileID: 2100000, guid: 52b940e1549b9774ebc0a8ab346d6eab, type: 2}
-  rarity: 0
+  rarity: 1
   damage: 2
   damageAttackTimes: 1
   armor: 0

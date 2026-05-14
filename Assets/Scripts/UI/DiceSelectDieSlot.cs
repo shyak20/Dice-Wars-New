@@ -9,6 +9,8 @@ using UnityEngine;
 public sealed class DiceSelectDieSlot : MonoBehaviour
 {
     [SerializeField] private DieAssetSO startingDie;
+    [Tooltip("3D die mesh in this slot. When unset, a DieVisualizer is searched under this object.")]
+    [SerializeField] private DieVisualizer dieMeshVisualizer;
     [SerializeField] private GameObject selectionIndicator;
     [Header("Tooltip")]
     [Tooltip("Unique tooltip root per die; visibility is driven by DiceSelectSceneController (click to pin, hover another to switch).")]
@@ -29,11 +31,33 @@ public sealed class DiceSelectDieSlot : MonoBehaviour
     public void Initialize(DiceSelectSceneController owner)
     {
         _owner = owner;
+        ApplyFaceMaterialsFromStartingDie();
         ApplyIndicatorVisual();
+    }
+
+    /// <summary>
+    /// Pushes <see cref="DieAssetSO.faces"/> <see cref="DieFaceSO.faceMaterial"/> onto the preview mesh (same as combat <see cref="DieVisualizer"/>).
+    /// </summary>
+    void ApplyFaceMaterialsFromStartingDie()
+    {
+        var vis = dieMeshVisualizer != null ? dieMeshVisualizer : GetComponentInChildren<DieVisualizer>(true);
+        if (startingDie == null)
+            return;
+        if (vis == null)
+        {
+            Debug.LogWarning(
+                $"DiceSelectDieSlot on '{name}': add a DieVisualizer component on the 3D die mesh (child of this slot) to show face materials from '{startingDie.name}'.",
+                this);
+            return;
+        }
+
+        vis.Initialize(startingDie);
     }
 
     private void Awake()
     {
+        if (dieMeshVisualizer == null)
+            dieMeshVisualizer = GetComponentInChildren<DieVisualizer>(true);
         if (dieAnimator == null)
             dieAnimator = GetComponentInChildren<Animator>(true);
         if (dieAnimator != null)

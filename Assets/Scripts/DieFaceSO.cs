@@ -51,7 +51,7 @@ public class DieFaceSO : ScriptableObject
             }
 
             if (nonEmptyLines.Count > 0)
-                return string.Join("\n\n", nonEmptyLines);
+                return string.Join("\n", nonEmptyLines);
         }
 
         return string.IsNullOrEmpty(description) ? name : description;

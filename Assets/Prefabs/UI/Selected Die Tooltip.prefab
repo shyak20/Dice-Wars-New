@@ -232,7 +232,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tooltipTitle: 
   tooltipDescription: 
-  tooltipPanel: {fileID: 6054160259927794653}
   tooltipScreenOffset: {x: 0, y: 0}
 --- !u!1 &1024775410771174319
 GameObject:
@@ -788,14 +787,14 @@ MonoBehaviour:
     on this die for this act. You can replace one of those existing faces.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
-  m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8b356e0a6a86d1d46bc11a735ea25739, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4284308991
-  m_fontColor: {r: 1, g: 0.36320752, b: 0.36320752, a: 1}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -825,7 +824,7 @@ MonoBehaviour:
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
-  m_lineSpacing: -15
+  m_lineSpacing: 10
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
