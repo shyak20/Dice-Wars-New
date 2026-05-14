@@ -18,7 +18,7 @@ public sealed class ShopOfferTooltipBindings
 public class UIShopOfferCardView : MonoBehaviour
 {
     [SerializeField] Image iconImage;
-    [Tooltip("Optional shadow holder. When assigned, receives the same icon sprite/visibility as iconImage.")]
+    [Tooltip("Optional shadow holder. Uses an Image on this object or its first child Image (excluding the main icon). Re-resolved on each Bind so shop refreshes always pick it up.")]
     [SerializeField] GameObject iconShadowObject;
     [SerializeField] TMP_Text nameText;
     [SerializeField] TMP_Text descriptionText;
@@ -36,15 +36,11 @@ public class UIShopOfferCardView : MonoBehaviour
     bool _sold;
     Action _onBuy;
     Image _iconShadowImage;
+    bool _loggedIconShadowResolveFailure;
 
     void Awake()
     {
-        if (iconShadowObject != null)
-        {
-            _iconShadowImage = iconShadowObject.GetComponent<Image>();
-            if (_iconShadowImage == null)
-                Debug.LogError("UIShopOfferCardView: iconShadowObject must have an Image component.", this);
-        }
+        EnsureIconShadowImageResolved();
 
         if (buyButton != null)
         {
@@ -55,6 +51,37 @@ public class UIShopOfferCardView : MonoBehaviour
         EnsureHoverVisualDoesNotBlockRaycasts();
 
         SetHoverVisible(false);
+    }
+
+    /// <summary>
+    /// Resolves the shadow <see cref="Image"/> from <see cref="iconShadowObject"/> (root or child). Called from Awake and
+    /// every <see cref="Bind"/> so shop rebuilds still pick up the shadow after Instantiate / layout.
+    /// </summary>
+    void EnsureIconShadowImageResolved()
+    {
+        _iconShadowImage = null;
+        if (iconShadowObject == null)
+            return;
+
+        _iconShadowImage = iconShadowObject.GetComponent<Image>();
+        if (_iconShadowImage == null)
+        {
+            var imgs = iconShadowObject.GetComponentsInChildren<Image>(true);
+            for (var i = 0; i < imgs.Length; i++)
+            {
+                var im = imgs[i];
+                if (im == null || im == iconImage)
+                    continue;
+                _iconShadowImage = im;
+                break;
+            }
+        }
+
+        if (_iconShadowImage == null && !_loggedIconShadowResolveFailure)
+        {
+            _loggedIconShadowResolveFailure = true;
+            Debug.LogError("UIShopOfferCardView: iconShadowObject must contain an Image (on the object or a child).", this);
+        }
     }
 
     void OnDisable() => SetHoverVisible(false);
@@ -99,6 +126,8 @@ public class UIShopOfferCardView : MonoBehaviour
         _sold = sold;
         _onBuy = onBuy;
 
+        EnsureIconShadowImageResolved();
+
         if (iconImage != null)
         {
             iconImage.sprite = icon;
@@ -109,6 +138,7 @@ public class UIShopOfferCardView : MonoBehaviour
         {
             _iconShadowImage.sprite = icon;
             _iconShadowImage.enabled = icon != null;
+            _iconShadowImage.color = icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
         }
         if (nameText != null) nameText.text = title ?? "";
         if (descriptionText != null) descriptionText.text = desc ?? "";

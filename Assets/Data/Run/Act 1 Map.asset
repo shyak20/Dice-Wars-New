@@ -27,15 +27,15 @@ MonoBehaviour:
   moveLimit: 10
   eliteMinOnMap: 2
   eliteMaxOnMap: 2
-  shopMinOnMap: 1
-  shopMaxOnMap: 2
+  shopMinOnMap: 3
+  shopMaxOnMap: 4
   shrineMinOnMap: 2
   shrineMaxOnMap: 2
   unknownMinOnMap: 1
   unknownMaxOnMap: 1
   treasureMinOnMap: 1
   treasureMaxOnMap: 1
-  eliteMinStepsFromStart: 2
+  eliteMinStepsFromStart: 3
   shopMinStepsFromStart: 2
   shrineMinStepsFromStart: 2
   treasureMinStepsFromStart: 1
