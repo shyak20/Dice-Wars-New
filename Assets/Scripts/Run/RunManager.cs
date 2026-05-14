@@ -982,7 +982,9 @@ public class RunManager : MonoBehaviour
             EndRunFromPlayerDefeat();
     }
 
-    /// <summary>Map runs: change max HP only (current HP is clamped to the new max).</summary>
+    /// <summary>
+    /// Map runs: change max HP. Positive delta also heals current HP by that amount (capped at new max); negative delta only lowers max and clamps current.
+    /// </summary>
     public void ApplyRunMaxHpDelta(int delta)
     {
         if (!_useMapBasedRun)
@@ -996,11 +998,14 @@ public class RunManager : MonoBehaviour
 
         EnsureRunVitalityBaseline();
         _runMaxHp = Mathf.Max(1, _runMaxHp + delta);
-        _runCurrentHp = Mathf.Clamp(_runCurrentHp, 0, _runMaxHp);
+        if (delta > 0)
+            _runCurrentHp = Mathf.Min(_runCurrentHp + delta, _runMaxHp);
+        else
+            _runCurrentHp = Mathf.Clamp(_runCurrentHp, 0, _runMaxHp);
         NotifyRunVitalityChanged();
     }
 
-    /// <summary>Map runs: raise max HP and heal current by the same amount (e.g. +3 → +3 current capped at new max).</summary>
+    /// <summary>Map runs: same as <see cref="ApplyRunMaxHpDelta"/> for a positive amount (raise max and heal).</summary>
     public void ApplyRunMaxHpIncreaseAndHeal(int amount)
     {
         if (!_useMapBasedRun)
@@ -1012,10 +1017,7 @@ public class RunManager : MonoBehaviour
         if (amount <= 0)
             return;
 
-        EnsureRunVitalityBaseline();
-        _runMaxHp = Mathf.Max(1, _runMaxHp + amount);
-        _runCurrentHp = Mathf.Min(_runCurrentHp + amount, _runMaxHp);
-        NotifyRunVitalityChanged();
+        ApplyRunMaxHpDelta(amount);
     }
 
     /// <summary>

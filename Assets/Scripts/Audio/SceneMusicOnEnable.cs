@@ -1,19 +1,28 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Place one instance per scene (e.g. on a bootstrap object). When enabled, crossfades
-/// <see cref="PersistentMusicPlaylist"/> from whatever is playing into <see cref="sceneMusicClip"/>.
+/// When enabled, asks <see cref="PersistentMusicPlaylist"/> to load <see cref="sceneMusicClip"/> only on the
+/// clear music bus and crossfade from the current line. When <see cref="onlyWhenThisSceneIsActive"/> is true,
+/// waits until this GameObject's scene is the active scene (next frame and/or <see cref="SceneManager.activeSceneChanged"/>)
+/// so additive and async loads still get a crossfade.
 /// </summary>
 public sealed class SceneMusicOnEnable : MonoBehaviour
 {
     [SerializeField] private AudioClip sceneMusicClip;
     [SerializeField, Min(0.01f)] private float crossfadeDurationSeconds = 1.5f;
     [SerializeField] private bool loop = true;
-    [Tooltip("If the playlist is already playing this exact clip, skip starting another crossfade.")]
-    [SerializeField] private bool skipIfAlreadyPlayingThisClip = true;
+    [SerializeField, Min(0f)]
+    [Tooltip("Wait this long for PersistentMusicPlaylist (Main Menu bootstrap) before logging an error.")]
+    private float waitForPlaylistSeconds = 5f;
 
-    Coroutine _waitRoutine;
+    [SerializeField]
+    [Tooltip("If true, crossfade runs only when this object's scene is SceneManager.GetActiveScene(). If not yet active (e.g. additive load), waits for activeSceneChanged.")]
+    private bool onlyWhenThisSceneIsActive = true;
+
+    private Coroutine _waitRoutine;
+    private bool _listeningForActiveScene;
 
     private void OnEnable()
     {
@@ -25,7 +34,7 @@ public sealed class SceneMusicOnEnable : MonoBehaviour
 
         if (_waitRoutine != null)
             StopCoroutine(_waitRoutine);
-        _waitRoutine = StartCoroutine(CoCrossfadeWhenPlaylistReady());
+        _waitRoutine = StartCoroutine(CoCrossfadeWhenReady());
     }
 
     private void OnDisable()
@@ -35,17 +44,70 @@ public sealed class SceneMusicOnEnable : MonoBehaviour
             StopCoroutine(_waitRoutine);
             _waitRoutine = null;
         }
+
+        UnregisterActiveSceneListener();
     }
 
-    IEnumerator CoCrossfadeWhenPlaylistReady()
+    private void UnregisterActiveSceneListener()
     {
-        yield return new WaitUntil(() => PersistentMusicPlaylist.Instance != null);
+        if (!_listeningForActiveScene)
+            return;
+        SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+        _listeningForActiveScene = false;
+    }
+
+    private void OnActiveSceneChanged(Scene previous, Scene next)
+    {
+        if (!isActiveAndEnabled || !onlyWhenThisSceneIsActive)
+            return;
+        if (gameObject.scene != next)
+            return;
+
+        UnregisterActiveSceneListener();
+        TryCrossfade();
+    }
+
+    private void TryCrossfade()
+    {
+        if (sceneMusicClip == null)
+            return;
+        if (PersistentMusicPlaylist.Instance == null)
+            return;
+        PersistentMusicPlaylist.Instance.CrossfadeToClip(sceneMusicClip, crossfadeDurationSeconds, loop);
+    }
+
+    private IEnumerator CoCrossfadeWhenReady()
+    {
+        var deadline = Time.unscaledTime + waitForPlaylistSeconds;
+        while (PersistentMusicPlaylist.Instance == null && Time.unscaledTime < deadline)
+            yield return null;
+
         _waitRoutine = null;
 
-        var p = PersistentMusicPlaylist.Instance;
-        if (skipIfAlreadyPlayingThisClip && p.IsPlayingClip(sceneMusicClip))
+        if (PersistentMusicPlaylist.Instance == null)
+        {
+            Debug.LogError(
+                $"SceneMusicOnEnable on '{name}': PersistentMusicPlaylist did not appear within {waitForPlaylistSeconds}s. " +
+                "Add a bootstrap with PersistentMusicPlaylist in an earlier scene (e.g. main menu).",
+                this);
             yield break;
+        }
 
-        p.CrossfadeToClip(sceneMusicClip, crossfadeDurationSeconds, loop);
+        yield return null;
+
+        if (!onlyWhenThisSceneIsActive)
+        {
+            TryCrossfade();
+            yield break;
+        }
+
+        if (gameObject.scene == SceneManager.GetActiveScene())
+        {
+            TryCrossfade();
+            yield break;
+        }
+
+        SceneManager.activeSceneChanged += OnActiveSceneChanged;
+        _listeningForActiveScene = true;
     }
 }

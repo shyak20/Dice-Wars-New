@@ -26697,7 +26697,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1564648580}
   - component: {fileID: 1564648579}
-  - component: {fileID: 1564648578}
   - component: {fileID: 1564648581}
   m_Layer: 0
   m_Name: Audio Player
@@ -26706,23 +26705,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1564648578
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1564648577}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9d0cfc0a578ad14ca1a5f620004cab9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PersistentMusicPlaylist
-  tracks:
-  - {fileID: 8300000, guid: e81b7cd144983a9409edc77bd733f209, type: 3}
-  playOnStart: 1
-  volume: 0.4
-  persistMutePreference: 1
 --- !u!82 &1564648579
 AudioSource:
   m_ObjectHideFlags: 0
@@ -26844,13 +26826,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1564648577}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7fa93ea05af10084d8d9fbf56161c978, type: 3}
+  m_Script: {fileID: 11500000, guid: a9d0cfc0a578ad14ca1a5f620004cab9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneMusicOnEnable
-  sceneMusicClip: {fileID: 8300000, guid: e81b7cd144983a9409edc77bd733f209, type: 3}
-  crossfadeDurationSeconds: 1.5
-  loop: 1
-  skipIfAlreadyPlayingThisClip: 1
+  m_EditorClassIdentifier: Assembly-CSharp::PersistentMusicPlaylist
+  tracks:
+  - {fileID: 8300000, guid: e81b7cd144983a9409edc77bd733f209, type: 3}
+  playOnStart: 1
+  trackToTrackCrossfadeSeconds: 1.5
+  volume: 1
+  persistMutePreference: 1
 --- !u!1 &1585281773
 GameObject:
   m_ObjectHideFlags: 0

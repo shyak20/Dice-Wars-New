@@ -23,7 +23,7 @@ MonoBehaviour:
     registerEventCompletedOnPick: 1
     outcome:
       rid: 6434882215894319359
-  - label: Leave
+  - label: Spit and the statue and leave
     enabledWhen: []
     registerEventCompletedOnPick: 1
     outcome:

@@ -79,25 +79,30 @@ public class PlayerStatus : MonoBehaviour
     }
 
     /// <summary>
-    /// Increases max HP and heals by the same amount (e.g. 10/20 and +3 → 13/23). Use for "Meditate" and similar.
+    /// Increases max HP and heals by the same amount for positive gains (e.g. 10/20 and +3 → 13/23).
+    /// Negative amounts reduce max HP and clamp current health (no heal).
     /// </summary>
     public void AddMaxHealthAndHeal(int amount)
     {
-        if (amount <= 0) return;
-        maxHealth = Mathf.Max(1, maxHealth + amount);
-        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
-        Debug.Log($"<color=green>Player +{amount} max HP (max {maxHealth}) and healed; current {currentHealth}</color>");
+        if (amount == 0) return;
+        if (amount > 0)
+        {
+            maxHealth = Mathf.Max(1, maxHealth + amount);
+            currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+            Debug.Log($"<color=green>Player +{amount} max HP (max {maxHealth}) and healed; current {currentHealth}</color>");
+        }
+        else
+        {
+            maxHealth = Mathf.Max(1, maxHealth + amount);
+            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+            Debug.Log($"<color=green>Player max HP changed by {amount}. Current max: {maxHealth}, current HP: {currentHealth}</color>");
+        }
+
         UpdateUI();
     }
 
-    /// <summary>Raises max HP only (no current-HP change). Prefer <see cref="AddMaxHealthAndHeal"/> for "gain max and heal" effects.</summary>
-    public void AddMaxHP(int amount)
-    {
-        if (amount == 0) return;
-        maxHealth = Mathf.Max(1, maxHealth + amount);
-        Debug.Log($"<color=green>Player ADD MAX HP {amount} . Current max: {maxHealth}</color>");
-        UpdateUI();
-    }
+    /// <summary>Same as <see cref="AddMaxHealthAndHeal"/> (positive gain heals; negative reduces max and clamps current).</summary>
+    public void AddMaxHP(int amount) => AddMaxHealthAndHeal(amount);
 
     private void Awake()
     {

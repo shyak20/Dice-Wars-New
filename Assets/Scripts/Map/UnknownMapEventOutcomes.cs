@@ -146,7 +146,7 @@ public sealed class UnknownMapEventOutcomeApplyRunCurrentHpDelta : UnknownMapEve
     }
 }
 
-/// <summary>Changes run max HP only (current HP is clamped to the new max).</summary>
+/// <summary>Map run: changes max HP; positive delta also heals current HP by that amount (capped at new max).</summary>
 [Serializable]
 public sealed class UnknownMapEventOutcomeApplyRunMaxHpDelta : UnknownMapEventOutcomeBase
 {

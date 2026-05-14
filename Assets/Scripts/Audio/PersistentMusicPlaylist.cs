@@ -3,8 +3,10 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Plays an ordered list of music clips on the primary <see cref="AudioSource"/> across scene loads.
-/// A second source is used for <see cref="CrossfadeToClip"/> (per-scene <see cref="SceneMusicOnEnable"/>).
+/// DontDestroyOnLoad music host with two fixed <see cref="AudioSource"/> buses: <b>Audio A</b> (on this GameObject)
+/// and <b>Audio B</b> (added in Awake). The playlist starts on A only; B stays empty until the first crossfade.
+/// Each new clip (next playlist track or <see cref="CrossfadeToClip"/>) loads only on the clear bus (the one not
+/// carrying the current line), then crossfades from the outgoing bus over the requested duration.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class PersistentMusicPlaylist : MonoBehaviour
@@ -15,20 +17,28 @@ public class PersistentMusicPlaylist : MonoBehaviour
 
     [SerializeField] private AudioClip[] tracks;
     [SerializeField] private bool playOnStart = true;
+    [SerializeField, Min(0.01f)] private float trackToTrackCrossfadeSeconds = 1.5f;
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
     [Tooltip("When true, PlayerPrefs remembers mute across runs.")]
     [SerializeField] private bool persistMutePreference = true;
 
-    private AudioSource _audio;
-    private AudioSource _secondary;
+    /// <summary>Audio A — the component on this GameObject. First playlist track starts here.</summary>
+    private AudioSource _audioA;
+
+    /// <summary>Audio B — second bus, always present; stays clear until the first crossfade.</summary>
+    private AudioSource _audioB;
+
+    /// <summary>When true, the audible line is on A; when false, on B.</summary>
+    private bool _lineOnA = true;
+
+    private AudioSource _crossfadeFrom;
+    private AudioSource _crossfadeTo;
+
     private int _nextIndex;
     private Coroutine _sequence;
     private Coroutine _crossfadeRoutine;
     private bool _muted;
-    /// <summary>When true, the primary source is the one that should carry the active music line (playlist or last crossfade landing).</summary>
-    private bool _playingIsPrimary = true;
 
-    /// <summary>Fired after mute state changes (including on startup when loaded from PlayerPrefs).</summary>
     public event Action<bool> MuteStateChanged;
 
     public bool IsMuted => _muted;
@@ -43,26 +53,25 @@ public class PersistentMusicPlaylist : MonoBehaviour
 
         Instance = this;
 
-        // DontDestroyOnLoad only applies reliably to root objects; detach from parent first.
         transform.SetParent(null, true);
         DontDestroyOnLoad(gameObject);
 
-        _audio = GetComponent<AudioSource>();
-        if (_audio == null)
+        _audioA = GetComponent<AudioSource>();
+        if (_audioA == null)
         {
             Debug.LogError("PersistentMusicPlaylist: AudioSource missing despite RequireComponent.", this);
             enabled = false;
             return;
         }
 
-        _audio.playOnAwake = false;
-        _audio.loop = false;
-        _audio.spatialBlend = 0f;
+        _audioB = gameObject.AddComponent<AudioSource>();
 
-        _secondary = gameObject.AddComponent<AudioSource>();
-        _secondary.playOnAwake = false;
-        _secondary.loop = false;
-        _secondary.spatialBlend = 0f;
+        foreach (var s in new[] { _audioA, _audioB })
+        {
+            s.playOnAwake = false;
+            s.loop = false;
+            s.spatialBlend = 0f;
+        }
 
         if (persistMutePreference && PlayerPrefs.GetInt(MusicMutedPlayerPrefKey, 0) != 0)
             _muted = true;
@@ -90,45 +99,61 @@ public class PersistentMusicPlaylist : MonoBehaviour
             Instance = null;
     }
 
-    /// <summary>Begins or restarts the playlist from the current next index (0 on first run). Stops scene crossfade music on the secondary bus.</summary>
+    /// <summary>Outgoing bus (current line). Incoming clip always targets the other bus.</summary>
+    private AudioSource OutgoingBus => _lineOnA ? _audioA : _audioB;
+
+    /// <summary>Clear bus — receives the next clip only; no duplicate load on the outgoing bus.</summary>
+    private AudioSource IncomingBus => _lineOnA ? _audioB : _audioA;
+
+    private AudioSource LineBus => _lineOnA ? _audioA : _audioB;
+
     public void BeginPlaylist()
     {
         if (tracks == null || tracks.Length == 0)
             return;
 
-        if (_crossfadeRoutine != null)
-        {
-            StopCoroutine(_crossfadeRoutine);
-            _crossfadeRoutine = null;
-        }
-
-        if (_secondary != null)
-            _secondary.Stop();
-
-        _playingIsPrimary = true;
-
-        if (_audio != null)
-            _audio.Stop();
-
-        if (_sequence != null)
-            StopCoroutine(_sequence);
-        _sequence = StartCoroutine(PlaySequence());
-    }
-
-    /// <summary>Stops playlist advancement and stops playback on the primary source only.</summary>
-    public void StopPlaylist()
-    {
+        StopCrossfadeRoutineIfAny();
         if (_sequence != null)
         {
             StopCoroutine(_sequence);
             _sequence = null;
         }
 
-        if (_audio != null)
-            _audio.Stop();
+        SnapMidCrossfadeIfNeeded();
+
+        _audioA.Stop();
+        _audioB.Stop();
+        _audioB.clip = null;
+        _audioA.clip = null;
+        _lineOnA = true;
+
+        ApplyMuteAndVolume();
+
+        _sequence = StartCoroutine(PlaySequence());
     }
 
-    /// <summary>Fades out whichever source is currently audible and fades in <paramref name="clip"/> on the other bus. Stops the ordered playlist.</summary>
+    public void StopPlaylistAdvancementOnly()
+    {
+        if (_sequence != null)
+        {
+            StopCoroutine(_sequence);
+            _sequence = null;
+        }
+    }
+
+    public void StopPlaylist()
+    {
+        StopPlaylistAdvancementOnly();
+        StopCrossfadeRoutineIfAny();
+        SnapMidCrossfadeIfNeeded();
+
+        _audioA.Stop();
+        _audioB.Stop();
+        _audioA.clip = null;
+        _audioB.clip = null;
+        ApplyMuteAndVolume();
+    }
+
     public void CrossfadeToClip(AudioClip clip, float crossfadeDurationSeconds, bool loop = true)
     {
         if (clip == null)
@@ -137,24 +162,21 @@ public class PersistentMusicPlaylist : MonoBehaviour
             return;
         }
 
-        if (_crossfadeRoutine != null)
-        {
-            StopCoroutine(_crossfadeRoutine);
-            _crossfadeRoutine = null;
-        }
-
+        StopCrossfadeRoutineIfAny();
+        StopPlaylistAdvancementOnly();
+        SnapMidCrossfadeIfNeeded();
         _crossfadeRoutine = StartCoroutine(CoCrossfadeToClip(clip, crossfadeDurationSeconds, loop));
     }
 
-    /// <summary>True if either music bus is playing this clip (after crossfade settles).</summary>
     public bool IsPlayingClip(AudioClip clip)
     {
         if (clip == null)
             return false;
-        if (_audio != null && _audio.isPlaying && _audio.clip == clip)
-            return true;
-        return _secondary != null && _secondary.isPlaying && _secondary.clip == clip;
+        return BusPlayingClip(_audioA, clip) || BusPlayingClip(_audioB, clip);
     }
+
+    private static bool BusPlayingClip(AudioSource s, AudioClip clip) =>
+        s != null && s.isPlaying && s.clip == clip;
 
     public void SetVolume(float normalized)
     {
@@ -182,25 +204,70 @@ public class PersistentMusicPlaylist : MonoBehaviour
             if (s == null)
                 return;
             s.mute = _muted;
+            if (s == _crossfadeFrom || s == _crossfadeTo)
+                return;
             s.volume = volume;
         }
 
-        ApplyOne(_audio);
-        ApplyOne(_secondary);
+        ApplyOne(_audioA);
+        ApplyOne(_audioB);
+    }
+
+    private void StopCrossfadeRoutineIfAny()
+    {
+        if (_crossfadeRoutine == null)
+            return;
+        StopCoroutine(_crossfadeRoutine);
+        _crossfadeRoutine = null;
+        SnapMidCrossfadeIfNeeded();
+    }
+
+    /// <summary>If a crossfade coroutine was stopped mid-fade, snap to the intended incoming bus and clear the outgoing line.</summary>
+    private void SnapMidCrossfadeIfNeeded()
+    {
+        if (_crossfadeTo == null)
+            return;
+
+        var from = _crossfadeFrom;
+        var to = _crossfadeTo;
+        _crossfadeFrom = null;
+        _crossfadeTo = null;
+
+        if (from != null)
+        {
+            from.Stop();
+            from.clip = null;
+        }
+
+        if (to.clip != null && !to.isPlaying)
+            to.Play();
+
+        to.volume = _muted ? 0f : volume;
+        to.mute = _muted;
+        _lineOnA = to == _audioA;
+        ApplyMuteAndVolume();
     }
 
     private IEnumerator CoCrossfadeToClip(AudioClip clip, float crossfadeDurationSeconds, bool loop)
     {
-        StopPlaylist();
+        yield return CoCrossfadeBetweenBuses(clip, crossfadeDurationSeconds, loop);
+        _crossfadeRoutine = null;
+    }
+
+    private IEnumerator CoCrossfadeBetweenBuses(AudioClip clip, float crossfadeDurationSeconds, bool loop)
+    {
+        SnapMidCrossfadeIfNeeded();
 
         if (clip.loadState == AudioDataLoadState.Unloaded)
             clip.LoadAudioData();
 
-        var from = _playingIsPrimary ? _audio : _secondary;
-        var to = _playingIsPrimary ? _secondary : _audio;
+        var from = OutgoingBus;
+        var to = IncomingBus;
 
-        var fromVolStart = !_muted && from != null && from.isPlaying ? from.volume : 0f;
+        _crossfadeFrom = from;
+        _crossfadeTo = to;
 
+        to.Stop();
         to.clip = clip;
         to.loop = loop;
         to.time = 0f;
@@ -218,10 +285,16 @@ public class PersistentMusicPlaylist : MonoBehaviour
 
         if (!to.isPlaying)
         {
-            Debug.LogError($"PersistentMusicPlaylist: crossfade target clip '{clip.name}' did not start playing.", this);
-            _crossfadeRoutine = null;
+            Debug.LogError($"PersistentMusicPlaylist: incoming clip '{clip.name}' did not start playing.", this);
+            to.Stop();
+            to.clip = null;
+            _crossfadeFrom = null;
+            _crossfadeTo = null;
+            ApplyMuteAndVolume();
             yield break;
         }
+
+        var fromVolStart = !_muted && from.isPlaying && from.clip != null ? from.volume : 0f;
 
         var dur = Mathf.Max(0.01f, crossfadeDurationSeconds);
         var elapsed = 0f;
@@ -247,40 +320,53 @@ public class PersistentMusicPlaylist : MonoBehaviour
         }
 
         from.Stop();
+        from.clip = null;
+
+        _lineOnA = to == _audioA;
+        _crossfadeFrom = null;
+        _crossfadeTo = null;
+
         ApplyMuteAndVolume();
-        _playingIsPrimary = to == _audio;
-        _crossfadeRoutine = null;
     }
 
     private IEnumerator PlaySequence()
     {
+        if (!TryAdvanceToNextNonNullTrack(out var first))
+            yield break;
+
+        _audioB.Stop();
+        _audioB.clip = null;
+        _lineOnA = true;
+
+        _audioA.clip = first;
+        _audioA.loop = false;
+        _audioA.time = 0f;
+        ApplyMuteAndVolume();
+        _audioA.Play();
+
+        if (!_audioA.isPlaying)
+        {
+            Debug.LogError($"PersistentMusicPlaylist: first clip '{first?.name}' did not start playing.", this);
+            yield break;
+        }
+
+        yield return new WaitWhile(() => _audioA.isPlaying);
+
         while (true)
         {
             if (!TryAdvanceToNextNonNullTrack(out var clip))
                 yield break;
 
-            if (clip.loadState == AudioDataLoadState.Unloaded)
-                clip.LoadAudioData();
+            yield return CoCrossfadeBetweenBuses(clip, trackToTrackCrossfadeSeconds, loop: false);
 
-            _audio.clip = clip;
-            _audio.Play();
-
-            // Unity often reports isPlaying == false for the first frame after Play(); waiting only on isPlaying skips the whole clip.
-            var waited = 0f;
-            const float giveUp = 2f;
-            while (!_audio.isPlaying && waited < giveUp)
+            var line = LineBus;
+            if (!line.isPlaying || line.clip != clip)
             {
-                waited += Time.unscaledDeltaTime;
-                yield return null;
-            }
-
-            if (!_audio.isPlaying)
-            {
-                Debug.LogError($"PersistentMusicPlaylist: clip '{clip.name}' did not start playing (check import settings / AudioListener).", this);
+                Debug.LogError($"PersistentMusicPlaylist: clip '{clip?.name}' did not land on the line bus.", this);
                 continue;
             }
 
-            yield return new WaitWhile(() => _audio.isPlaying);
+            yield return new WaitWhile(() => line.isPlaying);
         }
     }
 

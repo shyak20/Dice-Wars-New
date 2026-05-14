@@ -3010,7 +3010,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoverTooltipManager
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   fallbackCanvas: {fileID: 1896576052}
-  hoverTooltipScreenOffset: {x: 0, y: 0}
+  hoverTooltipScreenOffset: {x: 30, y: -100}
 --- !u!1 &432293861
 GameObject:
   m_ObjectHideFlags: 0
@@ -4020,7 +4020,7 @@ MonoBehaviour:
   sceneMusicClip: {fileID: 8300000, guid: 47ef3e5b775a6be4b9485b752867ffa9, type: 3}
   crossfadeDurationSeconds: 1.5
   loop: 1
-  skipIfAlreadyPlayingThisClip: 1
+  waitForPlaylistSeconds: 5
 --- !u!4 &573636643
 Transform:
   m_ObjectHideFlags: 0
