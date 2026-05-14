@@ -26698,6 +26698,7 @@ GameObject:
   - component: {fileID: 1564648580}
   - component: {fileID: 1564648579}
   - component: {fileID: 1564648578}
+  - component: {fileID: 1564648581}
   m_Layer: 0
   m_Name: Audio Player
   m_TagString: Untagged
@@ -26719,10 +26720,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PersistentMusicPlaylist
   tracks:
   - {fileID: 8300000, guid: e81b7cd144983a9409edc77bd733f209, type: 3}
-  - {fileID: 8300000, guid: 47ef3e5b775a6be4b9485b752867ffa9, type: 3}
-  - {fileID: 8300000, guid: 83729a5f689da4f4f8509540ceb9eaa6, type: 3}
-  - {fileID: 8300000, guid: 5f2519433241cc642b0275822b258f6d, type: 3}
-  - {fileID: 8300000, guid: ffd62500f927f8b41a12585257fa6666, type: 3}
   playOnStart: 1
   volume: 0.4
   persistMutePreference: 1
@@ -26838,6 +26835,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1564648581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1564648577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fa93ea05af10084d8d9fbf56161c978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneMusicOnEnable
+  sceneMusicClip: {fileID: 8300000, guid: e81b7cd144983a9409edc77bd733f209, type: 3}
+  crossfadeDurationSeconds: 1.5
+  loop: 1
+  skipIfAlreadyPlayingThisClip: 1
 --- !u!1 &1585281773
 GameObject:
   m_ObjectHideFlags: 0
