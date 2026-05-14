@@ -35,13 +35,13 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     public void OnPointerExit(PointerEventData eventData)
     {
         _isPointerInside = false;
-        HoverTooltipManager.Instance?.Hide();
+        HoverTooltipManager.HideAllTooltipPanels();
     }
 
     private void OnDisable()
     {
         _isPointerInside = false;
-        HoverTooltipManager.Instance?.Hide();
+        HoverTooltipManager.HideAllTooltipPanels();
     }
 
     private void Update()

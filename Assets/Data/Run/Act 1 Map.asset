@@ -27,8 +27,8 @@ MonoBehaviour:
   moveLimit: 10
   eliteMinOnMap: 2
   eliteMaxOnMap: 2
-  shopMinOnMap: 3
-  shopMaxOnMap: 4
+  shopMinOnMap: 1
+  shopMaxOnMap: 2
   shrineMinOnMap: 2
   shrineMaxOnMap: 2
   unknownMinOnMap: 1

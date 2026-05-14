@@ -23,7 +23,8 @@ public class HealAction : GameActionWithIcon
             PoolKey = PoolRowKey.FromInspectorString(row),
             Amount = amount,
             Icon = ResolveActionIcon(),
-            PoolRowBackground = GameIconCatalog.GetActionBackground(GetActionVisualId())
+            PoolRowBackground = GameIconCatalog.GetActionBackground(GetActionVisualId()),
+            PerfectStrikeScales = true
         });
     }
 

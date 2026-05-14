@@ -17,7 +17,7 @@ MonoBehaviour:
   combatAnimatorController: {fileID: 9100000, guid: b4955a03a63aec14e911ab1a8e5b2522, type: 2}
   idleAnimatorStateName: Poison Bober Idle
   enemyRank: 0
-  maxHealth: 25
+  maxHealth: 18
   startArmor: 0
   minGoldReward: 30
   maxGoldReward: 50

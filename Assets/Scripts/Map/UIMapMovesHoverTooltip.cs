@@ -43,7 +43,7 @@ public sealed class UIMapMovesHoverTooltip : MonoBehaviour, IPointerEnterHandler
         mgr.Show(_anchorRect, _screenOffset, _title, description);
     }
 
-    public void OnPointerExit(PointerEventData eventData) => HoverTooltipManager.Instance?.Hide();
+    public void OnPointerExit(PointerEventData eventData) => HoverTooltipManager.HideAllTooltipPanels();
 
-    private void OnDisable() => HoverTooltipManager.Instance?.Hide();
+    private void OnDisable() => HoverTooltipManager.HideAllTooltipPanels();
 }

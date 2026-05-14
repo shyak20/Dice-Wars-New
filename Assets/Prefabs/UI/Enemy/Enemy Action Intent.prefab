@@ -57,9 +57,6 @@ MonoBehaviour:
   backgroundImage: {fileID: 0}
   iconImage: {fileID: 2890752652811520331}
   valueText: {fileID: 7206115334883055204}
-  tooltipHoverTargetObject: {fileID: 8810192060997698084}
-  hoverTooltipTarget: {fileID: 0}
-  hoverTooltipPanel: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   tooltipScreenOffset: {x: 0, y: -40}
 --- !u!114 &537237866636673757
 MonoBehaviour:

@@ -1581,7 +1581,27 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private void ManualEndTurn() { if (currentState == CombatState.WaitingForRoll) SubmitTurn(); }
+    /// <summary>
+    /// End Turn from UI must run the same perfect / bust pipeline as <see cref="ProcessPrecisionQueue"/> —
+    /// otherwise <see cref="appliedMultiplier"/> never applies and turn-end heals (etc.) stay at ×1.
+    /// </summary>
+    private void ManualEndTurn()
+    {
+        if (currentState != CombatState.WaitingForRoll) return;
+
+        var perfectAtMax = currentPower == maxPower;
+        var perfectAtMaxMinusOne = maxPower > 1 && currentPower == maxPower - 1 &&
+                                   RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this);
+        var perfectAtMaxPlusOne = currentPower == maxPower + 1 &&
+                                  RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this);
+        if (perfectAtMax || perfectAtMaxMinusOne || perfectAtMaxPlusOne || currentPower > maxPower)
+        {
+            CheckBustStatus();
+            return;
+        }
+
+        SubmitTurn();
+    }
 
     /// <summary>Cheat/debug: force current pooled faces through the Perfect Strike branch.</summary>
     private void ForcePerfectStrikeCheat()

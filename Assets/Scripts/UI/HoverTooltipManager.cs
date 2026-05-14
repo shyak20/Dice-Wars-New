@@ -1,14 +1,42 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Single entry point for hover text that uses <see cref="HoverTooltipPanelUI"/>: instantiates the panel prefab once,
-/// parents it under the same <see cref="Canvas"/> as the anchor (or <see cref="fallbackCanvas"/>), and positions it
-/// with per-call screen offset plus <see cref="hoverTooltipScreenOffset"/>.
+/// Entry point for hover text using <see cref="HoverTooltipPanelUI"/>. Multiple instances may exist across additively loaded scenes;
+/// <see cref="Instance"/> resolves to an enabled manager in <see cref="SceneManager.GetActiveScene"/>. Duplicate components are not destroyed.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class HoverTooltipManager : MonoBehaviour
 {
-    public static HoverTooltipManager Instance { get; private set; }
+    static readonly List<HoverTooltipManager> Registry = new List<HoverTooltipManager>();
+
+    /// <summary>
+    /// Enabled manager in the <see cref="SceneManager.GetActiveScene"/> with a valid prefab, or null if none qualifies.
+    /// </summary>
+    public static HoverTooltipManager Instance
+    {
+        get
+        {
+            CleanupDestroyedEntries();
+            var activeScene = SceneManager.GetActiveScene();
+            for (var i = 0; i < Registry.Count; i++)
+            {
+                var m = Registry[i];
+                if (m == null)
+                    continue;
+                if (!m.isActiveAndEnabled)
+                    continue;
+                if (m.gameObject.scene != activeScene)
+                    continue;
+                if (m.panelPrefab == null)
+                    continue;
+                return m;
+            }
+
+            return null;
+        }
+    }
 
     [Tooltip("Prefab whose root has HoverTooltipPanelUI (same layout as legacy scene instances).")]
     [SerializeField] private HoverTooltipPanelUI panelPrefab;
@@ -27,25 +55,54 @@ public sealed class HoverTooltipManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Debug.LogWarning(
-                $"HoverTooltipManager: duplicate on '{name}' — only one manager per scene. Remove this component from cloned UI prefabs; destroying duplicate component.",
-                this);
-            Destroy(this);
-            return;
-        }
-
-        Instance = this;
         if (panelPrefab == null)
             Debug.LogError($"HoverTooltipManager on '{name}': assign panelPrefab (HoverTooltipPanelUI prefab).", this);
     }
 
+    void OnEnable() => RegisterSelf();
+
+    void OnDisable()
+    {
+        UnregisterSelf();
+        DestroyPanelIfOwned();
+    }
+
     void OnDestroy()
     {
-        if (Instance == this)
-            Instance = null;
+        UnregisterSelf();
         DestroyPanelIfOwned();
+    }
+
+    void RegisterSelf()
+    {
+        if (!Registry.Contains(this))
+            Registry.Add(this);
+    }
+
+    void UnregisterSelf()
+    {
+        Registry.Remove(this);
+    }
+
+    static void CleanupDestroyedEntries()
+    {
+        for (var i = Registry.Count - 1; i >= 0; i--)
+        {
+            if (Registry[i] == null)
+                Registry.RemoveAt(i);
+        }
+    }
+
+    /// <summary>Hides the runtime panel on every registered manager (safe when scene switches or pointer leaves).</summary>
+    public static void HideAllTooltipPanels()
+    {
+        CleanupDestroyedEntries();
+        for (var i = 0; i < Registry.Count; i++)
+        {
+            var m = Registry[i];
+            if (m != null)
+                m.Hide();
+        }
     }
 
     void DestroyPanelIfOwned()

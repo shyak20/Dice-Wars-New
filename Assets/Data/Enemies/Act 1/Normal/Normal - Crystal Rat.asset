@@ -17,7 +17,7 @@ MonoBehaviour:
   combatAnimatorController: {fileID: 9100000, guid: 05ea05f61a9528c47848e38c366f5c5e, type: 2}
   idleAnimatorStateName: Crystal Rat Idle
   enemyRank: 0
-  maxHealth: 30
+  maxHealth: 20
   startArmor: 0
   minGoldReward: 30
   maxGoldReward: 50

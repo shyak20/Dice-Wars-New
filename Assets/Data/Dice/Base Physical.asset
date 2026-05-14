@@ -16,12 +16,11 @@ MonoBehaviour:
   dieType: 0
   uiIcon: {fileID: 21300000, guid: 5a82c1d08c4c36a438cb81762a370f7b, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: 1086363c2a90d07439f392d72ef1197e, type: 3}
-  shopGoldPrice: 50
   faces:
   - {fileID: 11400000, guid: 1c3b340afa77e7c4395c8913616755f7, type: 2}
-  - {fileID: 11400000, guid: 4daef11f28f142840af10a9b80b29a8f, type: 2}
+  - {fileID: 11400000, guid: e2de6fe3ab3c79d4bacfc33247a39755, type: 2}
   - {fileID: 11400000, guid: fea284ff0e66a4e409cfbf722b8ce75a, type: 2}
-  - {fileID: 11400000, guid: 48e5b9d1e65e0df44b7e87ca8368976e, type: 2}
+  - {fileID: 11400000, guid: e2de6fe3ab3c79d4bacfc33247a39755, type: 2}
   - {fileID: 11400000, guid: e2de6fe3ab3c79d4bacfc33247a39755, type: 2}
   - {fileID: 11400000, guid: 0311322b6fde9954ab0768670c476557, type: 2}
   socketedGems:

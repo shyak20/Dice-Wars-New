@@ -13,8 +13,6 @@ namespace Enemies
         [SerializeField] private Image iconImage;
         [SerializeField] private TMP_Text valueText;
         [Header("Hover (HoverTooltipManager)")]
-        [Tooltip("Optional full-cell hit target. If it uses an Image with no sprite, raycasts may miss — when tooltips are on and the action icon has a sprite, the icon is used for hover instead.")]
-        [SerializeField] private GameObject tooltipHoverTargetObject;
         [Tooltip("Screen-space offset passed to HoverTooltipManager for this row.")]
         [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
 
@@ -109,7 +107,16 @@ namespace Enemies
 
         void EnsureHoverTooltipTarget(bool wantTooltip)
         {
-            var hoverGo = ResolveHoverGameObject(wantTooltip);
+            var hoverGo = ResolveHoverGameObject();
+            if (hoverGo == null)
+                return;
+
+            foreach (var orphan in GetComponentsInChildren<HoverTooltipTargetUI>(true))
+            {
+                if (orphan != null && orphan.gameObject != hoverGo)
+                    Destroy(orphan);
+            }
+
             if (_hoverTooltipTarget != null && _hoverTooltipTarget.gameObject != hoverGo)
             {
                 Destroy(_hoverTooltipTarget);
@@ -119,22 +126,38 @@ namespace Enemies
             if (_hoverTooltipTarget == null || _hoverTooltipTarget.gameObject != hoverGo)
                 _hoverTooltipTarget = hoverGo.GetComponent<HoverTooltipTargetUI>() ?? hoverGo.AddComponent<HoverTooltipTargetUI>();
 
-            EnsureGraphicReceivesPointerHover(hoverGo, wantTooltip);
+            if (wantTooltip)
+            {
+                EnsureGraphicReceivesPointerHover(hoverGo);
+                SoleRaycastTargetOnSegment(hoverGo);
+            }
+
             _hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
         }
 
-        GameObject ResolveHoverGameObject(bool wantTooltip)
+        /// <summary>
+        /// Later siblings (full-cell button, TMP, BG) sit above the action icon and steal raycasts. Only the hover target may receive hits so <see cref="HoverTooltipTargetUI"/> runs.
+        /// </summary>
+        void SoleRaycastTargetOnSegment(GameObject hoverGo)
         {
-            if (wantTooltip && iconImage != null && iconImage.sprite != null)
-                return iconImage.gameObject;
-            if (tooltipHoverTargetObject != null)
-                return tooltipHoverTargetObject;
-            return iconImage != null ? iconImage.gameObject : gameObject;
+            foreach (var g in GetComponentsInChildren<Graphic>(true))
+            {
+                if (g == null)
+                    continue;
+                g.raycastTarget = g.gameObject == hoverGo;
+            }
         }
 
-        static void EnsureGraphicReceivesPointerHover(GameObject hoverGo, bool wantTooltip)
+        GameObject ResolveHoverGameObject()
         {
-            if (hoverGo == null || !wantTooltip)
+            if (iconImage != null)
+                return iconImage.gameObject;
+            return gameObject;
+        }
+
+        static void EnsureGraphicReceivesPointerHover(GameObject hoverGo)
+        {
+            if (hoverGo == null)
                 return;
             var graphic = hoverGo.GetComponent<Graphic>();
             if (graphic == null)

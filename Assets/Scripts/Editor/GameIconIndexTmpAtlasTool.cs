@@ -4,12 +4,24 @@ using System.Reflection;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TextCore.LowLevel;
 using System.Linq;
 using System;
 
 public class GameIconIndexTmpAtlasTool : EditorWindow
 {
     private const int PrivateUseAreaStart = 0xE000;
+
+    /// <summary>EditorWindow object references are not reliably restored from layout; we persist via EditorPrefs per project.</summary>
+    private static string PrefsKeyRoot
+    {
+        get
+        {
+            var projectId = PlayerSettings.productGUID;
+            var id = projectId == Guid.Empty ? Application.dataPath : projectId.ToString("N");
+            return $"DiceWars.GameIconIndexTmpAtlasTool.{id}";
+        }
+    }
 
     [SerializeField] private GameIconIndexSO iconIndex;
     [Tooltip("Optional. All Sprites under each folder (recursive) are packed; atlas sprite names match each Sprite asset name in Unity.")]
@@ -19,6 +31,10 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
     [SerializeField] private int atlasSize = 1024;
     [SerializeField] private int atlasPadding = 2;
     [SerializeField] private bool setAsTmpDefaultSpriteAsset = true;
+    [Tooltip("Added to every baked sprite glyph’s Horizontal Bearing X (BX) after generation. Example: existing 0 + tool 0 → 0.")]
+    [SerializeField] private int addToBakedGlyphBearingX;
+    [Tooltip("Added to every baked sprite glyph’s Horizontal Bearing Y (BY) after generation. Example: existing 55 + tool 23 → 78.")]
+    [SerializeField] private int addToBakedGlyphBearingY;
 
     [MenuItem("Tools/Dice Wars/Create TMP Atlas From GameIconIndex")]
     public static void Open()
@@ -28,12 +44,104 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         window.Show();
     }
 
+    private void OnEnable() => LoadPersistedAssignments();
+
+    private void OnDisable() => SavePersistedAssignments();
+
+    private void LoadPersistedAssignments()
+    {
+        var root = PrefsKeyRoot;
+        iconIndex = LoadObjectFromGuidPref<GameIconIndexSO>(root, "IconIndex");
+        outputFolder = LoadObjectFromGuidPref<DefaultAsset>(root, "OutputFolder");
+
+        if (additionalIconFolders == null)
+            additionalIconFolders = new List<DefaultAsset>();
+        additionalIconFolders.Clear();
+        var foldersRaw = EditorPrefs.GetString($"{root}.ExtraFolders", "");
+        if (!string.IsNullOrEmpty(foldersRaw))
+        {
+            foreach (var token in foldersRaw.Split('|'))
+            {
+                if (string.IsNullOrEmpty(token))
+                    additionalIconFolders.Add(null);
+                else
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(token);
+                    additionalIconFolders.Add(
+                        string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<DefaultAsset>(path));
+                }
+            }
+        }
+
+        atlasBaseName = EditorPrefs.GetString($"{root}.AtlasBaseName", atlasBaseName);
+        atlasSize = EditorPrefs.GetInt($"{root}.AtlasSize", atlasSize);
+        atlasPadding = EditorPrefs.GetInt($"{root}.AtlasPadding", atlasPadding);
+        setAsTmpDefaultSpriteAsset = EditorPrefs.GetBool($"{root}.SetAsTmpDefault", setAsTmpDefaultSpriteAsset);
+        addToBakedGlyphBearingX = EditorPrefs.GetInt($"{root}.AddBx", addToBakedGlyphBearingX);
+        addToBakedGlyphBearingY = EditorPrefs.GetInt($"{root}.AddBy", addToBakedGlyphBearingY);
+    }
+
+    private void SavePersistedAssignments()
+    {
+        var root = PrefsKeyRoot;
+        SetGuidPref(root, "IconIndex", iconIndex);
+        SetGuidPref(root, "OutputFolder", outputFolder);
+
+        if (additionalIconFolders == null)
+            additionalIconFolders = new List<DefaultAsset>();
+        var folderTokens = new List<string>(additionalIconFolders.Count);
+        foreach (var folder in additionalIconFolders)
+        {
+            if (folder == null)
+                folderTokens.Add("");
+            else
+            {
+                var path = AssetDatabase.GetAssetPath(folder);
+                var guid = string.IsNullOrEmpty(path) ? "" : AssetDatabase.AssetPathToGUID(path);
+                folderTokens.Add(guid ?? "");
+            }
+        }
+
+        EditorPrefs.SetString($"{root}.ExtraFolders", string.Join("|", folderTokens));
+        EditorPrefs.SetString($"{root}.AtlasBaseName", atlasBaseName ?? "GameIconIndexTMPAtlas");
+        EditorPrefs.SetInt($"{root}.AtlasSize", atlasSize);
+        EditorPrefs.SetInt($"{root}.AtlasPadding", atlasPadding);
+        EditorPrefs.SetBool($"{root}.SetAsTmpDefault", setAsTmpDefaultSpriteAsset);
+        EditorPrefs.SetInt($"{root}.AddBx", addToBakedGlyphBearingX);
+        EditorPrefs.SetInt($"{root}.AddBy", addToBakedGlyphBearingY);
+    }
+
+    private static void SetGuidPref(string prefsRoot, string suffix, UnityEngine.Object obj)
+    {
+        if (obj == null)
+        {
+            EditorPrefs.SetString($"{prefsRoot}.{suffix}", "");
+            return;
+        }
+
+        var path = AssetDatabase.GetAssetPath(obj);
+        var guid = string.IsNullOrEmpty(path) ? "" : AssetDatabase.AssetPathToGUID(path);
+        EditorPrefs.SetString($"{prefsRoot}.{suffix}", guid ?? "");
+    }
+
+    private static T LoadObjectFromGuidPref<T>(string prefsRoot, string suffix) where T : UnityEngine.Object
+    {
+        var guid = EditorPrefs.GetString($"{prefsRoot}.{suffix}", "");
+        if (string.IsNullOrEmpty(guid))
+            return null;
+        var path = AssetDatabase.GUIDToAssetPath(guid);
+        if (string.IsNullOrEmpty(path))
+            return null;
+        return AssetDatabase.LoadAssetAtPath<T>(path);
+    }
+
     private void OnGUI()
     {
         EditorGUILayout.LabelField("Generate TMP Sprite Atlas", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "Reads icons from GameIconIndexSO and/or the folders below, packs them into one atlas texture, then creates a TMP Sprite Asset. " +
-            "Sprite names in the atlas match each source Sprite’s name in Unity (first wins if two sprites share a name).",
+            "Sprite names in the atlas match each source Sprite’s name in Unity (first wins if two sprites share a name). " +
+            "Object fields and options are saved for this project when the window closes (survives reopening Unity).",
             MessageType.Info);
 
         iconIndex = (GameIconIndexSO)EditorGUILayout.ObjectField("Game Icon Index", iconIndex, typeof(GameIconIndexSO), false);
@@ -52,6 +160,8 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         atlasSize = Mathf.Clamp(EditorGUILayout.IntField("Atlas Size", atlasSize), 128, 8192);
         atlasPadding = Mathf.Clamp(EditorGUILayout.IntField("Atlas Padding", atlasPadding), 0, 64);
         setAsTmpDefaultSpriteAsset = EditorGUILayout.ToggleLeft("Set generated atlas as TMP default sprite asset", setAsTmpDefaultSpriteAsset);
+        addToBakedGlyphBearingX = EditorGUILayout.IntField(new GUIContent("Add to baked BX", "Added to each glyph’s Horizontal Bearing X after bake."), addToBakedGlyphBearingX);
+        addToBakedGlyphBearingY = EditorGUILayout.IntField(new GUIContent("Add to baked BY", "Added to each glyph’s Horizontal Bearing Y after bake."), addToBakedGlyphBearingY);
 
         EditorGUILayout.Space(12f);
         var hasFolder = additionalIconFolders != null && additionalIconFolders.Exists(f => f != null);
@@ -172,6 +282,9 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
             Debug.LogError("TMP Atlas Tool: Failed to rebuild TMP sprite lookup tables after glyph-link fix.");
             return;
         }
+
+        AddToAllSpriteGlyphBearings(spriteAsset, addToBakedGlyphBearingX, addToBakedGlyphBearingY);
+
         EditorUtility.SetDirty(spriteAsset);
 
         if (setAsTmpDefaultSpriteAsset)
@@ -182,6 +295,7 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
 
         EditorGUIUtility.PingObject(spriteAsset);
         Debug.Log($"TMP Atlas Tool: Created atlas '{atlasBaseName}' with {uniqueSprites.Count} sprites at '{folderPath}'.");
+        SavePersistedAssignments();
     }
 
     private static void SetTmpDefaultSpriteAsset(TMP_SpriteAsset spriteAsset)
@@ -337,6 +451,29 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
             versionProp.stringValue = string.Empty;
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(spriteAsset);
+    }
+
+    /// <summary>
+    /// TMP sprite glyphs use <see cref="GlyphMetrics.horizontalBearingX"/> / <see cref="GlyphMetrics.horizontalBearingY"/>
+    /// (inspector BX/BY). Adds the tool deltas to whatever values the bake produced for every glyph.
+    /// </summary>
+    private static void AddToAllSpriteGlyphBearings(TMP_SpriteAsset spriteAsset, int addBx, int addBy)
+    {
+        if (spriteAsset == null || (addBx == 0 && addBy == 0)) return;
+        var glyphs = spriteAsset.spriteGlyphTable;
+        if (glyphs == null) return;
+
+        var dBx = (float)addBx;
+        var dBy = (float)addBy;
+        for (var i = 0; i < glyphs.Count; i++)
+        {
+            var g = glyphs[i];
+            if (g == null) continue;
+            var m = g.metrics;
+            m.horizontalBearingX += dBx;
+            m.horizontalBearingY += dBy;
+            g.metrics = m;
+        }
     }
 
     private static void FixCharacterGlyphLinks(TMP_SpriteAsset spriteAsset)
