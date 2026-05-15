@@ -3997,31 +3997,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 573636643}
-  - component: {fileID: 573636642}
   m_Layer: 0
   m_Name: Music
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &573636642
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 573636641}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7fa93ea05af10084d8d9fbf56161c978, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneMusicOnEnable
-  sceneMusicClip: {fileID: 8300000, guid: 47ef3e5b775a6be4b9485b752867ffa9, type: 3}
-  crossfadeDurationSeconds: 1.5
-  loop: 1
-  waitForPlaylistSeconds: 5
-  onlyWhenThisSceneIsActive: 1
+  m_IsActive: 0
 --- !u!4 &573636643
 Transform:
   m_ObjectHideFlags: 0

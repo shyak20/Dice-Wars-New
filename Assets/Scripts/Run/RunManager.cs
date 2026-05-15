@@ -13,6 +13,9 @@ public class RunManager : MonoBehaviour
     [SerializeField] private string shopSceneName = "ShopScene";
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+    /// <summary>Build Settings scene name for the main menu (music transitions use this key).</summary>
+    public string MainMenuSceneName => mainMenuSceneName;
+
     [Header("Map-based run")]
     [Tooltip("When true, StartRun() loads the map scene instead of the encounter list.")]
     [SerializeField] private bool useMapInsteadOfEncounterList;
@@ -287,12 +290,12 @@ public class RunManager : MonoBehaviour
                 return;
             }
 
-            SceneManager.LoadScene(diceSelectSceneName);
+            LoadSceneSingleWithMusic(diceSelectSceneName);
             return;
         }
 
         ClearMapSubsceneTransitionSnapshot();
-        SceneManager.LoadScene(mapSceneName);
+        LoadSceneSingleWithMusic(mapSceneName);
     }
 
     /// <summary>Called from <see cref="DiceSelectSceneController"/> after starting dice are written to <see cref="PlayerDataContainer"/>.</summary>
@@ -311,7 +314,7 @@ public class RunManager : MonoBehaviour
         }
 
         ClearMapSubsceneTransitionSnapshot();
-        SceneManager.LoadScene(mapSceneName);
+        LoadSceneSingleWithMusic(mapSceneName);
     }
 
     public MapGenerationEventsParams GetMapGenerationParamsForCurrentAct()
@@ -433,6 +436,33 @@ public class RunManager : MonoBehaviour
 
     public void ClearMapPersistenceForNewAct() => ClearPersistedMapState();
 
+    /// <summary>
+    /// Starts DDOL crossfade for <paramref name="sceneName"/> when configured, then <see cref="SceneManager.LoadScene(string)"/>.
+    /// Map-run fight / shop entry deliberately omit this so preload/set-active never swaps melody away from the map line.
+    /// </summary>
+    void LoadSceneSingleWithMusic(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogError("RunManager.LoadSceneSingleWithMusic: scene name is empty.");
+            return;
+        }
+
+        PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed(sceneName);
+        SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>Uses <see cref="combatSceneName"/> as the catalog key (must match <see cref="SceneMusicCatalogSO"/> entry).</summary>
+    void TryBeginCombatSceneMusicCrossfade()
+    {
+        if (string.IsNullOrEmpty(combatSceneName))
+            return;
+        PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed(combatSceneName);
+    }
+
+    /// <summary>Returns to main menu with menu scene music crossfade when configured.</summary>
+    public void LoadMainMenuScene() => LoadSceneSingleWithMusic(mainMenuSceneName);
+
     public void PersistAndLoadFightScene(MapGrid grid, Vector2Int playerCell, int movesTaken, EnemyRank rank,
         bool isBossEndTile)
     {
@@ -460,6 +490,7 @@ public class RunManager : MonoBehaviour
         RunEncounterBuffer.SetPendingCombat(enemy, isBossEndTile);
         if (TryEnterPreloadedCombatFromMap())
             return;
+        TryBeginCombatSceneMusicCrossfade();
         SceneManager.LoadScene(combatSceneName);
     }
 
@@ -577,6 +608,7 @@ public class RunManager : MonoBehaviour
         if (!combatScene.IsValid() || !combatScene.isLoaded)
             return false;
 
+        TryBeginCombatSceneMusicCrossfade();
         StashAndDeactivateMapSceneRoots();
         RestoreSceneRootsToCapturedDefaults(_fightRootDefaultActives);
         SceneManager.SetActiveScene(combatScene);
@@ -779,7 +811,7 @@ public class RunManager : MonoBehaviour
         _shopScenePreloadedForMapRun = false;
         ClearMapSubsceneTransitionSnapshot();
 
-        SceneManager.LoadScene(mapSceneName);
+        LoadSceneSingleWithMusic(mapSceneName);
     }
 
     public EnemyTypeSO DrawEnemyForMapCombat(EnemyRank rank)
@@ -1110,7 +1142,7 @@ public class RunManager : MonoBehaviour
             ClearMapPersistenceForNewAct();
             ClearMapEncounterDrawState();
             ClearMapSubsceneTransitionSnapshot();
-            SceneManager.LoadScene(mapSceneName);
+            LoadSceneSingleWithMusic(mapSceneName);
             return;
         }
 
@@ -1182,6 +1214,7 @@ public class RunManager : MonoBehaviour
                     Debug.LogError($"RunManager: Room {currentRoomIndex} is Combat but has no enemyType assigned!");
                     return;
                 }
+                TryBeginCombatSceneMusicCrossfade();
                 SceneManager.LoadScene(combatSceneName);
                 break;
 
@@ -1203,12 +1236,12 @@ public class RunManager : MonoBehaviour
     private void EndRun()
     {
         Debug.Log("RunManager: Run complete!");
-        SceneManager.LoadScene(mainMenuSceneName);
+        LoadMainMenuScene();
     }
 
     private void EndRunFromPlayerDefeat()
     {
         Debug.LogError("RunManager: Game over — player HP reached 0.");
-        SceneManager.LoadScene(mainMenuSceneName);
+        LoadMainMenuScene();
     }
 }

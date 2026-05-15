@@ -26835,6 +26835,7 @@ MonoBehaviour:
   trackToTrackCrossfadeSeconds: 1.5
   volume: 1
   persistMutePreference: 1
+  sceneMusicCatalog: {fileID: 11400000, guid: f8a7d6c5b4a3928170655443322110ab, type: 2}
 --- !u!1 &1585281773
 GameObject:
   m_ObjectHideFlags: 0

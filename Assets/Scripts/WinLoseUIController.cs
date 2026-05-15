@@ -89,6 +89,12 @@ public class WinLoseUIController : MonoBehaviour
     public void GoToMainMenu()
     {
         RunEncounterBuffer.AbortPendingMapCombatState();
-        SceneManager.LoadScene("MainMenu");
+        if (RunManager.Instance != null)
+            RunManager.Instance.LoadMainMenuScene();
+        else
+        {
+            PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed("MainMenu");
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 }

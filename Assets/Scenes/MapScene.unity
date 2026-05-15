@@ -9268,7 +9268,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1010002892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9280,12 +9280,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7fa93ea05af10084d8d9fbf56161c978, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneMusicOnEnable
-  sceneMusicClip: {fileID: 8300000, guid: d9be34e6245888944844fc3ea36b98d5, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::SceneMusicTarget
+  musicClip: {fileID: 8300000, guid: d9be34e6245888944844fc3ea36b98d5, type: 3}
   crossfadeDurationSeconds: 1.5
   loop: 1
-  waitForPlaylistSeconds: 0
-  onlyWhenThisSceneIsActive: 0
 --- !u!4 &1010002893
 Transform:
   m_ObjectHideFlags: 0

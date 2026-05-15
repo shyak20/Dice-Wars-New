@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -161,7 +162,15 @@ public sealed class MapMovementManager : MonoBehaviour
         treasurePanel?.Hide();
         unknownEventPanel?.Hide();
         RunManager.Instance?.ClearPersistedMapState();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        var idx = SceneManager.GetActiveScene().buildIndex;
+        var path = SceneUtility.GetScenePathByBuildIndex(idx);
+        if (!string.IsNullOrEmpty(path))
+        {
+            var sceneOnly = Path.GetFileNameWithoutExtension(path);
+            PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed(sceneOnly);
+        }
+
+        SceneManager.LoadScene(idx);
     }
 
     private void RegenerateMapInternal()

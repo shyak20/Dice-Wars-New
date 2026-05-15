@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -7,6 +8,7 @@ using UnityEngine;
 /// and <b>Audio B</b> (added in Awake). The playlist starts on A only; B stays empty until the first crossfade.
 /// Each new clip (next playlist track or <see cref="CrossfadeToClip"/>) loads only on the clear bus (the one not
 /// carrying the current line), then crossfades from the outgoing bus over the requested duration.
+/// Scene load flows call <see cref="TryBeginCrossfadeForSceneNamed"/> before <c>SceneManager.LoadScene</c>; scenes may host <see cref="SceneMusicTarget"/>.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class PersistentMusicPlaylist : MonoBehaviour
@@ -21,6 +23,20 @@ public class PersistentMusicPlaylist : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
     [Tooltip("When true, PlayerPrefs remembers mute across runs.")]
     [SerializeField] private bool persistMutePreference = true;
+
+    [Header("Scene transitions")]
+    [Tooltip("Optional. Scene names (Scene.name) → clip/crossfade for transitions before that scene has loaded once.")]
+    [SerializeField] private SceneMusicCatalogSO sceneMusicCatalog;
+
+    private readonly Dictionary<string, SceneMusicRegistration> _sceneMusicBySceneName =
+        new Dictionary<string, SceneMusicRegistration>(StringComparer.OrdinalIgnoreCase);
+
+    private struct SceneMusicRegistration
+    {
+        public AudioClip Clip;
+        public float CrossfadeSeconds;
+        public bool Loop;
+    }
 
     /// <summary>Audio A — the component on this GameObject. First playlist track starts here.</summary>
     private AudioSource _audioA;
@@ -84,7 +100,74 @@ public class PersistentMusicPlaylist : MonoBehaviour
 
         if (tracks == null || tracks.Length == 0)
             Debug.LogError("PersistentMusicPlaylist: assign at least one AudioClip in Tracks.", this);
+
+        MergeSceneMusicCatalogIntoRegistry();
     }
+
+    /// <summary>Merges <see cref="sceneMusicCatalog"/> entries (does not clear overrides from <see cref="SceneMusicTarget"/>).</summary>
+    public void MergeSceneMusicCatalogIntoRegistry()
+    {
+        if (sceneMusicCatalog == null || sceneMusicCatalog.entries == null)
+            return;
+
+        for (var i = 0; i < sceneMusicCatalog.entries.Count; i++)
+        {
+            var e = sceneMusicCatalog.entries[i];
+            if (e == null || string.IsNullOrWhiteSpace(e.sceneName) || e.clip == null)
+                continue;
+
+            var key = NormalizeSceneKey(e.sceneName);
+            if (string.IsNullOrEmpty(key))
+                continue;
+
+            _sceneMusicBySceneName[key] = new SceneMusicRegistration
+            {
+                Clip = e.clip,
+                CrossfadeSeconds = Mathf.Max(0.01f, e.crossfadeDurationSeconds),
+                Loop = e.loop,
+            };
+        }
+    }
+
+    /// <summary>Per-scene bootstrap from <see cref="SceneMusicTarget"/> (overrides catalog for that scene name).</summary>
+    public void RegisterSceneMusic(string sceneName, AudioClip clip, float crossfadeDurationSeconds, bool loop)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName) || clip == null)
+            return;
+
+        var key = NormalizeSceneKey(sceneName);
+        if (string.IsNullOrEmpty(key))
+            return;
+
+        _sceneMusicBySceneName[key] = new SceneMusicRegistration
+        {
+            Clip = clip,
+            CrossfadeSeconds = Mathf.Max(0.01f, crossfadeDurationSeconds),
+            Loop = loop,
+        };
+    }
+
+    /// <summary>
+    /// Starts crossfade toward the clip registered for <paramref name="sceneName"/> (from catalog or <see cref="SceneMusicTarget"/>).
+    /// Call immediately before <c>SceneManager.LoadScene</c> for single-loaded gameplay scenes.
+    /// </summary>
+    public void TryBeginCrossfadeForSceneNamed(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+            return;
+
+        var key = NormalizeSceneKey(sceneName);
+        if (string.IsNullOrEmpty(key))
+            return;
+
+        if (!_sceneMusicBySceneName.TryGetValue(key, out var reg) || reg.Clip == null)
+            return;
+
+        CrossfadeToClip(reg.Clip, reg.CrossfadeSeconds, reg.Loop);
+    }
+
+    static string NormalizeSceneKey(string sceneName) =>
+        string.IsNullOrWhiteSpace(sceneName) ? string.Empty : sceneName.Trim();
 
     private void Start()
     {
