@@ -85,6 +85,15 @@ public class DieAssetSO : ScriptableObject
         return false;
     }
 
+    /// <summary>Map events / tools: writes a gem socket even when replacing an existing gem.</summary>
+    public void SetSocketedGemForMapEvent(int index, GemSO gem)
+    {
+        EnsureGemSocketArray();
+        if (index < 0 || index >= GemSocketCount)
+            throw new ArgumentOutOfRangeException(nameof(index), index, $"Gem socket index must be 0..{GemSocketCount - 1}.");
+        socketedGems[index] = gem;
+    }
+
     /// <summary>Total charges where a matching roll contributes 0 power (sum of FreeFirstRollForThisDie params across socketed gems).</summary>
     public int SumGemNoPowerOnMatchCharges()
     {

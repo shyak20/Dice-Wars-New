@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b81b4720020024893a1c2c1f4b581a, type: 3}
+  m_Name: Merlins Monument
+  m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
+  displayName: "Merlin\u2019s Monument"
+  description: A statue of the Archmage Merlin standing tall. It is said that anyone
+    who meditate here gains a blessing from Merlin himself.
+  eventArt: {fileID: 21300000, guid: 946859e4d95ded54481bcdcb45a26228, type: 3}
+  visibilityConditions: []
+  excludeFromDrawIfCompletedThisRun: 0
+  choices:
+  - label: '[Risk] Try to break the statue - 50% find an Artifact, 50% gain a Face
+      Curse to a random die'
+    enabledWhen:
+    - rid: 6434882266773586187
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586188
+  - label: Spit on the Statue and move on
+    enabledWhen:
+    - rid: 6434882266773586189
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586190
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882266773586187
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586188
+      type: {class: UnknownMapEventOutcomeRandomWeightedBranch, ns: , asm: Assembly-CSharp}
+      data:
+        branches:
+        - rid: 6434882266773586191
+        - rid: 6434882266773586192
+    - rid: 6434882266773586189
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586190
+      type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586191
+      type: {class: UnknownMapEventRandomBranchSlot, ns: , asm: Assembly-CSharp}
+      data:
+        weight: 50
+        outcome:
+          rid: 6434882266773586193
+    - rid: 6434882266773586192
+      type: {class: UnknownMapEventRandomBranchSlot, ns: , asm: Assembly-CSharp}
+      data:
+        weight: 50
+        outcome:
+          rid: 6434882266773586194
+    - rid: 6434882266773586193
+      type: {class: UnknownMapEventOutcomeAddRunRelic, ns: , asm: Assembly-CSharp}
+      data:
+        relic: {fileID: 11400000, guid: fb3db4253ac093a49a1b7136b9cc03ac, type: 2}
+    - rid: 6434882266773586194
+      type: {class: UnknownMapEventOutcomeAddCurseFaceToRandomDie, ns: , asm: Assembly-CSharp}
+      data:
+        curseFace: {fileID: 11400000, guid: 0c48e346faacf154fba2364657dc462a, type: 2}

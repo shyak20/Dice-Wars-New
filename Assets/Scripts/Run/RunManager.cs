@@ -38,6 +38,11 @@ public class RunManager : MonoBehaviour
     private bool _runVitalityInitialized;
     private int _runCurrentHp;
     private int _runMaxHp;
+    private int _runPermanentStrengthStacksFromSpecialEvents;
+
+    [Header("Unknown map — permanent Strength")]
+    [Tooltip("Each combat start applies this many stacks per accumulated map bonus (Fossilized D6, etc.). Assign Strength status asset.")]
+    [SerializeField] private StrengthEffectSO mapRunPermanentStrengthDefinition;
 
     private MapGrid _persistedMapGrid;
     private Vector2Int _persistedPlayerCell;
@@ -223,6 +228,7 @@ public class RunManager : MonoBehaviour
         ClearRunRelics();
         _runVitalityInitialized = false;
         _completedUnknownMapEventIds.Clear();
+        _runPermanentStrengthStacksFromSpecialEvents = 0;
 
         if (useMapInsteadOfEncounterList)
         {
@@ -267,6 +273,7 @@ public class RunManager : MonoBehaviour
         _useMapBasedRun = true;
         _currentActIndex = 0;
         _runShrineBonusMaxPower = 0;
+        _runPermanentStrengthStacksFromSpecialEvents = 0;
         _runVitalityInitialized = false;
         ClearMapPersistenceForNewAct();
         ClearMapEncounterDrawState();
@@ -1057,6 +1064,28 @@ public class RunManager : MonoBehaviour
             return;
         _runShrineBonusMaxPower += amount;
         OnRunMaxPowerBudgetChanged?.Invoke();
+    }
+
+    /// <summary>Permanent run bonus: applied as Strength stacks at each combat start (see map strength definition).</summary>
+    public void AddRunPermanentStrengthStacks(int amount)
+    {
+        if (amount <= 0)
+            return;
+        _runPermanentStrengthStacksFromSpecialEvents += amount;
+    }
+
+    /// <summary>Called from <see cref="CombatManager"/> after relic CombatStart so map-granted Strength persists every fight.</summary>
+    public void TryApplyPermanentStrengthStacksAtCombatStart(CombatManager combat, PlayerStatus player, EnemyController enemy)
+    {
+        if (combat == null || player == null || _runPermanentStrengthStacksFromSpecialEvents <= 0 || mapRunPermanentStrengthDefinition == null)
+            return;
+        var ctx = new StatusEffectContext
+        {
+            CombatManager = combat,
+            Player = player,
+            Enemy = enemy,
+        };
+        player.StatusEffects.ApplyStatus(mapRunPermanentStrengthDefinition, _runPermanentStrengthStacksFromSpecialEvents, ctx);
     }
 
     public void HandleVictoryContinueFromCombat()

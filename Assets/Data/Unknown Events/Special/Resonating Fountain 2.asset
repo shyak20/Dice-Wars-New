@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b81b4720020024893a1c2c1f4b581a, type: 3}
+  m_Name: Resonating Fountain 2
+  m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
+  displayName: The Resonating Fountain 2
+  description: A pool of liquid mercury-mana sits perfectly still. As you approach,
+    your Resonance Meter begins to hum in sympathy. The water reflects not your face,
+    but the potential of your spells.
+  eventArt: {fileID: 0}
+  visibilityConditions:
+  - rid: 6434882266773586146
+  excludeFromDrawIfCompletedThisRun: 1
+  choices:
+  - label: '[Cost: 20 Max HP] Increase Max Power by 1 (Open The Resonating Fountain
+      3)'
+    enabledWhen:
+    - rid: 6434882266773586147
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586148
+  - label: Leave
+    enabledWhen:
+    - rid: 6434882266773586149
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586150
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882266773586146
+      type: {class: UnknownMapEventConditionCompletedUnknownEvent, ns: , asm: Assembly-CSharp}
+      data:
+        requiredCompletedUnknownEvent: {fileID: 11400000, guid: d2c402cad1934f0409eb32dcb4de2743, type: 2}
+    - rid: 6434882266773586147
+      type: {class: UnknownMapEventConditionRunMaxHpMin, ns: , asm: Assembly-CSharp}
+      data:
+        minimumMaxHp: 21
+    - rid: 6434882266773586148
+      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      data:
+        steps:
+        - rid: 6434882266773586151
+        - rid: 6434882266773586152
+    - rid: 6434882266773586149
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586150
+      type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586151
+      type: {class: UnknownMapEventOutcomeApplyRunMaxHpDelta, ns: , asm: Assembly-CSharp}
+      data:
+        maxHpDelta: -20
+    - rid: 6434882266773586152
+      type: {class: UnknownMapEventOutcomeApplyShrineMaxPowerBonus, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 1

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>Runtime context for executing <see cref="UnknownMapEventOutcomeBase"/> after the player picks an option.</summary>
 public readonly struct UnknownMapEventOutcomeContext
@@ -219,8 +218,8 @@ public sealed class UnknownMapEventRandomBranchSlot
 [Serializable]
 public sealed class UnknownMapEventOutcomeRandomWeightedBranch : UnknownMapEventOutcomeBase
 {
-    [SerializeField]
-    private List<UnknownMapEventRandomBranchSlot> branches = new List<UnknownMapEventRandomBranchSlot>();
+    [SerializeReference]
+    public List<UnknownMapEventRandomBranchSlot> branches = new List<UnknownMapEventRandomBranchSlot>();
 
     public override void Execute(UnknownMapEventOutcomeContext ctx)
     {
@@ -283,7 +282,7 @@ public sealed class UnknownMapEventOutcomeMarkEventCompleted : UnknownMapEventOu
 public sealed class UnknownMapEventOutcomeComposite : UnknownMapEventOutcomeBase
 {
     [SerializeReference]
-    private List<UnknownMapEventOutcomeBase> steps = new List<UnknownMapEventOutcomeBase>();
+    public List<UnknownMapEventOutcomeBase> steps = new List<UnknownMapEventOutcomeBase>();
 
     public override void Execute(UnknownMapEventOutcomeContext ctx)
     {
@@ -291,5 +290,376 @@ public sealed class UnknownMapEventOutcomeComposite : UnknownMapEventOutcomeBase
             return;
         for (var i = 0; i < steps.Count; i++)
             steps[i]?.Execute(ctx);
+    }
+}
+
+/// <summary>No gameplay effect (e.g. Leave / dismiss).</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeNoOp : UnknownMapEventOutcomeBase
+{
+    public override void Execute(UnknownMapEventOutcomeContext ctx) { }
+}
+
+/// <summary>Permanent run bonus: each combat start applies this many Strength stacks (see RunManager map strength definition).</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeAddRunPermanentStrengthStacks : UnknownMapEventOutcomeBase
+{
+    [Min(1)] public int stacks = 1;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (stacks <= 0)
+            return;
+        RunManager.Instance?.AddRunPermanentStrengthStacks(stacks);
+    }
+}
+
+/// <summary>Duplicates one random non-null deck die (runtime clone).</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeDuplicateRandomDeckDie : UnknownMapEventOutcomeBase
+{
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        var pdc = PlayerDataContainer.Instance;
+        if (pdc == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeDuplicateRandomDeckDie: PlayerDataContainer missing.");
+            return;
+        }
+
+        pdc.TryDuplicateRandomDeckDie();
+    }
+}
+
+/// <summary>Adds <see cref="curseFace"/> to a random deck die that can socket it (curse matches any die).</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeAddCurseFaceToRandomDie : UnknownMapEventOutcomeBase
+{
+    public DieFaceSO curseFace;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (curseFace == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeAddCurseFaceToRandomDie: curseFace is not assigned.");
+            return;
+        }
+
+        var pdc = PlayerDataContainer.Instance;
+        var data = pdc?.RuntimeData;
+        if (data?.currentDeck == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeAddCurseFaceToRandomDie: no runtime deck.");
+            return;
+        }
+
+        var indices = new List<int>();
+        for (var i = 0; i < data.currentDeck.Count; i++)
+        {
+            if (data.currentDeck[i] != null)
+                indices.Add(i);
+        }
+
+        if (indices.Count == 0)
+        {
+            Debug.LogWarning("UnknownMapEventOutcomeAddCurseFaceToRandomDie: deck empty.");
+            return;
+        }
+
+        UnknownMapEventOutcomeShuffle.ShuffleInPlace(indices);
+        foreach (var dieIdx in indices)
+        {
+            var die = data.currentDeck[dieIdx];
+            if (die?.faces == null)
+                continue;
+            var slotOrder = new List<int> { 0, 1, 2, 3, 4, 5 };
+            UnknownMapEventOutcomeShuffle.ShuffleInPlace(slotOrder);
+            foreach (var slot in slotOrder)
+            {
+                if (slot < 0 || slot >= die.faces.Length)
+                    continue;
+                if (!curseFace.MatchesDie(die))
+                    continue;
+                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, curseFace))
+                    continue;
+                die.SwapFace(slot, curseFace);
+                PlayerDataContainer.NotifyRuntimeDeckChanged();
+                return;
+            }
+        }
+
+        Debug.LogWarning("UnknownMapEventOutcomeAddCurseFaceToRandomDie: no valid face slot found.");
+    }
+}
+
+/// <summary>Replaces one random face on a random die with a legendary picked from <see cref="legendaryPool"/> that matches the die.</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool : UnknownMapEventOutcomeBase
+{
+    [Tooltip("Only faces with FaceRarity.Legendary are considered from this list.")]
+    public List<DieFaceSO> legendaryPool = new List<DieFaceSO>();
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (legendaryPool == null || legendaryPool.Count == 0)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool: legendaryPool empty.");
+            return;
+        }
+
+        var data = PlayerDataContainer.Instance?.RuntimeData;
+        if (data?.currentDeck == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool: no deck.");
+            return;
+        }
+
+        var dieOrder = new List<int>();
+        for (var i = 0; i < data.currentDeck.Count; i++)
+        {
+            if (data.currentDeck[i] != null)
+                dieOrder.Add(i);
+        }
+
+        UnknownMapEventOutcomeShuffle.ShuffleInPlace(dieOrder);
+        foreach (var dIdx in dieOrder)
+        {
+            var die = data.currentDeck[dIdx];
+            if (die?.faces == null)
+                continue;
+
+            var candidates = new List<DieFaceSO>();
+            for (var p = 0; p < legendaryPool.Count; p++)
+            {
+                var f = legendaryPool[p];
+                if (f != null && f.rarity == FaceRarity.Legendary && f.MatchesDie(die))
+                    candidates.Add(f);
+            }
+
+            if (candidates.Count == 0)
+                continue;
+
+            var slotOrder = new List<int> { 0, 1, 2, 3, 4, 5 };
+            UnknownMapEventOutcomeShuffle.ShuffleInPlace(slotOrder);
+            foreach (var slot in slotOrder)
+            {
+                if (slot < 0 || slot >= die.faces.Length)
+                    continue;
+                var pick = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, pick))
+                    continue;
+                die.SwapFace(slot, pick);
+                PlayerDataContainer.NotifyRuntimeDeckChanged();
+                return;
+            }
+        }
+
+        Debug.LogWarning("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool: could not place a legendary face.");
+    }
+}
+
+/// <summary>Replaces the first curse-type face found on the deck with <see cref="replacement"/> (must match die line).</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeReplaceFirstCurseFaceWith : UnknownMapEventOutcomeBase
+{
+    public DieFaceSO replacement;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (replacement == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceFirstCurseFaceWith: replacement is null.");
+            return;
+        }
+
+        var data = PlayerDataContainer.Instance?.RuntimeData;
+        if (data?.currentDeck == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceFirstCurseFaceWith: no deck.");
+            return;
+        }
+
+        for (var d = 0; d < data.currentDeck.Count; d++)
+        {
+            var die = data.currentDeck[d];
+            if (die?.faces == null)
+                continue;
+            for (var slot = 0; slot < die.faces.Length && slot < 6; slot++)
+            {
+                var face = die.faces[slot];
+                if (face == null || face.type != DieType.Curse)
+                    continue;
+                if (!replacement.MatchesDie(die))
+                    continue;
+                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, replacement))
+                    continue;
+                die.SwapFace(slot, replacement);
+                PlayerDataContainer.NotifyRuntimeDeckChanged();
+                return;
+            }
+        }
+
+        Debug.LogWarning("UnknownMapEventOutcomeReplaceFirstCurseFaceWith: no curse face replaced.");
+    }
+}
+
+/// <summary>Upgrades one random socketed gem by swapping it for the paired <see cref="to"/> when the socket holds <see cref="from"/>.</summary>
+[Serializable]
+public sealed class UnknownMapEventGemUpgradePair
+{
+    public GemSO from;
+    public GemSO to;
+}
+
+[Serializable]
+public sealed class UnknownMapEventOutcomeUpgradeRandomSocketedGemFromTable : UnknownMapEventOutcomeBase
+{
+    public List<UnknownMapEventGemUpgradePair> pairs = new List<UnknownMapEventGemUpgradePair>();
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (pairs == null || pairs.Count == 0)
+        {
+            Debug.LogError("UnknownMapEventOutcomeUpgradeRandomSocketedGemFromTable: no pairs.");
+            return;
+        }
+
+        var data = PlayerDataContainer.Instance?.RuntimeData;
+        if (data?.currentDeck == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeUpgradeRandomSocketedGemFromTable: no deck.");
+            return;
+        }
+
+        var sockets = new List<(DieAssetSO die, int socket, GemSO current, GemSO upgrade)>();
+        for (var d = 0; d < data.currentDeck.Count; d++)
+        {
+            var die = data.currentDeck[d];
+            if (die == null)
+                continue;
+            for (var s = 0; s < DieAssetSO.GemSocketCount; s++)
+            {
+                var g = die.GetSocketedGemAt(s);
+                if (g == null)
+                    continue;
+                for (var p = 0; p < pairs.Count; p++)
+                {
+                    var pair = pairs[p];
+                    if (pair?.from == null || pair.to == null)
+                        continue;
+                    if (pair.from != g)
+                        continue;
+                    sockets.Add((die, s, g, pair.to));
+                    break;
+                }
+            }
+        }
+
+        if (sockets.Count == 0)
+        {
+            Debug.LogWarning("UnknownMapEventOutcomeUpgradeRandomSocketedGemFromTable: no matching socketed gem.");
+            return;
+        }
+
+        var pick = sockets[UnityEngine.Random.Range(0, sockets.Count)];
+        pick.die.SetSocketedGemForMapEvent(pick.socket, pick.upgrade);
+        PlayerDataContainer.NotifyRuntimeDeckChanged();
+    }
+}
+
+[Serializable]
+public sealed class UnknownMapEventOutcomeAddRunRelic : UnknownMapEventOutcomeBase
+{
+    public RelicSO relic;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (relic == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeAddRunRelic: relic is null.");
+            return;
+        }
+
+        RunManager.Instance?.AddRunRelic(relic);
+    }
+}
+
+/// <summary>Replaces the first curse face on the deck with a base face chosen from the die’s <see cref="DieType"/> line.</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine : UnknownMapEventOutcomeBase
+{
+    public DieFaceSO replacementForDamageDie;
+    public DieFaceSO replacementForArmorDie;
+    public DieFaceSO replacementForFireDie;
+    public DieFaceSO replacementForIceDie;
+    public DieFaceSO replacementForNatureDie;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        var data = PlayerDataContainer.Instance?.RuntimeData;
+        if (data?.currentDeck == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine: no deck.");
+            return;
+        }
+
+        for (var d = 0; d < data.currentDeck.Count; d++)
+        {
+            var die = data.currentDeck[d];
+            if (die?.faces == null)
+                continue;
+            for (var slot = 0; slot < die.faces.Length && slot < 6; slot++)
+            {
+                var face = die.faces[slot];
+                if (face == null || face.type != DieType.Curse)
+                    continue;
+
+                var rep = ReplacementFor(die);
+                if (rep == null)
+                {
+                    Debug.LogError("UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine: missing replacement for die type " + die.dieType);
+                    return;
+                }
+
+                if (!rep.MatchesDie(die))
+                    continue;
+                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep))
+                    continue;
+                die.SwapFace(slot, rep);
+                PlayerDataContainer.NotifyRuntimeDeckChanged();
+                return;
+            }
+        }
+
+        Debug.LogWarning("UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine: no curse face replaced.");
+    }
+
+    DieFaceSO ReplacementFor(DieAssetSO die)
+    {
+        if (die == null)
+            return null;
+        return die.dieType switch
+        {
+            DieType.Damage => replacementForDamageDie,
+            DieType.Armor => replacementForArmorDie,
+            DieType.Fire => replacementForFireDie,
+            DieType.Ice => replacementForIceDie,
+            DieType.Nature => replacementForNatureDie,
+            _ => replacementForDamageDie,
+        };
+    }
+}
+
+static class UnknownMapEventOutcomeShuffle
+{
+    internal static void ShuffleInPlace<T>(IList<T> list)
+    {
+        if (list == null || list.Count < 2)
+            return;
+        for (var i = list.Count - 1; i > 0; i--)
+        {
+            var j = UnityEngine.Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 }

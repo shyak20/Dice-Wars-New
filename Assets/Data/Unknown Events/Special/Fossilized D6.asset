@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b81b4720020024893a1c2c1f4b581a, type: 3}
+  m_Name: Fossilized D6
+  m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
+  displayName: The Fossilized D6
+  description: "In a corner of the vault, you find a massive stone die half-buried
+    in crystalline growth. It vibrates with an ancient, heavy frequency. It isn't
+    dead\u2014it's waiting for a new spark."
+  eventArt: {fileID: 0}
+  visibilityConditions: []
+  excludeFromDrawIfCompletedThisRun: 0
+  choices:
+  - label: '[Cost: Add 1 Curse] Gain +2 Strength permanently (for the entire run).'
+    enabledWhen:
+    - rid: 6434882266773586130
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586131
+  - label: '[Cost: 10 HP] Gain 150 Coins.'
+    enabledWhen:
+    - rid: 6434882266773586132
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586133
+  - label: Leave
+    enabledWhen:
+    - rid: 6434882266773586134
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586135
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882266773586130
+      type: {class: UnknownMapEventConditionHasDieOfType, ns: , asm: Assembly-CSharp}
+      data:
+        dieType: 0
+    - rid: 6434882266773586131
+      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      data:
+        steps:
+        - rid: 6434882266773586136
+        - rid: 6434882266773586137
+    - rid: 6434882266773586132
+      type: {class: UnknownMapEventConditionRunCurrentHpMin, ns: , asm: Assembly-CSharp}
+      data:
+        minimumHp: 11
+    - rid: 6434882266773586133
+      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      data:
+        steps:
+        - rid: 6434882266773586138
+        - rid: 6434882266773586139
+    - rid: 6434882266773586134
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586135
+      type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586136
+      type: {class: UnknownMapEventOutcomeAddCurseFaceToRandomDie, ns: , asm: Assembly-CSharp}
+      data:
+        curseFace: {fileID: 11400000, guid: 0c48e346faacf154fba2364657dc462a, type: 2}
+    - rid: 6434882266773586137
+      type: {class: UnknownMapEventOutcomeAddRunPermanentStrengthStacks, ns: , asm: Assembly-CSharp}
+      data:
+        stacks: 2
+    - rid: 6434882266773586138
+      type: {class: UnknownMapEventOutcomeApplyRunCurrentHpDelta, ns: , asm: Assembly-CSharp}
+      data:
+        hpDelta: -10
+    - rid: 6434882266773586139
+      type: {class: UnknownMapEventOutcomeGrantGold, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 150

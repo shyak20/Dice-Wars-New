@@ -7,6 +7,9 @@ public class PlayerDataContainer : MonoBehaviour
     /// <summary>Fired after <see cref="RuntimeData"/> deck contents change (shop, treasure, dice select, etc.).</summary>
     public static event Action OnRuntimeDeckChanged;
 
+    /// <summary>Raises <see cref="OnRuntimeDeckChanged"/> — events may only be invoked from inside this type.</summary>
+    public static void NotifyRuntimeDeckChanged() => OnRuntimeDeckChanged?.Invoke();
+
     [SerializeField] private PlayerDataSO sourcePlayerData;
 
     public static PlayerDataContainer Instance { get; private set; }
@@ -99,6 +102,37 @@ public class PlayerDataContainer : MonoBehaviour
         var die = RuntimeData.currentDeck[pick];
         Destroy(die);
         RuntimeData.currentDeck.RemoveAt(pick);
+        OnRuntimeDeckChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>Duplicates one random non-null die in the deck (runtime <see cref="Object.Instantiate"/> clone).</summary>
+    public bool TryDuplicateRandomDeckDie()
+    {
+        if (RuntimeData?.currentDeck == null)
+        {
+            Debug.LogError("PlayerDataContainer.TryDuplicateRandomDeckDie: RuntimeData or deck is null.");
+            return false;
+        }
+
+        var indices = new List<int>();
+        for (var i = 0; i < RuntimeData.currentDeck.Count; i++)
+        {
+            if (RuntimeData.currentDeck[i] != null)
+                indices.Add(i);
+        }
+
+        if (indices.Count == 0)
+            return false;
+
+        var pick = indices[UnityEngine.Random.Range(0, indices.Count)];
+        var src = RuntimeData.currentDeck[pick];
+        if (src == null)
+            return false;
+
+        var copy = UnityEngine.Object.Instantiate(src);
+        copy.name = src.name;
+        RuntimeData.currentDeck.Add(copy);
         OnRuntimeDeckChanged?.Invoke();
         return true;
     }

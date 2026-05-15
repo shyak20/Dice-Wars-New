@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b81b4720020024893a1c2c1f4b581a, type: 3}
+  m_Name: Arcanists Polishing Wheel
+  m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
+  displayName: "The Arcanist\u2019s Polishing Wheel"
+  description: "You stumble upon a mechanical bench laden with fine diamond-dust
+    and specialized grinding tools. It was once used to shape the very gems that
+    power Merlin\u2019s throne, but now it sits abandoned, waiting for someone with
+    enough gold to bribe its ancient gears back to life. You drop your coins into
+    the brass slot, and the machine begins to hum. The facets of your gem are ground
+    to a razor-edge, allowing the mana to flow through it with lethal efficiency.
+    It shines brighter now, hungry for the next roll."
+  eventArt: {fileID: 0}
+  visibilityConditions: []
+  excludeFromDrawIfCompletedThisRun: 0
+  choices:
+  - label: '[Cost: 100 Coins] Upgrade one of your current Gems'
+    enabledWhen:
+    - rid: 6434882266773586180
+    - rid: 6434882266773586181
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586182
+  - label: Skip
+    enabledWhen:
+    - rid: 6434882266773586183
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586184
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882266773586180
+      type: {class: UnknownMapEventConditionGoldMin, ns: , asm: Assembly-CSharp}
+      data:
+        minimumGold: 100
+    - rid: 6434882266773586181
+      type: {class: UnknownMapEventConditionDeckTotalSocketedGemsMin, ns: , asm: Assembly-CSharp}
+      data:
+        minimumGems: 1
+    - rid: 6434882266773586182
+      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      data:
+        steps:
+        - rid: 6434882266773586185
+        - rid: 6434882266773586186
+    - rid: 6434882266773586183
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586184
+      type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586185
+      type: {class: UnknownMapEventOutcomeSpendGold, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 100
+    - rid: 6434882266773586186
+      type: {class: UnknownMapEventOutcomeUpgradeRandomSocketedGemFromTable, ns: , asm: Assembly-CSharp}
+      data:
+        pairs:
+        - from: {fileID: 11400000, guid: e50550c7dc7c1a24982043033fe68fd8, type: 2}
+          to: {fileID: 11400000, guid: 5d0320c68bd0686409be18caadb937eb, type: 2}
+        - from: {fileID: 11400000, guid: eee52c63cad94bc4e939f7b1a17cda4c, type: 2}
+          to: {fileID: 11400000, guid: efcb363395ff3524d86b0d69279f4443, type: 2}
+        - from: {fileID: 11400000, guid: 2c27c280ac039164c9365fbd79a68d1a, type: 2}
+          to: {fileID: 11400000, guid: 5020f7a1b610f044a8d92b1623ba786a, type: 2}
+        - from: {fileID: 11400000, guid: 7ffb880e4d910694682b80034caba86d, type: 2}
+          to: {fileID: 11400000, guid: cd57f6b30b9a48e41a6eaa335f990abc, type: 2}
+        - from: {fileID: 11400000, guid: 41147f6369dc0e94f8181a6c1d9e5905, type: 2}
+          to: {fileID: 11400000, guid: acf044ebe1052cc43bfaeac5e3b944f2, type: 2}
+        - from: {fileID: 11400000, guid: c0a5bb205a926144bbe8757a9451145b, type: 2}
+          to: {fileID: 11400000, guid: edeb8a3a3c20a24479f95ff2ce357254, type: 2}

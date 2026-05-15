@@ -76,6 +76,17 @@ public sealed class UnknownMapEventConditionHasAnyCurseFaceOnDeck : UnknownMapEv
         UnknownMapEventConditionShared.HasAnyCurseFace(ctx);
 }
 
+[Serializable]
+public sealed class UnknownMapEventConditionDeckTotalSocketedGemsMin : UnknownMapEventConditionBase
+{
+    [Min(0)]
+    [Tooltip("Requires at least this many non-null gems socketed across the whole deck.")]
+    public int minimumGems;
+
+    public override bool Evaluate(UnknownMapEventEvaluationContext ctx) =>
+        UnknownMapEventConditionShared.CountSocketedGems(ctx) >= Mathf.Max(0, minimumGems);
+}
+
 /// <summary>
 /// Requires the linked unknown event to have been completed this run (Clear Event chains).
 /// </summary>
@@ -172,6 +183,27 @@ public static class UnknownMapEventConditionShared
         }
 
         return false;
+    }
+
+    public static int CountSocketedGems(UnknownMapEventEvaluationContext ctx)
+    {
+        var data = PlayerDataContainer.Instance?.RuntimeData;
+        if (data?.currentDeck == null)
+            return 0;
+        var n = 0;
+        for (var d = 0; d < data.currentDeck.Count; d++)
+        {
+            var die = data.currentDeck[d];
+            if (die == null)
+                continue;
+            foreach (var g in die.GetSocketedGems())
+            {
+                if (g != null)
+                    n++;
+            }
+        }
+
+        return n;
     }
 }
 

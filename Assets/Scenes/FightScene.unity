@@ -2874,7 +2874,7 @@ MonoBehaviour:
   delaySecondsBetweenPhysicalAndEachEnemyStatusTick: 1
   playerStatusBar: {fileID: 1880349202053095173}
   enemyStatusBar: {fileID: 1793733565}
-  testStartingFaces: {fileID: 11400000, guid: d56d5b91c5b92ed4aafaa3ef613c5a40, type: 2}
+  testStartingFaces: {fileID: 0}
   gameIconIndex: {fileID: 11400000, guid: e7a9d94c00e44a54a8e1204408a75e96, type: 2}
   rerollDieSelection: {fileID: 1049117397}
   rollPlatformRenderer: {fileID: 2116241823}
@@ -4021,6 +4021,7 @@ MonoBehaviour:
   crossfadeDurationSeconds: 1.5
   loop: 1
   waitForPlaylistSeconds: 5
+  onlyWhenThisSceneIsActive: 1
 --- !u!4 &573636643
 Transform:
   m_ObjectHideFlags: 0
@@ -27055,7 +27056,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 21.87
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x

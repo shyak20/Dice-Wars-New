@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b81b4720020024893a1c2c1f4b581a, type: 3}
+  m_Name: Scoured Obelisk
+  m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
+  displayName: The Scoured Obelisk
+  description: "A pillar of white marble stands incongruously amidst the gloom, vibrating
+    with a high-pitched, cleansing frequency. It is a 'Reset' point a remnant of
+    Merlin\u2019s early attempts to keep his reality perfectly sterile. As you place
+    your die against the cold stone, the jagged, purple corruption of the Curse begins
+    to flake off like dry mud, revealing the smooth, stable mana-surface beneath.
+    The static in your head clears, if only for a moment."
+  eventArt: {fileID: 0}
+  visibilityConditions: []
+  excludeFromDrawIfCompletedThisRun: 0
+  choices:
+  - label: '[Condition: Target 1 Curse Face] Clear a die from 1 curse face and add
+      a base face instead'
+    enabledWhen:
+    - rid: 6434882266773586176
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586177
+  - label: Skip
+    enabledWhen:
+    - rid: 6434882266773586178
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586179
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882266773586176
+      type: {class: UnknownMapEventConditionHasAnyCurseFaceOnDeck, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586177
+      type: {class: UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine, ns: , asm: Assembly-CSharp}
+      data:
+        replacementForDamageDie: {fileID: 11400000, guid: fea284ff0e66a4e409cfbf722b8ce75a, type: 2}
+        replacementForArmorDie: {fileID: 11400000, guid: a0c0a3e6f34f23140a8c9e80248096fc, type: 2}
+        replacementForFireDie: {fileID: 11400000, guid: d539a4217d4542b4aa4b49bbeb1906d1, type: 2}
+        replacementForIceDie: {fileID: 11400000, guid: d539a4217d4542b4aa4b49bbeb1906d1, type: 2}
+        replacementForNatureDie: {fileID: 11400000, guid: d539a4217d4542b4aa4b49bbeb1906d1, type: 2}
+    - rid: 6434882266773586178
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586179
+      type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
+      data: 

@@ -568,6 +568,8 @@ public class CombatManager : MonoBehaviour
         _relicRuntime = new RelicRuntimeState();
         ResetStats();
         RelicActionRunner.RunPhase(this, RelicPhases.CombatStart);
+        if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+            RunManager.Instance.TryApplyPermanentStrengthStacksAtCombatStart(this, player, activeEnemy);
         ChangeState(CombatState.WaitingForRoll);
         CombatEvents.OnCombatSessionInitialized?.Invoke();
     }

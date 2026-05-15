@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b81b4720020024893a1c2c1f4b581a, type: 3}
+  m_Name: Altar Of Greed
+  m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
+  displayName: The Altar of Greed
+  description: A jagged stone altar, stained with the ink of a thousand discarded
+    runes. It whispers of wealth in exchange for your tools. The air around it smells
+    of copper and regret.
+  eventArt: {fileID: 0}
+  visibilityConditions: []
+  excludeFromDrawIfCompletedThisRun: 0
+  choices:
+  - label: '[Cost: 1 Die] Sacrifice a die to gain +150 Gold'
+    enabledWhen:
+    - rid: 6434882266773586118
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586119
+  - label: Leave
+    enabledWhen:
+    - rid: 6434882266773586120
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586121
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882266773586118
+      type: {class: UnknownMapEventConditionDeckDiceCountMin, ns: , asm: Assembly-CSharp}
+      data:
+        minimumCount: 2
+    - rid: 6434882266773586119
+      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      data:
+        steps:
+        - rid: 6434882266773586122
+        - rid: 6434882266773586123
+    - rid: 6434882266773586120
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586121
+      type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586122
+      type: {class: UnknownMapEventOutcomeRemoveRandomDeckDie, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586123
+      type: {class: UnknownMapEventOutcomeGrantGold, ns: , asm: Assembly-CSharp}
+      data:
+        amount: 150
