@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: "Merlin\u2019s Monument"
   description: A statue of the Archmage Merlin standing tall. It is said that anyone
     who meditate here gains a blessing from Merlin himself.
-  eventArt: {fileID: 21300000, guid: 946859e4d95ded54481bcdcb45a26228, type: 3}
+  eventArt: {fileID: 21300000, guid: c5b286746173fd849a036d97cf02519a, type: 3}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:

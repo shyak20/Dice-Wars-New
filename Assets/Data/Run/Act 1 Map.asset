@@ -19,13 +19,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e90e4b2912d70c2419b7be11cca5a37d, type: 2}
   - {fileID: 11400000, guid: 475f3c6e5877cc249a47a9e54308fee0, type: 2}
   possibleUnknownEvents:
-  - {fileID: 11400000, guid: 4b24dd24c786da2469b623658b51ead7, type: 2}
-  - {fileID: 11400000, guid: cc0f0df617309e447ba2da7aa34b5e3a, type: 2}
-  - {fileID: 11400000, guid: d2c402cad1934f0409eb32dcb4de2743, type: 2}
-  - {fileID: 11400000, guid: fe182c98b9932f34c8c8a71fa6304d78, type: 2}
-  - {fileID: 11400000, guid: 0299c904ec62fea41b59669e7816f567, type: 2}
-  - {fileID: 11400000, guid: feee991b242f5394eb36dce9b8d058ae, type: 2}
-  - {fileID: 11400000, guid: c01cab38299ca4241bd028627d57cbbb, type: 2}
   - {fileID: 11400000, guid: 15a428d791eb36d4080540424627f3fb, type: 2}
   treasurePacks:
   - {fileID: 11400000, guid: 78ee3181637c4034a873ce0e5835a0d8, type: 2}

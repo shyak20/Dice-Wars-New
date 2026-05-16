@@ -3536,7 +3536,7 @@ MonoBehaviour:
   speedLabel: {fileID: 67756074}
   minSpeed: 0.2
   maxSpeed: 4
-  defaultSpeed: 3
+  defaultSpeed: 3.2
 --- !u!1 &473523775
 GameObject:
   m_ObjectHideFlags: 0
@@ -5961,7 +5961,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &776683534
 RectTransform:
   m_ObjectHideFlags: 0

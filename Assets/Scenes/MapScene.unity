@@ -1070,8 +1070,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcc10369a436ff647b8137faac2a2096, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SplatterRevealGraphicPlayer
-  graphic: {fileID: 0}
-  maskUvOffsetRevealStart: {x: 0, y: 1}
+  graphic: {fileID: 316634960}
+  maskUvOffsetRevealStart: {x: 0, y: 0}
   maskUvOffsetRevealTarget: {x: 0, y: 0}
   maskOffsetEasing:
     serializedVersion: 2
@@ -1104,21 +1104,21 @@ MonoBehaviour:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
+      value: 0.2
+      inSlope: 0.8
+      outSlope: 0.8
+      tangentMode: 34
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.33333334
     - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: 2
-      outSlope: 2
-      tangentMode: 0
+      inSlope: 0.8
+      outSlope: 0.8
+      tangentMode: 34
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.33333334
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -2507,7 +2507,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMin.x
@@ -2515,7 +2515,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2555,11 +2555,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 291.85
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -290.5
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -7977,7 +7977,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 16777215
+    rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -17111,7 +17111,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMin.x
@@ -17119,7 +17119,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_SizeDelta.x
@@ -17159,11 +17159,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 291.85
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -170.25
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -18274,7 +18274,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMin.x
@@ -18282,7 +18282,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_SizeDelta.x
@@ -18322,11 +18322,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 291.85
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -50
       objectReference: {fileID: 0}
     - target: {fileID: 3768570355565276212, guid: abb44d6329640be4a85c8b8e5d2b536d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -18889,7 +18889,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 67108863
+    rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
