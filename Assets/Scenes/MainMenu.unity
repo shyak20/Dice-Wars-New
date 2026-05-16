@@ -32662,6 +32662,7 @@ MonoBehaviour:
   mapWeightUnknown: 1
   mapWeightTreasure: 1
   gameIconIndex: {fileID: 11400000, guid: e7a9d94c00e44a54a8e1204408a75e96, type: 2}
+  mapRunPermanentStrengthDefinition: {fileID: 0}
   preloadFightAndShopWhileOnMap: 1
 --- !u!4 &1943770114
 Transform:
