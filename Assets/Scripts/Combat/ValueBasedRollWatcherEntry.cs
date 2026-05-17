@@ -1,7 +1,10 @@
-/// <summary>Queued rule applied by <see cref="CombatManager"/> when a settled face matches <see cref="RequiredFaceValue"/>.</summary>
+using System.Collections.Generic;
+
+/// <summary>Queued rule applied by <see cref="CombatManager"/> when a settled face matches <see cref="RequiredFaceValues"/> or <see cref="MatchAnyFaceValue"/>.</summary>
 public sealed class ValueBasedRollWatcherEntry
 {
-    public int RequiredFaceValue;
+    public List<int> RequiredFaceValues = new List<int>();
+    public bool MatchAnyFaceValue;
     public RollBonusType BonusType;
     public int Amount;
     public BurnEffectSO BurnDefinition;

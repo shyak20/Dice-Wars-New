@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Iron Skin Rare
+  m_Name: Bracing Stance Common
   m_EditorClassIdentifier: 
-  title: Iron Skin Rare
+  title: Stance
   description: 
   descriptionLines:
   - Gain <style=Shield>4</style>
-  - This turn, whenever you roll a <style=Die4> gain <style=Shield>4</style>
+  - Next turn start with <style=Shield>2</style> in your pool
   value: 4
   type: 1
   faceMaterial: {fileID: 2100000, guid: 61cda76acd7a9be43b8a6d84a984da20, type: 2}
@@ -28,21 +28,13 @@ MonoBehaviour:
   uiIcon: {fileID: 21300000, guid: 653e288f6c076ab4e91a5db0f46aa882, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
   actions:
-  - rid: 6494956272364552432
+  - rid: 6434882300114632923
   references:
     version: 2
     RefIds:
-    - rid: 6494956272364552432
-      type: {class: AddValueBasedOnRollAction, ns: , asm: Assembly-CSharp}
+    - rid: 6434882300114632923
+      type: {class: StartNextTurnWithArmorAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 0
-        legacyRequiredFaceValue: 0
-        legacyRequiredFaceValuesArray: 
-        requiredFaceValues:
-          values:
-          - 4
-        legacyBonusOnAnyDieRollRestOfTurn: 0
-        bonusType: 0
-        amount: 4
-        burnDefinition: {fileID: 0}
-        duration: 1
+        armorAmount: 2
+        poolRowId: Armor

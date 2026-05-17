@@ -78,6 +78,7 @@ public class CombatManager : MonoBehaviour
     private int appliedMultiplier;
     private int bonusDamageFromActions;
     private int bonusArmorFromActions;
+    private int _playerArmorAtNextTurnStart;
     private bool bustProtected;
     private bool _warnedMissingEnemyIntentSequence;
     private bool _skipPowerOrbFlightForNextSubmitTurn;
@@ -250,6 +251,17 @@ public class CombatManager : MonoBehaviour
     {
         if (amount <= 0) return;
         bonusArmorFromActions += amount;
+    }
+
+    /// <summary>
+    /// Next player turn starts with this much armor instead of 0 (see <see cref="StartNextTurnWithArmorAction"/>).
+    /// Multiple schedules in one turn use the highest value.
+    /// </summary>
+    public void SchedulePlayerArmorAtNextTurnStart(int amount)
+    {
+        if (amount <= 0)
+            return;
+        _playerArmorAtNextTurnStart = Mathf.Max(_playerArmorAtNextTurnStart, amount);
     }
 
     /// <summary>
@@ -611,6 +623,7 @@ public class CombatManager : MonoBehaviour
         kineticShieldBonus = 0;
         bonusDamageFromActions = 0;
         bonusArmorFromActions = 0;
+        _playerArmorAtNextTurnStart = 0;
         _burnOnPlayerArmorLostFromEnemyDef = null;
         _burnStacksPerArmorLostFromEnemyPhysical = 0;
         pendingPrecisionChoices.Clear();
@@ -1140,11 +1153,19 @@ public class CombatManager : MonoBehaviour
                 thorns.AppendPoolContributionIfAny(result, thorns.ActivateImmediately);
             if (a is HealAction heal)
                 heal.AppendPoolContributionIfAny(result);
+            if (a is StartNextTurnWithArmorAction startNextTurnArmor)
+                startNextTurnArmor.AppendPoolContributionIfAny(result);
         }
     }
 
     /// <param name="fromRelicCombatStart">When true, the first player roll batch of the fight is skipped (watchers start from batch 2).</param>
-    public void RegisterValueBasedRollWatcher(int requiredFaceValue, RollBonusType bonusType, int amount, BurnEffectSO burnDefinition, AddValueBasedOnRollDuration duration, bool fromRelicCombatStart = false)
+    public void RegisterValueBasedRollWatcher(
+        FaceValueMatchSet requiredFaceValues,
+        RollBonusType bonusType,
+        int amount,
+        BurnEffectSO burnDefinition,
+        AddValueBasedOnRollDuration duration,
+        bool fromRelicCombatStart = false)
     {
         if (duration == AddValueBasedOnRollDuration.SameRoll)
         {
@@ -1152,63 +1173,78 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
-        if (amount <= 0) return;
-        if (bonusType == RollBonusType.Burn && burnDefinition == null)
-        {
-            Debug.LogError("CombatManager.RegisterValueBasedRollWatcher: burnDefinition required when Bonus Type is Burn.");
+        if (!ValidateValueBasedRollWatcherRegistration(amount, bonusType, burnDefinition, matchAnyFaceValue: true))
             return;
-        }
 
         var firstBatch = fromRelicCombatStart
             ? Mathf.Max(2, _rollBatchId + 2)
             : Mathf.Max(1, _rollBatchId + 1);
 
-        var entry = new ValueBasedRollWatcherEntry
-        {
-            RequiredFaceValue = requiredFaceValue,
-            BonusType = bonusType,
-            Amount = amount,
-            BurnDefinition = burnDefinition,
-            FirstEligibleBatchId = firstBatch,
-            FirstEligibleResolveSequence = 0
-        };
+        var entry = CreateValueBasedRollWatcherEntry(matchAnyFaceValue: true, bonusType, amount, burnDefinition);
+        entry.FirstEligibleBatchId = firstBatch;
+        entry.FirstEligibleResolveSequence = 0;
 
-        if (duration == AddValueBasedOnRollDuration.SameTurn)
-            _sameTurnValueWatchers.Add(entry);
-        else
-            _entireCombatValueWatchers.Add(entry);
+        AddValueBasedRollWatcherEntry(entry, duration);
     }
 
-    /// <summary>Registers a watcher when a die face with <see cref="AddValueBasedOnRollAction"/> resolves (Same Turn / Entire Combat from dice).</summary>
-    public void RegisterValueBasedRollWatcherFromDieResolution(int requiredFaceValue, RollBonusType bonusType, int amount, BurnEffectSO burnDefinition, AddValueBasedOnRollDuration duration)
+    /// <summary>Registers a watcher when a die face with <see cref="AddValueBasedOnRollAction"/> resolves (Same Turn / Entire Combat).</summary>
+    public void RegisterValueBasedRollWatcherAnyDieFromDieResolution(
+        int amount,
+        RollBonusType bonusType,
+        BurnEffectSO burnDefinition,
+        AddValueBasedOnRollDuration duration)
     {
-        if (duration == AddValueBasedOnRollDuration.SameRoll)
-        {
-            Debug.LogError("CombatManager.RegisterValueBasedRollWatcherFromDieResolution: SameRoll does not use watchers.");
+        if (!ValidateValueBasedRollWatcherRegistration(amount, bonusType, burnDefinition, matchAnyFaceValue: true))
             return;
-        }
 
-        if (amount <= 0) return;
+        var entry = CreateValueBasedRollWatcherEntry(matchAnyFaceValue: true, bonusType, amount, burnDefinition);
+        entry.FirstEligibleBatchId = 0;
+        entry.FirstEligibleResolveSequence = _faceResolveSequence + 1;
+
+        AddValueBasedRollWatcherEntry(entry, duration);
+    }
+
+    static bool ValidateValueBasedRollWatcherRegistration(
+        int amount,
+        RollBonusType bonusType,
+        BurnEffectSO burnDefinition,
+        bool matchAnyFaceValue)
+    {
+        if (amount <= 0)
+            return false;
         if (bonusType == RollBonusType.Burn && burnDefinition == null)
         {
-            Debug.LogError("CombatManager.RegisterValueBasedRollWatcherFromDieResolution: burnDefinition required when Bonus Type is Burn.");
-            return;
+            Debug.LogError("CombatManager: burnDefinition required when Bonus Type is Burn.");
+            return false;
         }
 
-        var entry = new ValueBasedRollWatcherEntry
+        if (!matchAnyFaceValue)
+            Debug.LogError("CombatManager: value-based roll watchers must use any-die matching.");
+
+        return true;
+    }
+
+    static ValueBasedRollWatcherEntry CreateValueBasedRollWatcherEntry(
+        bool matchAnyFaceValue,
+        RollBonusType bonusType,
+        int amount,
+        BurnEffectSO burnDefinition)
+    {
+        return new ValueBasedRollWatcherEntry
         {
-            RequiredFaceValue = requiredFaceValue,
+            MatchAnyFaceValue = matchAnyFaceValue,
             BonusType = bonusType,
             Amount = amount,
-            BurnDefinition = burnDefinition,
-            FirstEligibleBatchId = 0,
-            FirstEligibleResolveSequence = _faceResolveSequence + 1
+            BurnDefinition = burnDefinition
         };
+    }
 
-        if (duration == AddValueBasedOnRollDuration.SameTurn)
-            _sameTurnValueWatchers.Add(entry);
-        else
+    void AddValueBasedRollWatcherEntry(ValueBasedRollWatcherEntry entry, AddValueBasedOnRollDuration duration)
+    {
+        if (duration == AddValueBasedOnRollDuration.EntireCombat)
             _entireCombatValueWatchers.Add(entry);
+        else
+            _sameTurnValueWatchers.Add(entry);
     }
 
     private void CollectValueWatcherRegistrationsFromFace(FaceResult face)
@@ -1218,7 +1254,7 @@ public class CombatManager : MonoBehaviour
         {
             if (a is FaceResolveModifierBase) continue;
             if (a is AddValueBasedOnRollAction valueBonus)
-                valueBonus.RegisterWatcherIfNeeded(this);
+                valueBonus.RegisterWatcherIfNeeded(this, face);
         }
     }
 
@@ -1243,7 +1279,8 @@ public class CombatManager : MonoBehaviour
     private void ApplyValueBasedRollWatcherArmorDamage(FaceResult result, ValueBasedRollWatcherEntry w)
     {
         if (!ValueWatcherEligible(w)) return;
-        if (result.Value != w.RequiredFaceValue) return;
+        if (!FaceValueMatchSet.MatchesAny(result.Value, w.RequiredFaceValues, w.MatchAnyFaceValue))
+            return;
         if (w.Amount <= 0) return;
         switch (w.BonusType)
         {
@@ -1269,11 +1306,13 @@ public class CombatManager : MonoBehaviour
     private void ApplyValueBasedRollWatcherBurn(FaceResult result, GameActionContext ctx, ValueBasedRollWatcherEntry w)
     {
         if (!ValueWatcherEligible(w)) return;
-        if (result.Value != w.RequiredFaceValue) return;
+        if (!FaceValueMatchSet.MatchesAny(result.Value, w.RequiredFaceValues, w.MatchAnyFaceValue))
+            return;
         if (w.BonusType != RollBonusType.Burn || w.Amount <= 0) return;
 
         AddValueBasedOnRollAction.ApplyBurnToEnemyFromContext(ctx, w.Amount, w.BurnDefinition);
-        AddValueBasedOnRollAction.TryAppendBurnPoolLine(result, player, w.RequiredFaceValue, w.Amount, w.BurnDefinition);
+        AddValueBasedOnRollAction.TryAppendBurnPoolLineForWatcher(
+            result, player, w.RequiredFaceValues, w.MatchAnyFaceValue, w.Amount, w.BurnDefinition);
     }
 
     private static bool FaceHasAnyDeferredExecutableAction(FaceResult result)
@@ -1639,11 +1678,14 @@ public class CombatManager : MonoBehaviour
 
         bonusDamageFromActions = 0;
         bonusArmorFromActions = 0;
+        _playerArmorAtNextTurnStart = 0;
         kineticShieldBonus = 0;
         turnEndActions.Clear();
         _pendingAfterPhysicalApplyStatuses.Clear();
         _afterPhysicalDeferredStatusPhaseCompleted = true;
         _turnRegistry.ResetVolatile();
+        if (player?.StatusEffects != null)
+            player.StatusEffects.RemoveStatus<NextTurnArmorEffectSO>(BuildStatusContext());
 
         NotifyAllStoredActionsPoolUI();
         _skipPowerOrbFlightForNextSubmitTurn = true;
@@ -2257,6 +2299,21 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
     }
 
+    private void ApplyPlayerTurnStartArmor()
+    {
+        if (player == null)
+            return;
+
+        if (_playerArmorAtNextTurnStart > 0)
+        {
+            player.SetArmor(_playerArmorAtNextTurnStart);
+            _playerArmorAtNextTurnStart = 0;
+            return;
+        }
+
+        player.ResetArmor();
+    }
+
     private void ResetTurn()
     {
         EndRollPlatformGlow(forceImmediateReset: true);
@@ -2283,7 +2340,7 @@ public class CombatManager : MonoBehaviour
         _noPowerOnNextGatherCommit.Clear();
         _gemBatchRerollIndicesInFlight.Clear();
         _gemExtraRollGrantsThisTurnByDie.Clear();
-        player.ResetArmor();
+        ApplyPlayerTurnStartArmor();
         var statusCtx = BuildStatusContext();
         // Player turn starts here.
         player.StatusEffects.TickTurnStart(statusCtx);

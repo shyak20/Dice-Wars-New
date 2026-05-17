@@ -105,8 +105,13 @@ public static class GemCombatResolver
                 }
 
                 AddValueBasedOnRollAction.ApplyBurnToEnemyFromContext(ctx, entry.param, entry.burnDefinition);
-                AddValueBasedOnRollAction.TryAppendBurnPoolLine(
-                    result, combat.player, result.Value, entry.param, entry.burnDefinition);
+                AddValueBasedOnRollAction.TryAppendBurnPoolLineForWatcher(
+                    result,
+                    combat.player,
+                    new System.Collections.Generic.List<int> { result.Value },
+                    matchAnyFaceValue: false,
+                    entry.param,
+                    entry.burnDefinition);
                 break;
 
             case GemEffectKind.IncreasePowerMeter:

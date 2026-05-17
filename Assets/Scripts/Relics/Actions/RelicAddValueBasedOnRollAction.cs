@@ -1,15 +1,18 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// Relic hook mirroring <see cref="AddValueBasedOnRollAction"/>. <see cref="AddValueBasedOnRollDuration.SameRoll"/> uses relic modify / after-power phases;
 /// <see cref="AddValueBasedOnRollDuration.SameTurn"/> and <see cref="AddValueBasedOnRollDuration.EntireCombat"/> register watchers at <see cref="RelicPhases.CombatStart"/>.
 /// </summary>
 [Serializable]
-public sealed class RelicAddValueBasedOnRollAction : RelicGameActionBase
+public sealed class RelicAddValueBasedOnRollAction : RelicGameActionBase, ISerializationCallbackReceiver
 {
-    [Tooltip("Face value (after status modifiers) must equal this for the bonus to apply.")]
-    public int requiredFaceValue = 6;
+    [SerializeField, HideInInspector, FormerlySerializedAs("requiredFaceValues")]
+    int[] legacyRequiredFaceValues;
+
+    public FaceValueMatchSet requiredFaceValues = new FaceValueMatchSet();
 
     public RollBonusType bonusType = RollBonusType.Armor;
 
@@ -21,28 +24,47 @@ public sealed class RelicAddValueBasedOnRollAction : RelicGameActionBase
 
     public AddValueBasedOnRollDuration duration = AddValueBasedOnRollDuration.SameRoll;
 
+    public void OnBeforeSerialize() => MigrateLegacy();
+
+    public void OnAfterDeserialize() => MigrateLegacy();
+
+    void MigrateLegacy()
+    {
+        requiredFaceValues ??= new FaceValueMatchSet();
+        requiredFaceValues.MigrateLegacyIntArray(legacyRequiredFaceValues);
+        legacyRequiredFaceValues = null;
+    }
+
     public override void Execute(GameActionContext ctx)
     {
-        if (ctx == null) return;
+        if (ctx == null)
+            return;
 
         if (ctx.RelicPhase == RelicPhases.CombatStart)
         {
-            if (duration == AddValueBasedOnRollDuration.SameRoll) return;
-            if (ctx.CombatManager == null) return;
-            ctx.CombatManager.RegisterValueBasedRollWatcher(requiredFaceValue, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: true);
+            if (duration == AddValueBasedOnRollDuration.SameRoll)
+                return;
+            if (ctx.CombatManager == null)
+                return;
+            ctx.CombatManager.RegisterValueBasedRollWatcher(
+                requiredFaceValues, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: true);
             return;
         }
 
         if (ctx.RelicPhase == RelicPhases.AfterEnemyTurnPlayerTurnStart)
         {
-            if (duration != AddValueBasedOnRollDuration.SameTurn) return;
-            if (ctx.CombatManager == null) return;
-            ctx.CombatManager.RegisterValueBasedRollWatcher(requiredFaceValue, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: false);
+            if (duration != AddValueBasedOnRollDuration.SameTurn)
+                return;
+            if (ctx.CombatManager == null)
+                return;
+            ctx.CombatManager.RegisterValueBasedRollWatcher(
+                requiredFaceValues, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: false);
             return;
         }
 
-        if (duration != AddValueBasedOnRollDuration.SameRoll) return;
+        if (duration != AddValueBasedOnRollDuration.SameRoll)
+            return;
 
-        AddValueBasedOnRollAction.ExecuteSameRollBonus(ctx, requiredFaceValue, bonusType, amount, burnDefinition);
+        AddValueBasedOnRollAction.ExecuteSameRollBonus(ctx, requiredFaceValues, bonusType, amount, burnDefinition);
     }
 }

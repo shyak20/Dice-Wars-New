@@ -90,6 +90,10 @@ public class EnemyTypeSO : ScriptableObject
     [Header("Classification")]
     public EnemyRank enemyRank = EnemyRank.Normal;
 
+    [Header("Map draw")]
+    [Tooltip("When true, this enemy cannot be randomly drawn for the first combat encounter of each act they appear in.")]
+    public bool excludeFromFirstFight = true;
+
     public int maxHealth;
     public int startArmor;
 

@@ -10,30 +10,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Heavy Plate
+  m_Name: Mukmuk Legendary
   m_EditorClassIdentifier: 
-  title: Basic Training
+  title: Double Attack
   description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
-  - Deal <style=Attack></style> equal to the accumulated <style=Shield></style> gained
-    so far
-  value: 5
+  - Deal <style=Attack>6</style>
+  - Deal <style=Attack>6</style> for each extra physical die you have
+  value: 6
   type: 0
-  faceMaterial: {fileID: 2100000, guid: f35ae15ee7e93c149b27a0d43069dfd5, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 4e56169efc9c76a479f63ad4cdc0c46f, type: 2}
   rarity: 2
-  damage: 0
+  damage: 6
   damageAttackTimes: 1
   armor: 0
   selfDamage: 0
-  uiIcon: {fileID: 21300000, guid: 00dda7a098b7ec6478fd1355f4741d3d, type: 3}
+  uiIcon: {fileID: 21300000, guid: 803e5153cb81e874da5eca0d3cbc4a75, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: 7cb1ca40abd697a4d907cdec17ec9928, type: 3}
   actions:
-  - rid: 6494956392264499736
+  - rid: 6494956392264499738
   references:
     version: 2
     RefIds:
-    - rid: 6494956392264499736
-      type: {class: AddDamageFromAccumulatedPhysicalModifier, ns: , asm: Assembly-CSharp}
+    - rid: 6494956392264499738
+      type: {class: BonusDamagePerOwnedDieTypeAction, ns: , asm: Assembly-CSharp}
       data:
-        activateImmediately: 1
-        physicalDamageMultiplier: 1
+        activateImmediately: 0
+        countedDieType: 0
+        damagePerOwnedDie: 6

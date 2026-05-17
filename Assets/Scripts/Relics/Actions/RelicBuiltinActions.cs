@@ -343,12 +343,26 @@ public sealed class RelicDamageBelowHpPercentAction : RelicGameActionBase
 }
 
 [Serializable]
-public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase
+public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEngine.ISerializationCallbackReceiver
 {
-    public int[] requiredFaceValues = { 2, 4, 6 };
+    [UnityEngine.SerializeField, UnityEngine.HideInInspector, UnityEngine.Serialization.FormerlySerializedAs("requiredFaceValues")]
+    int[] legacyRequiredFaceValues;
+
+    public FaceValueMatchSet requiredFaceValues = new FaceValueMatchSet();
     public RollBonusType bonusType = RollBonusType.Damage;
     public int amount = 2;
     public BurnEffectSO burnDefinition;
+
+    public void OnBeforeSerialize() => MigrateLegacy();
+
+    public void OnAfterDeserialize() => MigrateLegacy();
+
+    void MigrateLegacy()
+    {
+        requiredFaceValues ??= new FaceValueMatchSet();
+        requiredFaceValues.MigrateLegacyIntArray(legacyRequiredFaceValues);
+        legacyRequiredFaceValues = null;
+    }
 
     public override void Execute(GameActionContext ctx)
     {
@@ -362,21 +376,10 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase
             if (ctx.RelicPhase != RelicPhases.ModifyFaceResult) return;
         }
 
-        if (requiredFaceValues == null || requiredFaceValues.Length == 0 || amount == 0) return;
+        if (requiredFaceValues == null || requiredFaceValues.IsEmpty || amount == 0)
+            return;
 
-        var match = false;
-        for (var i = 0; i < requiredFaceValues.Length; i++)
-        {
-            if (ctx.TriggeringFace.Value == requiredFaceValues[i])
-            {
-                match = true;
-                break;
-            }
-        }
-
-        if (!match) return;
-
-        AddValueBasedOnRollAction.ExecuteSameRollBonus(ctx, ctx.TriggeringFace.Value, bonusType, amount, burnDefinition);
+        AddValueBasedOnRollAction.ExecuteSameRollBonus(ctx, requiredFaceValues, bonusType, amount, burnDefinition);
     }
 }
 

@@ -54,13 +54,13 @@ public static class RequestedRelicAssetGenerator
             "Whenever you roll a list of numbers add +Y damage to the Element Container",
             new List<RelicGameActionBase>
             {
-                new RelicAddValueOnFaceListAction { requiredFaceValues = new[] { 2, 4, 6 }, bonusType = RollBonusType.Damage, amount = 2 }
+                new RelicAddValueOnFaceListAction { requiredFaceValues = FaceValueMatchSet.FromValues(2, 4, 6), bonusType = RollBonusType.Damage, amount = 2 }
             });
         Create("Ember Charm", FaceRarity.Common,
             "Whenever you roll X add Y Burn to the Element Container.",
             new List<RelicGameActionBase>
             {
-                new RelicAddValueOnFaceListAction { requiredFaceValues = new[] { 3 }, bonusType = RollBonusType.Burn, amount = 2, burnDefinition = burn }
+                new RelicAddValueOnFaceListAction { requiredFaceValues = FaceValueMatchSet.FromValues(3), bonusType = RollBonusType.Burn, amount = 2, burnDefinition = burn }
             });
         Create("Vampire Fang", FaceRarity.Rare,
             "While your HP is below X% your attacks are doubled",
@@ -69,7 +69,7 @@ public static class RequestedRelicAssetGenerator
             "Whenever you roll a list of numbers add +Y Armor",
             new List<RelicGameActionBase>
             {
-                new RelicAddValueOnFaceListAction { requiredFaceValues = new[] { 1, 2, 3 }, bonusType = RollBonusType.Armor, amount = 2 }
+                new RelicAddValueOnFaceListAction { requiredFaceValues = FaceValueMatchSet.FromValues(1, 2, 3), bonusType = RollBonusType.Armor, amount = 2 }
             });
         Create("Iron Talisman", FaceRarity.Common,
             "Start each Combat with +1 Strength",

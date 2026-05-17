@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Iron Skin Common
+  m_Name: Kinetic Absorb
   m_EditorClassIdentifier: 
-  title: Iron Skin Common
+  title: Kinetic Absorb
   description: 
   descriptionLines:
   - Gain <style=Shield>2</style>
-  - This turn, whenever you roll a <style=Die2> gain <style=Shield>2</style>
+  - This turn, whenever you roll any die gain <style=Shield>1</style>
   value: 2
   type: 1
   faceMaterial: {fileID: 2100000, guid: 1df214fcb0dce354abf802f527c2f8b2, type: 2}
@@ -28,21 +28,20 @@ MonoBehaviour:
   uiIcon: {fileID: 21300000, guid: 35fafc76b913db9428e26104a75a77b1, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
   actions:
-  - rid: 6494956272364552434
+  - rid: 6494956272364552501
   references:
     version: 2
     RefIds:
-    - rid: 6494956272364552434
+    - rid: 6494956272364552501
       type: {class: AddValueBasedOnRollAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 0
         legacyRequiredFaceValue: 0
         legacyRequiredFaceValuesArray: 
+        legacyBonusOnAnyDieRollRestOfTurn: 0
         requiredFaceValues:
-          values:
-          - 2
+          values: 010000000200000003000000040000000500000006000000
         bonusType: 0
-        amount: 2
+        amount: 1
         burnDefinition: {fileID: 0}
         duration: 1
-        legacyBonusOnAnyDieRollRestOfTurn: 0

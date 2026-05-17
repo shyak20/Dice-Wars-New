@@ -61,6 +61,9 @@ public class StatusEffectIconUI : MonoBehaviour
             spr = GameIconCatalog.GetElementIcon(DieType.Ice);
         if (spr == null && effect.Definition is ThornsEffectSO)
             spr = GameIconCatalog.GetActionIcon(ActionVisualId.Thorns);
+        if (spr == null && effect.Definition is NextTurnArmorEffectSO)
+            spr = GameIconCatalog.GetActionIcon(ActionVisualId.StartNextTurnWithArmor)
+                ?? GameIconCatalog.GetElementIcon(DieType.Armor);
         if (iconImage != null)
         {
             iconImage.sprite = spr;

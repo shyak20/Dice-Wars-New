@@ -1,19 +1,29 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
-/// When the settled face value matches <see cref="requiredFaceValue"/>, adds <see cref="amount"/> to armor or damage on that face,
-/// or applies burn stacks. <see cref="duration"/> controls whether that happens only for this resolve, via watchers for later batches this turn, or for the whole combat.
+/// When the settled face value is in <see cref="requiredFaceValues"/>, adds <see cref="amount"/> to armor or damage on that face,
+/// or applies burn stacks. <see cref="duration"/> controls same-roll vs rest-of-turn watcher behavior (see <see cref="AddValueBasedOnRollDuration"/>).
 /// </summary>
 [Serializable]
-public class AddValueBasedOnRollAction : GameActionWithIcon
+public class AddValueBasedOnRollAction : GameActionWithIcon, ISerializationCallbackReceiver
 {
-    [Tooltip("Face value (after status modifiers) must equal this for the bonus to apply.")]
-    [SerializeField] private int requiredFaceValue = 6;
+    [SerializeField, HideInInspector, FormerlySerializedAs("requiredFaceValue")]
+    private int legacyRequiredFaceValue;
+
+    [SerializeField, HideInInspector, FormerlySerializedAs("requiredFaceValues")]
+    private int[] legacyRequiredFaceValuesArray;
+
+    [SerializeField, HideInInspector, FormerlySerializedAs("bonusOnAnyDieRollRestOfTurn")]
+    private int legacyBonusOnAnyDieRollRestOfTurn;
+
+    [SerializeField, Tooltip("Face values (after modifiers) that activate this bonus.")]
+    private FaceValueMatchSet requiredFaceValues = new FaceValueMatchSet();
 
     [SerializeField] private RollBonusType bonusType = RollBonusType.Armor;
 
-    [Tooltip("Armor or damage added to the matching roll, or burn stacks when Bonus Type is Burn.")]
+    [Tooltip("Bonus magnitude: same-roll grant and/or rest-of-turn watcher (see Duration).")]
     [SerializeField] private int amount = 1;
 
     [Tooltip("Required when Bonus Type is Burn.")]
@@ -25,35 +35,93 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
 
     public AddValueBasedOnRollDuration Duration => duration;
 
+    public void OnBeforeSerialize() => MigrateSerializedFields();
+
+    public void OnAfterDeserialize() => MigrateSerializedFields();
+
+    void MigrateSerializedFields()
+    {
+        requiredFaceValues ??= new FaceValueMatchSet();
+        requiredFaceValues.MigrateLegacySingleValue(legacyRequiredFaceValue);
+        legacyRequiredFaceValue = 0;
+        requiredFaceValues.MigrateLegacyIntArray(legacyRequiredFaceValuesArray);
+        legacyRequiredFaceValuesArray = null;
+
+        if (legacyBonusOnAnyDieRollRestOfTurn > 0)
+        {
+            if (amount <= 0)
+                amount = legacyBonusOnAnyDieRollRestOfTurn;
+            if (duration == AddValueBasedOnRollDuration.SameRoll)
+                duration = AddValueBasedOnRollDuration.SameTurn;
+            legacyBonusOnAnyDieRollRestOfTurn = 0;
+        }
+
+        // Removed enum values SameTurnAnyDie (3) / EntireCombatAnyDie (4) — fold into SameTurn / EntireCombat.
+        var durationRaw = (int)duration;
+        if (durationRaw == 3)
+            duration = AddValueBasedOnRollDuration.SameTurn;
+        else if (durationRaw == 4)
+            duration = AddValueBasedOnRollDuration.EntireCombat;
+    }
+
+    FaceValueMatchSet GetRequiredFaceValues()
+    {
+        MigrateSerializedFields();
+        return requiredFaceValues;
+    }
+
     public override void Execute(GameActionContext context)
     {
         if (duration == AddValueBasedOnRollDuration.SameRoll)
-            ExecuteSameRollBonus(context, requiredFaceValue, bonusType, amount, burnDefinition);
+            ExecuteSameRollBonus(context, GetRequiredFaceValues(), bonusType, amount, burnDefinition);
     }
 
-    /// <summary>Registers a watcher when <see cref="duration"/> is <see cref="AddValueBasedOnRollDuration.SameTurn"/> or <see cref="AddValueBasedOnRollDuration.EntireCombat"/> (called after the face's actions run).</summary>
-    public void RegisterWatcherIfNeeded(CombatManager combat)
+    /// <summary>Registers watchers when <see cref="duration"/> is a rest-of-turn / entire-combat mode (called after the face resolves).</summary>
+    public void RegisterWatcherIfNeeded(CombatManager combat, FaceResult resolvingFace)
     {
-        if (combat == null || duration == AddValueBasedOnRollDuration.SameRoll) return;
-        combat.RegisterValueBasedRollWatcherFromDieResolution(requiredFaceValue, bonusType, amount, burnDefinition, duration);
+        if (combat == null || resolvingFace == null)
+            return;
+
+        var required = GetRequiredFaceValues();
+        if (!required.Matches(resolvingFace.Value))
+            return;
+
+        if (duration == AddValueBasedOnRollDuration.SameRoll)
+            return;
+
+        if (amount <= 0)
+            return;
+
+        combat.RegisterValueBasedRollWatcherAnyDieFromDieResolution(
+            amount, bonusType, burnDefinition, duration);
     }
 
-    /// <summary>Same-roll path for face actions and <see cref="RelicAddValueBasedOnRollAction"/> when <see cref="AddValueBasedOnRollDuration.SameRoll"/>.</summary>
-    public static void ExecuteSameRollBonus(GameActionContext ctx, int requiredFaceValue, RollBonusType bonusType, int amount, BurnEffectSO burnDefinition)
+    /// <summary>Same-roll path for face actions and relic hooks when <see cref="AddValueBasedOnRollDuration.SameRoll"/>.</summary>
+    public static void ExecuteSameRollBonus(
+        GameActionContext ctx,
+        FaceValueMatchSet requiredValues,
+        RollBonusType bonusType,
+        int amount,
+        BurnEffectSO burnDefinition)
     {
-        if (ctx?.TriggeringFace == null) return;
-        if (ctx.TriggeringFace.Value != requiredFaceValue) return;
-        if (amount <= 0) return;
+        if (ctx?.TriggeringFace == null)
+            return;
+        if (requiredValues == null || !requiredValues.Matches(ctx.TriggeringFace.Value))
+            return;
+        if (amount <= 0)
+            return;
 
         if (!string.IsNullOrEmpty(ctx.RelicPhase))
         {
             if (bonusType == RollBonusType.Burn)
             {
-                if (ctx.RelicPhase != RelicPhases.AfterPowerChangedFromRoll) return;
+                if (ctx.RelicPhase != RelicPhases.AfterPowerChangedFromRoll)
+                    return;
             }
             else
             {
-                if (ctx.RelicPhase != RelicPhases.ModifyFaceResult) return;
+                if (ctx.RelicPhase != RelicPhases.ModifyFaceResult)
+                    return;
             }
         }
 
@@ -79,7 +147,8 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
             return;
         }
 
-        if (ctx?.Enemy == null) return;
+        if (ctx?.Enemy == null)
+            return;
 
         var applyStacks = amount;
         if (burnDefinition.target == StatusEffectTarget.Enemy && ctx.Player != null)
@@ -101,25 +170,62 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
             Debug.Log($"[AddValueBasedOnRoll] Burn +{applyStacks}");
     }
 
-    /// <summary>Registers burn flyout row when this face is resolved (same timing as <see cref="ApplyStatusEffectAction"/>).</summary>
     public void AppendPoolContributionIfAny(FaceResult result, PlayerStatus player)
     {
-        if (duration != AddValueBasedOnRollDuration.SameRoll) return;
-        if (bonusType != RollBonusType.Burn || burnDefinition == null) return;
-        TryAppendBurnPoolLine(result, player, requiredFaceValue, amount, burnDefinition);
+        if (duration != AddValueBasedOnRollDuration.SameRoll)
+            return;
+        if (bonusType != RollBonusType.Burn || burnDefinition == null)
+            return;
+        TryAppendBurnPoolLine(result, player, GetRequiredFaceValues(), amount, burnDefinition);
     }
 
-    public static void TryAppendBurnPoolLine(FaceResult result, PlayerStatus player, int requiredFaceValue, int amount, BurnEffectSO burnDefinition)
+    public static void TryAppendBurnPoolLineForWatcher(
+        FaceResult result,
+        PlayerStatus player,
+        System.Collections.Generic.IReadOnlyList<int> requiredValues,
+        bool matchAnyFaceValue,
+        int amount,
+        BurnEffectSO burnDefinition)
     {
-        if (result == null || player == null) return;
-        if (burnDefinition == null || amount <= 0) return;
-        if (result.Value != requiredFaceValue) return;
+        if (result == null || player == null)
+            return;
+        if (burnDefinition == null || amount <= 0)
+            return;
+        if (!FaceValueMatchSet.MatchesAny(result.Value, requiredValues, matchAnyFaceValue))
+            return;
 
+        AppendBurnPoolLineCore(result, player, amount, burnDefinition);
+    }
+
+    public static void TryAppendBurnPoolLine(
+        FaceResult result,
+        PlayerStatus player,
+        FaceValueMatchSet requiredValues,
+        int amount,
+        BurnEffectSO burnDefinition)
+    {
+        if (result == null || player == null)
+            return;
+        if (burnDefinition == null || amount <= 0)
+            return;
+        if (requiredValues == null || !requiredValues.Matches(result.Value))
+            return;
+
+        AppendBurnPoolLineCore(result, player, amount, burnDefinition);
+    }
+
+    static void AppendBurnPoolLineCore(
+        FaceResult result,
+        PlayerStatus player,
+        int amount,
+        BurnEffectSO burnDefinition)
+    {
         var applyStacks = amount;
         if (burnDefinition.target == StatusEffectTarget.Enemy)
             applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
 
-        if (applyStacks <= 0) return;
+        if (applyStacks <= 0)
+            return;
 
         applyStacks = result.ApplyFireDoubleToEnemyBurnStacks(applyStacks, burnDefinition);
 
@@ -130,4 +236,8 @@ public class AddValueBasedOnRollAction : GameActionWithIcon
             Icon = GameIconCatalog.GetStatusIcon(burnDefinition)
         });
     }
+
+#if UNITY_EDITOR
+    private void OnValidate() => MigrateSerializedFields();
+#endif
 }

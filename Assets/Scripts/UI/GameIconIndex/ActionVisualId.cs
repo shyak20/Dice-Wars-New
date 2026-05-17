@@ -39,4 +39,7 @@ public enum ActionVisualId
 
     /// <summary><see cref="BonusDamageIfEnemyBurnMeetsThresholdAction"/> — bonus damage scaled when enemy burn ≥ threshold.</summary>
     BonusDamageVsBurnThreshold = 22,
+
+    /// <summary><see cref="StartNextTurnWithArmorAction"/> — next player turn begins with X armor.</summary>
+    StartNextTurnWithArmor = 23,
 }

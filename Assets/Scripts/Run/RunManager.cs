@@ -37,6 +37,7 @@ public class RunManager : MonoBehaviour
     private int currentRoomIndex;
     private bool _useMapBasedRun;
     private int _currentActIndex;
+    private bool _actFirstCombatConsumed;
     private int _runShrineBonusMaxPower;
     private bool _runVitalityInitialized;
     private int _runCurrentHp;
@@ -58,6 +59,7 @@ public class RunManager : MonoBehaviour
     private readonly HashSet<string> _drawnUnknownEventIdsThisMap = new HashSet<string>(StringComparer.Ordinal);
     private readonly HashSet<string> _completedUnknownMapEventIds = new HashSet<string>(StringComparer.Ordinal);
     private readonly List<EnemyTypeSO> _enemyDrawScratch = new List<EnemyTypeSO>();
+    private readonly List<EnemyTypeSO> _enemyFirstFightFilterScratch = new List<EnemyTypeSO>();
     private readonly List<UnknownMapEventSO> _unknownValidScratch = new List<UnknownMapEventSO>();
     private readonly List<UnknownMapEventSO> _unknownUnusedScratch = new List<UnknownMapEventSO>();
     private readonly List<RelicSO> _runRelics = new List<RelicSO>();
@@ -280,6 +282,7 @@ public class RunManager : MonoBehaviour
         _runVitalityInitialized = false;
         ClearMapPersistenceForNewAct();
         ClearMapEncounterDrawState();
+        ResetActFirstCombatState();
         currentRoomIndex = 0;
 
         if (loadDiceSelectBeforeMap)
@@ -486,6 +489,7 @@ public class RunManager : MonoBehaviour
             return;
         }
 
+        MarkActFirstCombatConsumed();
         SaveMapPersistence(grid, playerCell, movesTaken);
         RunEncounterBuffer.SetPendingCombat(enemy, isBossEndTile);
         if (TryEnterPreloadedCombatFromMap())
@@ -824,6 +828,17 @@ public class RunManager : MonoBehaviour
             throw new InvalidOperationException(
                 $"RunManager: act {_currentActIndex} has no enemies with rank {rank} in possibleEnemies.");
 
+        var drawable = valid;
+        if (!_actFirstCombatConsumed)
+        {
+            FilterEnemiesEligibleForFirstActCombat(valid, _enemyFirstFightFilterScratch);
+            if (_enemyFirstFightFilterScratch.Count > 0)
+                drawable = _enemyFirstFightFilterScratch;
+            else
+                Debug.LogWarning(
+                    $"RunManager: act {_currentActIndex} has no {rank} enemies eligible for the first combat (all excludeFromFirstFight) — using full pool.");
+        }
+
         if (!_drawnUniquesThisMap.TryGetValue(rank, out var used))
         {
             used = new HashSet<EnemyTypeSO>();
@@ -831,7 +846,7 @@ public class RunManager : MonoBehaviour
         }
 
         var unused = new List<EnemyTypeSO>();
-        foreach (var e in valid)
+        foreach (var e in drawable)
         {
             if (!used.Contains(e))
                 unused.Add(e);
@@ -845,7 +860,7 @@ public class RunManager : MonoBehaviour
         }
         else
         {
-            pick = valid[_enemyDrawRng.Next(valid.Count)];
+            pick = drawable[_enemyDrawRng.Next(drawable.Count)];
         }
 
         return pick;
@@ -856,6 +871,20 @@ public class RunManager : MonoBehaviour
         _drawnUniquesThisMap.Clear();
         _drawnUnknownThisMap.Clear();
         _drawnUnknownEventIdsThisMap.Clear();
+    }
+
+    void ResetActFirstCombatState() => _actFirstCombatConsumed = false;
+
+    void MarkActFirstCombatConsumed() => _actFirstCombatConsumed = true;
+
+    static void FilterEnemiesEligibleForFirstActCombat(List<EnemyTypeSO> source, List<EnemyTypeSO> into)
+    {
+        into.Clear();
+        foreach (var e in source)
+        {
+            if (e != null && !e.excludeFromFirstFight)
+                into.Add(e);
+        }
     }
 
     /// <summary>True if an unknown map event id was registered completed this run (see <see cref="RegisterUnknownMapEventCompleted"/>).</summary>
@@ -1141,6 +1170,7 @@ public class RunManager : MonoBehaviour
             _currentActIndex++;
             ClearMapPersistenceForNewAct();
             ClearMapEncounterDrawState();
+            ResetActFirstCombatState();
             ClearMapSubsceneTransitionSnapshot();
             LoadSceneSingleWithMusic(mapSceneName);
             return;

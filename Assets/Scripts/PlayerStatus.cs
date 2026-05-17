@@ -200,6 +200,13 @@ public class PlayerStatus : MonoBehaviour
         UpdateUI();
     }
 
+    /// <summary>Sets armor to an exact value (e.g. next-turn carry from <see cref="StartNextTurnWithArmorAction"/>).</summary>
+    public void SetArmor(int amount)
+    {
+        currentArmor = Mathf.Max(0, amount);
+        UpdateUI();
+    }
+
     private void UpdateUI()
     {
         if (healthSlider != null)
