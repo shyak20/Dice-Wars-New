@@ -9,13 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf2edee5c58d82540a51f03df9d42094, type: 3}
+  m_Script: {fileID: 11500000, guid: 557c9da3412dfbd40adf2ed69c859656, type: 3}
   m_Name: New Universal Render Pipeline Asset
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset
   k_AssetVersion: 13
   k_AssetPreviousVersion: 13
   m_RendererType: 1
-  m_RendererData: {fileID: 0}
+  m_RendererData: {fileID: 11400000, guid: 72da9bf7a84f24347af31cd9d7e43ebd, type: 2}
   m_RendererDataList:
   - {fileID: 11400000, guid: 72da9bf7a84f24347af31cd9d7e43ebd, type: 2}
   m_DefaultRendererIndex: 0

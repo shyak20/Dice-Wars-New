@@ -24,7 +24,8 @@ MonoBehaviour:
     probeSamplingDebugMesh: {fileID: 0}
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
-  m_RendererFeatures: []
+  m_RendererFeatures:
+  - {fileID: 6588719023623141234}
   m_RendererFeatureMap: 
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
@@ -53,4 +54,27 @@ MonoBehaviour:
   m_DepthAttachmentFormat: 0
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
-  m_IntermediateTextureMode: 1
+  m_IntermediateTextureMode: 0
+--- !u!114 &6588719023623141234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76e1689c0468da848a8be61bcb3f2ce0, type: 3}
+  m_Name: PixelArtPostProcess
+  m_EditorClassIdentifier: Assembly-CSharp::PixelArtPostProcessFeature
+  m_Active: 1
+  isEnabled: 1
+  material: {fileID: 2100000, guid: e868a07ed6c040443b195551aa795e39, type: 2}
+  pixelSize: 12
+  excludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  logWhenActive: 1
+  renderPassEvent: 600
+  colorLevels: 0
+  affectSceneView: 0
