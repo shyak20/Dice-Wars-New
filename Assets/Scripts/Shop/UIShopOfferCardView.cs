@@ -10,8 +10,14 @@ public class UIShopOfferCardView : MonoBehaviour
     [SerializeField] Image iconImage;
     [Tooltip("Optional shadow holder. Uses an Image on this object or its first child Image (excluding the main icon). Re-resolved on each Bind so shop refreshes always pick it up.")]
     [SerializeField] GameObject iconShadowObject;
+    [SerializeField] Color iconShadowColor = Color.black;
     [SerializeField] TMP_Text nameText;
     [SerializeField] TMP_Text descriptionText;
+    [SerializeField] TMP_Text rarityText;
+    [Header("Rarity text colors")]
+    [SerializeField] Color commonRarityColor = Color.white;
+    [SerializeField] Color rareRarityColor = new(0.2f, 0.6f, 1f);
+    [SerializeField] Color legendaryRarityColor = new(1f, 0.474f, 0.052f);
     [SerializeField] TMP_Text priceText;
     [SerializeField] Color affordablePriceColor = Color.white;
     [SerializeField] Color unaffordablePriceColor = new(1f, 0.35f, 0.35f);
@@ -124,7 +130,7 @@ public class UIShopOfferCardView : MonoBehaviour
         return hit != null ? hit.rectTransform : null;
     }
 
-    public void Bind(string title, string desc, Sprite icon, int price, bool canAfford, bool sold, Action onBuy)
+    public void Bind(string title, string desc, Sprite icon, int price, bool canAfford, bool sold, Action onBuy, FaceRarity? rarity = null)
     {
         _price = price;
         _sold = sold;
@@ -142,10 +148,13 @@ public class UIShopOfferCardView : MonoBehaviour
         {
             _iconShadowImage.sprite = icon;
             _iconShadowImage.enabled = icon != null;
-            _iconShadowImage.color = icon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+            _iconShadowImage.color = icon != null
+                ? iconShadowColor
+                : new Color(iconShadowColor.r, iconShadowColor.g, iconShadowColor.b, 0f);
         }
         if (nameText != null) nameText.text = title ?? "";
         if (descriptionText != null) descriptionText.text = desc ?? "";
+        ApplyRarityText(rarity);
         if (priceText != null) priceText.text = price.ToString();
         if (soldStamp != null) soldStamp.SetActive(sold);
         if (buyButton != null) buyButton.interactable = !sold && canAfford;
@@ -158,5 +167,26 @@ public class UIShopOfferCardView : MonoBehaviour
         var canAfford = RunEconomyManager.Instance != null && RunEconomyManager.Instance.CanAfford(_price);
         if (buyButton != null) buyButton.interactable = !_sold && canAfford;
         if (priceText != null) priceText.color = _sold || canAfford ? affordablePriceColor : unaffordablePriceColor;
+    }
+
+    void ApplyRarityText(FaceRarity? rarity)
+    {
+        if (rarityText == null)
+            return;
+
+        if (rarity == null)
+        {
+            rarityText.gameObject.SetActive(false);
+            return;
+        }
+
+        rarityText.gameObject.SetActive(true);
+        rarityText.text = rarity.Value.ToString();
+        rarityText.color = rarity.Value switch
+        {
+            FaceRarity.Rare => rareRarityColor,
+            FaceRarity.Legendary => legendaryRarityColor,
+            _ => commonRarityColor,
+        };
     }
 }

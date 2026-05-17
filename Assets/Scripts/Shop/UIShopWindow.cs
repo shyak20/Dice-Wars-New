@@ -132,7 +132,7 @@ public class UIShopWindow : MonoBehaviour
         {
             var v = Instantiate(prefab, parent); _cards.Add(v);
             var canAfford = RunEconomyManager.Instance != null && RunEconomyManager.Instance.CanAfford(o.Price);
-            v.Bind(NameOf(o), DescOf(o), IconOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o));
+            v.Bind(NameOf(o), DescOf(o), IconOf(o), o.Price, canAfford, o.Sold, () => TryBuy(o), RarityOf(o));
             RegisterShopOfferHover(v, o);
         }
     }
@@ -185,6 +185,14 @@ public class UIShopWindow : MonoBehaviour
         et.triggers.Add(enter);
         et.triggers.Add(exit);
     }
+
+    static FaceRarity? RarityOf(OfferData o) => o.Kind switch
+    {
+        OfferKind.Face when o.Face != null => o.Face.rarity,
+        OfferKind.Gem when o.Gem != null => o.Gem.rarity,
+        OfferKind.Relic when o.Relic != null => o.Relic.rarity,
+        _ => null,
+    };
 
     static string NameOf(OfferData o) => o.Kind switch { OfferKind.Face => o.Face != null ? o.Face.Title : "Face", OfferKind.Gem => o.Gem != null ? o.Gem.DisplayLabel : "Gem", OfferKind.Relic => o.Relic != null ? o.Relic.title : "Relic", OfferKind.Die => o.Die != null ? o.Die.dieName : "Die", _ => "" };
     static string DescOf(OfferData o) => o.Kind switch
