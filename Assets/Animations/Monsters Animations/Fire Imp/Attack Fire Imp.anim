@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Fire Imp Attack
+  m_Name: Attack Fire Imp
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -20,7 +20,7 @@ AnimationClip:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: {x: 0, y: 2.59, z: 0}
+        value: {x: 0, y: 5.8, z: 0}
         inSlope: {x: 0, y: 0, z: 0}
         outSlope: {x: 0, y: 0, z: 0}
         tangentMode: 0
@@ -31,41 +31,29 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     path: Enemy CTRL/Enemy Image
-  m_ScaleCurves: []
+  m_ScaleCurves:
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: {x: 0.81438, y: 0.81438, z: 0.81438}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0, y: 0.33333334, z: 0.33333334}
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: Enemy CTRL
   m_FloatCurves: []
   m_PPtrCurves:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: -1539292379, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.06666667
-      value: {fileID: 371445022, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.13333334
-      value: {fileID: -1435717863, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.2
-      value: {fileID: 1329514251, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.26666668
-      value: {fileID: -1702875229, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.33333334
-      value: {fileID: -1050613690, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.4
-      value: {fileID: -163966647, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.46666667
-      value: {fileID: 1484775849, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.53333336
-      value: {fileID: -2103719502, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - time: 0.6
-      value: {fileID: -1733129590, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - time: 0.6666667
-      value: {fileID: -1272100886, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - time: 0.73333335
-      value: {fileID: 696146256, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - time: 0.8
-      value: {fileID: 237644410, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - time: 0.8666667
-      value: {fileID: -1518081466, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - time: 0.93333334
-      value: {fileID: 424200975, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
+      value: {fileID: 21300000, guid: 1676d9f31159727488c48506577190a9, type: 3}
     attribute: m_Sprite
     path: Enemy CTRL/Enemy Image
     classID: 212
@@ -96,28 +84,23 @@ AnimationClip:
       isPPtrCurve: 0
       isIntCurve: 0
       isSerializeReferenceCurve: 0
+    - serializedVersion: 2
+      path: 2244824449
+      attribute: 3
+      script: {fileID: 0}
+      typeID: 4
+      customType: 0
+      isPPtrCurve: 0
+      isIntCurve: 0
+      isSerializeReferenceCurve: 0
     pptrCurveMapping:
-    - {fileID: -1539292379, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: 371445022, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: -1435717863, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: 1329514251, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: -1702875229, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: -1050613690, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: -163966647, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: 1484775849, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: -2103719502, guid: 9f9639eea3f333643ad23f38fef97395, type: 3}
-    - {fileID: -1733129590, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - {fileID: -1272100886, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - {fileID: 696146256, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - {fileID: 237644410, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - {fileID: -1518081466, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
-    - {fileID: 424200975, guid: d26caf9d4de18574ebe3f733f753dc4c, type: 3}
+    - {fileID: 21300000, guid: 1676d9f31159727488c48506577190a9, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.95
+    m_StopTime: 0.016666668
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -160,7 +143,7 @@ AnimationClip:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 2.59
+        value: 5.8
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -193,6 +176,69 @@ AnimationClip:
       m_RotationOrder: 4
     attribute: m_LocalPosition.z
     path: Enemy CTRL/Enemy Image
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.81438
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalScale.x
+    path: Enemy CTRL
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.81438
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalScale.y
+    path: Enemy CTRL
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.81438
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalScale.z
+    path: Enemy CTRL
     classID: 4
     script: {fileID: 0}
     flags: 0
