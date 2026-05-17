@@ -33,6 +33,10 @@ public sealed class MapTreasurePanel : MonoBehaviour
     [SerializeField, Min(0f)] private float canvasShakeMaxOffset = 22f;
     [SerializeField, Min(1f)] private float canvasShakeWaves = 12f;
 
+    [Header("Close")]
+    [Tooltip("After the last reward row is collected, wait this long before hiding the panel. Close button still closes immediately.")]
+    [SerializeField, Min(0f)] private float delayBeforeCloseSeconds = 1f;
+
     private MapTreasurePackSO _currentPack;
     private readonly List<RolledReward> _rolledRewards = new List<RolledReward>();
     private int _pendingRowCompletions;
@@ -53,6 +57,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
     }
 
     private Coroutine _canvasShakeRoutine;
+    private Coroutine _delayedCloseRoutine;
     private Vector2 _canvasShakeBaseAnchoredPosition;
 
     private void Awake()
@@ -70,7 +75,11 @@ public sealed class MapTreasurePanel : MonoBehaviour
             openButton.onClick.AddListener(OnOpenButtonPressed);
     }
 
-    private void OnDisable() => StopCanvasShake(resetPosition: true);
+    private void OnDisable()
+    {
+        StopCanvasShake(resetPosition: true);
+        CancelDelayedClose();
+    }
 
     private void OnDestroy()
     {
@@ -270,7 +279,35 @@ public sealed class MapTreasurePanel : MonoBehaviour
     {
         _pendingRowCompletions = Mathf.Max(0, _pendingRowCompletions - 1);
         if (_pendingRowCompletions == 0)
+            ScheduleCloseAfterRewardsCollected();
+    }
+
+    void ScheduleCloseAfterRewardsCollected()
+    {
+        CancelDelayedClose();
+        if (delayBeforeCloseSeconds <= 0f)
+        {
             Close();
+            return;
+        }
+
+        _delayedCloseRoutine = StartCoroutine(CoCloseAfterDelay());
+    }
+
+    IEnumerator CoCloseAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(delayBeforeCloseSeconds);
+        _delayedCloseRoutine = null;
+        Close();
+    }
+
+    void CancelDelayedClose()
+    {
+        if (_delayedCloseRoutine == null)
+            return;
+
+        StopCoroutine(_delayedCloseRoutine);
+        _delayedCloseRoutine = null;
     }
 
     private static void RollRewards(MapTreasurePackSO pack, List<RolledReward> destination)
@@ -337,6 +374,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
     /// <summary>Closes the panel and clears pending rewards UI (e.g. map regenerated).</summary>
     public void Hide()
     {
+        CancelDelayedClose();
         StopCanvasShake(resetPosition: true);
         _currentPack = null;
         _rolledRewards.Clear();

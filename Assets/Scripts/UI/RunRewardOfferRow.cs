@@ -316,7 +316,10 @@ public class RunRewardOfferRow : MonoBehaviour
     private void OnGoldClicked()
     {
         if (_goldAmount > 0)
+        {
+            DisplayCoins.TryShowFromReward(_goldAmount, transform);
             RunEconomyManager.TryGetRuntime()?.GrantGold(_goldAmount, null);
+        }
         _onCollected?.Invoke();
         Destroy(gameObject);
     }
