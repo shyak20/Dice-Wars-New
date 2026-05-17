@@ -10,13 +10,15 @@ public readonly struct UnknownMapEventOutcomeContext
         UnknownMapEventSO sourceEvent,
         MapGrid combatGrid,
         Vector2Int playerCell,
-        int movesTaken)
+        int movesTaken,
+        DieAssetSO chosenDie = null)
     {
         Evaluation = evaluation;
         SourceEvent = sourceEvent;
         CombatGrid = combatGrid;
         PlayerCell = playerCell;
         MovesTaken = movesTaken;
+        ChosenDie = chosenDie;
     }
 
     public UnknownMapEventEvaluationContext Evaluation { get; }
@@ -24,6 +26,10 @@ public readonly struct UnknownMapEventOutcomeContext
     public MapGrid CombatGrid { get; }
     public Vector2Int PlayerCell { get; }
     public int MovesTaken { get; }
+    public DieAssetSO ChosenDie { get; }
+
+    public UnknownMapEventOutcomeContext WithChosenDie(DieAssetSO die) =>
+        new UnknownMapEventOutcomeContext(Evaluation, SourceEvent, CombatGrid, PlayerCell, MovesTaken, die);
 }
 
 /// <summary>Polymorphic effect run when the player selects an unknown event option (SerializeReference on <see cref="UnknownMapEventOptionEntry"/>).</summary>
@@ -31,6 +37,72 @@ public readonly struct UnknownMapEventOutcomeContext
 public abstract class UnknownMapEventOutcomeBase
 {
     public abstract void Execute(UnknownMapEventOutcomeContext ctx);
+}
+
+/// <summary>Which deck dice appear in the map unknown-event die picker.</summary>
+public enum UnknownMapEventDieChoiceFilter
+{
+    AnyDeckDie,
+    HasCurseFace,
+}
+
+/// <summary>
+/// Outcome root that opens the die picker on the map panel; child steps run only after <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> is set.
+/// </summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeAfterDieChoice : UnknownMapEventOutcomeBase
+{
+    public UnknownMapEventDieChoiceFilter dieFilter = UnknownMapEventDieChoiceFilter.AnyDeckDie;
+
+    [SerializeReference]
+    public List<UnknownMapEventOutcomeBase> steps = new List<UnknownMapEventOutcomeBase>();
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (ctx.ChosenDie == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeAfterDieChoice: ChosenDie is required.");
+            return;
+        }
+
+        if (steps == null)
+            return;
+        for (var i = 0; i < steps.Count; i++)
+            steps[i]?.Execute(ctx);
+    }
+
+    public bool DiePassesFilter(DieAssetSO die)
+    {
+        if (die == null)
+            return false;
+        switch (dieFilter)
+        {
+            case UnknownMapEventDieChoiceFilter.HasCurseFace:
+                return UnknownMapEventDieChoiceUtility.DieHasCurseFace(die);
+            default:
+                return true;
+        }
+    }
+}
+
+static class UnknownMapEventDieChoiceUtility
+{
+    public static bool OutcomeRequiresDieChoice(UnknownMapEventOutcomeBase outcome) =>
+        outcome is UnknownMapEventOutcomeAfterDieChoice;
+
+    public static bool DieHasCurseFace(DieAssetSO die)
+    {
+        if (die?.faces == null)
+            return false;
+        for (var slot = 0; slot < die.faces.Length && slot < 6; slot++)
+        {
+            var face = die.faces[slot];
+            if (face != null && face.type == DieType.Curse)
+                return true;
+        }
+
+        return false;
+    }
 }
 
 /// <summary>Adds run gold (no world pop-up).</summary>
@@ -455,6 +527,201 @@ public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool
         }
 
         Debug.LogWarning("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool: could not place a legendary face.");
+    }
+}
+
+/// <summary>Adds <see cref="curseFace"/> to a random legal slot on <see cref="UnknownMapEventOutcomeContext.ChosenDie"/>.</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeAddCurseFaceToChosenDie : UnknownMapEventOutcomeBase
+{
+    public DieFaceSO curseFace;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (curseFace == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeAddCurseFaceToChosenDie: curseFace is not assigned.");
+            return;
+        }
+
+        var die = ctx.ChosenDie;
+        if (die == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeAddCurseFaceToChosenDie: ChosenDie is required.");
+            return;
+        }
+
+        if (!TrySwapFaceOnDie(die, curseFace))
+            Debug.LogWarning("UnknownMapEventOutcomeAddCurseFaceToChosenDie: no valid face slot found.");
+    }
+
+    static bool TrySwapFaceOnDie(DieAssetSO die, DieFaceSO face)
+    {
+        if (die?.faces == null || face == null)
+            return false;
+        var slotOrder = new List<int> { 0, 1, 2, 3, 4, 5 };
+        UnknownMapEventOutcomeShuffle.ShuffleInPlace(slotOrder);
+        foreach (var slot in slotOrder)
+        {
+            if (slot < 0 || slot >= die.faces.Length)
+                continue;
+            if (!face.MatchesDie(die))
+                continue;
+            if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, face))
+                continue;
+            die.SwapFace(slot, face);
+            PlayerDataContainer.NotifyRuntimeDeckChanged();
+            return true;
+        }
+
+        return false;
+    }
+}
+
+/// <summary>Replaces one random face on <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> with a legendary from <see cref="legendaryPool"/>.</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie : UnknownMapEventOutcomeBase
+{
+    [Tooltip("Only faces with FaceRarity.Legendary are considered from this list.")]
+    public List<DieFaceSO> legendaryPool = new List<DieFaceSO>();
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (legendaryPool == null || legendaryPool.Count == 0)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie: legendaryPool empty.");
+            return;
+        }
+
+        var die = ctx.ChosenDie;
+        if (die == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie: ChosenDie is required.");
+            return;
+        }
+
+        if (!TryPlaceLegendaryOnDie(die, legendaryPool))
+            Debug.LogWarning("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie: could not place a legendary face.");
+    }
+
+    internal static bool TryPlaceLegendaryOnDie(DieAssetSO die, List<DieFaceSO> legendaryPool)
+    {
+        if (die?.faces == null || legendaryPool == null || legendaryPool.Count == 0)
+            return false;
+
+        var candidates = new List<DieFaceSO>();
+        for (var p = 0; p < legendaryPool.Count; p++)
+        {
+            var f = legendaryPool[p];
+            if (f != null && f.rarity == FaceRarity.Legendary && f.MatchesDie(die))
+                candidates.Add(f);
+        }
+
+        if (candidates.Count == 0)
+            return false;
+
+        var slotOrder = new List<int> { 0, 1, 2, 3, 4, 5 };
+        UnknownMapEventOutcomeShuffle.ShuffleInPlace(slotOrder);
+        foreach (var slot in slotOrder)
+        {
+            if (slot < 0 || slot >= die.faces.Length)
+                continue;
+            var pick = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, pick))
+                continue;
+            die.SwapFace(slot, pick);
+            PlayerDataContainer.NotifyRuntimeDeckChanged();
+            return true;
+        }
+
+        return false;
+    }
+}
+
+/// <summary>Removes <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> from the run deck.</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeRemoveChosenDeckDie : UnknownMapEventOutcomeBase
+{
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (ctx.ChosenDie == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeRemoveChosenDeckDie: ChosenDie is required.");
+            return;
+        }
+
+        var pdc = PlayerDataContainer.Instance;
+        if (pdc == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeRemoveChosenDeckDie: PlayerDataContainer missing.");
+            return;
+        }
+
+        if (!pdc.TryRemoveDieFromDeck(ctx.ChosenDie))
+            Debug.LogWarning("UnknownMapEventOutcomeRemoveChosenDeckDie: die was not in the deck.");
+    }
+}
+
+/// <summary>Replaces the first curse face on <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> with the base face for that die line.</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine : UnknownMapEventOutcomeBase
+{
+    public DieFaceSO replacementForDamageDie;
+    public DieFaceSO replacementForArmorDie;
+    public DieFaceSO replacementForFireDie;
+    public DieFaceSO replacementForIceDie;
+    public DieFaceSO replacementForNatureDie;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        var die = ctx.ChosenDie;
+        if (die == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine: ChosenDie is required.");
+            return;
+        }
+
+        if (die.faces == null)
+            return;
+
+        for (var slot = 0; slot < die.faces.Length && slot < 6; slot++)
+        {
+            var face = die.faces[slot];
+            if (face == null || face.type != DieType.Curse)
+                continue;
+
+            var rep = ReplacementFor(die);
+            if (rep == null)
+            {
+                Debug.LogError("UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine: missing replacement for die type " + die.dieType);
+                return;
+            }
+
+            if (!rep.MatchesDie(die))
+                continue;
+            if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep))
+                continue;
+            die.SwapFace(slot, rep);
+            PlayerDataContainer.NotifyRuntimeDeckChanged();
+            return;
+        }
+
+        Debug.LogWarning("UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine: no curse face replaced.");
+    }
+
+    DieFaceSO ReplacementFor(DieAssetSO die)
+    {
+        if (die == null)
+            return null;
+        return die.dieType switch
+        {
+            DieType.Damage => replacementForDamageDie,
+            DieType.Armor => replacementForArmorDie,
+            DieType.Fire => replacementForFireDie,
+            DieType.Ice => replacementForIceDie,
+            DieType.Nature => replacementForNatureDie,
+            _ => replacementForDamageDie,
+        };
     }
 }
 

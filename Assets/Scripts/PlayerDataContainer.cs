@@ -79,6 +79,28 @@ public class PlayerDataContainer : MonoBehaviour
         return false;
     }
 
+    /// <summary>Removes a specific runtime deck die instance.</summary>
+    public bool TryRemoveDieFromDeck(DieAssetSO die)
+    {
+        if (RuntimeData?.currentDeck == null)
+        {
+            Debug.LogError("PlayerDataContainer.TryRemoveDieFromDeck: RuntimeData or deck is null.");
+            return false;
+        }
+
+        if (die == null)
+            return false;
+
+        var idx = RuntimeData.currentDeck.IndexOf(die);
+        if (idx < 0)
+            return false;
+
+        Destroy(die);
+        RuntimeData.currentDeck.RemoveAt(idx);
+        OnRuntimeDeckChanged?.Invoke();
+        return true;
+    }
+
     /// <summary>Removes one random non-null die from the deck.</summary>
     public bool TryRemoveRandomDieFromDeck()
     {

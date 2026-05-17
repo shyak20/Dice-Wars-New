@@ -18,8 +18,11 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     [SerializeField] private LayoutGroup optionChoicesLayoutGroup;
     [Tooltip("Prefab root must include UnknownMapEventChoiceRowView (Button + TMP label). One instance per visible choice.")]
     [SerializeField] private GameObject optionRowPrefab;
+    [SerializeField] private MapUnknownEventDieChoicePopupView dieChoicePopup;
 
     private RectTransform _runtimeChoicesRect;
+    private UnknownMapEventSO _pendingOptionEvent;
+    private UnknownMapEventOptionEntry _pendingOptionEntry;
 
     private UnknownMapEventSO _currentEvent;
     private MapGrid _pendingGrid;
@@ -37,6 +40,11 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
         if (optionRowPrefab != null && optionRowPrefab.GetComponent<UnknownMapEventChoiceRowView>() == null)
             Debug.LogError(
                 "MapUnknownEventPanel: Option Row Prefab root must have UnknownMapEventChoiceRowView.",
+                this);
+
+        if (dieChoicePopup == null)
+            Debug.LogWarning(
+                "MapUnknownEventPanel: assign Die Choice Popup for options that require picking a die.",
                 this);
 
         if (optionChoicesLayoutGroup != null && optionChoicesLayoutGroup.transform is not RectTransform)
@@ -292,20 +300,74 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             return;
         }
 
+        if (entry.outcome is UnknownMapEventOutcomeAfterDieChoice dieChoiceOutcome)
+        {
+            if (dieChoicePopup == null)
+            {
+                Debug.LogError(
+                    "MapUnknownEventPanel: option requires die choice but Die Choice Popup is not assigned.",
+                    this);
+                return;
+            }
+
+            _pendingOptionEvent = ev;
+            _pendingOptionEntry = entry;
+            var title = string.IsNullOrWhiteSpace(entry.label) ? "Choose a die" : entry.label.Trim();
+            dieChoicePopup.Show(
+                title,
+                dieChoiceOutcome.DiePassesFilter,
+                OnDieChoiceCommitted,
+                OnDieChoiceCancelled);
+            return;
+        }
+
+        ExecuteOptionOutcome(ev, entry, chosenDie: null);
+        Hide();
+    }
+
+    private void OnDieChoiceCommitted(DieAssetSO die)
+    {
+        var ev = _pendingOptionEvent;
+        var entry = _pendingOptionEntry;
+        _pendingOptionEvent = null;
+        _pendingOptionEntry = null;
+
+        if (RunManager.Instance == null || ev == null || entry == null || die == null)
+        {
+            Hide();
+            return;
+        }
+
+        ExecuteOptionOutcome(ev, entry, die);
+        Hide();
+    }
+
+    private void OnDieChoiceCancelled()
+    {
+        _pendingOptionEvent = null;
+        _pendingOptionEntry = null;
+    }
+
+    private void ExecuteOptionOutcome(UnknownMapEventSO ev, UnknownMapEventOptionEntry entry, DieAssetSO chosenDie)
+    {
         var evalCtx = new UnknownMapEventEvaluationContext(
             RunManager.Instance,
             _pendingGrid,
             _pendingPlayerCell,
             _pendingMovesTaken);
-        var outcomeCtx = new UnknownMapEventOutcomeContext(evalCtx, ev, _pendingGrid, _pendingPlayerCell, _pendingMovesTaken);
+        var outcomeCtx = new UnknownMapEventOutcomeContext(
+            evalCtx,
+            ev,
+            _pendingGrid,
+            _pendingPlayerCell,
+            _pendingMovesTaken,
+            chosenDie);
 
         if (entry.outcome != null)
             entry.outcome.Execute(outcomeCtx);
 
         if (entry.registerEventCompletedOnPick)
             RunManager.Instance.RegisterUnknownMapEventCompleted(ev.ResolvedEventId);
-
-        Hide();
     }
 
     private void ClearOptionRows()
@@ -330,6 +392,9 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     {
         _currentEvent = null;
         _pendingGrid = null;
+        _pendingOptionEvent = null;
+        _pendingOptionEntry = null;
+        dieChoicePopup?.Hide();
         ClearOptionRows();
         if (root != null)
             root.SetActive(false);

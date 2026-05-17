@@ -46,8 +46,9 @@ MonoBehaviour:
       data:
         minimumCount: 2
     - rid: 6434882266773586171
-      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeAfterDieChoice, ns: , asm: Assembly-CSharp}
       data:
+        dieFilter: 0
         steps:
         - rid: 6434882266773586174
         - rid: 6434882266773586175
@@ -58,7 +59,7 @@ MonoBehaviour:
       type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 6434882266773586174
-      type: {class: UnknownMapEventOutcomeRemoveRandomDeckDie, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeRemoveChosenDeckDie, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 6434882266773586175
       type: {class: UnknownMapEventOutcomeApplyShrineMaxPowerBonus, ns: , asm: Assembly-CSharp}

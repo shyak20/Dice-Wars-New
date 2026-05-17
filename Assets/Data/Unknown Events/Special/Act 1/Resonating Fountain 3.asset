@@ -21,7 +21,7 @@ MonoBehaviour:
   - rid: 6434882266773586153
   excludeFromDrawIfCompletedThisRun: 1
   choices:
-  - label: '[Cost: 40 Max HP] Increase Max Power by 1'
+  - label: Increase Max Power by 3 - Lose 20 Max HP
     enabledWhen:
     - rid: 6434882266773586154
     registerEventCompletedOnPick: 1
@@ -48,7 +48,7 @@ MonoBehaviour:
     - rid: 6434882266773586154
       type: {class: UnknownMapEventConditionRunMaxHpMin, ns: , asm: Assembly-CSharp}
       data:
-        minimumMaxHp: 41
+        minimumMaxHp: 21
     - rid: 6434882266773586155
       type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
       data:
@@ -64,7 +64,7 @@ MonoBehaviour:
     - rid: 6434882266773586158
       type: {class: UnknownMapEventOutcomeApplyRunMaxHpDelta, ns: , asm: Assembly-CSharp}
       data:
-        maxHpDelta: -40
+        maxHpDelta: -20
     - rid: 6434882266773586159
       type: {class: UnknownMapEventOutcomeApplyShrineMaxPowerBonus, ns: , asm: Assembly-CSharp}
       data:

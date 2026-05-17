@@ -21,11 +21,10 @@ MonoBehaviour:
   - rid: 6434882266773586146
   excludeFromDrawIfCompletedThisRun: 1
   choices:
-  - label: '[Cost: 20 Max HP] Increase Max Power by 1 (Open The Resonating Fountain
-      3)'
+  - label: Increase Max Power by 2 - Lose 10 Max HP
     enabledWhen:
     - rid: 6434882266773586147
-    registerEventCompletedOnPick: 1
+    registerEventCompletedOnPick: 0
     outcome:
       rid: 6434882266773586148
   - label: Leave
@@ -49,7 +48,7 @@ MonoBehaviour:
     - rid: 6434882266773586147
       type: {class: UnknownMapEventConditionRunMaxHpMin, ns: , asm: Assembly-CSharp}
       data:
-        minimumMaxHp: 21
+        minimumMaxHp: 11
     - rid: 6434882266773586148
       type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
       data:
@@ -65,7 +64,7 @@ MonoBehaviour:
     - rid: 6434882266773586151
       type: {class: UnknownMapEventOutcomeApplyRunMaxHpDelta, ns: , asm: Assembly-CSharp}
       data:
-        maxHpDelta: -20
+        maxHpDelta: -10
     - rid: 6434882266773586152
       type: {class: UnknownMapEventOutcomeApplyShrineMaxPowerBonus, ns: , asm: Assembly-CSharp}
       data:

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Fossilized D6
   m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
   displayName: The Fossilized D6
-  description: "In a corner of the vault, you find a massive stone die half-buried
+  description: In a corner of the vault, you find a massive stone die half-buried
     in crystalline growth. It vibrates with an ancient, heavy frequency. It isn't
-    dead\u2014it's waiting for a new spark."
+    dead - it's waiting for a new spark.
   eventArt: {fileID: 0}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0

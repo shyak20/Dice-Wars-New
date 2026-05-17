@@ -16,7 +16,7 @@ MonoBehaviour:
   description: A heavy anvil made of dark, pulsating obsidian. Hammers made of shadow
     beat against it in a rhythmic trance. It can forge greatness, but it always demands
     a dark price in return.
-  eventArt: {fileID: 0}
+  eventArt: {fileID: 21300000, guid: 0ed83265778b0d548ae488df1737c739, type: 3}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:
@@ -46,8 +46,9 @@ MonoBehaviour:
       data:
         minimumCount: 1
     - rid: 6434882266773586125
-      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeAfterDieChoice, ns: , asm: Assembly-CSharp}
       data:
+        dieFilter: 0
         steps:
         - rid: 6434882266773586128
         - rid: 6434882266773586129
@@ -58,11 +59,11 @@ MonoBehaviour:
       type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 6434882266773586128
-      type: {class: UnknownMapEventOutcomeAddCurseFaceToRandomDie, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeAddCurseFaceToChosenDie, ns: , asm: Assembly-CSharp}
       data:
         curseFace: {fileID: 11400000, guid: 0c48e346faacf154fba2364657dc462a, type: 2}
     - rid: 6434882266773586129
-      type: {class: UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie, ns: , asm: Assembly-CSharp}
       data:
         legendaryPool:
         - {fileID: 11400000, guid: 54329b8f680c9e3479923b8e99730339, type: 2}

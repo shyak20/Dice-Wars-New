@@ -48,7 +48,13 @@ MonoBehaviour:
       type: {class: UnknownMapEventConditionHasAnyCurseFaceOnDeck, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 6434882266773586177
-      type: {class: UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeAfterDieChoice, ns: , asm: Assembly-CSharp}
+      data:
+        dieFilter: 1
+        steps:
+        - rid: 6434882266773586180
+    - rid: 6434882266773586180
+      type: {class: UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine, ns: , asm: Assembly-CSharp}
       data:
         replacementForDamageDie: {fileID: 11400000, guid: fea284ff0e66a4e409cfbf722b8ce75a, type: 2}
         replacementForArmorDie: {fileID: 11400000, guid: a0c0a3e6f34f23140a8c9e80248096fc, type: 2}

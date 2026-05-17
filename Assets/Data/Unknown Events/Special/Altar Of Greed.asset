@@ -16,7 +16,7 @@ MonoBehaviour:
   description: A jagged stone altar, stained with the ink of a thousand discarded
     runes. It whispers of wealth in exchange for your tools. The air around it smells
     of copper and regret.
-  eventArt: {fileID: 0}
+  eventArt: {fileID: 21300000, guid: c1e96b4edf5464c48bd3f498a6140ee0, type: 3}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:
@@ -45,8 +45,9 @@ MonoBehaviour:
       data:
         minimumCount: 2
     - rid: 6434882266773586119
-      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeAfterDieChoice, ns: , asm: Assembly-CSharp}
       data:
+        dieFilter: 0
         steps:
         - rid: 6434882266773586122
         - rid: 6434882266773586123
@@ -57,7 +58,7 @@ MonoBehaviour:
       type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 6434882266773586122
-      type: {class: UnknownMapEventOutcomeRemoveRandomDeckDie, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeRemoveChosenDeckDie, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 6434882266773586123
       type: {class: UnknownMapEventOutcomeGrantGold, ns: , asm: Assembly-CSharp}

@@ -167,11 +167,11 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             Row(
                 "[Cost: 1 Die] Sacrifice a die to gain +150 Gold",
                 new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionDeckDiceCountMin { minimumCount = 2 } },
-                new UnknownMapEventOutcomeComposite
+                new UnknownMapEventOutcomeAfterDieChoice
                 {
                     steps = new List<UnknownMapEventOutcomeBase>
                     {
-                        new UnknownMapEventOutcomeRemoveRandomDeckDie(),
+                        new UnknownMapEventOutcomeRemoveChosenDeckDie(),
                         new UnknownMapEventOutcomeGrantGold { amount = 150 },
                     },
                 }),
@@ -191,12 +191,15 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             Row(
                 "[Penalty: Add 1 Curse] Choose a die and add a Legendary Face of that type.",
                 new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionDeckDiceCountMin { minimumCount = 1 } },
-                new UnknownMapEventOutcomeComposite
+                new UnknownMapEventOutcomeAfterDieChoice
                 {
                     steps = new List<UnknownMapEventOutcomeBase>
                     {
-                        new UnknownMapEventOutcomeAddCurseFaceToRandomDie { curseFace = curse },
-                        new UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool { legendaryPool = new List<DieFaceSO>(legendaryPool) },
+                        new UnknownMapEventOutcomeAddCurseFaceToChosenDie { curseFace = curse },
+                        new UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie
+                        {
+                            legendaryPool = new List<DieFaceSO>(legendaryPool),
+                        },
                     },
                 }),
             Row("Leave", new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() }, new UnknownMapEventOutcomeNoOp()),
@@ -368,11 +371,11 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             Row(
                 "[Cost: 1 Die] Permanently add +5 to your Resonance Peak (X).",
                 new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionDeckDiceCountMin { minimumCount = 2 } },
-                new UnknownMapEventOutcomeComposite
+                new UnknownMapEventOutcomeAfterDieChoice
                 {
                     steps = new List<UnknownMapEventOutcomeBase>
                     {
-                        new UnknownMapEventOutcomeRemoveRandomDeckDie(),
+                        new UnknownMapEventOutcomeRemoveChosenDeckDie(),
                         new UnknownMapEventOutcomeApplyShrineMaxPowerBonus { amount = 5 },
                     },
                 }),
@@ -392,13 +395,20 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             Row(
                 "[Condition: Target 1 Curse Face] Clear a die from 1 curse face and add a base face instead",
                 new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionHasAnyCurseFaceOnDeck() },
-                new UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine
+                new UnknownMapEventOutcomeAfterDieChoice
                 {
-                    replacementForDamageDie = atk,
-                    replacementForArmorDie = def,
-                    replacementForFireDie = fire,
-                    replacementForIceDie = fire,
-                    replacementForNatureDie = fire,
+                    dieFilter = UnknownMapEventDieChoiceFilter.HasCurseFace,
+                    steps = new List<UnknownMapEventOutcomeBase>
+                    {
+                        new UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine
+                        {
+                            replacementForDamageDie = atk,
+                            replacementForArmorDie = def,
+                            replacementForFireDie = fire,
+                            replacementForIceDie = fire,
+                            replacementForNatureDie = fire,
+                        },
+                    },
                 }),
             Row("Skip", new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() }, new UnknownMapEventOutcomeNoOp()),
         };
