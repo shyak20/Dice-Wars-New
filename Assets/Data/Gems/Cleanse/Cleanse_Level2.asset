@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Cleanse_Level2
   m_EditorClassIdentifier: 
   displayName: Cleanse Lv.2
-  description: If this die rolls an even number, cleanse 10.
+  description: If this die rolls an even number, cleanse <style=Cleanse>10</style>.
   icon: {fileID: 21300000, guid: e31e3aadb09237a4dbe64fab3263b04f, type: 3}
   rarity: 0
   shopGoldPrice: 0

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Fire Wall Rare
   m_EditorClassIdentifier: 
   title: Basic Fire 3
-  description: Harness 3 Damage \nHarness 3 Burn
+  description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Gain shield equal to 100% of enemy burn stacks
+  - Gain <style=Shield>shield</style> equal to 100% of enemy <style=Burn>burn</style> stacks
   value: 4
   type: 2
   faceMaterial: {fileID: 2100000, guid: e1be335986f1bca4f8e6be4b12db220e, type: 2}

@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   descriptionLines:
   - Gain <style=Shield>2</style>
-  - This turn, whenever you roll a 2 gain <style=Shield>2</style>
+  - This turn, whenever you roll a <style=Die2> gain <style=Shield>2</style>
   value: 2
   type: 1
   faceMaterial: {fileID: 2100000, guid: 1df214fcb0dce354abf802f527c2f8b2, type: 2}

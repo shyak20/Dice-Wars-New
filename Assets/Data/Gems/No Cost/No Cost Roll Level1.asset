@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: No Cost Roll Level1
   m_EditorClassIdentifier: 
   displayName: No Cost Roll Lv.1
-  description: The first time each combat this die rolls a 6,5, or 4 do not add anything
+  description: The first time each combat this die rolls a <style=Die6>, <style=Die5>, <style=Die4> do not add anything
     to the Power Pool
   icon: {fileID: 21300000, guid: a13da468118bf7b4e8058205bfe10171, type: 3}
   rarity: 1

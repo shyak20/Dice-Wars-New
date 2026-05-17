@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Double Attack
   m_EditorClassIdentifier: 
   title: Double Attack
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>2</style> twice
   value: 2

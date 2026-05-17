@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 4 - Defense Base
   m_EditorClassIdentifier: 
   title: Basic 4
-  description: Gain <Style=Shield>Shield 4</Style>
+  description: Gain <style=Shield>4</style>
   descriptionLines:
   - Gain <style=Shield>4</style>
   value: 4

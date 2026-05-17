@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 5 - Attack Base
   m_EditorClassIdentifier: 
   title: Base Shadow 5
-  description: Harness 5 Damage
+  description: Harness <style=Damage>5</style>
   descriptionLines:
   - Deal <style=Attack>5</style>
   value: 5

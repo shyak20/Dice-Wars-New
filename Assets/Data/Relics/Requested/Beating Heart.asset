@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Beating Heart
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Beating Heart
-  description: Gain 1 Max HP at the end of each combat
+  description: Gain <style=Max HP>1</style> Max HP at the end of each combat
   rarity: 1
   icon: {fileID: 21300000, guid: 754a71786e905f747a1cbdf8dfc0bfac, type: 3}
   shopGoldPrice: 0

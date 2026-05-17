@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ExtraRoll_Level3
   m_EditorClassIdentifier: 
   displayName: Extra Roll Lv.3
-  description: 'If this die rolls 1, 3, or 5, gain +1 roll this turn.
+  description: 'If this die rolls <style=Die1>, <style=Die3>, <style=Die5>, gain +1 roll this turn.
 
     (Limited
     to 2 extra rolls)'

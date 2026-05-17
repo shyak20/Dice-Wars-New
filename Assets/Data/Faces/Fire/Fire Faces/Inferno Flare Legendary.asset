@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Inferno Flare Legendary
   m_EditorClassIdentifier: 
   title: Basic Fire 3
-  description: Harness 3 Damage \nHarness 3 Burn
+  description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Deal 5 damage. If the target has 15+ Burn stacks, this damage is tripled
+  - Deal <style=Attack>5</style>. If the target has 15+ <style=Burn>Burn</style> stacks, this <style=Damage>damage</style> is tripled
   value: 5
   type: 2
   faceMaterial: {fileID: 2100000, guid: 6341c6eeafc9d7145b5681ae96923ed8, type: 2}

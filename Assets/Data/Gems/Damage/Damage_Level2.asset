@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Damage_Level2
   m_EditorClassIdentifier: 
   displayName: Damage Lv.2
-  description: If this die rolls 2 or 4, +6 damage.
+  description: If this die rolls <style=Die2>, <style=Die4>, <style=Damage>+6</style>.
   icon: {fileID: 21300000, guid: 9b12e6abbed577b428c497798292eb56, type: 3}
   rarity: 0
   shopGoldPrice: 0

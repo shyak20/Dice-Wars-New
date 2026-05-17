@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Iron Buckle
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Iron Buckle
-  description: 'When ending your turn, gain 2 armor for every roll you have left '
+  description: 'When ending your turn, gain <style=Shield>2</style> for every roll you have left '
   rarity: 1
   icon: {fileID: 21300000, guid: e8d329ebdc271664c9860789e3286a13, type: 3}
   shopGoldPrice: 0

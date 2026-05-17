@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Blood Vial
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Blood Vial
-  description: Heal 2 HP at the end of each combat.
+  description: Heal <style=Heal>2</style> HP at the end of each combat.
   rarity: 0
   icon: {fileID: 21300000, guid: a69ee4bd812ae9c4aa0cb44857f9c2ac, type: 3}
   shopGoldPrice: 0

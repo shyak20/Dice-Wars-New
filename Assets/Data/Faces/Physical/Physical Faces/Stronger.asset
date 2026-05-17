@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Stronger
   m_EditorClassIdentifier: 
   title: Stronger
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>4</style>
-  - Deal 4 additional Damage for every <style=Strength>Strength</style> you have
+  - Deal <style=Attack>4</style> additional for every <style=Strength>Strength</style> you have
   value: 4
   type: 0
   faceMaterial: {fileID: 2100000, guid: e7f2e895d671c5343bdd66a43248d860, type: 2}

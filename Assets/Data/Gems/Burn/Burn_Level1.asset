@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Burn_Level1
   m_EditorClassIdentifier: 
   displayName: Burn Lv.1
-  description: If this die rolls 1, apply +2 Burn.
+  description: If this die rolls <style=Die1>, apply <style=Burn>+2</style>.
   icon: {fileID: 21300000, guid: dbceca00fa0421f42bac4bb1d1d79938, type: 3}
   rarity: 1
   shopGoldPrice: 0

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Magma Chamber
   m_EditorClassIdentifier: 
   title: Basic Fire 3
-  description: Harness 3 Damage \nHarness 3 Burn
+  description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Gain 3 armor, for every armor point lost this turn, apply 1 burn stack.
+  - Gain <style=Shield>3</style>, for every <style=Shield>armor</style> point lost this turn, apply <style=Burn>1</style> stack.
   value: 3
   type: 2
   faceMaterial: {fileID: 2100000, guid: 57e98965d3724e04e94a3fcf286034af, type: 2}

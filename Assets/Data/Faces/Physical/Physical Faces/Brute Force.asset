@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Brute Force
   m_EditorClassIdentifier: 
   title: Stronger
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>5</style>
   - Apply <style=Vulnerable>1 Vulnerable </style>

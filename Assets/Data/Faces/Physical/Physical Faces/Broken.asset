@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Broken
   m_EditorClassIdentifier: 
   title: Stronger
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>4</style>
   - Apply Broken - Remove enemy shield (Instant)

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Heal_Level3
   m_EditorClassIdentifier: 
   displayName: Heal Lv.3
-  description: If this die rolls 2, 4, or 6, heal 2 HP.
+  description: If this die rolls <style=Die2>, <style=Die4>, <style=Die6>, heal <style=Heal>2</style> HP.
   icon: {fileID: 21300000, guid: f2d555143f4c81d4ebb5498347afa0a5, type: 3}
   rarity: 0
   shopGoldPrice: 0

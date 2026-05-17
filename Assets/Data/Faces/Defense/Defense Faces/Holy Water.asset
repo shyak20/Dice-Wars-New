@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Holy Water
   m_EditorClassIdentifier: 
   title: Holy Water
-  description: Gain 3 Shield \nCleanse 3
+  description: Gain <style=Shield>3</style> \n<style=Cleanse>3</style>
   descriptionLines:
   - Gain <style=Shield>3</style>
   - Gain <style=Cleanse>Cleanse 6</style>

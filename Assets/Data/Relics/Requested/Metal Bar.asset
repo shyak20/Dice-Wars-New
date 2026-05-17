@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Metal Bar
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Metal Bar
-  description: All Armor result give +2 to their outcome for every Armor Dice you
+  description: All <style=Shield>Armor</style> result give <style=Shield>+2</style> to their outcome for every <style=Shield>Armor</style> Dice you
     have.
   rarity: 1
   icon: {fileID: 21300000, guid: 3b43907db56462e4599b283fcf3715d9, type: 3}

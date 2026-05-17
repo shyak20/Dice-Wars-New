@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Oil Splash 1
   m_EditorClassIdentifier: 
   title: Basic Fire 3
-  description: Harness 3 Damage \nHarness 3 Burn
+  description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Remove all Burn from the target; gain 1 Max HP for every 3 stacks removed
+  - Remove all <style=Burn>Burn</style> from the target; gain <style=Max HP>1</style> Max HP for every 3 stacks removed
   value: 6
   type: 2
   faceMaterial: {fileID: 2100000, guid: 3e0141633dd484c4ea2beb1a03e5d504, type: 2}

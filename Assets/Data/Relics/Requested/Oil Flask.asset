@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Oil Flask
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Oil Flask
-  description: Adds +1 Burn to every Burn Die
+  description: Adds <style=Burn>+1</style> to every <style=Burn>Burn</style> Die
   rarity: 0
   icon: {fileID: 21300000, guid: b104bcc09c654824c82cea286208ed3a, type: 3}
   shopGoldPrice: 0

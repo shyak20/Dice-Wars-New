@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Armor_Level2
   m_EditorClassIdentifier: 
   displayName: Armor Lv.2
-  description: If this die rolls 1 or 3, +6 armor on this resolve.
+  description: If this die rolls <style=Die1>, <style=Die3>, <style=Shield>+6</style> on this resolve.
   icon: {fileID: 21300000, guid: 0e9f94f9aa2139945bfc52489e72833a, type: 3}
   rarity: 0
   shopGoldPrice: 0

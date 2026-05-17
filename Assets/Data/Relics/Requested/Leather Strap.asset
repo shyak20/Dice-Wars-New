@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Leather Strap
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Leather Strap
-  description: Whenever you roll 1,2,3 add +2 Armor
+  description: Whenever you roll <style=Die1>1</style>,<style=Die2>2</style>,<style=Die3>3</style> add <style=Shield>+2</style>
   rarity: 1
   icon: {fileID: 21300000, guid: 67fd17ef8db52e94b802bd31b8e63948, type: 3}
   shopGoldPrice: 0

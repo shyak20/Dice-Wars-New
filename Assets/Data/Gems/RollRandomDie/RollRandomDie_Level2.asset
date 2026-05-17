@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: RollRandomDie_Level2
   m_EditorClassIdentifier: 
   displayName: Roll Random Die Lv.2
-  description: If this die rolls 3, pick 2 random other dice in the same throw to
+  description: If this die rolls <style=Die3>, pick 2 random other dice in the same throw to
     roll again for free (their new faces add no power). Up to 3 times per roll for
     this die.
   icon: {fileID: 21300000, guid: 835463cf3d16f9e4d82ac20bffd498fe, type: 3}

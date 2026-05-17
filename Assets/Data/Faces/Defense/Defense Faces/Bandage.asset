@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Bandage
   m_EditorClassIdentifier: 
   title: Bandage
-  description: Gain <Style=Shield>Shield 2</Style> /nGain <Style=Heal>Heal 3</Style>
+  description: Gain <style=Shield>2</style> /nGain <style=Heal>3</style>
   descriptionLines:
   - Gain <style=Shield>2</style>
   - Gain <style=Heal>Heal 2</style>

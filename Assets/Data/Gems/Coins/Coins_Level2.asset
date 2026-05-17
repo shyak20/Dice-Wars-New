@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Coins_Level2
   m_EditorClassIdentifier: 
   displayName: Coins Lv.2
-  description: If this die rolls 1 or 3, gain +10 gold.
+  description: If this die rolls <style=Die1>, <style=Die3>, gain <style=Coin>+10</style>.
   icon: {fileID: 21300000, guid: d6e3d463e72ea1d49b93334eb4bed2e0, type: 3}
   rarity: 0
   shopGoldPrice: 0

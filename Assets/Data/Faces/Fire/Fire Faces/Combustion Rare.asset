@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Combustion Rare
   m_EditorClassIdentifier: 
   title: Basic Fire 3
-  description: Harness 3 Damage \nHarness 3 Burn
+  description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Instantly trigger 50% of the target's total Burn damage (does not remove stacks)
+  - Instantly trigger 50% of the target's total <style=Burn>Burn</style> <style=Damage>damage</style> (does not remove stacks)
   value: 3
   type: 2
   faceMaterial: {fileID: 2100000, guid: 57e98965d3724e04e94a3fcf286034af, type: 2}

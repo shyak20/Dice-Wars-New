@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 2  - Fire Base
   m_EditorClassIdentifier: 
   title: Basic Fire 1
-  description: Harness 1 Damage \nHarness 1 Burn
+  description: Harness <style=Damage>1</style> \nHarness <style=Burn>1</style>
   descriptionLines:
   - Apply <style=Burn>2</style>
   value: 2

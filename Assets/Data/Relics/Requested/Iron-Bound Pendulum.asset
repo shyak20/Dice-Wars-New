@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Iron-Bound Pendulum
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Iron-Bound Pendulum
-  description: Your Power Meter is increased by +3 for every 6 face you have equipped
+  description: Your Power Meter is increased by +3 for every <style=Die6>6</style> face you have equipped
     across all dice.
   rarity: 1
   icon: {fileID: 21300000, guid: 01c452af8b026ca47afeb55f1ad3530d, type: 3}

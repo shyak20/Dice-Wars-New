@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ExtraRoll_Level1
   m_EditorClassIdentifier: 
   displayName: Extra Roll Lv.1
-  description: If this die rolls 1, gain +1 roll this turn.
+  description: If this die rolls <style=Die1>, gain +1 roll this turn.
   icon: {fileID: 21300000, guid: 68f38984e14179a458ddd3325c115f7a, type: 3}
   rarity: 1
   shopGoldPrice: 0

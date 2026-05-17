@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Purge
   m_EditorClassIdentifier: 
   title: Purge
-  description: Gain 1 Shield \nCleanse 1
+  description: Gain <style=Shield>1</style> \n<style=Cleanse>1</style>
   descriptionLines:
   - Gain <style=Shield>3</style>
   - Gain <style=Cleanse>Cleanse 3</style>

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Fanning Flames
   m_EditorClassIdentifier: 
   title: Basic Fire 3
-  description: Harness 3 Damage \nHarness 3 Burn
+  description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Double the current Burn stacks on enemy
+  - Double the current <style=Burn>Burn</style> stacks on enemy
   value: 6
   type: 2
   faceMaterial: {fileID: 2100000, guid: 3e0141633dd484c4ea2beb1a03e5d504, type: 2}

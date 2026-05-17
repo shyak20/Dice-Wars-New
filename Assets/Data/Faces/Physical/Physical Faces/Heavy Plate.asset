@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Heavy Plate
   m_EditorClassIdentifier: 
   title: Basic Training
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack></style> equal to the accumulated <style=Shield></style> gained
     so far

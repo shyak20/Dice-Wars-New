@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Basic Training
   m_EditorClassIdentifier: 
   title: Basic Training
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>2</style>
   - Gain <style=Strength>2</style> (Instant)

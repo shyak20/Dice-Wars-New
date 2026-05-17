@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mukmuk
   m_EditorClassIdentifier: 
   title: Double Attack
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>6</style>
   - Deal extra <style=Attack>6</style> for each physical die you have

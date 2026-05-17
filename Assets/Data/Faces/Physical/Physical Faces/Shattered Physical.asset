@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Shattered Physical
   m_EditorClassIdentifier: 
   title: Stronger
-  description: Harness 1 Damage \nHarness +1 Strength
+  description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>5</style>
-  - Apply 1 Shattered (Reduce enemy damage by 5% per stack)
+  - Apply 1 Shattered (Reduce enemy <style=Damage>damage</style> by 5% per stack)
   value: 5
   type: 0
   faceMaterial: {fileID: 2100000, guid: f35ae15ee7e93c149b27a0d43069dfd5, type: 2}

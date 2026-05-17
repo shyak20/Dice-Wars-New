@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   descriptionLines:
   - Gain <style=Shield>6</style>
-  - This turn, whenever you roll a 6 gain <style=Shield>6</style>
+  - This turn, whenever you roll a <style=Die4>,<style=Die6> gain <style=Shield>6</style>
   value: 6
   type: 1
   faceMaterial: {fileID: 2100000, guid: 3f7122d4f64a56341a40bc26b951971d, type: 2}
@@ -29,9 +29,19 @@ MonoBehaviour:
   uiTooltipBackground: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
   actions:
   - rid: 6494956272364552432
+  - rid: 6434882266773586251
   references:
     version: 2
     RefIds:
+    - rid: 6434882266773586251
+      type: {class: AddValueBasedOnRollAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        requiredFaceValue: 4
+        bonusType: 0
+        amount: 6
+        burnDefinition: {fileID: 0}
+        duration: 1
     - rid: 6494956272364552432
       type: {class: AddValueBasedOnRollAction, ns: , asm: Assembly-CSharp}
       data:

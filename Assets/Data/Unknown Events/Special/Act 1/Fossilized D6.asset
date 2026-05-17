@@ -16,7 +16,7 @@ MonoBehaviour:
   description: In a corner of the vault, you find a massive stone die half-buried
     in crystalline growth. It vibrates with an ancient, heavy frequency. It isn't
     dead - it's waiting for a new spark.
-  eventArt: {fileID: 0}
+  eventArt: {fileID: 21300000, guid: 3253811a4e971c2488077bb08f2ce43a, type: 3}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:

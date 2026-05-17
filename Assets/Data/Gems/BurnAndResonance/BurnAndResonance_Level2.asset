@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BurnAndResonance_Level2
   m_EditorClassIdentifier: 
   displayName: Burn + Resonance Lv.2
-  description: If this die rolls 6, apply 8 Burn to the enemy and add 5 to the power
+  description: If this die rolls <style=Die6>, apply <style=Burn>8</style> to the enemy and add 5 to the power
     meter.
   icon: {fileID: 21300000, guid: 787efdac87ae00e4f95fd12354fa531a, type: 3}
   rarity: 1
