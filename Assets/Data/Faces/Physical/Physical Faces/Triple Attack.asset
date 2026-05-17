@@ -23,9 +23,9 @@ MonoBehaviour:
   damage: 3
   damageAttackTimes: 3
   armor: 0
+  selfDamage: 0
   uiIcon: {fileID: 21300000, guid: 4670230cb15f1fd4193eec090baa9073, type: 3}
-  uiTooltipBackground: {fileID: 21300000, guid: d54377126ab96104899c9eaf08f5578c, type: 3}
-  activateImmediately: 0
+  uiTooltipBackground: {fileID: 21300000, guid: 7cb1ca40abd697a4d907cdec17ec9928, type: 3}
   actions: []
   references:
     version: 2

@@ -24,8 +24,9 @@ MonoBehaviour:
   damage: 0
   damageAttackTimes: 1
   armor: 5
+  selfDamage: 0
   uiIcon: {fileID: 21300000, guid: 65d8887db19ae6545b307f87fc0a4639, type: 3}
-  uiTooltipBackground: {fileID: 21300000, guid: dff0064be162cef4091e7191cddcf4b8, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
   actions:
   - rid: 6494956095240142855
   references:

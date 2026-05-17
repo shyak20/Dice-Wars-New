@@ -24,9 +24,9 @@ MonoBehaviour:
   damage: 0
   damageAttackTimes: 1
   armor: 3
+  selfDamage: 0
   uiIcon: {fileID: 21300000, guid: d333fbbe67a0e0f47953e09df3120a95, type: 3}
-  uiTooltipBackground: {fileID: 21300000, guid: dff0064be162cef4091e7191cddcf4b8, type: 3}
-  activateImmediately: 1
+  uiTooltipBackground: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
   actions:
   - rid: 6494956272364552435
   references:
@@ -35,6 +35,6 @@ MonoBehaviour:
     - rid: 6494956272364552435
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
+        activateImmediately: 0
         statusEffect: {fileID: 11400000, guid: c3b5f7e19d204a8b9f0e1234567890cd, type: 2}
         stacks: 1
-        poolRowKeyOverride: 

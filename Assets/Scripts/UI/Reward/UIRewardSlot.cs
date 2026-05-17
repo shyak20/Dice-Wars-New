@@ -12,6 +12,10 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private TMP_Text valueText;
     [SerializeField] private TMP_Text rarityText;
+    [Header("Rarity text colors")]
+    [SerializeField] private Color commonRarityColor = Color.white;
+    [SerializeField] private Color rareRarityColor = new Color(0.2f, 0.6f, 1f);
+    [SerializeField] private Color legendaryRarityColor = new Color(1f, 0.474f, 0.052f);
     [SerializeField] private Image iconImage;
     [SerializeField] private Image typeIconImage;
     [Tooltip("Optional. Behind card content; uses DieFaceSO.uiTooltipBackground.")]
@@ -47,7 +51,7 @@ public class UIRewardSlot : MonoBehaviour
         if (nameText != null) nameText.text = face.Title;
         if (descriptionText != null) descriptionText.text = face.Description;
         if (valueText != null) valueText.text = face.value.ToString();
-        if (rarityText != null) rarityText.text = face.rarity.ToString();
+        ApplyRarityText(face.rarity);
 
         var faceSprite = face.uiIcon;
         var elementSprite = GameIconCatalog.GetElementIcon(face.type);
@@ -189,6 +193,23 @@ public class UIRewardSlot : MonoBehaviour
         et.triggers.Add(enter);
         et.triggers.Add(exit);
     }
+
+    private void ApplyRarityText(FaceRarity rarity)
+    {
+        if (rarityText == null)
+            return;
+
+        rarityText.text = rarity.ToString();
+        rarityText.color = GetRarityColor(rarity);
+    }
+
+    private Color GetRarityColor(FaceRarity rarity) =>
+        rarity switch
+        {
+            FaceRarity.Rare => rareRarityColor,
+            FaceRarity.Legendary => legendaryRarityColor,
+            _ => commonRarityColor,
+        };
 
     private void SetupStatusHoverTooltip(DieFaceSO face)
     {

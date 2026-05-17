@@ -906,7 +906,6 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   dieTooltipOverlay: {fileID: 6606301216288458979}
-  statusHoverTooltipPanel: {fileID: 9083719801664067795}
   phaseBObjects:
   - {fileID: 7818204890180253363}
   phaseCObjects:
@@ -2516,29 +2515,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6369665378424701123}
     m_Modifications:
-    - target: {fileID: 203278327266590044, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 203278327266590044, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -2.8899994
-      objectReference: {fileID: 0}
-    - target: {fileID: 4757044566743941923, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -12.339996
-      objectReference: {fileID: 0}
     - target: {fileID: 4976156703028391988, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
       propertyPath: m_Name
       value: Face Action Option
-      objectReference: {fileID: 0}
-    - target: {fileID: 5538375365255712356, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 57.199997
-      objectReference: {fileID: 0}
-    - target: {fileID: 5754851335817492004, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 33.940002
       objectReference: {fileID: 0}
     - target: {fileID: 8772609939246955444, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
       propertyPath: m_Pivot.x
@@ -2846,17 +2825,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7019382877085822306, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   m_PrefabInstance: {fileID: 2476913729353242857}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &9083719801664067795 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
-  m_PrefabInstance: {fileID: 2476913729353242857}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3848c6ebeaba79e449344ced7efca79d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &2692550960380935558
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2865,25 +2833,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6369665378424701123}
     m_Modifications:
-    - target: {fileID: 203278327266590044, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -2.8899994
-      objectReference: {fileID: 0}
-    - target: {fileID: 4757044566743941923, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -12.339996
-      objectReference: {fileID: 0}
     - target: {fileID: 4976156703028391988, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
       propertyPath: m_Name
       value: Face Action Option (1)
-      objectReference: {fileID: 0}
-    - target: {fileID: 5538375365255712356, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 57.199997
-      objectReference: {fileID: 0}
-    - target: {fileID: 5754851335817492004, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 33.940002
       objectReference: {fileID: 0}
     - target: {fileID: 8772609939246955444, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
       propertyPath: m_AnchorMax.x
@@ -3571,25 +3523,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6369665378424701123}
     m_Modifications:
-    - target: {fileID: 203278327266590044, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -2.8899994
-      objectReference: {fileID: 0}
-    - target: {fileID: 4757044566743941923, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -12.339996
-      objectReference: {fileID: 0}
     - target: {fileID: 4976156703028391988, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
       propertyPath: m_Name
       value: Face Action Option (2)
-      objectReference: {fileID: 0}
-    - target: {fileID: 5538375365255712356, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 57.199997
-      objectReference: {fileID: 0}
-    - target: {fileID: 5754851335817492004, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 33.940002
       objectReference: {fileID: 0}
     - target: {fileID: 8772609939246955444, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
       propertyPath: m_Pivot.x

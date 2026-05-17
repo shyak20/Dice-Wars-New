@@ -24,9 +24,9 @@ MonoBehaviour:
   damage: 0
   damageAttackTimes: 1
   armor: 6
+  selfDamage: 0
   uiIcon: {fileID: 21300000, guid: ee8a5f538c79db44493b373daa0529b1, type: 3}
-  uiTooltipBackground: {fileID: 21300000, guid: dff0064be162cef4091e7191cddcf4b8, type: 3}
-  activateImmediately: 1
+  uiTooltipBackground: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
   actions:
   - rid: 6494956272364552439
   references:
@@ -34,4 +34,5 @@ MonoBehaviour:
     RefIds:
     - rid: 6494956272364552439
       type: {class: RerollDieAction, ns: , asm: Assembly-CSharp}
-      data: 
+      data:
+        activateImmediately: 0
