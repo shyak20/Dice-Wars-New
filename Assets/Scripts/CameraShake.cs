@@ -1,67 +1,121 @@
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Shakes a camera's local position. Multiple instances may exist (map + preloaded fight);
+/// <see cref="Instance"/> and <see cref="ShakeActive"/> resolve the one in the active scene that is enabled.
+/// </summary>
 public class CameraShake : MonoBehaviour
 {
-    // A singleton makes it easy to call from anywhere
-    public static CameraShake Instance { get; private set; }
+    static readonly List<CameraShake> Registry = new List<CameraShake>();
 
-    private Vector3 originalPosition;
-    private Coroutine shakeRoutine;
+    /// <summary>Active, enabled shake in <see cref="SceneManager.GetActiveScene"/> when possible.</summary>
+    public static CameraShake Instance => ResolveForActiveScene();
 
-    private void Awake()
+    private Vector3 _originalLocalPosition;
+    private Coroutine _shakeRoutine;
+
+    private void OnEnable()
     {
-        if (Instance != null && Instance != this)
+        Register();
+        CaptureOriginalLocalPosition();
+    }
+
+    private void OnDisable()
+    {
+        if (_shakeRoutine != null)
         {
-            // Must not destroy the whole GameObject: other cameras (e.g. URP overlay) also get this by accident.
-            Destroy(this);
-            return;
+            StopCoroutine(_shakeRoutine);
+            _shakeRoutine = null;
         }
 
-        Instance = this;
+        transform.localPosition = _originalLocalPosition;
+        Unregister();
     }
 
-    private void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
-    }
+    private void OnDestroy() => Unregister();
 
-    private void Start()
-    {
-        // Store the camera's resting position
-        originalPosition = transform.localPosition;
-    }
+    /// <summary>Shakes the active scene's camera when one is available.</summary>
+    public static void ShakeActive(float duration, float magnitude) => Instance?.Shake(duration, magnitude);
 
-    /// <summary>
-    /// Call this to trigger a shake.
-    /// duration: how long it shakes (seconds)
-    /// magnitude: how intense the shake is (meters)
-    /// </summary>
     public void Shake(float duration, float magnitude)
     {
-        if (shakeRoutine != null) StopCoroutine(shakeRoutine);
-        shakeRoutine = StartCoroutine(ShakeSequence(duration, magnitude));
+        if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
+            return;
+
+        CaptureOriginalLocalPosition();
+
+        if (_shakeRoutine != null)
+            StopCoroutine(_shakeRoutine);
+        _shakeRoutine = StartCoroutine(ShakeSequence(duration, magnitude));
     }
 
     private IEnumerator ShakeSequence(float duration, float magnitude)
     {
-        float elapsed = 0f;
+        var elapsed = 0f;
 
         while (elapsed < duration)
         {
-            // Calculate a random offset in a sphere
-            Vector2 randomPoint = UnityEngine.Random.insideUnitCircle * magnitude;
-
-            // Apply the offset, keeping original Z depth
-            transform.localPosition = new Vector3(originalPosition.x + randomPoint.x, originalPosition.y + randomPoint.y, originalPosition.z);
+            var randomPoint = Random.insideUnitCircle * magnitude;
+            transform.localPosition = new Vector3(
+                _originalLocalPosition.x + randomPoint.x,
+                _originalLocalPosition.y + randomPoint.y,
+                _originalLocalPosition.z);
 
             elapsed += Time.deltaTime;
-            yield return null; // Wait for next frame
+            yield return null;
         }
 
-        // Return camera to original rest point
-        transform.localPosition = originalPosition;
-        shakeRoutine = null;
+        transform.localPosition = _originalLocalPosition;
+        _shakeRoutine = null;
+    }
+
+    private void CaptureOriginalLocalPosition()
+    {
+        if (_shakeRoutine != null)
+            return;
+        _originalLocalPosition = transform.localPosition;
+    }
+
+    private void Register()
+    {
+        if (!Registry.Contains(this))
+            Registry.Add(this);
+    }
+
+    private void Unregister() => Registry.Remove(this);
+
+    static void CleanupDestroyedEntries()
+    {
+        for (var i = Registry.Count - 1; i >= 0; i--)
+        {
+            if (Registry[i] == null)
+                Registry.RemoveAt(i);
+        }
+    }
+
+    static CameraShake ResolveForActiveScene()
+    {
+        CleanupDestroyedEntries();
+        if (Registry.Count == 0)
+            return null;
+
+        var activeScene = SceneManager.GetActiveScene();
+        CameraShake fallback = null;
+        for (var i = 0; i < Registry.Count; i++)
+        {
+            var shake = Registry[i];
+            if (shake == null || !shake.isActiveAndEnabled || !shake.gameObject.activeInHierarchy)
+                continue;
+
+            if (fallback == null)
+                fallback = shake;
+            if (activeScene.IsValid() && shake.gameObject.scene == activeScene)
+                return shake;
+        }
+
+        return fallback;
     }
 }

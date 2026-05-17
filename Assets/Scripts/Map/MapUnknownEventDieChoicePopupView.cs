@@ -84,12 +84,12 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows the chosen die tooltip and plays the replace animation on <paramref name="faceSlotIndex"/>
-    /// (swap must already be committed). Waits <see cref="faceSwapResolveDelay"/> before the next step or close.
+    /// Shows the chosen die tooltip and plays replace animations on every slot in <paramref name="faceSlotIndices"/>
+    /// (swaps must already be committed). All previews start together; waits <see cref="faceSwapResolveDelay"/> once.
     /// </summary>
-    public IEnumerator CoResolveFaceSwapOnDie(DieAssetSO die, int faceSlotIndex)
+    public IEnumerator CoResolveFaceSwapsOnDie(DieAssetSO die, IReadOnlyList<int> faceSlotIndices)
     {
-        if (die == null || dieTooltipOverlay == null || faceSlotIndex < 0)
+        if (die == null || dieTooltipOverlay == null || faceSlotIndices == null || faceSlotIndices.Count == 0)
             yield break;
 
         _selectedDie = die;
@@ -98,13 +98,15 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
 
         dieTooltipOverlay.ShowDie(die, false, null, GetDieIconRect(die));
 
-        var previewFace = die.faces != null && faceSlotIndex < die.faces.Length
-            ? die.faces[faceSlotIndex]
-            : null;
-        if (previewFace != null
-            && dieTooltipOverlay.TryGetFaceSlot(faceSlotIndex, out var slot))
+        for (var i = 0; i < faceSlotIndices.Count; i++)
         {
-            slot.ShowNewFacePickedPreview(previewFace);
+            var faceSlotIndex = faceSlotIndices[i];
+            if (faceSlotIndex < 0 || die.faces == null || faceSlotIndex >= die.faces.Length)
+                continue;
+
+            var previewFace = die.faces[faceSlotIndex];
+            if (previewFace != null && dieTooltipOverlay.TryGetFaceSlot(faceSlotIndex, out var slot))
+                slot.ShowNewFacePickedPreview(previewFace);
         }
 
         if (faceSwapResolveDelay > 0f)

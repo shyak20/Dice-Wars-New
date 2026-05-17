@@ -42,4 +42,10 @@ public enum ActionVisualId
 
     /// <summary><see cref="StartNextTurnWithArmorAction"/> — next player turn begins with X armor.</summary>
     StartNextTurnWithArmor = 23,
+
+    /// <summary><see cref="BonusPerOwnedDieAction"/> — bonus per die in the player's deck (armor, damage, fire, poison).</summary>
+    BonusPerOwnedDie = 24,
+
+    /// <summary><see cref="ResonanceMeterBonusModifier"/> — bonus equal to Resonance Meter before this roll resolves.</summary>
+    ResonanceMeterBonus = 25,
 }

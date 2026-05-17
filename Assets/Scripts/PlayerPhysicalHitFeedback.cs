@@ -73,8 +73,7 @@ public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
         var shakeDur = Mathf.Lerp(minShakeDuration, maxShakeDuration, blend);
         var shakeMag = Mathf.Lerp(minShakeMagnitude, maxShakeMagnitude, blend);
 
-        if (CameraShake.Instance != null)
-            CameraShake.Instance.Shake(shakeDur, shakeMag);
+        CameraShake.ShakeActive(shakeDur, shakeMag);
 
         if (hitEffectRoot != null)
         {

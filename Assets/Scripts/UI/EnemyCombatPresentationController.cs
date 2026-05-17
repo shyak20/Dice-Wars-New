@@ -212,8 +212,8 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
 
     private void FlashSprite(Color tint, bool withCameraShake)
     {
-        if (withCameraShake && CameraShake.Instance != null)
-            CameraShake.Instance.Shake(damageShakeDuration, damageShakeMagnitude);
+        if (withCameraShake)
+            CameraShake.ShakeActive(damageShakeDuration, damageShakeMagnitude);
 
         if (_enemyMaterial == null) return;
         if (_spriteFlashRoutine != null) StopCoroutine(_spriteFlashRoutine);

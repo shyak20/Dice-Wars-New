@@ -20,6 +20,7 @@ public class CombatUIController : MonoBehaviour
 
     [Header("Controls")]
     public Button rollButton;
+    [SerializeField] private CombatManager combatManager;
     public Button endTurnButton;
     public Button cheatWinButton;
     public Button cheatPerfectStrikeButton;
@@ -117,7 +118,10 @@ public class CombatUIController : MonoBehaviour
         {
             rollButton.onClick.AddListener(() => CombatEvents.OnRollCommand?.Invoke());
             rollButton.interactable = false;
+            EnsureRollButtonCastOddsTooltip();
         }
+        if (combatManager == null)
+            combatManager = FindObjectOfType<CombatManager>();
         if (endTurnButton != null) endTurnButton.onClick.AddListener(() => CombatEvents.OnEndTurnPressed?.Invoke());
         if (cheatWinButton != null) cheatWinButton.onClick.AddListener(() => CombatEvents.OnCheatWinPressed?.Invoke());
         if (cheatPerfectStrikeButton != null) cheatPerfectStrikeButton.onClick.AddListener(() => CombatEvents.OnCheatPerfectStrikePressed?.Invoke());
@@ -174,6 +178,30 @@ public class CombatUIController : MonoBehaviour
         pinnedTooltipDie = null;
         hoveredTooltipDie = null;
         HideDieTooltip();
+    }
+
+    /// <summary>Selected tray dice used for pre-roll Perfect Cast / Cast Overload odds on the Roll button.</summary>
+    public bool TryGetRollCastOddsInput(out IReadOnlyList<DieAssetSO> selectedDice)
+    {
+        selectedDice = null;
+        if (_combatState != CombatState.WaitingForRoll || currentlySelected.Count == 0)
+            return false;
+
+        selectedDice = currentlySelected;
+        return true;
+    }
+
+    private void EnsureRollButtonCastOddsTooltip()
+    {
+        if (rollButton == null)
+            return;
+
+        var tooltip = rollButton.GetComponent<RollButtonCastOddsHoverTooltip>();
+        if (tooltip == null)
+            tooltip = rollButton.gameObject.AddComponent<RollButtonCastOddsHoverTooltip>();
+
+        if (combatManager == null)
+            combatManager = FindObjectOfType<CombatManager>();
     }
 
     private void ToggleSelection(DieAssetSO die)

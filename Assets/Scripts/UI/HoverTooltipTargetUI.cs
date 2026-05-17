@@ -9,6 +9,8 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     [SerializeField] private string tooltipTitle;
     [SerializeField, TextArea] private string tooltipDescription;
     [SerializeField] private Vector2 tooltipScreenOffset;
+    [Tooltip("When true, HoverTooltipManager uses its Hover Above Tooltip Screen Offset instead of Tooltip Screen Offset.")]
+    [SerializeField] private bool isAbove;
     private Sprite _tooltipBackground;
     private ScriptableObject _scriptableSource;
     private bool _isPointerInside;
@@ -25,6 +27,8 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     }
 
     public void SetTooltipScreenOffset(Vector2 screenOffset) => tooltipScreenOffset = screenOffset;
+
+    public void SetIsAbove(bool above) => isAbove = above;
 
     public void OnPointerEnter(PointerEventData eventData)
     {
@@ -77,13 +81,13 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
                 return;
             if (string.IsNullOrWhiteSpace(t) && string.IsNullOrWhiteSpace(d))
                 return;
-            mgr.Show(anchor, tooltipScreenOffset, t, d, bg);
+            mgr.Show(anchor, tooltipScreenOffset, t, d, bg, isAbove);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(tooltipTitle) && string.IsNullOrWhiteSpace(tooltipDescription))
             return;
 
-        mgr.Show(anchor, tooltipScreenOffset, tooltipTitle, tooltipDescription, _tooltipBackground);
+        mgr.Show(anchor, tooltipScreenOffset, tooltipTitle, tooltipDescription, _tooltipBackground, isAbove);
     }
 }

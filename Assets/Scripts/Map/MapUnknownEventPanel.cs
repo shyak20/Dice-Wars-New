@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
@@ -9,6 +10,7 @@ using TMPro;
 /// Map-only panel for <see cref="MapEventType.Unknown"/> tiles.
 /// Legacy combat-on-enter is unchanged; otherwise the player always dismisses via option rows built from <see cref="optionRowPrefab"/>.
 /// </summary>
+[DefaultExecutionOrder(-100)]
 public sealed class MapUnknownEventPanel : MonoBehaviour
 {
     [SerializeField] private GameObject root;
@@ -21,6 +23,12 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     [Tooltip("Prefab root must include UnknownMapEventChoiceRowView (Button + TMP label). One instance per visible choice.")]
     [SerializeField] private GameObject optionRowPrefab;
     [SerializeField] private MapUnknownEventDieChoicePopupView dieChoicePopup;
+    [Tooltip("Plays Unknown Appear Anim on open. Options are snapped to the end state so choice buttons are clickable immediately.")]
+    [SerializeField] private Animator panelOpenAnimator;
+    [Tooltip("CanvasGroup on the options list (animated alpha in Unknown Appear Anim). Auto-resolved from Option Choices Layout Group when empty.")]
+    [SerializeField] private CanvasGroup optionChoicesCanvasGroup;
+
+    private static readonly int AppearAnimStateHash = Animator.StringToHash("Unknown Appear Anim");
 
     private RectTransform _runtimeChoicesRect;
     private UnknownMapEventSO _pendingOptionEvent;
@@ -31,6 +39,9 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     private Vector2Int _pendingPlayerCell;
     private int _pendingMovesTaken;
     private Coroutine _dieChoiceRoutine;
+    private Coroutine _openPresentationRoutine;
+    private CanvasGroup _optionsGroupClickabilityOverride;
+    private bool _enforceOptionsClickable;
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -52,13 +63,28 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
 
         if (optionChoicesLayoutGroup != null && optionChoicesLayoutGroup.transform is not RectTransform)
             Debug.LogError("MapUnknownEventPanel: Option Choices Layout Group must live on a RectTransform.", this);
+
+        if (optionChoicesCanvasGroup == null && optionChoicesLayoutGroup != null)
+            optionChoicesCanvasGroup = optionChoicesLayoutGroup.GetComponent<CanvasGroup>();
     }
 #endif
+
+    private void Update()
+    {
+        if (!_enforceOptionsClickable)
+            return;
+
+        ForceOptionChoicesInteractable(_optionsGroupClickabilityOverride);
+    }
 
     private void Awake()
     {
         if (root == null)
             root = gameObject;
+        if (panelOpenAnimator == null && root != null)
+            panelOpenAnimator = root.GetComponent<Animator>();
+        if (optionChoicesCanvasGroup == null && optionChoicesLayoutGroup != null)
+            optionChoicesCanvasGroup = optionChoicesLayoutGroup.GetComponent<CanvasGroup>();
         root.SetActive(false);
     }
 
@@ -176,7 +202,87 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             AddDismissRow(listRoot, dismissLabel);
         }
 
+        FinalizeOpenPresentation(listRoot);
         return true;
+    }
+
+    private void FinalizeOpenPresentation(RectTransform listRoot)
+    {
+        if (_openPresentationRoutine != null)
+        {
+            StopCoroutine(_openPresentationRoutine);
+            _openPresentationRoutine = null;
+        }
+
+        _openPresentationRoutine = StartCoroutine(CoOpenPresentation(listRoot));
+    }
+
+    /// <summary>
+    /// Unknown Appear Anim keeps Options Layout <see cref="CanvasGroup.alpha"/> at 0 until ~0.65s, which blocks clicks.
+    /// <see cref="Update"/> re-applies interactable state after the animator and before UI input while this runs.
+    /// </summary>
+    private IEnumerator CoOpenPresentation(RectTransform listRoot)
+    {
+        if (listRoot != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(listRoot);
+
+        Canvas.ForceUpdateCanvases();
+
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(null);
+
+        var optionsGroup = ResolveOptionChoicesCanvasGroup();
+        _optionsGroupClickabilityOverride = optionsGroup;
+        _enforceOptionsClickable = true;
+        ForceOptionChoicesInteractable(optionsGroup);
+
+        var animator = panelOpenAnimator != null ? panelOpenAnimator : root?.GetComponent<Animator>();
+        if (animator != null && animator.runtimeAnimatorController != null)
+        {
+            animator.Play(AppearAnimStateHash, 0, 0f);
+            animator.Update(0f);
+            ForceOptionChoicesInteractable(optionsGroup);
+
+            while (animator.isActiveAndEnabled)
+            {
+                var state = animator.GetCurrentAnimatorStateInfo(0);
+                if (state.shortNameHash != AppearAnimStateHash || state.normalizedTime >= 1f)
+                    break;
+
+                yield return null;
+            }
+        }
+
+        _enforceOptionsClickable = false;
+        ForceOptionChoicesInteractable(optionsGroup);
+        _openPresentationRoutine = null;
+    }
+
+    private CanvasGroup ResolveOptionChoicesCanvasGroup()
+    {
+        if (optionChoicesCanvasGroup != null)
+            return optionChoicesCanvasGroup;
+        return optionChoicesLayoutGroup != null
+            ? optionChoicesLayoutGroup.GetComponent<CanvasGroup>()
+            : null;
+    }
+
+    private static void ForceOptionChoicesInteractable(CanvasGroup optionsGroup)
+    {
+        if (optionsGroup == null)
+            return;
+
+        optionsGroup.alpha = 1f;
+        optionsGroup.interactable = true;
+        optionsGroup.blocksRaycasts = true;
+
+        var rows = optionsGroup.GetComponentsInChildren<UnknownMapEventChoiceRowView>(true);
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var rowButton = rows[i].GetComponent<Button>();
+            if (rowButton != null)
+                rowButton.interactable = true;
+        }
     }
 
     private bool TryStartLegacyCombatOnEnter()
@@ -400,6 +506,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             die);
 
         var usedFaceSlots = new HashSet<int>();
+        var faceSwapPreviewSlots = new List<int>();
 
         for (var i = 0; i < afterDieChoice.steps.Count; i++)
         {
@@ -418,7 +525,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
                 if (addCurse.TrySwapAtRandomSlot(die, addCurse.curseFace, usedFaceSlots, out var curseSlot))
                 {
                     usedFaceSlots.Add(curseSlot);
-                    yield return dieChoicePopup.CoResolveFaceSwapOnDie(die, curseSlot);
+                    faceSwapPreviewSlots.Add(curseSlot);
                 }
                 else
                 {
@@ -440,7 +547,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
                 if (replaceLegendary.TrySwapAtRandomSlot(die, legendary, usedFaceSlots, out var legendarySlot))
                 {
                     usedFaceSlots.Add(legendarySlot);
-                    yield return dieChoicePopup.CoResolveFaceSwapOnDie(die, legendarySlot);
+                    faceSwapPreviewSlots.Add(legendarySlot);
                 }
                 else
                 {
@@ -453,7 +560,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             if (step is UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine replaceCurse)
             {
                 if (replaceCurse.TryReplaceFirstCurse(die, out var curseSlot))
-                    yield return dieChoicePopup.CoResolveFaceSwapOnDie(die, curseSlot);
+                    faceSwapPreviewSlots.Add(curseSlot);
                 else
                     Debug.LogWarning("MapUnknownEventPanel: no curse face replaced on chosen die.", this);
                 continue;
@@ -461,6 +568,9 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
 
             step.Execute(outcomeCtx);
         }
+
+        if (faceSwapPreviewSlots.Count > 0)
+            yield return dieChoicePopup.CoResolveFaceSwapsOnDie(die, faceSwapPreviewSlots);
     }
 
     private void ExecuteOptionOutcome(UnknownMapEventSO ev, UnknownMapEventOptionEntry entry, DieAssetSO chosenDie)
@@ -505,6 +615,14 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     /// <summary>Closes the panel (e.g. map regenerated).</summary>
     public void Hide()
     {
+        _enforceOptionsClickable = false;
+
+        if (_openPresentationRoutine != null)
+        {
+            StopCoroutine(_openPresentationRoutine);
+            _openPresentationRoutine = null;
+        }
+
         if (_dieChoiceRoutine != null)
         {
             StopCoroutine(_dieChoiceRoutine);

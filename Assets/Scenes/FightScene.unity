@@ -2681,7 +2681,8 @@ MonoBehaviour:
   m_text: "Gain<style=Shield> Shield 4</style>\nGain <style=Shield>4</style> \nDeal
     <style=Attack>5</style>\nGain <style=Strength>5</style>\nGain <style=Cleanse>5</style>\nGain
     <style=Burn>5</style>\nGain <style=Heal>5</style>\nGain <style=Poison>5</style>\nWhen
-    you roll <style=die1> <style=die2> <style=die3> <style=die4> <style=die5> <style=die6>"
+    you roll <style=die1> <style=die2> <style=die3> <style=die4> <style=die5> <style=die6>\nGain
+    <style=Thorns>6</style>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}
@@ -2693,7 +2694,7 @@ MonoBehaviour:
     rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 1
-  m_colorMode: 3
+  m_colorMode: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
     topRight: {r: 1, g: 1, b: 1, a: 1}
@@ -2986,6 +2987,7 @@ MonoBehaviour:
   damageButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
   armorButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
   rollButton: {fileID: 1450787361}
+  combatManager: {fileID: 0}
   endTurnButton: {fileID: 415261149}
   cheatWinButton: {fileID: 1150229161}
   cheatPerfectStrikeButton: {fileID: 1820824086}
@@ -3081,6 +3083,7 @@ MonoBehaviour:
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   fallbackCanvas: {fileID: 1896576052}
   hoverTooltipScreenOffset: {x: 30, y: -60}
+  hoverAboveTooltipScreenOffset: {x: -20, y: 210}
 --- !u!1 &432293861
 GameObject:
   m_ObjectHideFlags: 0
@@ -3115,7 +3118,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -391.00003}
+  m_AnchoredPosition: {x: 0, y: -391}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &432293863
@@ -7660,7 +7663,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0defdf0fdcc9d874caf8f59f7aff75d2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b4e1cd3db51bc3144842053e41ff1e22, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -9366,7 +9369,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -40.3, y: -188}
-  m_SizeDelta: {x: 345.7, y: 304}
+  m_SizeDelta: {x: 456.11, y: 512.53}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1001816084
 MonoBehaviour:

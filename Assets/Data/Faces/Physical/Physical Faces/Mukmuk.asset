@@ -33,8 +33,12 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 6494956392264499738
-      type: {class: BonusDamagePerOwnedDieTypeAction, ns: , asm: Assembly-CSharp}
+      type: {class: BonusPerOwnedDieAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 0
+        bonusChannel: 1
+        amountPerOwnedDie: 4
+        countOnlySpecificDieType: 1
         countedDieType: 0
-        damagePerOwnedDie: 4
+        burnDefinition: {fileID: 0}
+        poisonDefinition: {fileID: 0}

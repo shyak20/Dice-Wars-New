@@ -513,6 +513,18 @@ public class StatusEffectManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>True when the next roll batch would consume Echo and add no power (peek only).</summary>
+    public bool WillEchoSkipPowerOnNextRollBatch()
+    {
+        for (var i = 0; i < effects.Count; i++)
+        {
+            if (effects[i].Definition is EchoEffectSO && effects[i].Stacks > 0)
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// If the player has <see cref="EchoEffectSO"/> stacks, removes one: the current roll batch (all dice) will not add to power.
     /// </summary>

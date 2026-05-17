@@ -20,6 +20,7 @@ public sealed class UnknownMapEventChoiceRowView : MonoBehaviour
         }
 
         labelText.text = string.IsNullOrWhiteSpace(label) ? "Choose" : label.Trim();
+        labelText.raycastTarget = false;
 
         if (button == null)
         {
@@ -27,7 +28,41 @@ public sealed class UnknownMapEventChoiceRowView : MonoBehaviour
             return;
         }
 
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(onClick);
+        ConfigureClickRouting(button, onClick);
+    }
+
+    /// <summary>
+    /// Prefab has a root <see cref="Button"/> plus a child "BG" button and decorative images; route all hits to <paramref name="primary"/>.
+    /// </summary>
+    private void ConfigureClickRouting(Button primary, UnityAction onClick)
+    {
+        foreach (var extra in GetComponentsInChildren<Button>(true))
+        {
+            if (extra != primary)
+                extra.enabled = false;
+        }
+
+        Image hitTarget = null;
+        foreach (var img in GetComponentsInChildren<Image>(true))
+        {
+            var useForHits = img.gameObject.name == "BG";
+            if (useForHits && hitTarget == null)
+                hitTarget = img;
+            img.raycastTarget = useForHits;
+        }
+
+        if (hitTarget == null)
+        {
+            hitTarget = primary.GetComponent<Image>();
+            if (hitTarget != null)
+                hitTarget.raycastTarget = true;
+        }
+
+        if (hitTarget != null)
+            primary.targetGraphic = hitTarget;
+
+        primary.interactable = true;
+        primary.onClick.RemoveAllListeners();
+        primary.onClick.AddListener(onClick);
     }
 }

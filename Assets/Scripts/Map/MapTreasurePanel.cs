@@ -99,8 +99,8 @@ public sealed class MapTreasurePanel : MonoBehaviour
 
     void PlayChestOpenShake()
     {
-        if (openCameraShakeDuration > 0f && openCameraShakeMagnitude > 0f && CameraShake.Instance != null)
-            CameraShake.Instance.Shake(openCameraShakeDuration, openCameraShakeMagnitude);
+        if (openCameraShakeDuration > 0f && openCameraShakeMagnitude > 0f)
+            CameraShake.ShakeActive(openCameraShakeDuration, openCameraShakeMagnitude);
 
         if (canvasShakeTarget != null && canvasShakeDuration > 0f && canvasShakeMaxOffset > 0f)
         {

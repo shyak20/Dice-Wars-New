@@ -47,6 +47,9 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [Tooltip("Added to every show call’s screen offset (global nudge for all hover tooltips).")]
     [SerializeField] private Vector2 hoverTooltipScreenOffset;
 
+    [Tooltip("Screen offset from the anchor when the trigger passes isAbove=true (replaces the caller offset, not added to it). Still adds Hover Tooltip Screen Offset.")]
+    [SerializeField] private Vector2 hoverAboveTooltipScreenOffset;
+
     HoverTooltipPanelUI _panel;
     Canvas _panelParentCanvas;
 
@@ -155,15 +158,28 @@ public sealed class HoverTooltipManager : MonoBehaviour
     }
 
     /// <summary>Show using data resolved from <paramref name="source"/> (same positioning rules as <see cref="Show"/>).</summary>
-    public void ShowForScriptableObject(RectTransform anchor, Vector2 screenPixelOffset, ScriptableObject source)
+    public void ShowForScriptableObject(
+        RectTransform anchor,
+        Vector2 screenPixelOffset,
+        ScriptableObject source,
+        bool isAbove = false)
     {
         if (!TryGetTooltipContent(source, out var t, out var d, out var bg))
             return;
-        Show(anchor, screenPixelOffset, t, d, bg);
+        Show(anchor, screenPixelOffset, t, d, bg, isAbove);
     }
 
-    /// <summary>Shows the shared panel aligned to <paramref name="anchor"/> with optional screen-pixel offset.</summary>
-    public void Show(RectTransform anchor, Vector2 screenPixelOffset, string title, string description, Sprite tooltipBackground = null)
+    /// <summary>
+    /// Shows the shared panel aligned to <paramref name="anchor"/>.
+    /// When <paramref name="isAbove"/> is true, uses <see cref="hoverAboveTooltipScreenOffset"/> instead of <paramref name="screenPixelOffset"/>.
+    /// </summary>
+    public void Show(
+        RectTransform anchor,
+        Vector2 screenPixelOffset,
+        string title,
+        string description,
+        Sprite tooltipBackground = null,
+        bool isAbove = false)
     {
         if (panelPrefab == null || anchor == null)
             return;
@@ -183,9 +199,11 @@ public sealed class HoverTooltipManager : MonoBehaviour
         EnsurePanelUnderCanvas(targetCanvas);
 
         _panel.Show(title, description, tooltipBackground);
-        var combined = screenPixelOffset + hoverTooltipScreenOffset;
-        _panel.AlignToRectWithScreenOffset(anchor, combined);
+        _panel.AlignToRectWithScreenOffset(anchor, ResolveScreenOffset(screenPixelOffset, isAbove));
     }
+
+    Vector2 ResolveScreenOffset(Vector2 callerScreenOffset, bool isAbove) =>
+        (isAbove ? hoverAboveTooltipScreenOffset : callerScreenOffset) + hoverTooltipScreenOffset;
 
     public void Hide() => _panel?.Hide();
 

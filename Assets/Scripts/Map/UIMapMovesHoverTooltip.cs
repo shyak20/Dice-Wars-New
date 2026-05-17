@@ -11,19 +11,22 @@ public sealed class UIMapMovesHoverTooltip : MonoBehaviour, IPointerEnterHandler
     private string _title;
     private string _descriptionFormat;
     private Vector2 _screenOffset;
+    private bool _isAbove;
 
     public void Initialize(
         RectTransform anchor,
         MapMovementManager manager,
         string title,
         string descriptionFormat,
-        Vector2 screenOffset)
+        Vector2 screenOffset,
+        bool isAbove = false)
     {
         _anchorRect = anchor;
         _manager = manager;
         _title = title ?? string.Empty;
         _descriptionFormat = descriptionFormat ?? string.Empty;
         _screenOffset = screenOffset;
+        _isAbove = isAbove;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -40,7 +43,7 @@ public sealed class UIMapMovesHoverTooltip : MonoBehaviour, IPointerEnterHandler
         var nextDamage = _manager != null ? _manager.GetCorruptionDamageForNextStep() : 0;
         var increase = _manager != null ? _manager.OverflowDamageIncreasePerMove : 0;
         var description = string.Format(_descriptionFormat, nextDamage, increase);
-        mgr.Show(_anchorRect, _screenOffset, _title, description);
+        mgr.Show(_anchorRect, _screenOffset, _title, description, isAbove: _isAbove);
     }
 
     public void OnPointerExit(PointerEventData eventData) => HoverTooltipManager.HideAllTooltipPanels();

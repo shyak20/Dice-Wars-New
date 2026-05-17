@@ -242,6 +242,39 @@ public class CombatManager : MonoBehaviour
     }
     public bool IsResolvingFirstRollOfTurn() => currentBatchIsFirstRollOfTurn;
     public int GetRollsRemaining() => rollsRemaining;
+    public int GetCurrentPower() => currentPower;
+    public int GetMaxPower() => maxPower;
+    public CombatState GetCombatState() => currentState;
+
+    /// <summary>
+    /// Pre-roll odds that the selected dice land on Perfect Cast or Cast Overload (uniform face odds, status face-value mods, relic perfect windows).
+    /// </summary>
+    public bool TryComputeRollCastOdds(IReadOnlyList<DieAssetSO> diceToRoll, out float perfectPercent, out float bustPercent)
+    {
+        perfectPercent = 0f;
+        bustPercent = 0f;
+        if (currentState != CombatState.WaitingForRoll || diceToRoll == null || diceToRoll.Count == 0 || player == null)
+            return false;
+
+        var statusCtx = BuildStatusContext();
+        var echoSkips = player.StatusEffects.WillEchoSkipPowerOnNextRollBatch();
+        var perfectAtMaxMinusOne = maxPower > 1 &&
+                                   RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this);
+        var perfectAtMaxPlusOne = RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this);
+        int ModifyFaceValue(int value) => player.StatusEffects.ModifyFaceValue(statusCtx, value);
+
+        var result = RollCastOddsCalculator.Compute(
+            currentPower,
+            maxPower,
+            perfectAtMaxMinusOne,
+            perfectAtMaxPlusOne,
+            echoSkips,
+            diceToRoll,
+            ModifyFaceValue);
+        perfectPercent = result.PerfectPercent;
+        bustPercent = result.BustPercent;
+        return true;
+    }
     public void AddBonusDamageFromAction(int amount)
     {
         if (amount <= 0) return;
