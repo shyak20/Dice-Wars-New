@@ -21,9 +21,14 @@ MonoBehaviour:
   actionAnimationLeadInSeconds: 0.2
   actions:
   - rid: 6494956586993451336
+  attackTooltipTitle: 
+  attackTooltipDescription: 
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   actionTooltips:
   - title: Double Stacks
-    description: Double the amount of Burn & Poison on you
+    description: Double your <style=Burn>Burn</style> and <style=Poison>Poison</style> stacks
   references:
     version: 2
     RefIds:

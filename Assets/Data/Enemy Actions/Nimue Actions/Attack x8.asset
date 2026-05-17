@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Attack x8
   m_EditorClassIdentifier: 
   actionName: Eight-Fold Lash
-  actionDescription: Attack 1x8
+  attackTooltipTitle: <style=Attack>Attack</style>
+  attackTooltipDescription: Deal <style=Attack>1</style> eight times
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   icon: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   damage: 1
   numberOfAttacks: 8

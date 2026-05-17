@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: Attack 1x3
   m_EditorClassIdentifier: 
   actionName: Shield
+  attackTooltipTitle: <style=Attack>Attack</style>
+  attackTooltipDescription: Deal <style=Attack>1</style> three times
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   icon: {fileID: 21300000, guid: 01e402055d774024b95da23142df863c, type: 3}
   damage: 1
   numberOfAttacks: 3

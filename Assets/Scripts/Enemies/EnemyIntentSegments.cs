@@ -35,6 +35,8 @@ public static class EnemyIntentSegments
         if (intent == null)
             return;
 
+        intent.MigrateLegacyActionDescription();
+
         if (intent.damage > 0)
         {
             var hits = Mathf.Max(1, intent.numberOfAttacks);
@@ -43,11 +45,31 @@ public static class EnemyIntentSegments
             if (enemy != null && combat != null)
                 computedPer = combat.PreviewEnemyPhysicalHitDamage(enemy, basePer);
             var label = FormatPhysicalIntentLabel(basePer, computedPer, hits, buffDamageColor);
-            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Damage), label, null, null, null, false, GameIconCatalog.GetElementBackground(DieType.Damage)));
+            ResolveAttackIntentTooltip(intent, out var attackTitle, out var attackDescription);
+            var attackTooltip = HasTooltipContent(attackTitle, attackDescription);
+            into.Add(new Row(
+                GameIconCatalog.GetElementIcon(DieType.Damage),
+                label,
+                null,
+                attackTitle,
+                attackDescription,
+                attackTooltip,
+                GameIconCatalog.GetElementBackground(DieType.Damage)));
         }
 
         if (intent.armor > 0)
-            into.Add(new Row(GameIconCatalog.GetElementIcon(DieType.Armor), intent.armor.ToString(), null, null, null, false, GameIconCatalog.GetElementBackground(DieType.Armor)));
+        {
+            ResolveArmorIntentTooltip(intent, out var armorTitle, out var armorDescription);
+            var armorTooltip = HasTooltipContent(armorTitle, armorDescription);
+            into.Add(new Row(
+                GameIconCatalog.GetElementIcon(DieType.Armor),
+                intent.armor.ToString(),
+                null,
+                armorTitle,
+                armorDescription,
+                armorTooltip,
+                GameIconCatalog.GetElementBackground(DieType.Armor)));
+        }
 
         if (intent.actions == null)
             return;
@@ -64,13 +86,59 @@ public static class EnemyIntentSegments
 
             if (a is ApplyStatusEffectAction apply && apply.StatusEffectDefinition != null)
             {
+                if (TryResolveActionTooltip(intent, i, out var statusTitle, out var statusDescription))
+                {
+                    into.Add(new Row(icon, DescribeActionAmount(a), null, statusTitle, statusDescription, true, bg));
+                    continue;
+                }
+
                 into.Add(new Row(icon, DescribeActionAmount(a), apply.StatusEffectDefinition, null, null, true, bg));
                 continue;
             }
 
-            ResolveNonStatusActionTooltip(intent, i, a, out var tooltipTitle, out var tooltipDescription);
+            if (TryResolveActionTooltip(intent, i, out var tooltipTitle, out var tooltipDescription))
+            {
+                into.Add(new Row(icon, DescribeActionAmount(a), null, tooltipTitle, tooltipDescription, true, bg));
+                continue;
+            }
+
+            ResolveNonStatusActionTooltip(intent, i, a, out tooltipTitle, out tooltipDescription);
             into.Add(new Row(icon, DescribeActionAmount(a), null, tooltipTitle, tooltipDescription, true, bg));
         }
+    }
+
+    static bool HasTooltipContent(string title, string description) =>
+        !string.IsNullOrWhiteSpace(title) || !string.IsNullOrWhiteSpace(description);
+
+    static void ResolveAttackIntentTooltip(EnemyActionSO intent, out string title, out string description)
+    {
+        title = string.IsNullOrWhiteSpace(intent.attackTooltipTitle)
+            ? "<style=Attack>Attack</style>"
+            : intent.attackTooltipTitle.Trim();
+        description = intent.attackTooltipDescription?.Trim() ?? "";
+    }
+
+    static void ResolveArmorIntentTooltip(EnemyActionSO intent, out string title, out string description)
+    {
+        title = string.IsNullOrWhiteSpace(intent.armorTooltipTitle)
+            ? "<style=Shield>Shield</style>"
+            : intent.armorTooltipTitle.Trim();
+        description = intent.armorTooltipDescription?.Trim() ?? "";
+    }
+
+    static bool TryResolveActionTooltip(EnemyActionSO intent, int actionIndex, out string title, out string description)
+    {
+        title = "";
+        description = "";
+        if (intent.actionTooltips == null || actionIndex >= intent.actionTooltips.Count || intent.actionTooltips[actionIndex] == null)
+            return false;
+
+        var entry = intent.actionTooltips[actionIndex];
+        if (!string.IsNullOrWhiteSpace(entry.title))
+            title = entry.title.Trim();
+        if (!string.IsNullOrWhiteSpace(entry.description))
+            description = entry.description.Trim();
+        return HasTooltipContent(title, description);
     }
 
     static void ResolveNonStatusActionTooltip(EnemyActionSO intent, int actionIndex, IGameAction a, out string title, out string description)

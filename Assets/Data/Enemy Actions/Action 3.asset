@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Action 3
   m_EditorClassIdentifier: 
   actionName: Attack
-  actionDescription: Deal <style=Attack>5</style> twice
+  attackTooltipTitle: <style=Attack>Attack</style>
+  attackTooltipDescription: Deal <style=Attack>5</style> twice
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   icon: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   damage: 5
   numberOfAttacks: 2

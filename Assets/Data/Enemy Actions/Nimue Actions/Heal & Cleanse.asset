@@ -22,11 +22,16 @@ MonoBehaviour:
   actions:
   - rid: 6494956586993451334
   - rid: 6494956586993451333
+  attackTooltipTitle: 
+  attackTooltipDescription: 
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   actionTooltips:
-  - title: Cleanse
-    description: Cleanse 20
-  - title: Heal
-    description: Heal 20
+  - title: <style=Cleanse>Cleanse</style>
+    description: Cleanse <style=Cleanse>20</style>
+  - title: <style=Heal>Heal</style>
+    description: Heal <style=Heal>20</style>
   references:
     version: 2
     RefIds:

@@ -1,17 +1,31 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "NewAction", menuName = "DiceGame/EnemyAction")]
 public class EnemyActionSO : ScriptableObject
 {
     public string actionName;
 
+    [Header("Intent tooltips (TMP styles, e.g. <style=Attack>4</style>)")]
+    [Tooltip("Hover title on the physical attack intent row.")]
+    public string attackTooltipTitle;
+    [TextArea(2, 4)]
+    public string attackTooltipDescription;
+    [Tooltip("Hover title on the armor intent row.")]
+    public string armorTooltipTitle;
+    [TextArea(2, 4)]
+    public string armorTooltipDescription;
+
+    [SerializeField, HideInInspector, FormerlySerializedAs("actionDescription")]
+    private string legacyActionDescription;
+
     [Serializable]
     public class ActionTooltipEntry
     {
         public string title;
-        [TextArea] public string description;
+        [TextArea(2, 4)] public string description;
     }
 
     [Tooltip("Shown when this intent has no game actions, or none of them define an icon.")]
@@ -32,6 +46,22 @@ public class EnemyActionSO : ScriptableObject
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();
     [Tooltip("Per-action tooltip text by action index. Entry 0 maps to actions[0], etc.")]
     public List<ActionTooltipEntry> actionTooltips = new List<ActionTooltipEntry>();
+
+    void OnValidate() => MigrateLegacyActionDescription();
+
+    public void MigrateLegacyActionDescription()
+    {
+        if (string.IsNullOrWhiteSpace(legacyActionDescription))
+            return;
+
+        var legacy = legacyActionDescription.Trim();
+        if (damage > 0 && string.IsNullOrWhiteSpace(attackTooltipDescription))
+            attackTooltipDescription = legacy;
+        else if (armor > 0 && string.IsNullOrWhiteSpace(armorTooltipDescription))
+            armorTooltipDescription = legacy;
+
+        legacyActionDescription = null;
+    }
 
     /// <summary>
     /// Intent portrait: first non-null icon from <see cref="actions"/> (same rules as dice faces).

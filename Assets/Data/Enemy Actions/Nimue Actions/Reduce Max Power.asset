@@ -21,9 +21,14 @@ MonoBehaviour:
   actionAnimationLeadInSeconds: 0.2
   actions:
   - rid: 6494956586993451337
+  attackTooltipTitle: 
+  attackTooltipDescription: 
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   actionTooltips:
   - title: Reduce Max Power
-    description: Reduce your Max Power by 2 (minimum 6)
+    description: Reduce your Max Power by <style=Damage>2</style> (minimum <style=Damage>6</style>)
   references:
     version: 2
     RefIds:

@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: Gain Strength Enemy
   m_EditorClassIdentifier: 
   actionName: Gain Strength
-  actionDescription: Enemy gains <style=Strength>2 Strength</style>
+  attackTooltipTitle: 
+  attackTooltipDescription: 
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
+  actionTooltips:
+  - title: <style=Strength>Strength</style>
+    description: Gain <style=Strength>2</style>
   icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}
   damage: 0
   numberOfAttacks: 0

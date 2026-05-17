@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: Poison Action Enemy 2
   m_EditorClassIdentifier: 
   actionName: Attack & Poison
+  attackTooltipTitle: <style=Attack>Attack</style>
+  attackTooltipDescription: Deal <style=Attack>4</style>
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   icon: {fileID: 21300000, guid: 618a26f22d6051543af8c274abf85fdf, type: 3}
   damage: 4
   numberOfAttacks: 0
@@ -23,7 +28,7 @@ MonoBehaviour:
   - rid: 6494956392264499752
   actionTooltips:
   - title: <style=Poison>Poison</style>
-    description: The enemy will add <style=Poison>2</style>
+    description: Apply <style=Poison>4</style>
   references:
     version: 2
     RefIds:

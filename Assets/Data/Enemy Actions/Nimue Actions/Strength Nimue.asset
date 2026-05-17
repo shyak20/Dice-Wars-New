@@ -21,9 +21,14 @@ MonoBehaviour:
   actionAnimationLeadInSeconds: 0.2
   actions:
   - rid: 6494956586993451335
+  attackTooltipTitle: 
+  attackTooltipDescription: 
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   actionTooltips:
-  - title: Strength
-    description: Gain 1 Strength
+  - title: <style=Strength>Strength</style>
+    description: Gain <style=Strength>1</style>
   references:
     version: 2
     RefIds:

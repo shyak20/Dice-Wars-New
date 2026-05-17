@@ -21,9 +21,14 @@ MonoBehaviour:
   actionAnimationLeadInSeconds: 0.2
   actions:
   - rid: 6494956586993451335
+  attackTooltipTitle: 
+  attackTooltipDescription: 
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
   actionTooltips:
-  - title: Burn
-    description: Apply 4 Burn
+  - title: <style=Burn>Burn</style>
+    description: Apply <style=Burn>4</style>
   references:
     version: 2
     RefIds:
