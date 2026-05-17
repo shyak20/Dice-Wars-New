@@ -16,8 +16,8 @@ MonoBehaviour:
   defence: {fileID: 21300000, guid: 01e402055d774024b95da23142df863c, type: 3}
   attackBackground: {fileID: 21300000, guid: a99fc84c451825e4bbb3607028255e4c, type: 3}
   defenceBackground: {fileID: 21300000, guid: 18e27bc9eab91344e8f331588002bb1d, type: 3}
-  selfDamage: {fileID: 0}
-  selfDamageBackground: {fileID: 0}
+  selfDamage: {fileID: 21300000, guid: a16a5b71ccb87194c8b30fdc0f1f1f8d, type: 3}
+  selfDamageBackground: {fileID: 21300000, guid: b3ae040ba2a87844dbec5166f1abcab7, type: 3}
   actionIcons:
   - id: 1
     sprite: {fileID: 21300000, guid: 32f5865e231bd304d88711f7f7dc357c, type: 3}
@@ -66,7 +66,7 @@ MonoBehaviour:
     description: 
   - id: 11
     sprite: {fileID: 21300000, guid: cf961ca66e8819a4b8f97c6c5b76f212, type: 3}
-    background: {fileID: 0}
+    background: {fileID: 21300000, guid: 0b1bb4264e52e46419e31c615c001f9c, type: 3}
     title: 
     description: 
   - id: 13
