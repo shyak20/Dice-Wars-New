@@ -105,6 +105,13 @@ public class UIRewardSlot : MonoBehaviour
         }
 
         newFacePickedRevealRoot.SetActive(true);
+
+        var animator = newFacePickedRevealRoot.GetComponent<Animator>();
+        if (animator != null && animator.runtimeAnimatorController != null)
+        {
+            animator.Rebind();
+            animator.Update(0f);
+        }
     }
 
     public void HideNewFacePickedPreview()

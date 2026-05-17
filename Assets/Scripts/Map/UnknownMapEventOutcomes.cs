@@ -90,6 +90,11 @@ static class UnknownMapEventDieChoiceUtility
     public static bool OutcomeRequiresDieChoice(UnknownMapEventOutcomeBase outcome) =>
         outcome is UnknownMapEventOutcomeAfterDieChoice;
 
+    public static bool StepAppliesChosenDieFaceSwap(UnknownMapEventOutcomeBase step) =>
+        step is UnknownMapEventOutcomeAddCurseFaceToChosenDie
+        || step is UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie
+        || step is UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine;
+
     public static bool DieHasCurseFace(DieAssetSO die)
     {
         if (die?.faces == null)
@@ -551,30 +556,61 @@ public sealed class UnknownMapEventOutcomeAddCurseFaceToChosenDie : UnknownMapEv
             return;
         }
 
-        if (!TrySwapFaceOnDie(die, curseFace))
+        if (!TrySwapAtRandomSlotInternal(die, curseFace, excludedSlots: null, out _))
             Debug.LogWarning("UnknownMapEventOutcomeAddCurseFaceToChosenDie: no valid face slot found.");
     }
 
-    static bool TrySwapFaceOnDie(DieAssetSO die, DieFaceSO face)
+    public bool TrySwapAtSlot(DieAssetSO die, int slot, DieFaceSO face) =>
+        TrySwapFaceAtSlot(die, slot, face);
+
+    public bool TrySwapAtRandomSlot(DieAssetSO die, DieFaceSO face, ICollection<int> excludedSlots, out int slotUsed) =>
+        TrySwapAtRandomSlotInternal(die, face, excludedSlots, out slotUsed);
+
+    /// <summary>Picks a random legal slot (optionally excluding slots already used this event) and swaps the face.</summary>
+    internal static bool TrySwapAtRandomSlotInternal(DieAssetSO die, DieFaceSO face, ICollection<int> excludedSlots, out int slotUsed)
+    {
+        slotUsed = PickRandomLegalSlot(die, face, excludedSlots);
+        if (slotUsed < 0)
+            return false;
+        return TrySwapFaceAtSlot(die, slotUsed, face);
+    }
+
+    internal static bool TrySwapFaceAtSlot(DieAssetSO die, int slot, DieFaceSO face)
     {
         if (die?.faces == null || face == null)
             return false;
+        if (slot < 0 || slot >= die.faces.Length)
+            return false;
+        if (!face.MatchesDie(die))
+            return false;
+        if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, face))
+            return false;
+
+        die.SwapFace(slot, face);
+        PlayerDataContainer.NotifyRuntimeDeckChanged();
+        return true;
+    }
+
+    internal static int PickRandomLegalSlot(DieAssetSO die, DieFaceSO face, ICollection<int> excludedSlots = null)
+    {
+        if (die?.faces == null || face == null)
+            return -1;
+
         var slotOrder = new List<int> { 0, 1, 2, 3, 4, 5 };
         UnknownMapEventOutcomeShuffle.ShuffleInPlace(slotOrder);
         foreach (var slot in slotOrder)
         {
             if (slot < 0 || slot >= die.faces.Length)
                 continue;
+            if (excludedSlots != null && excludedSlots.Contains(slot))
+                continue;
             if (!face.MatchesDie(die))
                 continue;
-            if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, face))
-                continue;
-            die.SwapFace(slot, face);
-            PlayerDataContainer.NotifyRuntimeDeckChanged();
-            return true;
+            if (SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, face))
+                return slot;
         }
 
-        return false;
+        return -1;
     }
 }
 
@@ -600,8 +636,36 @@ public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosen
             return;
         }
 
-        if (!TryPlaceLegendaryOnDie(die, legendaryPool))
+        var pick = PickLegendaryForDie(die, legendaryPool);
+        if (pick == null || !UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapAtRandomSlotInternal(die, pick, excludedSlots: null, out _))
             Debug.LogWarning("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie: could not place a legendary face.");
+    }
+
+    public DieFaceSO PickLegendaryForDie(DieAssetSO die) => PickLegendaryForDie(die, legendaryPool);
+
+    public bool TrySwapAtSlot(DieAssetSO die, int slot, DieFaceSO face) =>
+        UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapFaceAtSlot(die, slot, face);
+
+    public bool TrySwapAtRandomSlot(DieAssetSO die, DieFaceSO face, ICollection<int> excludedSlots, out int slotUsed) =>
+        UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapAtRandomSlotInternal(die, face, excludedSlots, out slotUsed);
+
+    internal static DieFaceSO PickLegendaryForDie(DieAssetSO die, List<DieFaceSO> legendaryPool)
+    {
+        if (die?.faces == null || legendaryPool == null || legendaryPool.Count == 0)
+            return null;
+
+        var candidates = new List<DieFaceSO>();
+        for (var p = 0; p < legendaryPool.Count; p++)
+        {
+            var f = legendaryPool[p];
+            if (f != null && f.rarity == FaceRarity.Legendary && f.MatchesDie(die))
+                candidates.Add(f);
+        }
+
+        if (candidates.Count == 0)
+            return null;
+
+        return candidates[UnityEngine.Random.Range(0, candidates.Count)];
     }
 
     internal static bool TryPlaceLegendaryOnDie(DieAssetSO die, List<DieFaceSO> legendaryPool)
@@ -617,24 +681,11 @@ public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosen
                 candidates.Add(f);
         }
 
-        if (candidates.Count == 0)
+        var pick = PickLegendaryForDie(die, legendaryPool);
+        if (pick == null)
             return false;
 
-        var slotOrder = new List<int> { 0, 1, 2, 3, 4, 5 };
-        UnknownMapEventOutcomeShuffle.ShuffleInPlace(slotOrder);
-        foreach (var slot in slotOrder)
-        {
-            if (slot < 0 || slot >= die.faces.Length)
-                continue;
-            var pick = candidates[UnityEngine.Random.Range(0, candidates.Count)];
-            if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, pick))
-                continue;
-            die.SwapFace(slot, pick);
-            PlayerDataContainer.NotifyRuntimeDeckChanged();
-            return true;
-        }
-
-        return false;
+        return UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapAtRandomSlotInternal(die, pick, excludedSlots: null, out _);
     }
 }
 
@@ -707,6 +758,63 @@ public sealed class UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseFo
         }
 
         Debug.LogWarning("UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine: no curse face replaced.");
+    }
+
+    /// <summary>Replaces the first legal curse slot on the die (lowest index).</summary>
+    public bool TryReplaceFirstCurse(DieAssetSO die, out int slotUsed)
+    {
+        slotUsed = -1;
+        if (die?.faces == null)
+            return false;
+
+        for (var slot = 0; slot < die.faces.Length && slot < 6; slot++)
+        {
+            if (!IsLegalCurseReplacementSlot(die, slot))
+                continue;
+            if (!TrySwapCurseAtSlot(die, slot))
+                continue;
+            slotUsed = slot;
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool TrySwapCurseAtSlot(DieAssetSO die, int slot)
+    {
+        if (die?.faces == null || slot < 0 || slot >= die.faces.Length)
+            return false;
+
+        var face = die.faces[slot];
+        if (face == null || face.type != DieType.Curse)
+            return false;
+
+        var rep = ReplacementFor(die);
+        if (rep == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine: missing replacement for die type " + die.dieType);
+            return false;
+        }
+
+        return UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapFaceAtSlot(die, slot, rep);
+    }
+
+    public static bool IsCurseSlot(DieAssetSO die, int slot)
+    {
+        if (die?.faces == null || slot < 0 || slot >= die.faces.Length)
+            return false;
+        var face = die.faces[slot];
+        return face != null && face.type == DieType.Curse;
+    }
+
+    public bool IsLegalCurseReplacementSlot(DieAssetSO die, int slot)
+    {
+        if (!IsCurseSlot(die, slot))
+            return false;
+
+        var rep = ReplacementFor(die);
+        return rep != null && rep.MatchesDie(die)
+            && SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep);
     }
 
     DieFaceSO ReplacementFor(DieAssetSO die)

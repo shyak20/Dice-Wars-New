@@ -185,10 +185,7 @@ public class PlayerStatus : MonoBehaviour
         }
 
         if (currentHealth <= 0)
-        {
-            UnityEngine.Debug.LogError("Game Over: Player Health reached 0!");
-            // Trigger Game Over Logic
-        }
+            CombatEvents.OnPlayerHealthDepleted?.Invoke();
     }
 
     /// <summary>

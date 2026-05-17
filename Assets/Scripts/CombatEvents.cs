@@ -76,6 +76,9 @@ public static class CombatEvents
     public static Action OnPlayerVictory;
     public static Action OnPlayerDefeat;
 
+    /// <summary>Fired when <see cref="PlayerStatus"/> HP reaches 0 after damage. Combat listens and shows defeat.</summary>
+    public static Action OnPlayerHealthDepleted;
+
     /// <summary>Player armor points destroyed by a single <see cref="PlayerDamageSource.EnemyPhysicalAttack"/> hit (not HP loss).</summary>
     public static Action<int> OnPlayerArmorLostToEnemyPhysicalAttack;
 

@@ -225,15 +225,28 @@ public class RunManager : MonoBehaviour
         ResetGlobalTimeScaleToOne();
     }
 
-    public void StartRun()
+    /// <summary>Clears run HP, gold, relics, and map session so the next <see cref="StartRun"/> uses defaults.</summary>
+    public void AbandonActiveRun()
     {
+        _useMapBasedRun = false;
+        _runVitalityInitialized = false;
+        _runCurrentHp = 0;
+        _runMaxHp = 0;
+        _runShrineBonusMaxPower = 0;
+        _runPermanentStrengthStacksFromSpecialEvents = 0;
+        _completedUnknownMapEventIds.Clear();
+        ClearRunRelics();
+        ClearPersistedMapState();
+        ClearMapEncounterDrawState();
+        VictoryRewardBuffer.Clear();
+        RunEncounterBuffer.AbortPendingMapCombatState();
         if (RunEconomyManager.Instance != null)
             RunEconomyManager.Instance.ResetEconomyForNewRun();
+    }
 
-        ClearRunRelics();
-        _runVitalityInitialized = false;
-        _completedUnknownMapEventIds.Clear();
-        _runPermanentStrengthStacksFromSpecialEvents = 0;
+    public void StartRun()
+    {
+        AbandonActiveRun();
 
         if (useMapInsteadOfEncounterList)
         {
@@ -463,8 +476,12 @@ public class RunManager : MonoBehaviour
         PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed(combatSceneName);
     }
 
-    /// <summary>Returns to main menu with menu scene music crossfade when configured.</summary>
-    public void LoadMainMenuScene() => LoadSceneSingleWithMusic(mainMenuSceneName);
+    /// <summary>Returns to main menu and clears run HP, gold, and map progress.</summary>
+    public void LoadMainMenuScene()
+    {
+        AbandonActiveRun();
+        LoadSceneSingleWithMusic(mainMenuSceneName);
+    }
 
     public void PersistAndLoadFightScene(MapGrid grid, Vector2Int playerCell, int movesTaken, EnemyRank rank,
         bool isBossEndTile)
@@ -980,6 +997,8 @@ public class RunManager : MonoBehaviour
             return;
         EnsureRunVitalityBaseline();
         ReconcileRunVitalityIfAwakeDefaultPoisoned();
+        if (_runCurrentHp < 1)
+            _runCurrentHp = _runMaxHp;
         player.ApplyRunVitality(_runCurrentHp, _runMaxHp);
     }
 

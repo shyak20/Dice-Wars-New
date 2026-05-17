@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
@@ -60,6 +61,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
 
     public DieAssetSO CurrentDie { get; private set; }
 
+    private readonly List<UIRewardSlot> _faceSlots = new();
+    private readonly Dictionary<int, UIRewardSlot> _faceSlotsByFaceIndex = new();
     private readonly Vector3[] _worldCornersScratch = new Vector3[4];
     private Coroutine _replacementErrorShakeRoutine;
     private RectTransform _replacementErrorShakeRect;
@@ -96,6 +99,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
         HideFaceReplacementRuleError();
+        _faceSlots.Clear();
+        _faceSlotsByFaceIndex.Clear();
 
         foreach (Transform child in dieTooltipSlotContainer)
             Destroy(child.gameObject);
@@ -147,6 +152,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             slot.SetInteractable(facesInteractable && onFaceClicked != null);
             slot.SetExternalStatusHoverTooltipEnabled(false);
             RegisterFaceHover(slot, face);
+            _faceSlots.Add(slot);
+            _faceSlotsByFaceIndex[faceIndex] = slot;
         }
 
         RefreshFaceGridContainerLayout(grid.Length);
@@ -173,9 +180,29 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         panelRt.position = pos;
     }
 
+    public bool TryGetFaceSlot(int faceIndex, out UIRewardSlot slot) =>
+        _faceSlotsByFaceIndex.TryGetValue(faceIndex, out slot);
+
+    /// <summary>During face-swap resolve, disables slot clicks while the replace animation plays on the tooltip.</summary>
+    public void SetAllFaceSlotsInteractable(bool interactable)
+    {
+        HideFaceHoverTooltip();
+        HideStatusHoverTooltip();
+        for (var i = 0; i < _faceSlots.Count; i++)
+        {
+            var slot = _faceSlots[i];
+            if (slot == null)
+                continue;
+            slot.SetInteractable(interactable);
+            slot.SetHoverRevealEnabled(interactable);
+        }
+    }
+
     public void Hide()
     {
         CurrentDie = null;
+        _faceSlots.Clear();
+        _faceSlotsByFaceIndex.Clear();
         if (dieTooltipPanel != null)
             dieTooltipPanel.SetActive(false);
         DieTooltipBackgrounds.Clear(dieTooltipTypeBackground);

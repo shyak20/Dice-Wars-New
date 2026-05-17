@@ -543,12 +543,16 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnCheatWinPressed += CheatWinCombat;
         CombatEvents.OnCheatPerfectStrikePressed += ForcePerfectStrikeCheat;
         CombatEvents.OnPlayerArmorLostToEnemyPhysicalAttack += HandlePlayerArmorLostToEnemyPhysicalAttack;
+        CombatEvents.OnPlayerHealthDepleted += HandlePlayerHealthDepleted;
     }
 
     private void OnDisable()
     {
+        CombatEvents.OnPlayerHealthDepleted -= HandlePlayerHealthDepleted;
+
         // Do not capture before InitializeCombat — additive preload hides the fight scene while PlayerStatus is still at Awake defaults (1/1).
-        if (_mapCombatBootstrapped && player != null && RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
+        if (_mapCombatBootstrapped && player != null && RunManager.Instance != null && RunManager.Instance.UseMapBasedRun
+            && player.GetCurrentHealth() > 0)
             RunManager.Instance.CaptureRunVitalityFromPlayer(player);
 
         // Fight scene stays loaded with roots toggled off between map visits; must re-bootstrap on next activation.
@@ -562,6 +566,8 @@ public class CombatManager : MonoBehaviour
         CombatEvents.OnCheatPerfectStrikePressed -= ForcePerfectStrikeCheat;
         CombatEvents.OnPlayerArmorLostToEnemyPhysicalAttack -= HandlePlayerArmorLostToEnemyPhysicalAttack;
     }
+
+    void HandlePlayerHealthDepleted() => CheckDefeat();
 
     private void InitializeCombat()
     {
@@ -2119,6 +2125,9 @@ public class CombatManager : MonoBehaviour
                 if (gameAction is FaceResolveModifierBase) continue;
                 gameAction.Execute(actionCtx);
             }
+
+            if (CheckDefeat())
+                yield break;
         }
     }
 
@@ -2171,7 +2180,7 @@ public class CombatManager : MonoBehaviour
 
             activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
             player.StatusEffects.TickAfterEnemyTurn(statusCtx);
-            if (CheckVictory())
+            if (CheckVictory() || CheckDefeat())
             {
                 yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
                 yield break;
@@ -2181,6 +2190,10 @@ public class CombatManager : MonoBehaviour
         }
 
         yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+
+        if (currentState == CombatState.Victory || currentState == CombatState.Defeat)
+            yield break;
+
         yield return new WaitForSeconds(1.0f);
         ResetTurn();
     }
@@ -2290,7 +2303,17 @@ public class CombatManager : MonoBehaviour
         activeEnemy.TakeTrueDamage(hp);
         CheckVictory();
     }
-    private bool CheckDefeat() { if (player.GetCurrentHealth() <= 0) { ChangeState(CombatState.Defeat); CombatEvents.OnPlayerDefeat?.Invoke(); return true; } return false; }
+    private bool CheckDefeat()
+    {
+        if (currentState == CombatState.Defeat)
+            return true;
+        if (player == null || player.GetCurrentHealth() > 0)
+            return false;
+
+        ChangeState(CombatState.Defeat);
+        CombatEvents.OnPlayerDefeat?.Invoke();
+        return true;
+    }
 
     public void AddRollsRemaining(int amount)
     {
@@ -2344,6 +2367,9 @@ public class CombatManager : MonoBehaviour
         var statusCtx = BuildStatusContext();
         // Player turn starts here.
         player.StatusEffects.TickTurnStart(statusCtx);
+        if (CheckDefeat())
+            return;
+
         NotifyAllStoredActionsPoolUI();
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);

@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -28,6 +30,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     private MapGrid _pendingGrid;
     private Vector2Int _pendingPlayerCell;
     private int _pendingMovesTaken;
+    private Coroutine _dieChoiceRoutine;
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -327,25 +330,137 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
 
     private void OnDieChoiceCommitted(DieAssetSO die)
     {
-        var ev = _pendingOptionEvent;
-        var entry = _pendingOptionEntry;
-        _pendingOptionEvent = null;
-        _pendingOptionEntry = null;
-
-        if (RunManager.Instance == null || ev == null || entry == null || die == null)
-        {
-            Hide();
-            return;
-        }
-
-        ExecuteOptionOutcome(ev, entry, die);
-        Hide();
+        if (_dieChoiceRoutine != null)
+            StopCoroutine(_dieChoiceRoutine);
+        _dieChoiceRoutine = StartCoroutine(CoFinishDieChoice(die));
     }
 
     private void OnDieChoiceCancelled()
     {
+        if (_dieChoiceRoutine != null)
+        {
+            StopCoroutine(_dieChoiceRoutine);
+            _dieChoiceRoutine = null;
+        }
+
         _pendingOptionEvent = null;
         _pendingOptionEntry = null;
+    }
+
+    IEnumerator CoFinishDieChoice(DieAssetSO die)
+    {
+        var ev = _pendingOptionEvent;
+        var entry = _pendingOptionEntry;
+        _pendingOptionEvent = null;
+        _pendingOptionEntry = null;
+        _dieChoiceRoutine = null;
+
+        if (RunManager.Instance == null || ev == null || entry == null || die == null)
+        {
+            dieChoicePopup?.Hide();
+            Hide();
+            yield break;
+        }
+
+        if (entry.outcome is UnknownMapEventOutcomeAfterDieChoice afterDieChoice)
+        {
+            yield return CoRunAfterDieChoiceSteps(ev, entry, afterDieChoice, die);
+            dieChoicePopup?.Hide();
+            if (entry.registerEventCompletedOnPick)
+                RunManager.Instance.RegisterUnknownMapEventCompleted(ev.ResolvedEventId);
+            Hide();
+            yield break;
+        }
+
+        ExecuteOptionOutcome(ev, entry, die);
+        dieChoicePopup?.Hide();
+        Hide();
+    }
+
+    IEnumerator CoRunAfterDieChoiceSteps(
+        UnknownMapEventSO ev,
+        UnknownMapEventOptionEntry entry,
+        UnknownMapEventOutcomeAfterDieChoice afterDieChoice,
+        DieAssetSO die)
+    {
+        if (afterDieChoice.steps == null || dieChoicePopup == null)
+            yield break;
+
+        var evalCtx = new UnknownMapEventEvaluationContext(
+            RunManager.Instance,
+            _pendingGrid,
+            _pendingPlayerCell,
+            _pendingMovesTaken);
+        var outcomeCtx = new UnknownMapEventOutcomeContext(
+            evalCtx,
+            ev,
+            _pendingGrid,
+            _pendingPlayerCell,
+            _pendingMovesTaken,
+            die);
+
+        var usedFaceSlots = new HashSet<int>();
+
+        for (var i = 0; i < afterDieChoice.steps.Count; i++)
+        {
+            var step = afterDieChoice.steps[i];
+            if (step == null)
+                continue;
+
+            if (step is UnknownMapEventOutcomeAddCurseFaceToChosenDie addCurse)
+            {
+                if (addCurse.curseFace == null)
+                {
+                    Debug.LogError("MapUnknownEventPanel: AddCurseFaceToChosenDie missing curseFace.", this);
+                    continue;
+                }
+
+                if (addCurse.TrySwapAtRandomSlot(die, addCurse.curseFace, usedFaceSlots, out var curseSlot))
+                {
+                    usedFaceSlots.Add(curseSlot);
+                    yield return dieChoicePopup.CoResolveFaceSwapOnDie(die, curseSlot);
+                }
+                else
+                {
+                    Debug.LogWarning("MapUnknownEventPanel: could not place curse face on chosen die.", this);
+                }
+
+                continue;
+            }
+
+            if (step is UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie replaceLegendary)
+            {
+                var legendary = replaceLegendary.PickLegendaryForDie(die);
+                if (legendary == null)
+                {
+                    Debug.LogWarning("MapUnknownEventPanel: no legendary face for chosen die.", this);
+                    continue;
+                }
+
+                if (replaceLegendary.TrySwapAtRandomSlot(die, legendary, usedFaceSlots, out var legendarySlot))
+                {
+                    usedFaceSlots.Add(legendarySlot);
+                    yield return dieChoicePopup.CoResolveFaceSwapOnDie(die, legendarySlot);
+                }
+                else
+                {
+                    Debug.LogWarning("MapUnknownEventPanel: could not place legendary face on chosen die.", this);
+                }
+
+                continue;
+            }
+
+            if (step is UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine replaceCurse)
+            {
+                if (replaceCurse.TryReplaceFirstCurse(die, out var curseSlot))
+                    yield return dieChoicePopup.CoResolveFaceSwapOnDie(die, curseSlot);
+                else
+                    Debug.LogWarning("MapUnknownEventPanel: no curse face replaced on chosen die.", this);
+                continue;
+            }
+
+            step.Execute(outcomeCtx);
+        }
     }
 
     private void ExecuteOptionOutcome(UnknownMapEventSO ev, UnknownMapEventOptionEntry entry, DieAssetSO chosenDie)
@@ -390,6 +505,12 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     /// <summary>Closes the panel (e.g. map regenerated).</summary>
     public void Hide()
     {
+        if (_dieChoiceRoutine != null)
+        {
+            StopCoroutine(_dieChoiceRoutine);
+            _dieChoiceRoutine = null;
+        }
+
         _currentEvent = null;
         _pendingGrid = null;
         _pendingOptionEvent = null;

@@ -145,6 +145,8 @@ public class ShopDieChoicePopupView : MonoBehaviour
 
     IEnumerator CoCloseAfterFaceSwapPreview(UIRewardSlot slot, DieFaceSO newFace)
     {
+        dieTooltipOverlay?.SetAllFaceSlotsInteractable(false);
+
         if (slot != null && newFace != null)
             slot.ShowNewFacePickedPreview(newFace);
 
