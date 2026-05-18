@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8305391145862009133}
   - component: {fileID: 7695903719354657008}
   - component: {fileID: 1675593947625841633}
+  - component: {fileID: 5829471036482917045}
   m_Layer: 3
   m_Name: Dice Prefab
   m_TagString: Untagged
@@ -112,6 +113,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+--- !u!114 &5829471036482917045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4390715500269665299}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8981cdf0d43ead1439d2293dcd78e771, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  renderers: []
+  includeInactiveChildren: 1
+  fadeDurationSeconds: 2
+  animateToCutoutOnStart: 0
+  cutoutAmount: 0
 --- !u!1001 &8782684422019099443
 PrefabInstance:
   m_ObjectHideFlags: 0

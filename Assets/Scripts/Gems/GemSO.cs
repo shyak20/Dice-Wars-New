@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>One effect row on a gem: kind + single integer param (+ burn asset when burning).</summary>
+/// <summary>One effect row on a gem: kind + single integer param (+ status/burn assets when applying status).</summary>
 [Serializable]
 public class GemEffectEntry
 {
     public GemEffectKind kind;
 
-    [Tooltip("Interpretation depends on Kind (heal amount, burn stacks, power delta, damage multiplier, etc.).")]
+    [Tooltip("Interpretation depends on Kind (heal amount, status stacks, power delta, damage multiplier, etc.).")]
     public int param;
 
     [Tooltip("Same behavior as die-face actions: true = run now; false = queue for turn end and show in stored element bar.")]
@@ -16,6 +16,9 @@ public class GemEffectEntry
 
     [Tooltip("Required when Kind is ApplyBurnToEnemy.")]
     public BurnEffectSO burnDefinition;
+
+    [Tooltip("Required when Kind is ApplyStatus (same as die-face Gain Status).")]
+    public StatusEffectSO statusDefinition;
 }
 
 /// <summary>

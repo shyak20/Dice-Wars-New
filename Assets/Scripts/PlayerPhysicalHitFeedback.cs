@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Juice when the player is hit by an enemy physical strike: optional VFX root, camera shake scaled by hit severity, sprite color flash.
+/// Juice when the player takes damage: optional VFX root, hit-flash objects, camera shake scaled by hit severity.
 /// </summary>
 public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
 {
@@ -16,6 +16,11 @@ public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
     [SerializeField] private GameObject hitEffectRoot;
     [SerializeField, Min(0f)] private float hitEffectDuration = 0.35f;
 
+    [Header("Hit flash")]
+    [Tooltip("Enabled on damage, disabled after Hit Flash Duration.")]
+    [SerializeField] private List<GameObject> hitFlashRoots = new List<GameObject>();
+    [SerializeField, Min(0.02f)] private float hitFlashDuration = 0.18f;
+
     [Header("Camera shake (scaled by hit severity)")]
     [Tooltip("Severity = HP lost / max HP, or if armor absorbed all damage, incoming damage / max HP (each clamped 0–1).")]
     [SerializeField] private AnimationCurve damageRatioToShakeBlend = AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -24,15 +29,8 @@ public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
     [SerializeField, Min(0f)] private float minShakeMagnitude = 0.02f;
     [SerializeField, Min(0f)] private float maxShakeMagnitude = 0.28f;
 
-    [Header("Sprite hit flash")]
-    [SerializeField] private Color hitColor = new Color(1f, 0.35f, 0.35f, 1f);
-    [SerializeField, Min(0.02f)] private float hitFlashDuration = 0.18f;
-    [SerializeField] private List<SpriteRenderer> hitSpriteTargets = new List<SpriteRenderer>();
-
     private Coroutine _hitEffectRoutine;
     private Coroutine _flashRoutine;
-    private Color[] _spriteBaseColors;
-    private bool _cachedSpriteColors;
 
     private void Awake()
     {
@@ -43,7 +41,8 @@ public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
 
         if (hitEffectRoot != null)
             hitEffectRoot.SetActive(false);
-
+        if (HasHitFlashTargets())
+            SetHitFlashActive(false);
     }
 
     private void Reset()
@@ -59,8 +58,8 @@ public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
             maxShakeMagnitude = minShakeMagnitude;
     }
 
-    /// <summary>Call only for <see cref="PlayerDamageSource.EnemyPhysicalAttack"/> after armor and HP resolve.</summary>
-    public void OnEnemyPhysicalHit(int grossDamage, int hpLost, int maxHp)
+    /// <summary>Call after armor and HP resolve for any player damage.</summary>
+    public void OnPlayerDamaged(int grossDamage, int hpLost, int maxHp)
     {
         if (!isActiveAndEnabled || grossDamage <= 0)
             return;
@@ -80,92 +79,59 @@ public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
             if (_hitEffectRoutine != null)
                 StopCoroutine(_hitEffectRoutine);
             hitEffectRoot.SetActive(true);
-            _hitEffectRoutine = StartCoroutine(CoTurnOffHitEffect());
+            _hitEffectRoutine = StartCoroutine(CoTurnOffAfterDuration(hitEffectRoot, hitEffectDuration, () => _hitEffectRoutine = null));
         }
 
-        if (hitSpriteTargets != null && hitSpriteTargets.Count > 0)
+        if (HasHitFlashTargets())
         {
-            CacheSpriteColorsIfNeeded();
             if (_flashRoutine != null)
                 StopCoroutine(_flashRoutine);
-            _flashRoutine = StartCoroutine(CoFlashSprites());
+            SetHitFlashActive(true);
+            _flashRoutine = StartCoroutine(CoTurnOffHitFlash());
         }
     }
 
-    private IEnumerator CoTurnOffHitEffect()
+    private bool HasHitFlashTargets()
     {
-        yield return new WaitForSeconds(hitEffectDuration);
-        if (hitEffectRoot != null)
-            hitEffectRoot.SetActive(false);
-        _hitEffectRoutine = null;
+        if (hitFlashRoots == null || hitFlashRoots.Count == 0)
+            return false;
+
+        for (var i = 0; i < hitFlashRoots.Count; i++)
+        {
+            if (hitFlashRoots[i] != null)
+                return true;
+        }
+
+        return false;
     }
 
-    private void CacheSpriteColorsIfNeeded()
+    private void SetHitFlashActive(bool active)
     {
-        if (hitSpriteTargets == null || hitSpriteTargets.Count == 0)
+        if (hitFlashRoots == null)
             return;
 
-        if (_spriteBaseColors != null && _spriteBaseColors.Length == hitSpriteTargets.Count && _cachedSpriteColors)
-            return;
-
-        _spriteBaseColors = new Color[hitSpriteTargets.Count];
-        for (var i = 0; i < hitSpriteTargets.Count; i++)
+        for (var i = 0; i < hitFlashRoots.Count; i++)
         {
-            var sr = hitSpriteTargets[i];
-            if (sr == null)
-                throw new System.InvalidOperationException($"PlayerPhysicalHitFeedback on '{name}': hit sprite target index {i} is null.");
-            _spriteBaseColors[i] = sr.color;
+            var root = hitFlashRoots[i];
+            if (root == null)
+                throw new System.InvalidOperationException($"PlayerPhysicalHitFeedback on '{name}': hit flash root index {i} is null.");
+            root.SetActive(active);
         }
-
-        _cachedSpriteColors = true;
     }
 
-    private IEnumerator CoFlashSprites()
+    private IEnumerator CoTurnOffHitFlash()
     {
-        var half = hitFlashDuration * 0.5f;
-        var t = 0f;
-        while (t < half)
-        {
-            var u = half > 0.0001f ? t / half : 1f;
-            ApplySpriteBlend(u);
-            t += Time.deltaTime;
-            yield return null;
-        }
-
-        ApplySpriteBlend(1f);
-        t = 0f;
-        while (t < half)
-        {
-            var u = half > 0.0001f ? t / half : 1f;
-            ApplySpriteBlend(1f - u);
-            t += Time.deltaTime;
-            yield return null;
-        }
-
-        RestoreSpriteColors();
+        yield return new WaitForSeconds(hitFlashDuration);
+        SetHitFlashActive(false);
         _flashRoutine = null;
     }
 
-    private void ApplySpriteBlend(float blend)
+    private static IEnumerator CoTurnOffAfterDuration(GameObject root, float duration, System.Action onComplete)
     {
-        for (var i = 0; i < hitSpriteTargets.Count; i++)
-        {
-            var sr = hitSpriteTargets[i];
-            if (sr == null || _spriteBaseColors == null || i >= _spriteBaseColors.Length)
-                continue;
-            sr.color = Color.Lerp(_spriteBaseColors[i], hitColor, blend);
-        }
-    }
-
-    private void RestoreSpriteColors()
-    {
-        if (!_cachedSpriteColors || _spriteBaseColors == null)
-            return;
-        for (var i = 0; i < hitSpriteTargets.Count && i < _spriteBaseColors.Length; i++)
-        {
-            if (hitSpriteTargets[i] != null)
-                hitSpriteTargets[i].color = _spriteBaseColors[i];
-        }
+        yield return new WaitForSeconds(duration);
+        if (root != null)
+            root.SetActive(false);
+        onComplete?.Invoke();
     }
 
     private void OnDisable()
@@ -184,6 +150,7 @@ public sealed class PlayerPhysicalHitFeedback : MonoBehaviour
 
         if (hitEffectRoot != null)
             hitEffectRoot.SetActive(false);
-        RestoreSpriteColors();
+        if (HasHitFlashTargets())
+            SetHitFlashActive(false);
     }
 }

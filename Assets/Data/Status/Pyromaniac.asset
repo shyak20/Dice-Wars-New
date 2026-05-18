@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Pyromaniac
   m_EditorClassIdentifier: 
   effectName: Pyromaniac
-  description: Increase <style=Burn> gained from rolls by +1
+  description: Increase <style=Burn></style> gained from rolls by <style=Burn>+1</style>
   type: 0
   target: 0
   stackDecayPerTurn: 1

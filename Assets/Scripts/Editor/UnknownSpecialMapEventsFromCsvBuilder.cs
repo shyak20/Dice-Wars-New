@@ -33,13 +33,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         var defBase = Load<DieFaceSO>("Assets/Data/Faces/Defense/Stating Defense/1 - Defense Base.asset");
         var fireBase = Load<DieFaceSO>("Assets/Data/Faces/Fire/Base Fire/1 - Fire Base.asset");
 
-        var legendaryPool = new List<DieFaceSO>
-        {
-            Load<DieFaceSO>("Assets/Data/Faces/Physical/Physical Faces/Stronger.asset"),
-            Load<DieFaceSO>("Assets/Data/Faces/Physical/Physical Faces/Heavy Plate.asset"),
-            Load<DieFaceSO>("Assets/Data/Faces/Fire/Fire Faces/Combustion Legendary.asset"),
-            Load<DieFaceSO>("Assets/Data/Faces/Defense/Defense Faces/Second Wind.asset"),
-        };
+        var facesLootTable = Load<FaceLootTableSO>("Assets/Data/Faces/Faces Loot Table.asset");
 
         var gemPairs = new List<UnknownMapEventGemUpgradePair>
         {
@@ -54,7 +48,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         var created = new List<UnknownMapEventSO>();
 
         created.Add(Save("UE_AltarOfGreed", BuildAltarOfGreed()));
-        created.Add(Save("UE_CursedAnvil", BuildCursedAnvil(curse, legendaryPool)));
+        created.Add(Save("UE_CursedAnvil", BuildCursedAnvil(curse, facesLootTable)));
         created.Add(Save("UE_FossilizedD6", BuildFossilizedD6(curse)));
         var f1Ev = BuildResonatingFountain1();
         f1Ev.excludeFromDrawIfCompletedThisRun = true;
@@ -180,7 +174,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         return ev;
     }
 
-    static UnknownMapEventSO BuildCursedAnvil(DieFaceSO curse, List<DieFaceSO> legendaryPool)
+    static UnknownMapEventSO BuildCursedAnvil(DieFaceSO curse, FaceLootTableSO facesLootTable)
     {
         var ev = ScriptableObject.CreateInstance<UnknownMapEventSO>();
         ev.displayName = "The Cursed Anvil";
@@ -196,9 +190,10 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
                     steps = new List<UnknownMapEventOutcomeBase>
                     {
                         new UnknownMapEventOutcomeAddCurseFaceToChosenDie { curseFace = curse },
-                        new UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie
+                        new UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie
                         {
-                            legendaryPool = new List<DieFaceSO>(legendaryPool),
+                            facesLootTable = facesLootTable,
+                            rarity = FaceRarity.Legendary,
                         },
                     },
                 }),

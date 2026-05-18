@@ -69,4 +69,30 @@ public class FaceLootTableSO : ScriptableObject
         }
         return selected;
     }
+
+    /// <summary>Faces from <see cref="allPossibleFaces"/> with the given rarity that <see cref="DieFaceSO.MatchesDie"/> the die.</summary>
+    public List<DieFaceSO> GetCandidatesForDieAndRarity(DieAssetSO die, FaceRarity rarity)
+    {
+        var candidates = new List<DieFaceSO>();
+        if (die == null || allPossibleFaces == null || allPossibleFaces.Count == 0)
+            return candidates;
+
+        for (var i = 0; i < allPossibleFaces.Count; i++)
+        {
+            var face = allPossibleFaces[i];
+            if (face != null && face.rarity == rarity && face.MatchesDie(die))
+                candidates.Add(face);
+        }
+
+        return candidates;
+    }
+
+    /// <summary>Uniform random pick from <see cref="GetCandidatesForDieAndRarity"/>; null when none match.</summary>
+    public DieFaceSO PickRandomForDieAndRarity(DieAssetSO die, FaceRarity rarity)
+    {
+        var candidates = GetCandidatesForDieAndRarity(die, rarity);
+        if (candidates.Count == 0)
+            return null;
+        return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+    }
 }

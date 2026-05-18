@@ -3,8 +3,8 @@ using UnityEngine;
 /// <summary>
 /// Each owner turn start: damage equal to current stacks (ignores armor on enemies). Stack decay is
 /// <see cref="StatusEffectSO.stackDecayPerTurn"/>, applied in <see cref="StatusEffectManager.TickTurnStart"/> after this runs.
-/// Uses <see cref="OnTurnStart"/> (not <see cref="OnBeforeEnemyTurn"/>) so debuffs on the player actually tick:
-/// <see cref="StatusEffectManager.TickBeforeEnemyTurn"/> only runs on the enemy's status manager.
+/// Player poison ticks via <see cref="StatusEffectManager.TickTurnStartBeforePlayerArmorReset"/> so armor applies.
+/// Enemy poison uses <see cref="OnTurnStart"/> on the enemy manager after the player's turn.
 /// </summary>
 [CreateAssetMenu(fileName = "Poison", menuName = "DiceGame/StatusEffects/Poison")]
 public class PoisonEffectSO : StatusEffectSO

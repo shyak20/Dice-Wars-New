@@ -535,23 +535,23 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
                 continue;
             }
 
-            if (step is UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie replaceLegendary)
+            if (step is UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie replaceFace)
             {
-                var legendary = replaceLegendary.PickLegendaryForDie(die);
-                if (legendary == null)
+                var face = replaceFace.PickFaceForDie(die);
+                if (face == null)
                 {
-                    Debug.LogWarning("MapUnknownEventPanel: no legendary face for chosen die.", this);
+                    Debug.LogWarning($"MapUnknownEventPanel: no {replaceFace.rarity} face for chosen die.", this);
                     continue;
                 }
 
-                if (replaceLegendary.TrySwapAtRandomSlot(die, legendary, usedFaceSlots, out var legendarySlot))
+                if (replaceFace.TrySwapAtRandomSlot(die, face, usedFaceSlots, out var faceSlot))
                 {
-                    usedFaceSlots.Add(legendarySlot);
-                    faceSwapPreviewSlots.Add(legendarySlot);
+                    usedFaceSlots.Add(faceSlot);
+                    faceSwapPreviewSlots.Add(faceSlot);
                 }
                 else
                 {
-                    Debug.LogWarning("MapUnknownEventPanel: could not place legendary face on chosen die.", this);
+                    Debug.LogWarning($"MapUnknownEventPanel: could not place {replaceFace.rarity} face on chosen die.", this);
                 }
 
                 continue;

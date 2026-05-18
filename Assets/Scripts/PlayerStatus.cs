@@ -24,8 +24,8 @@ public class PlayerStatus : MonoBehaviour
     [Tooltip("World-space target when the turn has no enemy damage (armor/support): orb flies here instead of to the enemy. Prefer an empty above the HP bar in world space.")]
     [SerializeField] private Transform powerOrbSupportWorldAnchor;
 
-    [Header("Enemy physical hit juice")]
-    [Tooltip("Optional. Shakes camera, hit VFX, sprite flash when damage uses EnemyPhysicalAttack.")]
+    [Header("Player damage juice")]
+    [Tooltip("Optional. Shakes camera, enables hit VFX for a duration, sprite flash whenever the player takes damage.")]
     [SerializeField] private PlayerPhysicalHitFeedback physicalHitFeedback;
 
     public StatusEffectManager StatusEffects { get; private set; }
@@ -178,10 +178,10 @@ public class PlayerStatus : MonoBehaviour
             CombatEvents.OnPlayerDamageNumber?.Invoke(damage, w);
         }
 
-        if (physicalHitFeedback != null && source == PlayerDamageSource.EnemyPhysicalAttack && damage > 0)
+        if (physicalHitFeedback != null && damage > 0)
         {
             var hpLost = hpBefore - currentHealth;
-            physicalHitFeedback.OnEnemyPhysicalHit(damage, hpLost, maxHealth);
+            physicalHitFeedback.OnPlayerDamaged(damage, hpLost, maxHealth);
         }
 
         if (currentHealth <= 0)

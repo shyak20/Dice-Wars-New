@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GemLootTableSO
   rarityConfig: {fileID: 11400000, guid: 5cc7f86d596871f409d01b2530a907f1, type: 2}
   allPossibleGems:
-  - {fileID: 11400000, guid: 2c27c280ac039164c9365fbd79a68d1a, type: 2}
-  - {fileID: 11400000, guid: 7ffb880e4d910694682b80034caba86d, type: 2}
-  - {fileID: 11400000, guid: a5704dd8a40d96a48a6e6aecbacafbe7, type: 2}
-  - {fileID: 11400000, guid: d841099fae092cf47acf2bd0b092d338, type: 2}
-  - {fileID: 11400000, guid: 41147f6369dc0e94f8181a6c1d9e5905, type: 2}
-  - {fileID: 11400000, guid: eee52c63cad94bc4e939f7b1a17cda4c, type: 2}
-  - {fileID: 11400000, guid: 3e0d97e299aa8e649b1f991c4d6d641f, type: 2}
-  - {fileID: 11400000, guid: 79d86e30bb967d6448c78dd3d9af0eb6, type: 2}
-  - {fileID: 11400000, guid: e50550c7dc7c1a24982043033fe68fd8, type: 2}
-  - {fileID: 11400000, guid: c0a5bb205a926144bbe8757a9451145b, type: 2}
-  - {fileID: 11400000, guid: 75200b5876be4e9418b4affe1bd5b54e, type: 2}
-  - {fileID: 11400000, guid: d7dcdc1e906562a448a1420da69d4533, type: 2}
+  - {fileID: 11400000, guid: e7b67cd37a6a8434eb83b2b326f4c1c8, type: 2}
+  - {fileID: 11400000, guid: b03c736d2fb31144b843277b69e7b77b, type: 2}
+  - {fileID: 11400000, guid: 8de6fa939ebe8b64ebec517308a42a60, type: 2}
+  - {fileID: 11400000, guid: 90bd97814ec36674bbd76776623de7c5, type: 2}
+  - {fileID: 11400000, guid: 8180057d98b156b4b9eaf68dd983dd59, type: 2}
+  - {fileID: 11400000, guid: 8067cfb75acc0b04084c5d21a6dc32e4, type: 2}
+  - {fileID: 11400000, guid: 7ec657a55227e5643bbad41d07f28253, type: 2}
+  - {fileID: 11400000, guid: 06c32d96fa74a71479bbd7a57d132b4e, type: 2}
+  - {fileID: 11400000, guid: f76fce3d46429004ea5f502d4a8ae07f, type: 2}
+  - {fileID: 11400000, guid: 02c156175f71c1040a4c9e8d22f1d21a, type: 2}
+  - {fileID: 11400000, guid: 541fb426a91ec914cb7b285fe6905e03, type: 2}
+  - {fileID: 11400000, guid: 944a0a8b0b558994fb0c39cf5e504a55, type: 2}

@@ -12,6 +12,8 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - N_F_COEDGL_ON
+  - N_F_CO_ON
   - N_F_DDMD_ON
   - N_F_EAL_ON
   - N_F_GLOT_ON
@@ -22,6 +24,7 @@ Material:
   - N_F_SL_ON
   - N_F_SS_ON
   - N_F_TRANSAFFSHA_ON
+  - N_F_TRANS_ON
   - _UVSET_UV0
   m_InvalidKeywords:
   - L_F_O_ON
@@ -30,8 +33,9 @@ Material:
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
+  m_CustomRenderQueue: 2450
+  stringTagMap:
+    RenderType: TransparentCutout
   disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
@@ -122,7 +126,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SecondaryCutout:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: d0a2b1fc7fd51af4fad42c2433e9b600, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ShadowColorTexture:
@@ -137,9 +141,9 @@ Material:
     m_Floats:
     - _AAS: 0.0001
     - _AlpToCov: 0
-    - _AlphaBaseCutout: 1
-    - _BleModDest: 0
-    - _BleModSour: 1
+    - _AlphaBaseCutout: 0
+    - _BleModDest: 10
+    - _BleModSour: 5
     - _BumpScale: 1
     - _ClipAdju: 0
     - _Compa: 4
@@ -212,8 +216,8 @@ Material:
     - _N_F_ANIS: 0
     - _N_F_CA: 0
     - _N_F_CLD: 0
-    - _N_F_CO: 0
-    - _N_F_COEDGL: 0
+    - _N_F_CO: 1
+    - _N_F_COEDGL: 1
     - _N_F_DCS: 0
     - _N_F_DDMD: 1
     - _N_F_EAL: 1
@@ -323,7 +327,7 @@ Material:
     - _SrcBlend: 1
     - _StraWidt: 10
     - _TEXMCOLINT: 1
-    - _TRANSMODE: 0
+    - _TRANSMODE: 1
     - _TessellationFar: 1
     - _TessellationNear: 1
     - _TessellationSmoothness: 0.5
@@ -349,7 +353,7 @@ Material:
     - _CustomLightDirection: {r: 0, g: 0, b: 10, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Glow_Color: {r: 1, g: 0.41960785, b: 0.18431373, a: 1}
     - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
     - _MainColor: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 1}
     - _ObjPosi: {r: 0, g: 0, b: 0, a: 0}

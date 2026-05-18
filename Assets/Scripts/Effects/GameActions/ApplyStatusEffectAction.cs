@@ -14,54 +14,49 @@ public class ApplyStatusEffectAction : GameActionWithIcon
     public Sprite ResolveStatusIcon() =>
         GameIconCatalog.GetStatusIcon(statusEffect);
 
-    PoolRowKey ResolvePoolRowKey()
+    static PoolRowKey ResolvePoolRowKey(StatusEffectSO effect) =>
+        effect != null ? PoolRowKey.Custom(effect.name) : PoolRowKey.Custom("Status");
+
+    /// <summary>Final stack count after Pyromaniac, fire-double, etc. Shared by die faces and gems.</summary>
+    public static int ResolveApplyStacks(StatusEffectSO statusEffect, int baseStacks, GameActionContext context, FaceResult face)
     {
-        if (statusEffect != null)
-            return PoolRowKey.Custom(statusEffect.name);
-        return PoolRowKey.Custom("Status");
+        if (statusEffect == null || baseStacks <= 0)
+            return 0;
+
+        var applyStacks = baseStacks;
+        if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context?.Player != null)
+            applyStacks += context.Player.StatusEffects.GetStacks<PyromaniacEffectSO>();
+
+        if (face != null)
+            applyStacks = face.ApplyFireDoubleToEnemyBurnStacks(applyStacks, statusEffect);
+
+        return applyStacks;
     }
 
-    public override void Execute(GameActionContext context)
+    public static void ApplyFromContext(GameActionContext context, StatusEffectSO statusEffect, int applyStacks)
     {
-        if (statusEffect == null)
-        {
-            Debug.LogError("ApplyStatusEffectAction: statusEffect is not assigned!");
+        if (statusEffect == null || applyStacks <= 0 || context == null)
             return;
-        }
 
-        var manager = statusEffect.target == StatusEffectTarget.Player
-            ? context.Player.StatusEffects
-            : context.Enemy.StatusEffects;
-
-        var ctx = new StatusEffectContext
+        var statusCtx = new StatusEffectContext
         {
             CombatManager = context.CombatManager,
             Player = context.Player,
             Enemy = context.Enemy
         };
 
-        int applyStacks;
-        if (context.PendingApplyStackOverrides != null)
+        if (statusEffect.target == StatusEffectTarget.Player)
         {
-            if (!context.PendingApplyStackOverrides.TryGetValue(this, out applyStacks))
-                applyStacks = 0;
+            if (context.Player == null)
+                return;
+            context.Player.StatusEffects.ApplyStatus(statusEffect, applyStacks, statusCtx);
         }
         else
         {
-            applyStacks = stacks;
-            if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context.Player != null)
-            {
-                var pyro = context.Player.StatusEffects.GetStacks<PyromaniacEffectSO>();
-                applyStacks += pyro;
-            }
-
-            if (context.TriggeringFace != null)
-                applyStacks = context.TriggeringFace.ApplyFireDoubleToEnemyBurnStacks(applyStacks, statusEffect);
+            if (context.Enemy == null)
+                return;
+            context.Enemy.StatusEffects.ApplyStatus(statusEffect, applyStacks, statusCtx);
         }
-
-        if (applyStacks <= 0) return;
-
-        manager.ApplyStatus(statusEffect, applyStacks, ctx);
 
         if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context.CombatManager != null)
             context.CombatManager.TurnRegistry?.RecordBurnApplied(applyStacks);
@@ -72,27 +67,65 @@ public class ApplyStatusEffectAction : GameActionWithIcon
 
     /// <summary>
     /// Deferred faces: pool row until submit (scales with Perfect Strike / bust).
-    /// Immediate faces: adds a flyout-only row (not in pending pool snapshot) so the status icon can arc to the element container.
+    /// Immediate faces / gems: flyout-only row so the status icon can arc to the element container.
     /// </summary>
-    public void AppendPoolContributionIfAny(FaceResult result, PlayerStatus player, bool activateImmediately)
+    public static void AppendPoolContribution(
+        FaceResult result,
+        PlayerStatus player,
+        StatusEffectSO statusEffect,
+        int baseStacks,
+        bool visualFlyoutOnly,
+        ApplyStatusEffectAction poolSourceAction = null)
     {
-        if (statusEffect == null || result == null || player == null) return;
+        if (statusEffect == null || result == null || player == null || baseStacks <= 0)
+            return;
 
-        var applyStacks = stacks;
-        if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy)
-            applyStacks += player.StatusEffects.GetStacks<PyromaniacEffectSO>();
-
-        if (applyStacks <= 0) return;
-
-        applyStacks = result.ApplyFireDoubleToEnemyBurnStacks(applyStacks, statusEffect);
+        var previewCtx = new GameActionContext { Player = player };
+        var applyStacks = ResolveApplyStacks(statusEffect, baseStacks, previewCtx, result);
+        if (applyStacks <= 0)
+            return;
 
         result.ActionPoolContributions.Add(new FacePoolExtraContribution
         {
-            PoolKey = ResolvePoolRowKey(),
+            PoolKey = ResolvePoolRowKey(statusEffect),
             Amount = applyStacks,
-            Icon = ResolveStatusIcon(),
-            PoolSourceAction = activateImmediately ? null : this,
-            VisualFlyoutOnly = activateImmediately
+            Icon = GameIconCatalog.GetStatusIcon(statusEffect),
+            PoolSourceAction = visualFlyoutOnly ? null : poolSourceAction,
+            VisualFlyoutOnly = visualFlyoutOnly
         });
+    }
+
+    public override void Execute(GameActionContext context)
+    {
+        if (statusEffect == null)
+        {
+            Debug.LogError("ApplyStatusEffectAction: statusEffect is not assigned!");
+            return;
+        }
+
+        int applyStacks;
+        if (context.PendingApplyStackOverrides != null)
+        {
+            if (!context.PendingApplyStackOverrides.TryGetValue(this, out applyStacks))
+                applyStacks = 0;
+        }
+        else
+            applyStacks = ResolveApplyStacks(statusEffect, stacks, context, context.TriggeringFace);
+
+        ApplyFromContext(context, statusEffect, applyStacks);
+    }
+
+    public void AppendPoolContributionIfAny(FaceResult result, PlayerStatus player, bool activateImmediately)
+    {
+        if (statusEffect == null || result == null || player == null)
+            return;
+
+        AppendPoolContribution(
+            result,
+            player,
+            statusEffect,
+            stacks,
+            activateImmediately,
+            activateImmediately ? null : this);
     }
 }

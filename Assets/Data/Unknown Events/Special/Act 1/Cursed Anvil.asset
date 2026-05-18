@@ -63,10 +63,7 @@ MonoBehaviour:
       data:
         curseFace: {fileID: 11400000, guid: 0c48e346faacf154fba2364657dc462a, type: 2}
     - rid: 6434882266773586129
-      type: {class: UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie, ns: , asm: Assembly-CSharp}
       data:
-        legendaryPool:
-        - {fileID: 11400000, guid: 54329b8f680c9e3479923b8e99730339, type: 2}
-        - {fileID: 11400000, guid: 22f51c0b0687321469875f4a45c8955f, type: 2}
-        - {fileID: 11400000, guid: 08455eb9ad41f48448d46e75c4ce07cc, type: 2}
-        - {fileID: 11400000, guid: 89b5e61b0d6ab4e48ba3c734f55e8d98, type: 2}
+        facesLootTable: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
+        rarity: 2

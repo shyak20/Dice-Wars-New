@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
+  m_Name: Cauterize
+  m_EditorClassIdentifier: 
+  title: Basic Fire 3
+  description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
+  descriptionLines:
+  - Remove all <style=Burn>Burn</style> from the target; gain <style=Max HP>1</style>
+    for every <style=Burn>3</style> stacks removed
+  value: 6
+  type: 2
+  faceMaterial: {fileID: 2100000, guid: 3e0141633dd484c4ea2beb1a03e5d504, type: 2}
+  rarity: 2
+  damage: 0
+  damageAttackTimes: 1
+  armor: 0
+  selfDamage: 0
+  uiIcon: {fileID: 21300000, guid: fa9342af0f4a5a145b9b429e7efac97b, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: 8406a89d5e5c90148996d2cab1332be2, type: 3}
+  actions:
+  - rid: 6494956586993451216
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956586993451216
+      type: {class: ConsumeAllBurnForMaxHpAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 1
+        burnTarget: 1
+        stacksPerMaxHp: 3

@@ -400,9 +400,27 @@ public class StatusEffectManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Player debuffs that deal turn-start damage (e.g. enemy-applied Burn) tick here while last turn's armor is still up.
+    /// Call before <see cref="PlayerStatus.ResetArmor"/> in <see cref="CombatManager.ResetTurn"/>.
+    /// </summary>
+    public void TickTurnStartBeforePlayerArmorReset(StatusEffectContext ctx)
+        => TickTurnStartCore(ctx, TicksDamageBeforePlayerArmorReset);
+
+    /// <summary>
     /// Per effect with stacks: <see cref="StatusEffectSO.OnTurnStart"/> runs at full stack count, then <see cref="StatusEffectSO.stackDecayPerTurn"/> is applied (e.g. burn damage = stacks, then decay).
+    /// Skips player Burn/Poison already handled by <see cref="TickTurnStartBeforePlayerArmorReset"/>.
     /// </summary>
     public void TickTurnStart(StatusEffectContext ctx)
+        => TickTurnStartCore(ctx, def => !TicksDamageBeforePlayerArmorReset(def));
+
+    static bool TicksDamageBeforePlayerArmorReset(StatusEffectSO definition)
+    {
+        if (definition == null || definition.target != StatusEffectTarget.Player)
+            return false;
+        return definition is BurnEffectSO or PoisonEffectSO;
+    }
+
+    void TickTurnStartCore(StatusEffectContext ctx, System.Func<StatusEffectSO, bool> includeDefinition)
     {
         for (var i = effects.Count - 1; i >= 0; i--)
         {
@@ -417,12 +435,18 @@ public class StatusEffectManager : MonoBehaviour
                 continue;
             }
 
+            if (!includeDefinition(instance.Definition))
+                continue;
+
             instance.Definition.OnTurnStart(instance, ctx);
         }
 
         for (var i = effects.Count - 1; i >= 0; i--)
         {
             var instance = effects[i];
+
+            if (!includeDefinition(instance.Definition))
+                continue;
 
             if (instance.Definition.stackDecayPerTurn > 0)
                 instance.RemoveStacks(instance.Definition.stackDecayPerTurn);

@@ -92,7 +92,7 @@ static class UnknownMapEventDieChoiceUtility
 
     public static bool StepAppliesChosenDieFaceSwap(UnknownMapEventOutcomeBase step) =>
         step is UnknownMapEventOutcomeAddCurseFaceToChosenDie
-        || step is UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie
+        || step is UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie
         || step is UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine;
 
     public static bool DieHasCurseFace(DieAssetSO die)
@@ -469,25 +469,25 @@ public sealed class UnknownMapEventOutcomeAddCurseFaceToRandomDie : UnknownMapEv
     }
 }
 
-/// <summary>Replaces one random face on a random die with a legendary picked from <see cref="legendaryPool"/> that matches the die.</summary>
+/// <summary>Replaces one random face on a random die with a face from <see cref="facesLootTable"/> at <see cref="rarity"/> that matches the die.</summary>
 [Serializable]
-public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool : UnknownMapEventOutcomeBase
+public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnRandomDie : UnknownMapEventOutcomeBase
 {
-    [Tooltip("Only faces with FaceRarity.Legendary are considered from this list.")]
-    public List<DieFaceSO> legendaryPool = new List<DieFaceSO>();
+    public FaceLootTableSO facesLootTable;
+    public FaceRarity rarity = FaceRarity.Legendary;
 
     public override void Execute(UnknownMapEventOutcomeContext ctx)
     {
-        if (legendaryPool == null || legendaryPool.Count == 0)
+        if (facesLootTable == null)
         {
-            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool: legendaryPool empty.");
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnRandomDie: facesLootTable is not assigned.");
             return;
         }
 
         var data = PlayerDataContainer.Instance?.RuntimeData;
         if (data?.currentDeck == null)
         {
-            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool: no deck.");
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnRandomDie: no deck.");
             return;
         }
 
@@ -505,14 +505,7 @@ public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool
             if (die?.faces == null)
                 continue;
 
-            var candidates = new List<DieFaceSO>();
-            for (var p = 0; p < legendaryPool.Count; p++)
-            {
-                var f = legendaryPool[p];
-                if (f != null && f.rarity == FaceRarity.Legendary && f.MatchesDie(die))
-                    candidates.Add(f);
-            }
-
+            var candidates = facesLootTable.GetCandidatesForDieAndRarity(die, rarity);
             if (candidates.Count == 0)
                 continue;
 
@@ -531,7 +524,7 @@ public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool
             }
         }
 
-        Debug.LogWarning("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryFromPool: could not place a legendary face.");
+        Debug.LogWarning($"UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnRandomDie: could not place a {rarity} face.");
     }
 }
 
@@ -614,79 +607,41 @@ public sealed class UnknownMapEventOutcomeAddCurseFaceToChosenDie : UnknownMapEv
     }
 }
 
-/// <summary>Replaces one random face on <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> with a legendary from <see cref="legendaryPool"/>.</summary>
+/// <summary>Replaces one random face on <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> with a face from <see cref="facesLootTable"/> at <see cref="rarity"/> that matches the die.</summary>
 [Serializable]
-public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie : UnknownMapEventOutcomeBase
+public sealed class UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie : UnknownMapEventOutcomeBase
 {
-    [Tooltip("Only faces with FaceRarity.Legendary are considered from this list.")]
-    public List<DieFaceSO> legendaryPool = new List<DieFaceSO>();
+    public FaceLootTableSO facesLootTable;
+    public FaceRarity rarity = FaceRarity.Legendary;
 
     public override void Execute(UnknownMapEventOutcomeContext ctx)
     {
-        if (legendaryPool == null || legendaryPool.Count == 0)
+        if (facesLootTable == null)
         {
-            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie: legendaryPool empty.");
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie: facesLootTable is not assigned.");
             return;
         }
 
         var die = ctx.ChosenDie;
         if (die == null)
         {
-            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie: ChosenDie is required.");
+            Debug.LogError("UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie: ChosenDie is required.");
             return;
         }
 
-        var pick = PickLegendaryForDie(die, legendaryPool);
+        var pick = PickFaceForDie(die);
         if (pick == null || !UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapAtRandomSlotInternal(die, pick, excludedSlots: null, out _))
-            Debug.LogWarning("UnknownMapEventOutcomeReplaceRandomFaceWithLegendaryOnChosenDie: could not place a legendary face.");
+            Debug.LogWarning($"UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie: could not place a {rarity} face.");
     }
 
-    public DieFaceSO PickLegendaryForDie(DieAssetSO die) => PickLegendaryForDie(die, legendaryPool);
+    public DieFaceSO PickFaceForDie(DieAssetSO die) =>
+        facesLootTable != null ? facesLootTable.PickRandomForDieAndRarity(die, rarity) : null;
 
     public bool TrySwapAtSlot(DieAssetSO die, int slot, DieFaceSO face) =>
         UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapFaceAtSlot(die, slot, face);
 
     public bool TrySwapAtRandomSlot(DieAssetSO die, DieFaceSO face, ICollection<int> excludedSlots, out int slotUsed) =>
         UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapAtRandomSlotInternal(die, face, excludedSlots, out slotUsed);
-
-    internal static DieFaceSO PickLegendaryForDie(DieAssetSO die, List<DieFaceSO> legendaryPool)
-    {
-        if (die?.faces == null || legendaryPool == null || legendaryPool.Count == 0)
-            return null;
-
-        var candidates = new List<DieFaceSO>();
-        for (var p = 0; p < legendaryPool.Count; p++)
-        {
-            var f = legendaryPool[p];
-            if (f != null && f.rarity == FaceRarity.Legendary && f.MatchesDie(die))
-                candidates.Add(f);
-        }
-
-        if (candidates.Count == 0)
-            return null;
-
-        return candidates[UnityEngine.Random.Range(0, candidates.Count)];
-    }
-
-    internal static bool TryPlaceLegendaryOnDie(DieAssetSO die, List<DieFaceSO> legendaryPool)
-    {
-        if (die?.faces == null || legendaryPool == null || legendaryPool.Count == 0)
-            return false;
-
-        var candidates = new List<DieFaceSO>();
-        for (var p = 0; p < legendaryPool.Count; p++)
-        {
-            var f = legendaryPool[p];
-            if (f != null && f.rarity == FaceRarity.Legendary && f.MatchesDie(die))
-                candidates.Add(f);
-        }
-
-        var pick = PickLegendaryForDie(die, legendaryPool);
-        if (pick == null)
-            return false;
-
-        return UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapAtRandomSlotInternal(die, pick, excludedSlots: null, out _);
-    }
 }
 
 /// <summary>Removes <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> from the run deck.</summary>

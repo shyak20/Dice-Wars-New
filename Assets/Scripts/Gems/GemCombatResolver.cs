@@ -186,6 +186,10 @@ public static class GemCombatResolver
                 if (sourceDie != null && combat.TryConsumeGemNoPowerOnMatchCharge(sourceDie))
                     result.PowerContributionThisResolve = 0;
                 break;
+
+            case GemEffectKind.ApplyStatus:
+                ApplyImmediateGemStatus(entry, gem, result, ctx);
+                break;
         }
     }
 
@@ -385,6 +389,65 @@ public static class GemCombatResolver
                 Debug.LogWarning($"Gem '{gem.name}': '{entry.kind}' cannot be deferred; applying immediately.");
                 ApplyImmediateGemEffectEntry(sourceDie, entry, gem, result, combat, ctx, state, batchGatherIndex);
                 break;
+            case GemEffectKind.ApplyStatus:
+                ApplyDeferredGemStatus(entry, gem, result, combat, ctx);
+                break;
         }
+    }
+
+    private static bool TryGetGemStatusDefinition(GemSO gem, GemEffectEntry entry, out StatusEffectSO statusDefinition)
+    {
+        statusDefinition = entry.statusDefinition;
+        if (statusDefinition != null)
+            return true;
+
+        Debug.LogError($"Gem '{gem.name}': ApplyStatus row needs statusDefinition.", gem);
+        return false;
+    }
+
+    private static void ApplyImmediateGemStatus(GemEffectEntry entry, GemSO gem, FaceResult result, GameActionContext ctx)
+    {
+        if (!TryGetGemStatusDefinition(gem, entry, out var statusDefinition))
+            return;
+
+        var baseStacks = Mathf.Max(0, entry.param);
+        if (baseStacks <= 0)
+            return;
+
+        ApplyStatusEffectAction.AppendPoolContribution(result, ctx.Player, statusDefinition, baseStacks, visualFlyoutOnly: true);
+        var applyStacks = ApplyStatusEffectAction.ResolveApplyStacks(statusDefinition, baseStacks, ctx, result);
+        ApplyStatusEffectAction.ApplyFromContext(ctx, statusDefinition, applyStacks);
+    }
+
+    private static void ApplyDeferredGemStatus(GemEffectEntry entry, GemSO gem, FaceResult result, CombatManager combat, GameActionContext ctx)
+    {
+        if (!TryGetGemStatusDefinition(gem, entry, out var statusDefinition))
+            return;
+
+        var baseStacks = Mathf.Max(0, entry.param);
+        if (baseStacks <= 0)
+            return;
+
+        var handle = NextDeferredHandleId();
+        var poolKey = PoolRowKey.Custom(statusDefinition.name);
+        var cancelOnEnemyTarget = statusDefinition.target == StatusEffectTarget.Enemy;
+        result.ActionPoolContributions.Add(new FacePoolExtraContribution
+        {
+            PoolKey = poolKey,
+            Amount = baseStacks,
+            Icon = GameIconCatalog.GetStatusIcon(statusDefinition),
+            PoolRowBackground = GameIconCatalog.TryGetPoolRowBackground(poolKey)
+                ?? GameIconCatalog.GetActionBackground(ActionVisualId.InstantBurnProcFromStacks),
+            PerfectStrikeScales = true,
+            GemDeferredHandleId = handle,
+            CancelOnBustNullifyDamage = cancelOnEnemyTarget,
+            CancelOnBustNullifyArmor = !cancelOnEnemyTarget
+        });
+        combat.QueueTurnEndAction(endCtx =>
+        {
+            var finalStacks = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);
+            var applyStacks = ApplyStatusEffectAction.ResolveApplyStacks(statusDefinition, finalStacks, endCtx, result);
+            ApplyStatusEffectAction.ApplyFromContext(endCtx, statusDefinition, applyStacks);
+        });
     }
 }

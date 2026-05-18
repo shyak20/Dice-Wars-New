@@ -17,11 +17,11 @@ public class DiceSpawner : MonoBehaviour
     [SerializeField] private float delayBetweenDice = 0.12f;
 
     [Header("Visual Effects")]
-    public GameObject damageDestroyEffect;  // Damage dice
-    public GameObject armorDestroyEffect;   // Armor dice
-    public GameObject fireDestroyEffect;    // Fire dice
-    public GameObject iceDestroyEffect;     // Ice dice
-    public GameObject natureDestroyEffect;  // Nature dice
+    public GameObject damageDestroyEffect;
+    public GameObject armorDestroyEffect;
+    public GameObject fireDestroyEffect;
+    public GameObject iceDestroyEffect;
+    public GameObject natureDestroyEffect;
     public float effectLifetime = 2.0f;
 
     [Header("Throw Force")]
@@ -34,7 +34,7 @@ public class DiceSpawner : MonoBehaviour
     public float minTorque = 10f;
     public float maxTorque = 30f;
 
-    private List<GameObject> activeDiceModels = new List<GameObject>();
+    private readonly List<GameObject> activeDiceModels = new List<GameObject>();
     private Coroutine _spawnRoutine;
 
     /// <summary>Copy of spawned dice for this batch (reroll UI / physics).</summary>
@@ -73,20 +73,7 @@ public class DiceSpawner : MonoBehaviour
         foreach (GameObject die in activeDiceModels)
         {
             if (die != null)
-            {
-                DieVisualizer visualizer = die.GetComponent<DieVisualizer>();
-                if (visualizer != null && visualizer.dieData != null)
-                {
-                    var effectPrefab = GetDestroyEffectPrefab(visualizer.dieData.dieType);
-
-                    if (effectPrefab != null)
-                    {
-                        GameObject effectInstance = Instantiate(effectPrefab, die.transform.position, die.transform.rotation);
-                        Destroy(effectInstance, effectLifetime);
-                    }
-                }
-                Destroy(die);
-            }
+                StartCoroutine(CoDissolveAndDestroyDie(die));
         }
         activeDiceModels.Clear();
     }
@@ -135,6 +122,58 @@ public class DiceSpawner : MonoBehaviour
         {
             _spawnRoutine = null;
         }
+    }
+
+    private IEnumerator CoDissolveAndDestroyDie(GameObject die)
+    {
+        var visualizer = die.GetComponent<DieVisualizer>();
+        var dieType = visualizer != null && visualizer.dieData != null
+            ? visualizer.dieData.dieType
+            : DieType.Damage;
+
+        var roller = die.GetComponent<DiceRoller>();
+        if (roller != null)
+            roller.enabled = false;
+
+        var rb = die.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
+        var boxCollider = die.GetComponent<BoxCollider>();
+        if (boxCollider != null)
+            boxCollider.enabled = false;
+
+        var dissolveFade = die.GetComponent<DissolveFadeController>();
+        if (dissolveFade == null)
+        {
+            Debug.LogError(
+                $"DiceSpawner: die prefab '{dicePrefab.name}' needs a disabled {nameof(DissolveFadeController)} on the root.",
+                dicePrefab);
+            Destroy(die);
+            yield break;
+        }
+
+        dissolveFade.enabled = true;
+        dissolveFade.RefreshRenderers();
+        dissolveFade.ShowImmediate();
+        dissolveFade.FadeDurationSeconds = effectLifetime;
+        dissolveFade.FadeOut();
+
+        var effectPrefab = GetDestroyEffectPrefab(dieType);
+        if (effectPrefab != null)
+        {
+            var effectInstance = Instantiate(effectPrefab, die.transform.position, die.transform.rotation);
+            Destroy(effectInstance, effectLifetime);
+        }
+
+        yield return new WaitForSeconds(effectLifetime);
+
+        if (die != null)
+            Destroy(die);
     }
 
     private void ApplyForces(Rigidbody rb)

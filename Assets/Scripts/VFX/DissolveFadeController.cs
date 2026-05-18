@@ -2,43 +2,41 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Drives <c>_DissolveAmount</c> on DiceWars/Dissolve Lit materials: 0 = fully visible, 1 = fully hidden.
+/// Fades RealToon <c>Cutout</c> (<c>_Cutout</c>) from 0 (visible) to 1 (hidden) on child renderers.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class DissolveFadeController : MonoBehaviour
 {
-    public const string DissolveAmountPropertyName = "_DissolveAmount";
+    public const string RealToonCutoutPropertyName = "_Cutout";
+    public const string RealToonCutoutKeyword = "N_F_CO_ON";
 
-    private static readonly int DissolveAmountId = Shader.PropertyToID(DissolveAmountPropertyName);
+    private static readonly int CutoutId = Shader.PropertyToID(RealToonCutoutPropertyName);
+    private static readonly int CutoutFeatureToggleId = Shader.PropertyToID("_N_F_CO");
 
     [Tooltip("Renderers to fade. If empty, uses all child renderers (including inactive).")]
     [SerializeField] private Renderer[] renderers;
 
     [SerializeField] private bool includeInactiveChildren = true;
 
-    [Tooltip("When enabled, uses MaterialPropertyBlock so shared materials are not instanced.")]
-    [SerializeField] private bool useMaterialPropertyBlock = true;
-
     [Header("Fade")]
-    [Tooltip("Seconds to reach the target dissolve amount when fading. 0 = instant.")]
+    [Tooltip("Seconds to reach the target cutout when fading. 0 = instant.")]
     [SerializeField, Min(0f)] private float fadeDurationSeconds = 1f;
 
-    [Tooltip("On Start, fades from fully visible (0) to Dissolve Amount below.")]
-    [SerializeField] private bool animateToDissolveAmountOnStart;
+    [Tooltip("On Start, fades from fully visible (0) to Cutout below.")]
+    [SerializeField] private bool animateToCutoutOnStart;
 
-    [SerializeField, Range(0f, 1f)] private float dissolveAmount;
+    [SerializeField, Range(0f, 1f)] private float cutoutAmount;
 
-    private MaterialPropertyBlock _propertyBlock;
     private Coroutine _fadeRoutine;
 
-    /// <summary>0 = fully shown, 1 = fully hidden.</summary>
-    public float DissolveAmount
+    /// <summary>0 = fully shown, 1 = fully cut out.</summary>
+    public float CutoutAmount
     {
-        get => dissolveAmount;
+        get => cutoutAmount;
         set
         {
-            dissolveAmount = Mathf.Clamp01(value);
-            ApplyDissolveAmount();
+            cutoutAmount = Mathf.Clamp01(value);
+            ApplyCutoutAmount();
         }
     }
 
@@ -59,23 +57,22 @@ public sealed class DissolveFadeController : MonoBehaviour
         if (renderers == null || renderers.Length == 0)
             CacheRenderers();
 
-        _propertyBlock = new MaterialPropertyBlock();
-        ValidateDissolveMaterials();
-        ApplyDissolveAmount();
+        ValidateRealToonMaterials();
+        ApplyCutoutAmount();
     }
 
     private void Start()
     {
-        if (!animateToDissolveAmountOnStart)
+        if (!animateToCutoutOnStart)
             return;
 
-        var target = dissolveAmount;
-        dissolveAmount = 0f;
-        ApplyDissolveAmount();
+        var target = cutoutAmount;
+        cutoutAmount = 0f;
+        ApplyCutoutAmount();
         FadeTo(target, fadeDurationSeconds);
     }
 
-    private void ValidateDissolveMaterials()
+    private void ValidateRealToonMaterials()
     {
         if (renderers == null)
             return;
@@ -90,10 +87,10 @@ public sealed class DissolveFadeController : MonoBehaviour
             for (var m = 0; m < shared.Length; m++)
             {
                 var mat = shared[m];
-                if (mat == null || !mat.HasProperty(DissolveAmountId))
+                if (mat == null || !mat.HasProperty(CutoutId))
                 {
                     Debug.LogError(
-                        $"DissolveFadeController on '{name}': renderer '{renderer.name}' material slot {m} must use 'DiceWars/Dissolve Lit (URP)'.",
+                        $"DissolveFadeController on '{name}': renderer '{renderer.name}' material slot {m} must use RealToon with Cutout ({RealToonCutoutPropertyName}).",
                         renderer);
                 }
             }
@@ -102,27 +99,24 @@ public sealed class DissolveFadeController : MonoBehaviour
 
     private void OnValidate()
     {
-        dissolveAmount = Mathf.Clamp01(dissolveAmount);
+        cutoutAmount = Mathf.Clamp01(cutoutAmount);
         if (isActiveAndEnabled)
-            ApplyDissolveAmount();
+            ApplyCutoutAmount();
     }
 
-    /// <summary>Fades from current amount to fully hidden (1) over <see cref="fadeDurationSeconds"/>.</summary>
+    /// <summary>Fades from current cutout to fully hidden (1).</summary>
     public void FadeOut() => FadeTo(1f, fadeDurationSeconds);
 
-    /// <summary>Fades from current amount to fully shown (0) over <see cref="fadeDurationSeconds"/>.</summary>
+    /// <summary>Fades from current cutout to fully shown (0).</summary>
     public void FadeIn() => FadeTo(0f, fadeDurationSeconds);
 
     /// <summary>Fades to <paramref name="targetAmount"/> over <see cref="fadeDurationSeconds"/>.</summary>
     public void FadeTo(float targetAmount) => FadeTo(targetAmount, fadeDurationSeconds);
 
-    /// <summary>Fades from current amount to fully hidden (1).</summary>
     public void FadeOut(float durationSeconds) => FadeTo(1f, durationSeconds);
 
-    /// <summary>Fades from current amount to fully shown (0).</summary>
     public void FadeIn(float durationSeconds) => FadeTo(0f, durationSeconds);
 
-    /// <summary>Fades to a target dissolve amount over time.</summary>
     public void FadeTo(float targetAmount, float durationSeconds)
     {
         if (_fadeRoutine != null)
@@ -130,7 +124,7 @@ public sealed class DissolveFadeController : MonoBehaviour
 
         if (durationSeconds <= 0f)
         {
-            DissolveAmount = targetAmount;
+            CutoutAmount = targetAmount;
             return;
         }
 
@@ -146,23 +140,23 @@ public sealed class DissolveFadeController : MonoBehaviour
         }
     }
 
-    /// <summary>Immediately visible.</summary>
+    /// <summary>Immediately visible (cutout 0).</summary>
     public void ShowImmediate()
     {
         StopFade();
-        DissolveAmount = 0f;
+        CutoutAmount = 0f;
     }
 
-    /// <summary>Immediately hidden (dissolved).</summary>
+    /// <summary>Immediately hidden (cutout 1).</summary>
     public void HideImmediate()
     {
         StopFade();
-        DissolveAmount = 1f;
+        CutoutAmount = 1f;
     }
 
     private IEnumerator CoFadeTo(float target, float duration)
     {
-        var start = dissolveAmount;
+        var start = cutoutAmount;
         var elapsed = 0f;
         target = Mathf.Clamp01(target);
 
@@ -170,12 +164,20 @@ public sealed class DissolveFadeController : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             var t = Mathf.Clamp01(elapsed / duration);
-            DissolveAmount = Mathf.Lerp(start, target, t);
+            CutoutAmount = Mathf.Lerp(start, target, t);
             yield return null;
         }
 
-        DissolveAmount = target;
+        CutoutAmount = target;
         _fadeRoutine = null;
+    }
+
+    /// <summary>Re-scan child renderers (e.g. after face materials are assigned).</summary>
+    public void RefreshRenderers()
+    {
+        CacheRenderers();
+        ValidateRealToonMaterials();
+        ApplyCutoutAmount();
     }
 
     private void CacheRenderers()
@@ -183,7 +185,14 @@ public sealed class DissolveFadeController : MonoBehaviour
         renderers = GetComponentsInChildren<Renderer>(includeInactiveChildren);
     }
 
-    private void ApplyDissolveAmount()
+    private static void EnableRealToonCutout(Material material)
+    {
+        material.EnableKeyword(RealToonCutoutKeyword);
+        if (material.HasProperty(CutoutFeatureToggleId))
+            material.SetFloat(CutoutFeatureToggleId, 1f);
+    }
+
+    private void ApplyCutoutAmount()
     {
         if (renderers == null || renderers.Length == 0)
             return;
@@ -194,20 +203,15 @@ public sealed class DissolveFadeController : MonoBehaviour
             if (renderer == null)
                 continue;
 
-            if (useMaterialPropertyBlock)
+            var materials = renderer.materials;
+            for (var m = 0; m < materials.Length; m++)
             {
-                renderer.GetPropertyBlock(_propertyBlock);
-                _propertyBlock.SetFloat(DissolveAmountId, dissolveAmount);
-                renderer.SetPropertyBlock(_propertyBlock);
-            }
-            else
-            {
-                var materials = renderer.materials;
-                for (var m = 0; m < materials.Length; m++)
-                {
-                    if (materials[m] != null && materials[m].HasProperty(DissolveAmountId))
-                        materials[m].SetFloat(DissolveAmountId, dissolveAmount);
-                }
+                var mat = materials[m];
+                if (mat == null || !mat.HasProperty(CutoutId))
+                    continue;
+
+                EnableRealToonCutout(mat);
+                mat.SetFloat(CutoutId, cutoutAmount);
             }
         }
     }

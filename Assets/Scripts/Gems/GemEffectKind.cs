@@ -17,5 +17,7 @@ public enum GemEffectKind
     /// <summary>param = damage multiplier for this resolve (2 = double, 3 = triple).</summary>
     MultiplyPhysicalDamageThisFace,
     /// <summary>On matching rolls only: consume one charge and contribute 0 power to the power pool. Param = charges.</summary>
-    FreeFirstRollForThisDie
+    FreeFirstRollForThisDie,
+    /// <summary>Status stacks; set <see cref="GemEffectEntry.statusDefinition"/> and param = stack count.</summary>
+    ApplyStatus
 }

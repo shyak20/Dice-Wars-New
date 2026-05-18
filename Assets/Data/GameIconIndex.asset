@@ -125,7 +125,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 618a26f22d6051543af8c274abf85fdf, type: 3}
     poolRowBackground: {fileID: 0}
   - effect: {fileID: 11400000, guid: 5566e5d6dc6943599c897d06a088c281, type: 2}
-    icon: {fileID: 21300000, guid: 0aa3c0b0d176e3c498739a1a0e8b400c, type: 3}
+    icon: {fileID: 21300000, guid: 7148a07abce224045a809b01300414b0, type: 3}
     poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
   - effect: {fileID: 11400000, guid: eab92401621da2241a6640d43a76acb5, type: 2}
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
@@ -137,7 +137,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
     poolRowBackground: {fileID: 0}
   - effect: {fileID: 11400000, guid: dae17a03096114942839eb0d8a1cf77d, type: 2}
-    icon: {fileID: 21300000, guid: 53e0242a95155b14d90305fc4e4d280f, type: 3}
+    icon: {fileID: 21300000, guid: ab9046a68c2bb3745bd0b340ad9c6f02, type: 3}
     poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
   enemyResistanceIcons:
   - resistanceElement: 1

@@ -16,7 +16,7 @@ public class BurnEffectSO : StatusEffectSO
         if (target == StatusEffectTarget.Enemy)
             ctx.Enemy.TakeDamage(damage, EnemyDamagePresentationKind.Burn);
         else
-            ctx.Player.TakeDamage(damage);
+            ctx.Player.TakeDamage(damage, PlayerDamageSource.Generic);
 
         if (GameActionDebug.Enabled)
             Debug.Log($"[Burn] Turn-start tick: dealt {damage} (1 per stack) on {target}; stacks before decay: {stacks}");

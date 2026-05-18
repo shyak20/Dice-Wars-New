@@ -2396,9 +2396,14 @@ public class CombatManager : MonoBehaviour
         _noPowerOnNextGatherCommit.Clear();
         _gemBatchRerollIndicesInFlight.Clear();
         _gemExtraRollGrantsThisTurnByDie.Clear();
-        ApplyPlayerTurnStartArmor();
         var statusCtx = BuildStatusContext();
-        // Player turn starts here.
+        // Enemy-applied player debuffs (Burn, Poison) tick before armor is cleared for the new turn.
+        player.StatusEffects.TickTurnStartBeforePlayerArmorReset(statusCtx);
+        if (CheckDefeat())
+            return;
+
+        ApplyPlayerTurnStartArmor();
+        // Player turn starts here (Next Turn Armor, etc.).
         player.StatusEffects.TickTurnStart(statusCtx);
         if (CheckDefeat())
             return;
