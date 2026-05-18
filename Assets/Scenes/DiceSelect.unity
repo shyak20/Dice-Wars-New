@@ -445,7 +445,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &90625780
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3445,6 +3445,7 @@ MonoBehaviour:
   tooltipTitle: 
   tooltipDescription: 
   tooltipScreenOffset: {x: 0, y: 0}
+  isAbove: 0
 --- !u!1 &554438059
 GameObject:
   m_ObjectHideFlags: 0
@@ -3720,6 +3721,7 @@ MonoBehaviour:
   tooltipTitle: 
   tooltipDescription: 
   tooltipScreenOffset: {x: 0, y: 0}
+  isAbove: 0
 --- !u!1 &671414978
 GameObject:
   m_ObjectHideFlags: 0

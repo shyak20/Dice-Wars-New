@@ -30,6 +30,11 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     [SerializeField] private List<GameObject> disableOnVictoryScreen = new List<GameObject>();
     [Header("Flow")]
     [SerializeField] private FaceRewardManager faceRewardManager;
+    [Header("Unclaimed rewards")]
+    [Tooltip("Optional. When empty, uses ConfirmationDialog in the active scene.")]
+    [SerializeField] private ConfirmationDialog confirmationDialog;
+    [SerializeField] private string unclaimedRewardsMessage =
+        "You still have unclaimed rewards.\nContinue without collecting them?";
 
     private int _uncollectedGold;
     private int _uncollectedGemRewards;
@@ -279,7 +284,35 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         AdvanceVictoryAfterWinStage();
     }
 
-    private void OnContinueClicked() => AdvanceVictoryAfterWinStage();
+    private void OnContinueClicked()
+    {
+        if (!HasUncollectedRewards())
+        {
+            AdvanceVictoryAfterWinStage();
+            return;
+        }
+
+        if (!ConfirmationDialog.TryShow(
+                unclaimedRewardsMessage,
+                AdvanceVictoryAfterWinStage,
+                dialog: ResolveConfirmationDialog()))
+        {
+            Debug.LogError(
+                "WinStageFlowController: assign Confirmation Dialog on this component or add one to the fight scene.",
+                this);
+        }
+    }
+
+    private ConfirmationDialog ResolveConfirmationDialog() =>
+        confirmationDialog != null ? confirmationDialog : ConfirmationDialog.Instance;
+
+    private bool HasUncollectedRewards() =>
+        _uncollectedGold > 0
+        || _uncollectedGemRewards > 0
+        || _uncollectedRelicRewards > 0
+        || _uncollectedDieRewards > 0
+        || _faceRewardRowPending
+        || !_faceFlowComplete;
 
     private void AdvanceVictoryAfterWinStage()
     {

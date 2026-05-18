@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Pyromaniac
   m_EditorClassIdentifier: 
   effectName: Pyromaniac
-  description: Increase Burn Effects triggered by +1 per stack
+  description: Increase <style=Burn> gained from rolls by +1
   type: 0
   target: 0
-  stackDecayPerTurn: 0
+  stackDecayPerTurn: 1
   activateBeforePlayerPhysicalDamage: 1

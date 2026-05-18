@@ -40,6 +40,7 @@ public class RunManager : MonoBehaviour
     private bool _actFirstCombatConsumed;
     private int _runShrineBonusMaxPower;
     private bool _runVitalityInitialized;
+    private bool _runDefeated;
     private int _runCurrentHp;
     private int _runMaxHp;
     private int _runPermanentStrengthStacksFromSpecialEvents;
@@ -83,6 +84,9 @@ public class RunManager : MonoBehaviour
     }
 
     public bool UseMapBasedRun => _useMapBasedRun;
+
+    /// <summary>True after map run HP hits 0 until a new run starts.</summary>
+    public bool IsRunDefeated => _runDefeated;
     public bool PreloadsFightShopOnMap => preloadFightAndShopWhileOnMap;
     public int CurrentActIndex => _currentActIndex;
     public int RunShrineBonusMaxPower => _runShrineBonusMaxPower;
@@ -230,6 +234,7 @@ public class RunManager : MonoBehaviour
     {
         _useMapBasedRun = false;
         _runVitalityInitialized = false;
+        _runDefeated = false;
         _runCurrentHp = 0;
         _runMaxHp = 0;
         _runShrineBonusMaxPower = 0;
@@ -242,6 +247,8 @@ public class RunManager : MonoBehaviour
         RunEncounterBuffer.AbortPendingMapCombatState();
         if (RunEconomyManager.Instance != null)
             RunEconomyManager.Instance.ResetEconomyForNewRun();
+        ClearMapFightShopPreloadState();
+        ClearMapSubsceneTransitionSnapshot();
     }
 
     public void StartRun()
@@ -293,6 +300,7 @@ public class RunManager : MonoBehaviour
         _runShrineBonusMaxPower = 0;
         _runPermanentStrengthStacksFromSpecialEvents = 0;
         _runVitalityInitialized = false;
+        _runDefeated = false;
         ClearMapPersistenceForNewAct();
         ClearMapEncounterDrawState();
         ResetActFirstCombatState();
@@ -731,8 +739,16 @@ public class RunManager : MonoBehaviour
     /// Clears additive preload bookkeeping after fight/shop scenes unload so the next preload captures fresh root actives
     /// (nested UI like the element pool is not restored by <see cref="RestoreSceneRootsToCapturedDefaults"/> alone).
     /// </summary>
-    private void ClearFightShopAdditivePreloadSnapshots()
+    private void ClearFightShopAdditivePreloadSnapshots() => ClearMapFightShopPreloadState();
+
+    private void ClearMapFightShopPreloadState()
     {
+        if (_preloadMapSubscenesRoutine != null)
+        {
+            StopCoroutine(_preloadMapSubscenesRoutine);
+            _preloadMapSubscenesRoutine = null;
+        }
+
         _fightRootDefaultActives.Clear();
         _shopRootDefaultActives.Clear();
         _fightScenePreloadedForMapRun = false;
@@ -1066,7 +1082,7 @@ public class RunManager : MonoBehaviour
         NotifyRunVitalityChanged();
 
         if (_runCurrentHp <= 0)
-            EndRunFromPlayerDefeat();
+            MarkRunDefeated();
     }
 
     /// <summary>
@@ -1090,6 +1106,9 @@ public class RunManager : MonoBehaviour
         else
             _runCurrentHp = Mathf.Clamp(_runCurrentHp, 0, _runMaxHp);
         NotifyRunVitalityChanged();
+
+        if (_runCurrentHp <= 0)
+            MarkRunDefeated();
     }
 
     /// <summary>Map runs: same as <see cref="ApplyRunMaxHpDelta"/> for a positive amount (raise max and heal).</summary>
@@ -1133,10 +1152,19 @@ public class RunManager : MonoBehaviour
         CombatEvents.OnPlayerDamageNumber?.Invoke(finalDamage, damageNumberWorldAnchor);
 
         if (_runCurrentHp <= 0)
-            EndRunFromPlayerDefeat();
+            MarkRunDefeated();
     }
 
     private void NotifyRunVitalityChanged() => OnRunVitalityChanged?.Invoke();
+
+    /// <summary>Map run ended because current HP reached 0. UI is handled by <see cref="MapMovementManager"/>.</summary>
+    public void MarkRunDefeated()
+    {
+        if (_runDefeated)
+            return;
+
+        _runDefeated = true;
+    }
 
     public void ApplyShrineMaxPowerBonus(int amount)
     {
@@ -1288,9 +1316,4 @@ public class RunManager : MonoBehaviour
         LoadMainMenuScene();
     }
 
-    private void EndRunFromPlayerDefeat()
-    {
-        Debug.LogError("RunManager: Game over — player HP reached 0.");
-        LoadMainMenuScene();
-    }
 }

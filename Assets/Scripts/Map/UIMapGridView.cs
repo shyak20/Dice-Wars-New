@@ -107,6 +107,14 @@ public class UIMapGridView : MonoBehaviour
 
         if (_markerLayoutSnapRoutine != null)
             StopCoroutine(_markerLayoutSnapRoutine);
+        if (!isActiveAndEnabled)
+        {
+            Debug.LogError(
+                $"UIMapGridView on '{name}': cannot present while inactive — enable the Grid hierarchy before calling Present.",
+                this);
+            return;
+        }
+
         _markerLayoutSnapRoutine = StartCoroutine(CoSnapPlayerMarkerAfterLayout());
     }
 

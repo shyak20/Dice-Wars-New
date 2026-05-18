@@ -63,7 +63,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
     background: {fileID: 0}
     title: Thorns
-    description: When hit by a physical attack, deal <style=Attack>1</style> damage per stack.
+    description: When hit by a physical attack, deal <style=Attack>1</style> damage
+      per stack.
   - id: 11
     sprite: {fileID: 21300000, guid: cf961ca66e8819a4b8f97c6c5b76f212, type: 3}
     background: {fileID: 21300000, guid: 0b1bb4264e52e46419e31c615c001f9c, type: 3}
@@ -83,7 +84,9 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 65d8887db19ae6545b307f87fc0a4639, type: 3}
     background: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
     title: Per-die bonus
-    description: Gain extra <style=Shield>armor</style>, <style=Attack>damage</style>, <style=Burn>burn</style>, or <style=Poison>poison</style> for each die in your deck.
+    description: Gain extra <style=Shield>armor</style>, <style=Attack>damage</style>,
+      <style=Burn>burn</style>, or <style=Poison>poison</style> for each die in your
+      deck.
   - id: 25
     sprite: {fileID: 21300000, guid: 65d8887db19ae6545b307f87fc0a4639, type: 3}
     background: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
@@ -127,9 +130,15 @@ MonoBehaviour:
   - effect: {fileID: 11400000, guid: eab92401621da2241a6640d43a76acb5, type: 2}
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
     poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
-  - effect: {fileID: 11400000, guid: a7f3e2d1c4b5648790a1b2c3d4e5f60, type: 2}
+  - effect: {fileID: 11400000, guid: 36a967d8f94b7684c9ba6c18b9928e25, type: 2}
     icon: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
     poolRowBackground: {fileID: 0}
+  - effect: {fileID: 11400000, guid: c100a975ed88ecf478b21b6af88461fc, type: 2}
+    icon: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
+    poolRowBackground: {fileID: 0}
+  - effect: {fileID: 11400000, guid: dae17a03096114942839eb0d8a1cf77d, type: 2}
+    icon: {fileID: 21300000, guid: 53e0242a95155b14d90305fc4e4d280f, type: 3}
+    poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
   enemyResistanceIcons:
   - resistanceElement: 1
     icon: {fileID: 21300000, guid: 5ba35a2c41528e14b84e1058087d01a2, type: 3}

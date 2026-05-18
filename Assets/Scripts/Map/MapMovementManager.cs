@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -44,6 +45,10 @@ public sealed class MapMovementManager : MonoBehaviour
     [Header("Dev / map scene UI")]
     [Tooltip("Assign the New Map button: reloads this scene and runs a fresh generate in Start (clears combat return snapshot). Leave empty to disable.")]
     [SerializeField] private Button newMapReloadSceneButton;
+    [Header("Run defeat")]
+    [Tooltip("Lose overlay root (e.g. Lose Prefab instance). Shown when run HP reaches 0.")]
+    [SerializeField] private GameObject loseScreen;
+    [SerializeField] private Button loseScreenMainMenuButton;
 
     private MapGrid _grid;
     private System.Random _rng;
@@ -51,7 +56,7 @@ public sealed class MapMovementManager : MonoBehaviour
     private int _effectiveGridHeight;
     private int _effectiveMoveLimit;
 
-    private Action _mapFightShopPreloadFinishedHandler;
+    private bool _loseScreenShown;
 
     public int MovesTaken { get; private set; }
     public int MoveLimit => _effectiveMoveLimit;
@@ -80,15 +85,24 @@ public sealed class MapMovementManager : MonoBehaviour
     private void OnEnable()
     {
         if (RunManager.Instance != null)
+        {
             RunManager.Instance.OnRunRelicsChanged += OnRunRelicsChangedRefreshMoves;
+            RunManager.Instance.OnRunVitalityChanged += OnRunVitalityChanged;
+        }
     }
 
     private void OnDisable()
     {
         if (RunManager.Instance != null)
+        {
             RunManager.Instance.OnRunRelicsChanged -= OnRunRelicsChangedRefreshMoves;
+            RunManager.Instance.OnRunVitalityChanged -= OnRunVitalityChanged;
+        }
+
         if (newMapReloadSceneButton != null)
             newMapReloadSceneButton.onClick.RemoveListener(ReloadMapSceneAndGenerateNew);
+        if (loseScreenMainMenuButton != null)
+            loseScreenMainMenuButton.onClick.RemoveListener(GoToMainMenuFromLoseScreen);
     }
 
     private void OnRunRelicsChangedRefreshMoves()
@@ -101,49 +115,151 @@ public sealed class MapMovementManager : MonoBehaviour
     {
         if (newMapReloadSceneButton != null)
             newMapReloadSceneButton.onClick.AddListener(ReloadMapSceneAndGenerateNew);
+        if (loseScreen != null)
+            loseScreen.SetActive(false);
+        if (loseScreenMainMenuButton != null)
+            loseScreenMainMenuButton.onClick.AddListener(GoToMainMenuFromLoseScreen);
 
         RefreshEffectiveMapLayoutFromActOrDefaults();
 
         var rm = RunManager.Instance;
-        if (rm != null && rm.UseMapBasedRun && rm.PreloadsFightShopOnMap && !rm.IsMapFightShopPreloadFinishedForIntro())
+        if (rm != null && rm.UseMapBasedRun && rm.PreloadsFightShopOnMap)
         {
-            rm.NotifyMapSceneReadyForSubscenePreload();
-            _mapFightShopPreloadFinishedHandler = CompleteMapBootstrapAfterFightShopPreload;
-            rm.OnMapFightShopPreloadFinished += _mapFightShopPreloadFinishedHandler;
+            StartCoroutine(CoBootstrapMapWhenIntroReady());
             return;
         }
 
         CompleteMapBootstrapAfterFightShopPreload();
-        RunManager.Instance?.NotifyMapSceneReadyForSubscenePreload();
+        rm?.NotifyMapSceneReadyForSubscenePreload();
     }
 
-    private void OnDestroy()
+    private IEnumerator CoBootstrapMapWhenIntroReady()
     {
-        if (RunManager.Instance != null && _mapFightShopPreloadFinishedHandler != null)
-            RunManager.Instance.OnMapFightShopPreloadFinished -= _mapFightShopPreloadFinishedHandler;
-        _mapFightShopPreloadFinishedHandler = null;
+        var rm = RunManager.Instance;
+        if (rm == null)
+        {
+            CompleteMapBootstrapAfterFightShopPreload();
+            yield break;
+        }
+
+        if (!rm.IsMapFightShopPreloadFinishedForIntro())
+        {
+            rm.NotifyMapSceneReadyForSubscenePreload();
+            while (!rm.IsMapFightShopPreloadFinishedForIntro())
+                yield return null;
+        }
+
+        // MapIntroWaitForFightShopPreload disables intro roots in Awake and re-enables them in Start.
+        yield return null;
+
+        EnsureMapViewHierarchyActive();
+        CompleteMapBootstrapAfterFightShopPreload();
+        rm.NotifyMapSceneReadyForSubscenePreload();
     }
+
+    private static void EnsureMapViewHierarchyActive(UIMapGridView mapView)
+    {
+        if (mapView == null)
+            return;
+
+        var t = mapView.transform;
+        while (t != null)
+        {
+            if (!t.gameObject.activeSelf)
+                t.gameObject.SetActive(true);
+            t = t.parent;
+        }
+    }
+
+    private void EnsureMapViewHierarchyActive() => EnsureMapViewHierarchyActive(mapView);
 
     private void CompleteMapBootstrapAfterFightShopPreload()
     {
-        if (RunManager.Instance != null && _mapFightShopPreloadFinishedHandler != null)
-        {
-            RunManager.Instance.OnMapFightShopPreloadFinished -= _mapFightShopPreloadFinishedHandler;
-            _mapFightShopPreloadFinishedHandler = null;
-        }
-
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun &&
             RunManager.Instance.TryRestorePersistedMap(out var restoredGrid, out var playerCell, out var moves))
         {
             _grid = restoredGrid;
             PlayerGridPosition = playerCell;
             MovesTaken = moves;
+            EnsureMapViewHierarchyActive();
             mapView?.Present(_grid, this, mapPresentation);
             moveCounterUI?.Bind(this);
             return;
         }
 
         RegenerateMap();
+        TryShowLoseScreenIfHpDepleted();
+    }
+
+    private void OnRunVitalityChanged() => TryShowLoseScreenIfHpDepleted();
+
+    private void TryShowLoseScreenIfHpDepleted()
+    {
+        if (_loseScreenShown)
+            return;
+
+        var run = RunManager.Instance;
+        if (run == null || !run.UseMapBasedRun || run.RunCurrentHp > 0)
+            return;
+
+        _loseScreenShown = true;
+        run.MarkRunDefeated();
+        CloseMapEventPanels();
+
+        if (loseScreen == null)
+        {
+            Debug.LogError("MapMovementManager: assign Lose Screen.", this);
+            return;
+        }
+
+        loseScreen.SetActive(true);
+        ConfigureLoseScreenForInput();
+    }
+
+    private void ConfigureLoseScreenForInput()
+    {
+        var canvas = loseScreen.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            var parentCanvas = loseScreen.transform.parent != null
+                ? loseScreen.GetComponentInParent<Canvas>()
+                : null;
+            if (parentCanvas != null && parentCanvas.renderMode == RenderMode.ScreenSpaceCamera &&
+                parentCanvas.worldCamera != null)
+            {
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = parentCanvas.worldCamera;
+                canvas.planeDistance = parentCanvas.planeDistance + 1f;
+            }
+            else if (canvas.renderMode == RenderMode.WorldSpace)
+            {
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            }
+        }
+
+        var button = loseScreenMainMenuButton;
+        if (button == null)
+            button = loseScreen.GetComponentInChildren<Button>(true);
+        if (button == null)
+        {
+            Debug.LogError("MapMovementManager: Lose Screen has no Main Menu Button.", this);
+            return;
+        }
+
+        button.onClick.RemoveListener(GoToMainMenuFromLoseScreen);
+        button.onClick.AddListener(GoToMainMenuFromLoseScreen);
+    }
+
+    private void GoToMainMenuFromLoseScreen()
+    {
+        RunEncounterBuffer.AbortPendingMapCombatState();
+        if (RunManager.Instance != null)
+            RunManager.Instance.LoadMainMenuScene();
+        else
+        {
+            PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed("MainMenu");
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
     /// <summary>Rebuilds grid and resets player at start. Act 1+ may use <see cref="mapModeAfterBossReach"/>.</summary>
@@ -152,15 +268,21 @@ public sealed class MapMovementManager : MonoBehaviour
         RegenerateMapInternal();
     }
 
+    /// <summary>Closes shrine, treasure, and unknown-event overlays (e.g. on run defeat).</summary>
+    public void CloseMapEventPanels()
+    {
+        shrineChoicePanel?.Hide();
+        treasurePanel?.Hide();
+        unknownEventPanel?.Hide();
+    }
+
     /// <summary>
     /// Clears any saved map return state, reloads the active scene, then <see cref="Start"/> generates a new map
     /// (new <see cref="System.Random"/> in <see cref="Awake"/> unless <see cref="useFixedSeed"/>).
     /// </summary>
     public void ReloadMapSceneAndGenerateNew()
     {
-        shrineChoicePanel?.Hide();
-        treasurePanel?.Hide();
-        unknownEventPanel?.Hide();
+        CloseMapEventPanels();
         RunManager.Instance?.ClearPersistedMapState();
         var idx = SceneManager.GetActiveScene().buildIndex;
         var path = SceneUtility.GetScenePathByBuildIndex(idx);
@@ -175,9 +297,7 @@ public sealed class MapMovementManager : MonoBehaviour
 
     private void RegenerateMapInternal()
     {
-        shrineChoicePanel?.Hide();
-        treasurePanel?.Hide();
-        unknownEventPanel?.Hide();
+        CloseMapEventPanels();
         RunManager.Instance?.ClearPersistedMapState();
 
         RefreshEffectiveMapLayoutFromActOrDefaults();
@@ -200,6 +320,7 @@ public sealed class MapMovementManager : MonoBehaviour
         MovesTaken = 0;
         PlayerGridPosition = StartPosition;
 
+        EnsureMapViewHierarchyActive();
         mapView?.Present(_grid, this, mapPresentation);
         moveCounterUI?.Bind(this);
     }
@@ -207,6 +328,9 @@ public sealed class MapMovementManager : MonoBehaviour
     /// <summary>Move to an orthogonally adjacent tile if the current tile has a directed exit toward it.</summary>
     public bool TryMoveTo(Vector2Int target)
     {
+        if (RunManager.Instance != null && RunManager.Instance.IsRunDefeated)
+            return false;
+
         if (_grid == null || !_grid.Contains(target))
             return false;
 

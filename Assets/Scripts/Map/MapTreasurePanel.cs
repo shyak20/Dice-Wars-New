@@ -36,6 +36,11 @@ public sealed class MapTreasurePanel : MonoBehaviour
     [Header("Close")]
     [Tooltip("After the last reward row is collected, wait this long before hiding the panel. Close button still closes immediately.")]
     [SerializeField, Min(0f)] private float delayBeforeCloseSeconds = 1f;
+    [Header("Unclaimed rewards")]
+    [Tooltip("Optional. When empty, uses ConfirmationDialog in the active scene.")]
+    [SerializeField] private ConfirmationDialog confirmationDialog;
+    [SerializeField] private string unclaimedRewardsMessage =
+        "You still have unclaimed rewards.\nLeave without collecting them?";
 
     private MapTreasurePackSO _currentPack;
     private readonly List<RolledReward> _rolledRewards = new List<RolledReward>();
@@ -70,7 +75,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
         if (canvasShakeTarget != null)
             _canvasShakeBaseAnchoredPosition = canvasShakeTarget.anchoredPosition;
         if (closeButton != null)
-            closeButton.onClick.AddListener(Close);
+            closeButton.onClick.AddListener(OnCloseButtonClicked);
         if (openButton != null)
             openButton.onClick.AddListener(OnOpenButtonPressed);
     }
@@ -84,7 +89,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
     private void OnDestroy()
     {
         if (closeButton != null)
-            closeButton.onClick.RemoveListener(Close);
+            closeButton.onClick.RemoveListener(OnCloseButtonClicked);
         if (openButton != null)
             openButton.onClick.RemoveListener(OnOpenButtonPressed);
     }
@@ -287,7 +292,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
         CancelDelayedClose();
         if (delayBeforeCloseSeconds <= 0f)
         {
-            Close();
+            Hide();
             return;
         }
 
@@ -298,7 +303,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(delayBeforeCloseSeconds);
         _delayedCloseRoutine = null;
-        Close();
+        Hide();
     }
 
     void CancelDelayedClose()
@@ -369,7 +374,29 @@ public sealed class MapTreasurePanel : MonoBehaviour
         }
     }
 
-    private void Close() => Hide();
+    private void OnCloseButtonClicked()
+    {
+        if (!HasUncollectedRewards())
+        {
+            Hide();
+            return;
+        }
+
+        if (!ConfirmationDialog.TryShow(
+                unclaimedRewardsMessage,
+                Hide,
+                dialog: ResolveConfirmationDialog()))
+        {
+            Debug.LogError(
+                "MapTreasurePanel: assign Confirmation Dialog on this component or add one to the map scene.",
+                this);
+        }
+    }
+
+    private ConfirmationDialog ResolveConfirmationDialog() =>
+        confirmationDialog != null ? confirmationDialog : ConfirmationDialog.Instance;
+
+    private bool HasUncollectedRewards() => _pendingRowCompletions > 0;
 
     /// <summary>Closes the panel and clears pending rewards UI (e.g. map regenerated).</summary>
     public void Hide()
