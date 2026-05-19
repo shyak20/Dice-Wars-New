@@ -127,7 +127,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   renderers: []
   includeInactiveChildren: 1
-  fadeDurationSeconds: 2
+  fadeDurationSeconds: 6
   animateToCutoutOnStart: 0
   cutoutAmount: 0
 --- !u!1001 &8782684422019099443

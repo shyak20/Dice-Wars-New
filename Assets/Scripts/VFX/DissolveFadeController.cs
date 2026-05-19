@@ -2,7 +2,9 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Fades RealToon <c>Cutout</c> (<c>_Cutout</c>) from 0 (visible) to 1 (hidden) on child renderers.
+/// Fades RealToon <c>Cutout</c> (<c>_Cutout</c>) from 0 (visible) to 1 (hidden) on die renderers.
+/// Disabled on the dice prefab; enabled only when dissolving after a roll. Face materials must be assigned first
+/// (see <see cref="DieVisualizer.Initialize"/>).
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class DissolveFadeController : MonoBehaviour
@@ -13,7 +15,7 @@ public sealed class DissolveFadeController : MonoBehaviour
     private static readonly int CutoutId = Shader.PropertyToID(RealToonCutoutPropertyName);
     private static readonly int CutoutFeatureToggleId = Shader.PropertyToID("_N_F_CO");
 
-    [Tooltip("Renderers to fade. If empty, uses all child renderers (including inactive).")]
+    [Tooltip("Renderers to fade. If empty, uses the DieVisualizer mesh renderer or all child renderers.")]
     [SerializeField] private Renderer[] renderers;
 
     [SerializeField] private bool includeInactiveChildren = true;
@@ -36,7 +38,8 @@ public sealed class DissolveFadeController : MonoBehaviour
         set
         {
             cutoutAmount = Mathf.Clamp01(value);
-            ApplyCutoutAmount();
+            if (isActiveAndEnabled)
+                ApplyCutoutAmount();
         }
     }
 
@@ -52,18 +55,18 @@ public sealed class DissolveFadeController : MonoBehaviour
         CacheRenderers();
     }
 
-    private void Awake()
+    private void OnEnable()
     {
-        if (renderers == null || renderers.Length == 0)
-            CacheRenderers();
+        CacheRenderers();
+        if (!ValidateRealToonMaterials())
+            return;
 
-        ValidateRealToonMaterials();
         ApplyCutoutAmount();
     }
 
     private void Start()
     {
-        if (!animateToCutoutOnStart)
+        if (!isActiveAndEnabled || !animateToCutoutOnStart)
             return;
 
         var target = cutoutAmount;
@@ -72,11 +75,15 @@ public sealed class DissolveFadeController : MonoBehaviour
         FadeTo(target, fadeDurationSeconds);
     }
 
-    private void ValidateRealToonMaterials()
+    private bool ValidateRealToonMaterials()
     {
-        if (renderers == null)
-            return;
+        if (renderers == null || renderers.Length == 0)
+        {
+            Debug.LogError($"DissolveFadeController on '{name}': no renderers to fade.", this);
+            return false;
+        }
 
+        var valid = false;
         for (var i = 0; i < renderers.Length; i++)
         {
             var renderer = renderers[i];
@@ -87,14 +94,29 @@ public sealed class DissolveFadeController : MonoBehaviour
             for (var m = 0; m < shared.Length; m++)
             {
                 var mat = shared[m];
-                if (mat == null || !mat.HasProperty(CutoutId))
+                if (mat == null)
+                    continue;
+
+                if (!mat.HasProperty(CutoutId))
                 {
                     Debug.LogError(
                         $"DissolveFadeController on '{name}': renderer '{renderer.name}' material slot {m} must use RealToon with Cutout ({RealToonCutoutPropertyName}).",
                         renderer);
+                    continue;
                 }
+
+                valid = true;
             }
         }
+
+        if (!valid)
+        {
+            Debug.LogError(
+                $"DissolveFadeController on '{name}': no RealToon cutout materials found. Assign face materials before enabling dissolve.",
+                this);
+        }
+
+        return valid;
     }
 
     private void OnValidate()
@@ -172,16 +194,27 @@ public sealed class DissolveFadeController : MonoBehaviour
         _fadeRoutine = null;
     }
 
-    /// <summary>Re-scan child renderers (e.g. after face materials are assigned).</summary>
+    /// <summary>Re-scan renderers (call after <see cref="DieVisualizer.Initialize"/> assigns face materials).</summary>
     public void RefreshRenderers()
     {
+        renderers = null;
         CacheRenderers();
+        if (!isActiveAndEnabled)
+            return;
+
         ValidateRealToonMaterials();
         ApplyCutoutAmount();
     }
 
     private void CacheRenderers()
     {
+        var visualizer = GetComponent<DieVisualizer>();
+        if (visualizer != null && visualizer.meshRenderer != null)
+        {
+            renderers = new[] { visualizer.meshRenderer };
+            return;
+        }
+
         renderers = GetComponentsInChildren<Renderer>(includeInactiveChildren);
     }
 
@@ -194,7 +227,7 @@ public sealed class DissolveFadeController : MonoBehaviour
 
     private void ApplyCutoutAmount()
     {
-        if (renderers == null || renderers.Length == 0)
+        if (!isActiveAndEnabled || renderers == null || renderers.Length == 0)
             return;
 
         for (var i = 0; i < renderers.Length; i++)

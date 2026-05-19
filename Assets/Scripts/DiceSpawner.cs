@@ -16,12 +16,13 @@ public class DiceSpawner : MonoBehaviour
     [Tooltip("Seconds to wait after each die before spawning the next (reduces overlapping impulses).")]
     [SerializeField] private float delayBetweenDice = 0.12f;
 
-    [Header("Visual Effects")]
+    [Header("Destroy VFX (one per die face, by face type)")]
     public GameObject damageDestroyEffect;
     public GameObject armorDestroyEffect;
     public GameObject fireDestroyEffect;
     public GameObject iceDestroyEffect;
     public GameObject natureDestroyEffect;
+    public GameObject curseDestroyEffect;
     public float effectLifetime = 2.0f;
 
     [Header("Throw Force")]
@@ -127,10 +128,6 @@ public class DiceSpawner : MonoBehaviour
     private IEnumerator CoDissolveAndDestroyDie(GameObject die)
     {
         var visualizer = die.GetComponent<DieVisualizer>();
-        var dieType = visualizer != null && visualizer.dieData != null
-            ? visualizer.dieData.dieType
-            : DieType.Damage;
-
         var roller = die.GetComponent<DiceRoller>();
         if (roller != null)
             roller.enabled = false;
@@ -163,17 +160,33 @@ public class DiceSpawner : MonoBehaviour
         dissolveFade.FadeDurationSeconds = effectLifetime;
         dissolveFade.FadeOut();
 
-        var effectPrefab = GetDestroyEffectPrefab(dieType);
-        if (effectPrefab != null)
-        {
-            var effectInstance = Instantiate(effectPrefab, die.transform.position, die.transform.rotation);
-            Destroy(effectInstance, effectLifetime);
-        }
+        SpawnDestroyEffectsForAllFaces(die, visualizer);
 
         yield return new WaitForSeconds(effectLifetime);
 
         if (die != null)
             Destroy(die);
+    }
+
+    void SpawnDestroyEffectsForAllFaces(GameObject die, DieVisualizer visualizer)
+    {
+        var meshRenderer = visualizer != null ? visualizer.meshRenderer : null;
+        var faces = visualizer?.dieData?.faces;
+        var fallbackType = visualizer?.dieData != null ? visualizer.dieData.dieType : DieType.Damage;
+
+        for (var faceIndex = 0; faceIndex < DieFaceTopology.FaceCount; faceIndex++)
+        {
+            DieFaceSO face = faces != null && faceIndex < faces.Length ? faces[faceIndex] : null;
+            var faceType = face != null ? face.type : fallbackType;
+            var effectPrefab = GetDestroyEffectPrefab(faceType);
+            if (effectPrefab == null)
+                continue;
+
+            var effectPos = DieFaceTopology.GetFaceWorldPosition(die.transform, meshRenderer, faceIndex);
+            var effectInstance = Instantiate(effectPrefab);
+            effectInstance.transform.position = effectPos;
+            Destroy(effectInstance, effectLifetime);
+        }
     }
 
     private void ApplyForces(Rigidbody rb)
@@ -188,16 +201,16 @@ public class DiceSpawner : MonoBehaviour
         rb.AddTorque(Random.insideUnitSphere * torqueMagnitude, ForceMode.Impulse);
     }
 
-    private GameObject GetDestroyEffectPrefab(DieType dieType)
+    private GameObject GetDestroyEffectPrefab(DieType faceType)
     {
-        return dieType switch
+        return faceType switch
         {
             DieType.Damage => damageDestroyEffect,
             DieType.Armor => armorDestroyEffect,
             DieType.Fire => fireDestroyEffect != null ? fireDestroyEffect : damageDestroyEffect,
             DieType.Ice => iceDestroyEffect != null ? iceDestroyEffect : armorDestroyEffect,
             DieType.Nature => natureDestroyEffect != null ? natureDestroyEffect : armorDestroyEffect,
-            DieType.Curse => damageDestroyEffect,
+            DieType.Curse => curseDestroyEffect,
             _ => null
         };
     }

@@ -27,14 +27,22 @@ public class DieVisualizer : MonoBehaviour
 
         dieData = data;
 
-        // Build the material array based on the Face SOs
-        Material[] materialsToApply = new Material[6];
+        if (meshRenderer == null)
+            meshRenderer = GetComponentInChildren<MeshRenderer>();
+        if (meshRenderer == null)
+        {
+            Debug.LogError($"DieVisualizer on '{name}': no MeshRenderer found.", this);
+            return;
+        }
+
+        // Runtime instances so dissolve cutout never mutates shared face material assets.
+        var materialsToApply = new Material[6];
 
         for (int i = 0; i < 6; i++)
         {
             var face = data.faces[i];
             if (face != null && face.faceMaterial != null)
-                materialsToApply[i] = face.faceMaterial;
+                materialsToApply[i] = new Material(face.faceMaterial);
         }
 
         meshRenderer.materials = materialsToApply;
