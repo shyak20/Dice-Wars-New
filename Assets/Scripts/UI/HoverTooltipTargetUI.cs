@@ -21,6 +21,7 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
 
     public void SetContent(string title, string description, Sprite tooltipBackground = null)
     {
+        _scriptableSource = null;
         tooltipTitle = title ?? string.Empty;
         tooltipDescription = description ?? string.Empty;
         _tooltipBackground = tooltipBackground;

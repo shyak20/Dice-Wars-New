@@ -322,18 +322,31 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         var ev = ScriptableObject.CreateInstance<UnknownMapEventSO>();
         ev.displayName = "The Splitting Prism";
         ev.description =
-            "You find a floating, multi-faceted crystal that hums with a parasitic frequency. It doesn't create—it copies. By feeding it enough gold, the prism refracts the 'soul' of one of your dice, splitting it into two identical twins.";
+            "You find a floating, multi-faceted crystal that hums with a parasitic frequency. It doesn't create—it copies. By feeding it your life force, the prism refracts the 'soul' of one of your dice, splitting it into two identical twins.";
         ev.choices = new[]
         {
             Row(
-                "[Cost: 100 Coins] Duplicate one of your existing dice.",
-                new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionGoldMin { minimumGold = 100 } },
-                new UnknownMapEventOutcomeComposite
+                "Select a die to duplicate it - Lose <style=heal>50%({0}) HP</style>.",
+                new List<UnknownMapEventConditionBase>
+                {
+                    new UnknownMapEventConditionDeckDiceCountMin { minimumCount = 1 },
+                    new UnknownMapEventConditionRunCurrencyPercentCostMin
+                    {
+                        currency = UnknownMapEventRunCurrency.CurrentHp,
+                        percent = 50f,
+                        minimumRoundedCost = 1,
+                    },
+                },
+                new UnknownMapEventOutcomeAfterDieChoice
                 {
                     steps = new List<UnknownMapEventOutcomeBase>
                     {
-                        new UnknownMapEventOutcomeSpendGold { amount = 100 },
-                        new UnknownMapEventOutcomeDuplicateRandomDeckDie(),
+                        new UnknownMapEventOutcomeDuplicateChosenDeckDie(),
+                        new UnknownMapEventOutcomeSpendRunCurrencyPercent
+                        {
+                            currency = UnknownMapEventRunCurrency.CurrentHp,
+                            percent = 50f,
+                        },
                     },
                 }),
             Row("Skip", new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() }, new UnknownMapEventOutcomeNoOp()),

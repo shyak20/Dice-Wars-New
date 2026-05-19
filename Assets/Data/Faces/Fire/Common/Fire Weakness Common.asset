@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Basic Fire 3
   description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Apply <style=Ablaze>1</style>
+  - Apply <style=Ablaze>1 Ablaze</style>
   value: 1
   type: 2
   faceMaterial: {fileID: 2100000, guid: 5e06bc7ed7ca709419be092a341d8102, type: 2}

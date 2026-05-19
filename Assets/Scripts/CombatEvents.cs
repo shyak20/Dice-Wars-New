@@ -13,6 +13,8 @@ public struct RollOutcomeVisualLine
     public Sprite BackgroundOverride;
     /// <summary>True for immediate status rows used only for flyout; triggers delayed stored-pool resync after landing.</summary>
     public bool IsVisualFlyoutOnly;
+    /// <summary>When true with <see cref="IsVisualFlyoutOnly"/>, fly to the player status bar instead of the element pool.</summary>
+    public bool FlyToPlayerStatusBar;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>

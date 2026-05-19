@@ -15,6 +15,7 @@ MonoBehaviour:
   title: Basic Fire 3
   description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
+  - Apply <style=Burn>1</style>
   - Next Fire roll this turn have its stacks Doubled
   value: 6
   type: 2
@@ -28,9 +29,16 @@ MonoBehaviour:
   uiTooltipBackground: {fileID: 21300000, guid: 8406a89d5e5c90148996d2cab1332be2, type: 3}
   actions:
   - rid: 6494956586993451214
+  - rid: 6434882333615849601
   references:
     version: 2
     RefIds:
+    - rid: 6434882333615849601
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        statusEffect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
+        stacks: 1
     - rid: 6494956586993451214
       type: {class: PrimeNextFireRollDoubleEnemyBurnModifier, ns: , asm: Assembly-CSharp}
       data:

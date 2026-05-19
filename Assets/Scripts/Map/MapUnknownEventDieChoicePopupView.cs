@@ -19,9 +19,10 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
     [SerializeField] private Transform diceLayoutContainer;
     [SerializeField] private GameObject dieButtonPrefab;
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
-    [Tooltip("After a face is replaced, keep the die tooltip open this long while the slot replace animation plays, then resolve (next step or close).")]
+    [Tooltip("After the player picks a die and an outcome step completes, wait this long while feedback plays before the next step or popup close.")]
+    [FormerlySerializedAs("faceSwapResolveDelay")]
     [FormerlySerializedAs("faceSwapCloseDelay")]
-    [SerializeField, Min(0f)] private float faceSwapResolveDelay = 1.25f;
+    [SerializeField, Min(0f)] private float actionResolveDelay = 1.25f;
 
     private readonly Dictionary<DieAssetSO, DiceTrayButtonView> _diceViews = new();
     private readonly Dictionary<DieAssetSO, Button> _diceButtons = new();
@@ -83,9 +84,38 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
         _onCancel = null;
     }
 
+    public void RefreshDiceTray(DieAssetSO playAppearForDie = null) => RebuildDiceLayout(playAppearForDie);
+
+    /// <summary>
+    /// Waits <see cref="actionResolveDelay"/> after a popup action completes (face swap, duplicate, spend, etc.).
+    /// </summary>
+    public IEnumerator CoWaitAfterPopupAction()
+    {
+        if (actionResolveDelay > 0f)
+            yield return new WaitForSeconds(actionResolveDelay);
+    }
+
+    /// <summary>
+    /// Highlights the chosen die, shows its tooltip, then waits <see cref="actionResolveDelay"/>.
+    /// </summary>
+    public IEnumerator CoAcknowledgeActionOnDie(DieAssetSO die)
+    {
+        if (die != null)
+        {
+            _selectedDie = die;
+            foreach (var kv in _diceViews)
+                kv.Value.SetSelected(kv.Key == die);
+
+            if (dieTooltipOverlay != null)
+                dieTooltipOverlay.ShowDie(die, false, null, GetDieIconRect(die));
+        }
+
+        yield return CoWaitAfterPopupAction();
+    }
+
     /// <summary>
     /// Shows the chosen die tooltip and plays replace animations on every slot in <paramref name="faceSlotIndices"/>
-    /// (swaps must already be committed). All previews start together; waits <see cref="faceSwapResolveDelay"/> once.
+    /// (swaps must already be committed). All previews start together; waits <see cref="actionResolveDelay"/> once.
     /// </summary>
     public IEnumerator CoResolveFaceSwapsOnDie(DieAssetSO die, IReadOnlyList<int> faceSlotIndices)
     {
@@ -109,11 +139,10 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
                 slot.ShowNewFacePickedPreview(previewFace);
         }
 
-        if (faceSwapResolveDelay > 0f)
-            yield return new WaitForSeconds(faceSwapResolveDelay);
+        yield return CoWaitAfterPopupAction();
     }
 
-    private void RebuildDiceLayout()
+    private void RebuildDiceLayout(DieAssetSO playAppearForDie = null)
     {
         if (diceLayoutContainer == null || PlayerDataContainer.Instance?.RuntimeData == null)
             return;
@@ -144,6 +173,8 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
                 view.SetSelected(false);
                 view.SetSelectedIconShakeEnabled(false);
                 _diceViews[die] = view;
+                if (playAppearForDie != null && die == playAppearForDie)
+                    view.PlayAppearAnimation();
             }
             else
             {

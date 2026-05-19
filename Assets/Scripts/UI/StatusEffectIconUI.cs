@@ -11,8 +11,12 @@ public class StatusEffectIconUI : MonoBehaviour
     [Header("Tooltip")]
     [Tooltip("Tooltip offset in screen pixels relative to the hovered status icon.")]
     [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
+    [Tooltip("When on, tooltips use HoverTooltipManager's above-bar offset (recommended for bottom HUD icons).")]
+    [SerializeField] private bool showTooltipAbove = true;
+
     private HoverTooltipTargetUI hoverTooltipTarget;
-    private HoverTooltipTargetUI hoverTooltipTargetOnIcon;
+    private Image _hitAreaImage;
+    private bool _hoverTargetsInitialized;
 
     private void Awake()
     {
@@ -21,36 +25,34 @@ public class StatusEffectIconUI : MonoBehaviour
         if (stackText == null)
             Debug.LogError($"StatusEffectIconUI on '{gameObject.name}': stackText is not assigned!");
 
-        hoverTooltipTarget = GetComponent<HoverTooltipTargetUI>() ?? gameObject.AddComponent<HoverTooltipTargetUI>();
-        hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
-        if (iconImage != null)
-        {
-            hoverTooltipTargetOnIcon = iconImage.gameObject.GetComponent<HoverTooltipTargetUI>() ?? iconImage.gameObject.AddComponent<HoverTooltipTargetUI>();
-            hoverTooltipTargetOnIcon.SetTooltipScreenOffset(tooltipScreenOffset);
-            iconImage.raycastTarget = true;
-        }
+        EnsureHoverTooltipTargets();
     }
 
     public void Setup(StatusEffectInstance effect)
     {
+        EnsureHoverTooltipTargets();
         RefreshVisual(effect);
     }
 
     public void SetupCustom(Sprite icon, string title, string description, Sprite tooltipBackground = null)
     {
+        EnsureHoverTooltipTargets();
+
         if (iconImage != null)
         {
             iconImage.sprite = icon;
             iconImage.enabled = icon != null;
+            iconImage.raycastTarget = false;
         }
 
         ApplyTooltipContent(title, description, tooltipBackground);
-
         UpdateStacks(0);
     }
 
     public void RefreshVisual(StatusEffectInstance effect)
     {
+        EnsureHoverTooltipTargets();
+
         if (effect == null || effect.Definition == null) return;
         var spr = GameIconCatalog.GetStatusIcon(effect.Definition);
         if (spr == null && effect.Definition is BurnEffectSO)
@@ -68,12 +70,13 @@ public class StatusEffectIconUI : MonoBehaviour
         {
             iconImage.sprite = spr;
             iconImage.enabled = spr != null;
+            iconImage.raycastTarget = false;
         }
-        if (hoverTooltipTarget != null)
-        {
-            var title = string.IsNullOrWhiteSpace(effect.Definition.effectName) ? effect.Definition.name : effect.Definition.effectName;
-            ApplyTooltipContent(title, effect.Definition.description);
-        }
+
+        var title = string.IsNullOrWhiteSpace(effect.Definition.effectName)
+            ? effect.Definition.name
+            : effect.Definition.effectName;
+        ApplyTooltipContent(title, effect.Definition.description);
         UpdateStacks(effect.Stacks);
     }
 
@@ -86,12 +89,61 @@ public class StatusEffectIconUI : MonoBehaviour
             stackVisualRoot.SetActive(hasStacks);
     }
 
-    private void ApplyTooltipContent(string title, string description, Sprite tooltipBackground = null)
+    void EnsureHoverTooltipTargets()
     {
+        if (_hoverTargetsInitialized)
+            return;
+        _hoverTargetsInitialized = true;
+
+        DisableDecorativeRaycasts();
+
+        if (_hitAreaImage == null)
+        {
+            _hitAreaImage = GetComponent<Image>();
+            if (_hitAreaImage == null)
+                _hitAreaImage = gameObject.AddComponent<Image>();
+            _hitAreaImage.color = new Color(1f, 1f, 1f, 0f);
+            _hitAreaImage.raycastTarget = true;
+        }
+
+        hoverTooltipTarget = GetComponent<HoverTooltipTargetUI>() ?? gameObject.AddComponent<HoverTooltipTargetUI>();
+        hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
+        if (showTooltipAbove)
+            hoverTooltipTarget.SetIsAbove(true);
+    }
+
+    void DisableDecorativeRaycasts()
+    {
+        var rootTransform = transform;
+        for (var i = 0; i < rootTransform.childCount; i++)
+        {
+            var child = rootTransform.GetChild(i);
+            if (child == null)
+                continue;
+
+            var childImages = child.GetComponentsInChildren<Image>(true);
+            for (var j = 0; j < childImages.Length; j++)
+            {
+                var image = childImages[j];
+                if (image == null || image == _hitAreaImage)
+                    continue;
+                image.raycastTarget = false;
+            }
+
+            var childTexts = child.GetComponentsInChildren<TMP_Text>(true);
+            for (var j = 0; j < childTexts.Length; j++)
+            {
+                if (childTexts[j] != null)
+                    childTexts[j].raycastTarget = false;
+            }
+        }
+    }
+
+    void ApplyTooltipContent(string title, string description, Sprite tooltipBackground = null)
+    {
+        EnsureHoverTooltipTargets();
+
         if (hoverTooltipTarget != null)
             hoverTooltipTarget.SetContent(title, description, tooltipBackground);
-
-        if (hoverTooltipTargetOnIcon != null)
-            hoverTooltipTargetOnIcon.SetContent(title, description, tooltipBackground);
     }
 }

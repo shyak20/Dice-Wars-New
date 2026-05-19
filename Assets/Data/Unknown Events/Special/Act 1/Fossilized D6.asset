@@ -20,7 +20,8 @@ MonoBehaviour:
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:
-  - label: '[Cost: Add 1 Curse] Gain +2 Strength permanently (for the entire run).'
+  - label: 'Choose a die, add one <style=Curse>curse</style>. Gain <style=Strength>+2</style>
+      for the entire run '
     enabledWhen:
     - rid: 6434882266773586130
     registerEventCompletedOnPick: 1

@@ -80,6 +80,18 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             worldCamera = Camera.main;
         if (spawnYOffsetOverTime == null || spawnYOffsetOverTime.length == 0)
             throw new System.InvalidOperationException("DiceRollOutcomeFlyoutController: spawnYOffsetOverTime must have at least one key.");
+
+        ResolvePlayerStatusBarFlyTarget();
+    }
+
+    void ResolvePlayerStatusBarFlyTarget()
+    {
+        if (playerStatusBarUI == null)
+            return;
+
+        playerStatusBarUI.BringBarToFront();
+        if (playerStatusBarUI.IconContainerRect != null)
+            playerStatusBarFlyTarget = playerStatusBarUI.IconContainerRect;
     }
 
     private float EvaluateSpawnScaleMultiplier(float normalizedTime)
@@ -92,6 +104,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     private void OnEnable()
     {
         CombatEvents.OnDiceRollVisualFeedback += HandleRollVisual;
+        ResolvePlayerStatusBarFlyTarget();
     }
 
     private void OnDisable()
@@ -293,9 +306,11 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         {
             var line = payload.Lines[i];
             var st = ResolveStatusTarget(line);
-            if (ShouldRouteStatusToStatusBar(line, st) && st == StatusEffectTarget.Player)
+            if (!ShouldRouteStatusToStatusBar(line, st))
+                continue;
+            if (line.FlyToPlayerStatusBar || st == StatusEffectTarget.Player)
                 needPlayer = true;
-            else if (ShouldRouteStatusToStatusBar(line, st) && st == StatusEffectTarget.Enemy)
+            else if (st == StatusEffectTarget.Enemy)
                 needEnemy = true;
         }
 
@@ -483,6 +498,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private RectTransform ResolveFlyTargetRect(RollOutcomeVisualLine line)
     {
+        if (line.FlyToPlayerStatusBar && playerStatusBarFlyTarget != null)
+            return playerStatusBarFlyTarget;
+
         var statusTarget = ResolveStatusTarget(line);
         if (ShouldRouteStatusToStatusBar(line, statusTarget))
         {
@@ -512,6 +530,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private bool ShouldRouteStatusToStatusBar(RollOutcomeVisualLine line, StatusEffectTarget? statusTarget)
     {
+        if (line.FlyToPlayerStatusBar && playerStatusBarFlyTarget != null)
+            return true;
+
         // Deferred rows (non-immediate actions) must always fly to the element container.
         // Only immediate visual-only status rows route to status bars.
         if (!line.IsVisualFlyoutOnly || !statusTarget.HasValue)

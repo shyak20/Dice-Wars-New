@@ -15,6 +15,9 @@ public class PlayerDataContainer : MonoBehaviour
     public static PlayerDataContainer Instance { get; private set; }
     public PlayerDataSO RuntimeData { get; private set; }
 
+    /// <summary>Most recent runtime die instance added by <see cref="AddDieToDeck"/> or duplicate helpers.</summary>
+    public DieAssetSO LastAddedDeckDie { get; private set; }
+
     private void Awake()
     {
         if (Instance != null)
@@ -36,24 +39,27 @@ public class PlayerDataContainer : MonoBehaviour
     }
 
     /// <summary>Runtime clone of <paramref name="template"/> is appended to the deck (e.g. shop purchase).</summary>
-    public void AddDieToDeck(DieAssetSO template)
+    public DieAssetSO AddDieToDeck(DieAssetSO template)
     {
+        LastAddedDeckDie = null;
         if (template == null)
         {
             Debug.LogError("PlayerDataContainer.AddDieToDeck: template is null.");
-            return;
+            return null;
         }
 
         if (RuntimeData == null)
         {
             Debug.LogError("PlayerDataContainer.AddDieToDeck: RuntimeData is null.");
-            return;
+            return null;
         }
 
         var clone = Instantiate(template);
         clone.name = template.name;
         RuntimeData.currentDeck.Add(clone);
+        LastAddedDeckDie = clone;
         OnRuntimeDeckChanged?.Invoke();
+        return clone;
     }
 
     /// <summary>Removes the first deck die whose <see cref="DieAssetSO.dieType"/> matches <paramref name="dieType"/>.</summary>
@@ -128,13 +134,35 @@ public class PlayerDataContainer : MonoBehaviour
         return true;
     }
 
-    /// <summary>Duplicates one random non-null die in the deck (runtime <see cref="Object.Instantiate"/> clone).</summary>
-    public bool TryDuplicateRandomDeckDie()
+    /// <summary>Duplicates a specific runtime deck die (runtime <see cref="Object.Instantiate"/> clone).</summary>
+    public DieAssetSO TryDuplicateDeckDie(DieAssetSO die)
     {
+        LastAddedDeckDie = null;
+        if (RuntimeData?.currentDeck == null)
+        {
+            Debug.LogError("PlayerDataContainer.TryDuplicateDeckDie: RuntimeData or deck is null.");
+            return null;
+        }
+
+        if (die == null || !RuntimeData.currentDeck.Contains(die))
+            return null;
+
+        var copy = UnityEngine.Object.Instantiate(die);
+        copy.name = die.name;
+        RuntimeData.currentDeck.Add(copy);
+        LastAddedDeckDie = copy;
+        OnRuntimeDeckChanged?.Invoke();
+        return copy;
+    }
+
+    /// <summary>Duplicates one random non-null die in the deck (runtime <see cref="Object.Instantiate"/> clone).</summary>
+    public DieAssetSO TryDuplicateRandomDeckDie()
+    {
+        LastAddedDeckDie = null;
         if (RuntimeData?.currentDeck == null)
         {
             Debug.LogError("PlayerDataContainer.TryDuplicateRandomDeckDie: RuntimeData or deck is null.");
-            return false;
+            return null;
         }
 
         var indices = new List<int>();
@@ -145,18 +173,19 @@ public class PlayerDataContainer : MonoBehaviour
         }
 
         if (indices.Count == 0)
-            return false;
+            return null;
 
         var pick = indices[UnityEngine.Random.Range(0, indices.Count)];
         var src = RuntimeData.currentDeck[pick];
         if (src == null)
-            return false;
+            return null;
 
         var copy = UnityEngine.Object.Instantiate(src);
         copy.name = src.name;
         RuntimeData.currentDeck.Add(copy);
+        LastAddedDeckDie = copy;
         OnRuntimeDeckChanged?.Invoke();
-        return true;
+        return copy;
     }
 
     private void CloneDeckForRuntime()

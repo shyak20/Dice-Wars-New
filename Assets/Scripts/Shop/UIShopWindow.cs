@@ -276,10 +276,18 @@ public class UIShopWindow : MonoBehaviour
         RunManager.Instance.AddRunRelic(o.Relic);
         // OnRunRelicsChangedForShop refreshes prices (new discount relic), offer UI, and player relic row.
     }
-    void BuyDie(OfferData o) { if (o.Die == null || !SpendGold(o.Price) || PlayerDataContainer.Instance == null) return; PlayerDataContainer.Instance.AddDieToDeck(o.Die); o.Sold = true; RebuildOfferUi(); RebuildPlayerDice(); }
+    void BuyDie(OfferData o)
+    {
+        if (o.Die == null || !SpendGold(o.Price) || PlayerDataContainer.Instance == null)
+            return;
+        var addedDie = PlayerDataContainer.Instance.AddDieToDeck(o.Die);
+        o.Sold = true;
+        RebuildOfferUi();
+        RebuildPlayerDice(addedDie);
+    }
     bool SpendGold(int amount) { var eco = RunEconomyManager.Instance; return eco != null && eco.CanAfford(amount) && eco.TrySpend(amount); }
 
-    void RebuildPlayerDice(bool hideDieTooltipOverlay = true)
+    void RebuildPlayerDice(DieAssetSO playAppearForDie = null, bool hideDieTooltipOverlay = true)
     {
         if (playerDiceContainer == null || PlayerDataContainer.Instance?.RuntimeData == null) return;
         foreach (Transform c in playerDiceContainer) Destroy(c.gameObject);
@@ -289,7 +297,7 @@ public class UIShopWindow : MonoBehaviour
         {
             if (die == null || playerDieButtonPrefab == null) continue;
             var go = Instantiate(playerDieButtonPrefab, playerDiceContainer); var txt = go.GetComponentInChildren<TMP_Text>(); if (txt != null) txt.text = die.dieName;
-            var tray = go.GetComponent<DiceTrayButtonView>(); if (tray != null) { tray.SetIcon(die.uiIcon); tray.SetSelected(false); tray.SetSelectedIconShakeEnabled(false); }
+            var tray = go.GetComponent<DiceTrayButtonView>(); if (tray != null) { tray.SetIcon(die.uiIcon); tray.SetSelected(false); tray.SetSelectedIconShakeEnabled(false); if (playAppearForDie != null && die == playAppearForDie) tray.PlayAppearAnimation(); }
             RegisterPlayerDieHover(go, die, tray != null ? tray.IconRectTransform : null);
         }
     }

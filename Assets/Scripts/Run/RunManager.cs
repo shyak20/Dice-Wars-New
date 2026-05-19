@@ -1174,6 +1174,51 @@ public class RunManager : MonoBehaviour
         OnRunMaxPowerBudgetChanged?.Invoke();
     }
 
+    /// <summary>
+    /// Map runs: changes max-power budget. Positive adds shrine bonus; negative drains shrine bonus then runtime base max power
+    /// (dice/relic contributions are not reduced).
+    /// </summary>
+    public void ApplyRunMaxPowerBudgetDelta(int delta)
+    {
+        if (delta == 0)
+            return;
+
+        if (delta > 0)
+        {
+            ApplyShrineMaxPowerBonus(delta);
+            return;
+        }
+
+        var remaining = -delta;
+        var fromShrine = Mathf.Min(_runShrineBonusMaxPower, remaining);
+        _runShrineBonusMaxPower -= fromShrine;
+        remaining -= fromShrine;
+
+        if (remaining > 0)
+        {
+            var data = PlayerDataContainer.Instance?.RuntimeData;
+            if (data == null)
+            {
+                Debug.LogError("RunManager.ApplyRunMaxPowerBudgetDelta: RuntimeData missing.");
+            }
+            else
+            {
+                var reducibleBase = Mathf.Max(0, data.baseMaxPower - 1);
+                var fromBase = Mathf.Min(reducibleBase, remaining);
+                data.baseMaxPower -= fromBase;
+                remaining -= fromBase;
+            }
+        }
+
+        if (remaining > 0)
+        {
+            Debug.LogWarning(
+                $"RunManager.ApplyRunMaxPowerBudgetDelta: could not reduce max power by {-delta} ({remaining} remains locked in dice/relic budget).");
+        }
+
+        OnRunMaxPowerBudgetChanged?.Invoke();
+    }
+
     /// <summary>Permanent run bonus: applied as Strength stacks at each combat start (see map strength definition).</summary>
     public void AddRunPermanentStrengthStacks(int amount)
     {

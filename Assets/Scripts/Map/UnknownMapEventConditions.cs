@@ -29,6 +29,33 @@ public sealed class UnknownMapEventConditionDeckDiceCountMin : UnknownMapEventCo
         UnknownMapEventConditionShared.CountDeckDice(ctx) >= Mathf.Max(0, minimumCount);
 }
 
+/// <summary>
+/// Requires the rounded percent cost of a run currency to be at least <see cref="minimumRoundedCost"/>
+/// and the player to afford that cost.
+/// </summary>
+[Serializable]
+public sealed class UnknownMapEventConditionRunCurrencyPercentCostMin : UnknownMapEventConditionBase
+{
+    public UnknownMapEventRunCurrency currency = UnknownMapEventRunCurrency.Coins;
+
+    [Range(0f, 100f)]
+    [Tooltip("Percent of the currency’s current amount (rounded).")]
+    public float percent = 50f;
+
+    [Min(0)]
+    [Tooltip("Requires the rounded cost to be at least this value (e.g. 1 so 50% of 1 HP still costs something).")]
+    public int minimumRoundedCost = 1;
+
+    public override bool Evaluate(UnknownMapEventEvaluationContext ctx)
+    {
+        var current = UnknownMapEventRunCurrencyUtility.GetCurrentAmount(currency);
+        var cost = UnknownMapEventRunCurrencyUtility.ComputePercentCost(current, percent);
+        if (cost < minimumRoundedCost)
+            return false;
+        return current >= cost;
+    }
+}
+
 [Serializable]
 public sealed class UnknownMapEventConditionGoldMin : UnknownMapEventConditionBase
 {

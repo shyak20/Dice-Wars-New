@@ -367,7 +367,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
                 continue;
 
             var captured = entry;
-            var label = string.IsNullOrWhiteSpace(captured.label) ? "Choose" : captured.label.Trim();
+            var label = UnknownMapEventLabelUtility.ResolveOptionLabel(captured);
             WireOptionRow(CreateOptionRowInstance(listRoot), label, () => OnOptionChosen(ev, captured));
         }
     }
@@ -421,7 +421,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
 
             _pendingOptionEvent = ev;
             _pendingOptionEntry = entry;
-            var title = string.IsNullOrWhiteSpace(entry.label) ? "Choose a die" : entry.label.Trim();
+            var title = UnknownMapEventLabelUtility.ResolveOptionLabel(entry);
             dieChoicePopup.Show(
                 title,
                 dieChoiceOutcome.DiePassesFilter,
@@ -567,6 +567,20 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             }
 
             step.Execute(outcomeCtx);
+
+            DieAssetSO appearDie = null;
+            if (UnknownMapEventDieChoiceUtility.StepMutatesDeckComposition(step))
+            {
+                if (UnknownMapEventDieChoiceUtility.StepAddsDeckDie(step))
+                    appearDie = PlayerDataContainer.Instance?.LastAddedDeckDie;
+                dieChoicePopup.RefreshDiceTray(appearDie);
+            }
+
+            var acknowledgeDie = appearDie != null ? appearDie : die;
+            if (step is UnknownMapEventOutcomeRemoveChosenDeckDie)
+                yield return dieChoicePopup.CoWaitAfterPopupAction();
+            else
+                yield return dieChoicePopup.CoAcknowledgeActionOnDie(acknowledgeDie);
         }
 
         if (faceSwapPreviewSlots.Count > 0)

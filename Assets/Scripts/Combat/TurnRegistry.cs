@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -12,6 +13,14 @@ public class TurnRegistry
 
     /// <summary>When true, the next committed <see cref="DieType.Fire"/> face doubles enemy-target <see cref="BurnEffectSO"/> stacks from that resolve (then cleared).</summary>
     public bool PendingNextFireRollDoubleEnemyBurn { get; set; }
+
+    readonly HashSet<ActionVisualId> _activePlayerBarBuffs = new HashSet<ActionVisualId>();
+
+    /// <summary>Non-status buff icons shown on the player status bar (keys into <see cref="GameIconIndexSO"/>).</summary>
+    public IReadOnlyCollection<ActionVisualId> ActivePlayerBarBuffs => _activePlayerBarBuffs;
+
+    /// <summary>Fired when <see cref="ActivePlayerBarBuffs"/> changes (player status bar refresh).</summary>
+    public event Action OnPlayerBarBuffsChanged;
 
     /// <summary>
     /// Queued one-shot multiplier for the next eligible roll result this turn.
@@ -27,6 +36,16 @@ public class TurnRegistry
     public int SupernovaBustDamage { get; set; }
 
     public event Action<ElementType, int> OnValueAccumulated;
+
+    public void SetPlayerBarBuff(ActionVisualId id, bool active)
+    {
+        if (id == ActionVisualId.None)
+            return;
+
+        var changed = active ? _activePlayerBarBuffs.Add(id) : _activePlayerBarBuffs.Remove(id);
+        if (changed)
+            OnPlayerBarBuffsChanged?.Invoke();
+    }
 
     /// <summary>
     /// Clears volatile turn trackers. Call at new player turn (ResetTurn) and/or enemy turn start.
@@ -44,6 +63,12 @@ public class TurnRegistry
         NextRollMultiplier = 1f;
         SupernovaBustOverrideActive = false;
         SupernovaBustDamage = 0;
+
+        if (_activePlayerBarBuffs.Count > 0)
+        {
+            _activePlayerBarBuffs.Clear();
+            OnPlayerBarBuffsChanged?.Invoke();
+        }
     }
 
     public void RecordBurnApplied(int stacks)

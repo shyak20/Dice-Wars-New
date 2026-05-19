@@ -14,24 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
   displayName: The Splitting Prism
   description: "You find a floating, multi-faceted crystal that hums with a parasitic
-    frequency. It doesn't create\u2014it copies. By feeding it enough gold, the prism
-    refracts the 'soul' of one of your dice, splitting it into two identical twins."
+    frequency. It doesn't create\u2014it copies. By feeding it your life force, the
+    prism refracts the 'soul' of one of your dice, splitting it into two identical
+    twins."
   eventArt: {fileID: 0}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:
-  - label: '[Cost: 100 Coins] Duplicate one of your existing dice.'
+  - label: Select a die to duplicate it - Lose <style=heal>50% HP ({0})</style>.
     enabledWhen:
-    - rid: 6434882266773586160
+    - rid: 6434882266773586161
     registerEventCompletedOnPick: 1
     outcome:
-      rid: 6434882266773586161
+      rid: 6434882266773586162
   - label: Skip
     enabledWhen:
-    - rid: 6434882266773586162
+    - rid: 6434882266773586163
     registerEventCompletedOnPick: 1
     outcome:
-      rid: 6434882266773586163
+      rid: 6434882266773586164
   triggersCombat: 0
   combatRank: 0
   specificEnemy: {fileID: 0}
@@ -40,26 +41,30 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 6434882266773586160
-      type: {class: UnknownMapEventConditionGoldMin, ns: , asm: Assembly-CSharp}
-      data:
-        minimumGold: 100
     - rid: 6434882266773586161
-      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventConditionRunCurrencyPercentCostMin, ns: , asm: Assembly-CSharp}
       data:
-        steps:
-        - rid: 6434882266773586164
-        - rid: 6434882266773586165
+        currency: 1
+        percent: 50
+        minimumRoundedCost: 1
     - rid: 6434882266773586162
+      type: {class: UnknownMapEventOutcomeAfterDieChoice, ns: , asm: Assembly-CSharp}
+      data:
+        dieFilter: 0
+        steps:
+        - rid: 6434882266773586165
+        - rid: 6434882266773586166
+    - rid: 6434882266773586163
       type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
       data: 
-    - rid: 6434882266773586163
+    - rid: 6434882266773586164
       type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
       data: 
-    - rid: 6434882266773586164
-      type: {class: UnknownMapEventOutcomeSpendGold, ns: , asm: Assembly-CSharp}
-      data:
-        amount: 100
     - rid: 6434882266773586165
-      type: {class: UnknownMapEventOutcomeDuplicateRandomDeckDie, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeDuplicateChosenDeckDie, ns: , asm: Assembly-CSharp}
       data: 
+    - rid: 6434882266773586166
+      type: {class: UnknownMapEventOutcomeSpendRunCurrencyPercent, ns: , asm: Assembly-CSharp}
+      data:
+        currency: 1
+        percent: 50

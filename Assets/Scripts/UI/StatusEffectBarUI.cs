@@ -10,6 +10,7 @@ public class StatusEffectBarUI : MonoBehaviour
     private readonly Dictionary<string, StatusEffectIconUI> activeIcons = new();
 
     private StatusEffectManager trackedManager;
+    private TurnRegistry trackedTurnRegistry;
     private EnemyController trackedEnemy;
     private bool _refreshFrozen;
     private bool _refreshQueued;
@@ -36,6 +37,28 @@ public class StatusEffectBarUI : MonoBehaviour
         }
 
         trackedManager.OnEffectsChanged += QueueRefresh;
+        BringBarToFront();
+        QueueRefresh();
+    }
+
+    /// <summary>Icon list parent used for layout and as the player status flyout anchor.</summary>
+    public RectTransform IconContainerRect => iconContainer as RectTransform;
+
+    /// <summary>Draw above overlapping HUD siblings (e.g. HP bar) so icons receive hover input.</summary>
+    public void BringBarToFront() => transform.SetAsLastSibling();
+
+    /// <summary>Player bar only: shows turn-scoped combat buffs from <see cref="TurnRegistry.ActivePlayerBarBuffs"/>.</summary>
+    public void BindPlayerCombatBarBuffs(TurnRegistry registry)
+    {
+        if (trackedTurnRegistry != null)
+            trackedTurnRegistry.OnPlayerBarBuffsChanged -= QueueRefresh;
+
+        trackedTurnRegistry = registry;
+
+        if (trackedTurnRegistry != null)
+            trackedTurnRegistry.OnPlayerBarBuffsChanged += QueueRefresh;
+
+        BringBarToFront();
         QueueRefresh();
     }
 
@@ -49,6 +72,8 @@ public class StatusEffectBarUI : MonoBehaviour
     {
         if (trackedManager != null)
             trackedManager.OnEffectsChanged -= QueueRefresh;
+        if (trackedTurnRegistry != null)
+            trackedTurnRegistry.OnPlayerBarBuffsChanged -= QueueRefresh;
     }
 
     private void LateUpdate()
@@ -76,7 +101,7 @@ public class StatusEffectBarUI : MonoBehaviour
 
     private void RefreshNow()
     {
-        if (trackedManager == null)
+        if (trackedManager == null && trackedTurnRegistry == null && trackedEnemy == null)
             return;
 
         var nullIconKeys = activeIcons
@@ -88,16 +113,38 @@ public class StatusEffectBarUI : MonoBehaviour
 
         var activeKeys = new HashSet<string>();
 
-        foreach (var effect in trackedManager.Effects)
+        if (trackedManager != null)
         {
-            if (effect?.Definition == null)
-                continue;
-            var key = $"status:{effect.Definition.GetInstanceID()}";
-            activeKeys.Add(key);
-            var icon = GetOrCreateIcon(key);
-            if (icon == null)
-                continue;
-            icon.Setup(effect);
+            foreach (var effect in trackedManager.Effects)
+            {
+                if (effect?.Definition == null)
+                    continue;
+                var key = $"status:{effect.Definition.GetInstanceID()}";
+                activeKeys.Add(key);
+                var icon = GetOrCreateIcon(key);
+                if (icon == null)
+                    continue;
+                icon.Setup(effect);
+            }
+        }
+
+        if (trackedTurnRegistry != null)
+        {
+            foreach (var buffId in trackedTurnRegistry.ActivePlayerBarBuffs)
+            {
+                var key = $"combat-buff:{buffId}";
+                activeKeys.Add(key);
+                var icon = GetOrCreateIcon(key);
+                if (icon == null)
+                    continue;
+
+                var iconSprite = GameIconCatalog.GetActionIcon(buffId);
+                var tooltipBackground = GameIconCatalog.GetActionBackground(buffId);
+                GameIconCatalog.TryGetActionTooltip(buffId, out var title, out var description);
+                if (string.IsNullOrWhiteSpace(title))
+                    title = buffId.ToString();
+                icon.SetupCustom(iconSprite, title, description ?? string.Empty, tooltipBackground);
+            }
         }
 
         if (trackedEnemy != null)
@@ -166,6 +213,7 @@ public class StatusEffectBarUI : MonoBehaviour
         {
             if (!existingIcon.gameObject.activeSelf)
                 existingIcon.gameObject.SetActive(true);
+            existingIcon.transform.SetAsLastSibling();
             return existingIcon;
         }
 
@@ -179,6 +227,7 @@ public class StatusEffectBarUI : MonoBehaviour
         }
 
         activeIcons[key] = iconUI;
+        iconUI.transform.SetAsLastSibling();
         return iconUI;
     }
 }

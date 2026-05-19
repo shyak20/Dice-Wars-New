@@ -48,4 +48,7 @@ public enum ActionVisualId
 
     /// <summary><see cref="ResonanceMeterBonusModifier"/> — bonus equal to Resonance Meter before this roll resolves.</summary>
     ResonanceMeterBonus = 25,
+
+    /// <summary><see cref="PrimeNextFireRollDoubleEnemyBurnModifier"/> — next Fire roll doubles enemy burn stacks applied.</summary>
+    PrimeNextFireRollDoubleEnemyBurn = 26,
 }

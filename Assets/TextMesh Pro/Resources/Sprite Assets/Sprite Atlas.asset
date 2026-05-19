@@ -142,75 +142,80 @@ MonoBehaviour:
     m_Unicode: 57364
     m_GlyphIndex: 20
     m_Scale: 1
-    m_Name: Freeze Icon
+    m_Name: Double Burn
   - m_ElementType: 2
     m_Unicode: 57365
     m_GlyphIndex: 21
     m_Scale: 1
-    m_Name: Green Icon BG
+    m_Name: Freeze Icon
   - m_ElementType: 2
     m_Unicode: 57366
     m_GlyphIndex: 22
     m_Scale: 1
-    m_Name: Heal Icon
+    m_Name: Green Icon BG
   - m_ElementType: 2
     m_Unicode: 57367
     m_GlyphIndex: 23
     m_Scale: 1
-    m_Name: Heal Icon BG
+    m_Name: Heal Icon
   - m_ElementType: 2
     m_Unicode: 57368
     m_GlyphIndex: 24
     m_Scale: 1
-    m_Name: Kinetic Shield Icon
+    m_Name: Heal Icon BG
   - m_ElementType: 2
     m_Unicode: 57369
     m_GlyphIndex: 25
     m_Scale: 1
-    m_Name: Max HP Icon
+    m_Name: Kinetic Shield Icon
   - m_ElementType: 2
     m_Unicode: 57370
     m_GlyphIndex: 26
     m_Scale: 1
-    m_Name: Poison Icon
+    m_Name: Max HP Icon
   - m_ElementType: 2
     m_Unicode: 57371
     m_GlyphIndex: 27
     m_Scale: 1
-    m_Name: Power Icon
+    m_Name: Poison Icon
   - m_ElementType: 2
     m_Unicode: 57372
     m_GlyphIndex: 28
     m_Scale: 1
-    m_Name: Pyromaniac Icon
+    m_Name: Power Icon
   - m_ElementType: 2
     m_Unicode: 57373
     m_GlyphIndex: 29
     m_Scale: 1
-    m_Name: Self Damage Icon
+    m_Name: Pyromaniac Icon
   - m_ElementType: 2
     m_Unicode: 57374
     m_GlyphIndex: 30
     m_Scale: 1
-    m_Name: Shield Icon
+    m_Name: Self Damage Icon
   - m_ElementType: 2
     m_Unicode: 57375
     m_GlyphIndex: 31
     m_Scale: 1
-    m_Name: Strength Icon
+    m_Name: Shield Icon
   - m_ElementType: 2
     m_Unicode: 57376
     m_GlyphIndex: 32
     m_Scale: 1
-    m_Name: Thorns Icon
+    m_Name: Strength Icon
   - m_ElementType: 2
     m_Unicode: 57377
     m_GlyphIndex: 33
     m_Scale: 1
-    m_Name: Vulnerable Icon
+    m_Name: Thorns Icon
   - m_ElementType: 2
     m_Unicode: 57378
     m_GlyphIndex: 34
+    m_Scale: 1
+    m_Name: Vulnerable Icon
+  - m_ElementType: 2
+    m_Unicode: 57379
+    m_GlyphIndex: 35
     m_Scale: 1
     m_Name: Water_Splash_16_07
   m_GlyphTable:
@@ -222,8 +227,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 228
       m_HorizontalAdvance: 261
     m_GlyphRect:
-      m_X: 1278
-      m_Y: 714
+      m_X: 1549
+      m_Y: 680
       m_Width: 261
       m_Height: 258
     m_Scale: 1
@@ -270,8 +275,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 237
       m_HorizontalAdvance: 255
     m_GlyphRect:
-      m_X: 760
-      m_Y: 714
+      m_X: 762
+      m_Y: 943
       m_Width: 255
       m_Height: 267
     m_Scale: 1
@@ -318,8 +323,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 231
       m_HorizontalAdvance: 259
     m_GlyphRect:
-      m_X: 1017
-      m_Y: 714
+      m_X: 1288
+      m_Y: 680
       m_Width: 259
       m_Height: 261
     m_Scale: 1
@@ -328,16 +333,16 @@ MonoBehaviour:
     sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - m_Index: 7
     m_Metrics:
-      m_Width: 279
-      m_Height: 288
+      m_Width: 15
+      m_Height: 15
       m_HorizontalBearingX: 20
-      m_HorizontalBearingY: 258
-      m_HorizontalAdvance: 279
+      m_HorizontalBearingY: -15
+      m_HorizontalAdvance: 15
     m_GlyphRect:
-      m_X: 0
-      m_Y: 1656
-      m_Width: 279
-      m_Height: 288
+      m_X: 964
+      m_Y: 359
+      m_Width: 15
+      m_Height: 15
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
@@ -350,8 +355,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 231
       m_HorizontalAdvance: 263
     m_GlyphRect:
-      m_X: 1051
-      m_Y: 424
+      m_X: 497
+      m_Y: 680
       m_Width: 263
       m_Height: 261
     m_Scale: 1
@@ -366,7 +371,7 @@ MonoBehaviour:
       m_HorizontalBearingY: 224
       m_HorizontalAdvance: 275
     m_GlyphRect:
-      m_X: 774
+      m_X: 497
       m_Y: 424
       m_Width: 275
       m_Height: 254
@@ -430,8 +435,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 114
       m_HorizontalAdvance: 144
     m_GlyphRect:
-      m_X: 760
-      m_Y: 1656
+      m_X: 762
+      m_Y: 1748
       m_Width: 144
       m_Height: 144
     m_Scale: 1
@@ -446,8 +451,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 231
       m_HorizontalAdvance: 261
     m_GlyphRect:
-      m_X: 497
-      m_Y: 977
+      m_X: 762
+      m_Y: 680
       m_Width: 261
       m_Height: 261
     m_Scale: 1
@@ -463,7 +468,7 @@ MonoBehaviour:
       m_HorizontalAdvance: 261
     m_GlyphRect:
       m_X: 497
-      m_Y: 714
+      m_Y: 1732
       m_Width: 261
       m_Height: 261
     m_Scale: 1
@@ -478,8 +483,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 231
       m_HorizontalAdvance: 261
     m_GlyphRect:
-      m_X: 1579
-      m_Y: 424
+      m_X: 497
+      m_Y: 1469
       m_Width: 261
       m_Height: 261
     m_Scale: 1
@@ -494,8 +499,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 231
       m_HorizontalAdvance: 261
     m_GlyphRect:
-      m_X: 1316
-      m_Y: 424
+      m_X: 497
+      m_Y: 1206
       m_Width: 261
       m_Height: 261
     m_Scale: 1
@@ -511,7 +516,7 @@ MonoBehaviour:
       m_HorizontalAdvance: 261
     m_GlyphRect:
       m_X: 497
-      m_Y: 1240
+      m_Y: 943
       m_Width: 261
       m_Height: 261
     m_Scale: 1
@@ -526,8 +531,8 @@ MonoBehaviour:
       m_HorizontalBearingY: 231
       m_HorizontalAdvance: 261
     m_GlyphRect:
-      m_X: 497
-      m_Y: 1503
+      m_X: 1025
+      m_Y: 680
       m_Width: 261
       m_Height: 261
     m_Scale: 1
@@ -536,21 +541,37 @@ MonoBehaviour:
     sprite: {fileID: 5790224405844098233, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - m_Index: 20
     m_Metrics:
+      m_Width: 248
+      m_Height: 265
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 235
+      m_HorizontalAdvance: 248
+    m_GlyphRect:
+      m_X: 762
+      m_Y: 1481
+      m_Width: 248
+      m_Height: 265
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 3074123495765528857, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 21
+    m_Metrics:
       m_Width: 228
       m_Height: 231
       m_HorizontalBearingX: 20
       m_HorizontalBearingY: 201
       m_HorizontalAdvance: 228
     m_GlyphRect:
-      m_X: 760
-      m_Y: 983
+      m_X: 1283
+      m_Y: 424
       m_Width: 228
       m_Height: 231
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 21
+  - m_Index: 22
     m_Metrics:
       m_Width: 288
       m_Height: 283
@@ -566,7 +587,7 @@ MonoBehaviour:
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 1850640359596639596, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 22
+  - m_Index: 23
     m_Metrics:
       m_Width: 210
       m_Height: 220
@@ -574,15 +595,15 @@ MonoBehaviour:
       m_HorizontalBearingY: 190
       m_HorizontalAdvance: 210
     m_GlyphRect:
-      m_X: 760
-      m_Y: 1434
+      m_X: 1729
+      m_Y: 424
       m_Width: 210
       m_Height: 220
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 23
+  - m_Index: 24
     m_Metrics:
       m_Width: 288
       m_Height: 283
@@ -598,7 +619,7 @@ MonoBehaviour:
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 1600010482700210598, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 24
+  - m_Index: 25
     m_Metrics:
       m_Width: 256
       m_Height: 236
@@ -606,15 +627,15 @@ MonoBehaviour:
       m_HorizontalBearingY: 206
       m_HorizontalAdvance: 256
     m_GlyphRect:
-      m_X: 1541
-      m_Y: 714
+      m_X: 774
+      m_Y: 424
       m_Width: 256
       m_Height: 236
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 25
+  - m_Index: 26
     m_Metrics:
       m_Width: 249
       m_Height: 227
@@ -622,15 +643,15 @@ MonoBehaviour:
       m_HorizontalBearingY: 197
       m_HorizontalAdvance: 249
     m_GlyphRect:
-      m_X: 1799
-      m_Y: 714
+      m_X: 1032
+      m_Y: 424
       m_Width: 249
       m_Height: 227
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 26
+  - m_Index: 27
     m_Metrics:
       m_Width: 190
       m_Height: 271
@@ -638,7 +659,7 @@ MonoBehaviour:
       m_HorizontalBearingY: 241
       m_HorizontalAdvance: 190
     m_GlyphRect:
-      m_X: 281
+      m_X: 277
       m_Y: 1656
       m_Width: 190
       m_Height: 271
@@ -646,7 +667,7 @@ MonoBehaviour:
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 6346943658632662112, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 27
+  - m_Index: 28
     m_Metrics:
       m_Width: 275
       m_Height: 288
@@ -654,15 +675,15 @@ MonoBehaviour:
       m_HorizontalBearingY: 258
       m_HorizontalAdvance: 275
     m_GlyphRect:
-      m_X: 497
-      m_Y: 424
+      m_X: 0
+      m_Y: 1656
       m_Width: 275
       m_Height: 288
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 633350421133112441, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 28
+  - m_Index: 29
     m_Metrics:
       m_Width: 215
       m_Height: 247
@@ -678,7 +699,7 @@ MonoBehaviour:
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -6456651685181505503, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 29
+  - m_Index: 30
     m_Metrics:
       m_Width: 255
       m_Height: 267
@@ -686,15 +707,15 @@ MonoBehaviour:
       m_HorizontalBearingY: 237
       m_HorizontalAdvance: 255
     m_GlyphRect:
-      m_X: 497
-      m_Y: 1766
+      m_X: 762
+      m_Y: 1212
       m_Width: 255
       m_Height: 267
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -3499936154177569583, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 30
+  - m_Index: 31
     m_Metrics:
       m_Width: 189
       m_Height: 229
@@ -702,15 +723,15 @@ MonoBehaviour:
       m_HorizontalBearingY: 199
       m_HorizontalAdvance: 189
     m_GlyphRect:
-      m_X: 1842
-      m_Y: 424
+      m_X: 1812
+      m_Y: 680
       m_Width: 189
       m_Height: 229
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 31
+  - m_Index: 32
     m_Metrics:
       m_Width: 214
       m_Height: 216
@@ -718,15 +739,15 @@ MonoBehaviour:
       m_HorizontalBearingY: 186
       m_HorizontalAdvance: 214
     m_GlyphRect:
-      m_X: 760
-      m_Y: 1216
+      m_X: 1513
+      m_Y: 424
       m_Width: 214
       m_Height: 216
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -8130133584056446798, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 32
+  - m_Index: 33
     m_Metrics:
       m_Width: 227
       m_Height: 249
@@ -742,7 +763,7 @@ MonoBehaviour:
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 5248542921010066017, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 33
+  - m_Index: 34
     m_Metrics:
       m_Width: 202
       m_Height: 258
@@ -758,7 +779,7 @@ MonoBehaviour:
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 7052443852177249881, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - m_Index: 34
+  - m_Index: 35
     m_Metrics:
       m_Width: 495
       m_Height: 424
@@ -776,8 +797,8 @@ MonoBehaviour:
     sprite: {fileID: 6494035533245625250, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   spriteInfoList:
   - id: 0
-    x: 1278
-    y: 714
+    x: 1549
+    y: 680
     width: 261
     height: 258
     xOffset: 0
@@ -818,8 +839,8 @@ MonoBehaviour:
     pivot: {x: 418.5, y: 211}
     sprite: {fileID: -6039530204223424628, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 3
-    x: 760
-    y: 714
+    x: 762
+    y: 943
     width: 255
     height: 267
     xOffset: 0
@@ -860,8 +881,8 @@ MonoBehaviour:
     pivot: {x: 127, y: 259.5}
     sprite: {fileID: -3967975971440997542, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 6
-    x: 1017
-    y: 714
+    x: 1288
+    y: 680
     width: 259
     height: 261
     xOffset: 0
@@ -874,22 +895,22 @@ MonoBehaviour:
     pivot: {x: 129.5, y: 130.5}
     sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 7
-    x: 0
-    y: 1656
-    width: 279
-    height: 288
+    x: 964
+    y: 359
+    width: 15
+    height: 15
     xOffset: 0
-    yOffset: 288
-    xAdvance: 279
+    yOffset: 15
+    xAdvance: 15
     scale: 1
     name: Burn Icon BG
     hashCode: -356539867
     unicode: 57351
-    pivot: {x: 139.5, y: 144}
+    pivot: {x: 7.5, y: 7.5}
     sprite: {fileID: 4443186488756482793, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 8
-    x: 1051
-    y: 424
+    x: 497
+    y: 680
     width: 263
     height: 261
     xOffset: 0
@@ -902,7 +923,7 @@ MonoBehaviour:
     pivot: {x: 131.5, y: 130.5}
     sprite: {fileID: 6158000368922251447, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 9
-    x: 774
+    x: 497
     y: 424
     width: 275
     height: 254
@@ -958,8 +979,8 @@ MonoBehaviour:
     pivot: {x: 144, y: 141.5}
     sprite: {fileID: 299225067176281671, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 13
-    x: 760
-    y: 1656
+    x: 762
+    y: 1748
     width: 144
     height: 144
     xOffset: 0
@@ -972,8 +993,8 @@ MonoBehaviour:
     pivot: {x: 72, y: 72}
     sprite: {fileID: 2979638529940037016, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 14
-    x: 497
-    y: 977
+    x: 762
+    y: 680
     width: 261
     height: 261
     xOffset: 0
@@ -987,7 +1008,7 @@ MonoBehaviour:
     sprite: {fileID: -951324242474890380, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 15
     x: 497
-    y: 714
+    y: 1732
     width: 261
     height: 261
     xOffset: 0
@@ -1000,8 +1021,8 @@ MonoBehaviour:
     pivot: {x: 130.5, y: 130.5}
     sprite: {fileID: 5030406608479721366, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 16
-    x: 1579
-    y: 424
+    x: 497
+    y: 1469
     width: 261
     height: 261
     xOffset: 0
@@ -1014,8 +1035,8 @@ MonoBehaviour:
     pivot: {x: 130.5, y: 130.5}
     sprite: {fileID: -8306455795211793738, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 17
-    x: 1316
-    y: 424
+    x: 497
+    y: 1206
     width: 261
     height: 261
     xOffset: 0
@@ -1029,7 +1050,7 @@ MonoBehaviour:
     sprite: {fileID: 9192458185809667784, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 18
     x: 497
-    y: 1240
+    y: 943
     width: 261
     height: 261
     xOffset: 0
@@ -1042,8 +1063,8 @@ MonoBehaviour:
     pivot: {x: 130.5, y: 130.5}
     sprite: {fileID: 2753783077020577227, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 19
-    x: 497
-    y: 1503
+    x: 1025
+    y: 680
     width: 261
     height: 261
     xOffset: 0
@@ -1056,8 +1077,22 @@ MonoBehaviour:
     pivot: {x: 130.5, y: 130.5}
     sprite: {fileID: 5790224405844098233, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   - id: 20
-    x: 760
-    y: 983
+    x: 762
+    y: 1481
+    width: 248
+    height: 265
+    xOffset: 0
+    yOffset: 265
+    xAdvance: 248
+    scale: 1
+    name: Double Burn
+    hashCode: 605966910
+    unicode: 57364
+    pivot: {x: 124, y: 132.5}
+    sprite: {fileID: 3074123495765528857, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 21
+    x: 1283
+    y: 424
     width: 228
     height: 231
     xOffset: 0
@@ -1066,10 +1101,10 @@ MonoBehaviour:
     scale: 1
     name: Freeze Icon
     hashCode: 512502304
-    unicode: 57364
+    unicode: 57365
     pivot: {x: 114, y: 115.5}
     sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 21
+  - id: 22
     x: 0
     y: 1371
     width: 288
@@ -1080,12 +1115,12 @@ MonoBehaviour:
     scale: 1
     name: Green Icon BG
     hashCode: 2039785973
-    unicode: 57365
+    unicode: 57366
     pivot: {x: 144, y: 141.5}
     sprite: {fileID: 1850640359596639596, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 22
-    x: 760
-    y: 1434
+  - id: 23
+    x: 1729
+    y: 424
     width: 210
     height: 220
     xOffset: 0
@@ -1094,10 +1129,10 @@ MonoBehaviour:
     scale: 1
     name: Heal Icon
     hashCode: 479724235
-    unicode: 57366
+    unicode: 57367
     pivot: {x: 105, y: 110}
     sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 23
+  - id: 24
     x: 1709
     y: 0
     width: 288
@@ -1108,12 +1143,12 @@ MonoBehaviour:
     scale: 1
     name: Heal Icon BG
     hashCode: -148930034
-    unicode: 57367
+    unicode: 57368
     pivot: {x: 144, y: 141.5}
     sprite: {fileID: 1600010482700210598, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 24
-    x: 1541
-    y: 714
+  - id: 25
+    x: 774
+    y: 424
     width: 256
     height: 236
     xOffset: 0
@@ -1122,12 +1157,12 @@ MonoBehaviour:
     scale: 1
     name: Kinetic Shield Icon
     hashCode: -1426757565
-    unicode: 57368
+    unicode: 57369
     pivot: {x: 128, y: 118}
     sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 25
-    x: 1799
-    y: 714
+  - id: 26
+    x: 1032
+    y: 424
     width: 249
     height: 227
     xOffset: 0
@@ -1136,11 +1171,11 @@ MonoBehaviour:
     scale: 1
     name: Max HP Icon
     hashCode: -91572025
-    unicode: 57369
+    unicode: 57370
     pivot: {x: 124.5, y: 113.5}
     sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 26
-    x: 281
+  - id: 27
+    x: 277
     y: 1656
     width: 190
     height: 271
@@ -1150,12 +1185,12 @@ MonoBehaviour:
     scale: 1
     name: Poison Icon
     hashCode: 515284655
-    unicode: 57370
+    unicode: 57371
     pivot: {x: 95, y: 135.5}
     sprite: {fileID: 6346943658632662112, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 27
-    x: 497
-    y: 424
+  - id: 28
+    x: 0
+    y: 1656
     width: 275
     height: 288
     xOffset: 0
@@ -1164,10 +1199,10 @@ MonoBehaviour:
     scale: 1
     name: Power Icon
     hashCode: -82758412
-    unicode: 57371
+    unicode: 57372
     pivot: {x: 137.5, y: 144}
     sprite: {fileID: 633350421133112441, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 28
+  - id: 29
     x: 256
     y: 1101
     width: 215
@@ -1178,12 +1213,12 @@ MonoBehaviour:
     scale: 1
     name: Pyromaniac Icon
     hashCode: -1980446570
-    unicode: 57372
+    unicode: 57373
     pivot: {x: 107.5, y: 123.5}
     sprite: {fileID: -6456651685181505503, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 29
-    x: 497
-    y: 1766
+  - id: 30
+    x: 762
+    y: 1212
     width: 255
     height: 267
     xOffset: 0
@@ -1192,12 +1227,12 @@ MonoBehaviour:
     scale: 1
     name: Self Damage Icon
     hashCode: 159999356
-    unicode: 57373
+    unicode: 57374
     pivot: {x: 127.5, y: 133.5}
     sprite: {fileID: -3499936154177569583, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 30
-    x: 1842
-    y: 424
+  - id: 31
+    x: 1812
+    y: 680
     width: 189
     height: 229
     xOffset: 0
@@ -1206,12 +1241,12 @@ MonoBehaviour:
     scale: 1
     name: Shield Icon
     hashCode: 198985492
-    unicode: 57374
+    unicode: 57375
     pivot: {x: 94.5, y: 114.5}
     sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 31
-    x: 760
-    y: 1216
+  - id: 32
+    x: 1513
+    y: 424
     width: 214
     height: 216
     xOffset: 0
@@ -1220,10 +1255,10 @@ MonoBehaviour:
     scale: 1
     name: Strength Icon
     hashCode: -1581046482
-    unicode: 57375
+    unicode: 57376
     pivot: {x: 107, y: 108}
     sprite: {fileID: -8130133584056446798, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 32
+  - id: 33
     x: 256
     y: 850
     width: 227
@@ -1234,10 +1269,10 @@ MonoBehaviour:
     scale: 1
     name: Thorns Icon
     hashCode: 1557527063
-    unicode: 57376
+    unicode: 57377
     pivot: {x: 113.5, y: 124.5}
     sprite: {fileID: 5248542921010066017, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 33
+  - id: 34
     x: 290
     y: 1371
     width: 202
@@ -1248,10 +1283,10 @@ MonoBehaviour:
     scale: 1
     name: Vulnerable Icon
     hashCode: 433637111
-    unicode: 57377
+    unicode: 57378
     pivot: {x: 101, y: 129}
     sprite: {fileID: 7052443852177249881, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
-  - id: 34
+  - id: 35
     x: 0
     y: 424
     width: 495
@@ -1262,7 +1297,7 @@ MonoBehaviour:
     scale: 1
     name: Water_Splash_16_07
     hashCode: -1102918017
-    unicode: 57378
+    unicode: 57379
     pivot: {x: 247.5, y: 212}
     sprite: {fileID: 6494035533245625250, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
   fallbackSpriteAssets: []

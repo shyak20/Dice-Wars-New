@@ -98,6 +98,9 @@ TextureImporter:
   - first:
       213: -869103960030476151
     second: Ablaze Icon
+  - first:
+      213: 3074123495765528857
+    second: Double Burn
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -222,8 +225,8 @@ TextureImporter:
       name: Attack Icon
       rect:
         serializedVersion: 2
-        x: 760
-        y: 714
+        x: 762
+        y: 943
         width: 255
         height: 267
       alignment: 0
@@ -244,8 +247,8 @@ TextureImporter:
       name: Shield Icon
       rect:
         serializedVersion: 2
-        x: 1842
-        y: 424
+        x: 1812
+        y: 680
         width: 189
         height: 229
       alignment: 0
@@ -266,8 +269,8 @@ TextureImporter:
       name: Self Damage Icon
       rect:
         serializedVersion: 2
-        x: 497
-        y: 1766
+        x: 762
+        y: 1212
         width: 255
         height: 267
       alignment: 0
@@ -354,8 +357,8 @@ TextureImporter:
       name: Heal Icon
       rect:
         serializedVersion: 2
-        x: 760
-        y: 1434
+        x: 1729
+        y: 424
         width: 210
         height: 220
       alignment: 0
@@ -398,7 +401,7 @@ TextureImporter:
       name: Cleanse Icon
       rect:
         serializedVersion: 2
-        x: 774
+        x: 497
         y: 424
         width: 275
         height: 254
@@ -464,8 +467,8 @@ TextureImporter:
       name: Kinetic Shield Icon
       rect:
         serializedVersion: 2
-        x: 1541
-        y: 714
+        x: 774
+        y: 424
         width: 256
         height: 236
       alignment: 0
@@ -508,8 +511,8 @@ TextureImporter:
       name: Max HP Icon
       rect:
         serializedVersion: 2
-        x: 1799
-        y: 714
+        x: 1032
+        y: 424
         width: 249
         height: 227
       alignment: 0
@@ -530,8 +533,8 @@ TextureImporter:
       name: Defense Dice 5
       rect:
         serializedVersion: 2
-        x: 760
-        y: 1656
+        x: 762
+        y: 1748
         width: 144
         height: 144
       alignment: 0
@@ -571,11 +574,55 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: Double Burn
+      rect:
+        serializedVersion: 2
+        x: 762
+        y: 1481
+        width: 248
+        height: 265
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91159c0380b79aa20800000000000000
+      internalID: 3074123495765528857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Burn Icon BG
+      rect:
+        serializedVersion: 2
+        x: 964
+        y: 359
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e2352d029e59ad30800000000000000
+      internalID: 4443186488756482793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: Burn Icon
       rect:
         serializedVersion: 2
-        x: 1017
-        y: 714
+        x: 1288
+        y: 680
         width: 259
         height: 261
       alignment: 0
@@ -593,33 +640,11 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Burn Icon BG
+      name: Power Icon
       rect:
         serializedVersion: 2
         x: 0
         y: 1656
-        width: 279
-        height: 288
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9e2352d029e59ad30800000000000000
-      internalID: 4443186488756482793
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Power Icon
-      rect:
-        serializedVersion: 2
-        x: 497
-        y: 424
         width: 275
         height: 288
       alignment: 0
@@ -640,8 +665,8 @@ TextureImporter:
       name: Strength Icon
       rect:
         serializedVersion: 2
-        x: 760
-        y: 1216
+        x: 1513
+        y: 424
         width: 214
         height: 216
       alignment: 0
@@ -684,8 +709,8 @@ TextureImporter:
       name: Freeze Icon
       rect:
         serializedVersion: 2
-        x: 760
-        y: 983
+        x: 1283
+        y: 424
         width: 228
         height: 231
       alignment: 0
@@ -750,7 +775,7 @@ TextureImporter:
       name: Poison Icon
       rect:
         serializedVersion: 2
-        x: 281
+        x: 277
         y: 1656
         width: 190
         height: 271
@@ -772,8 +797,8 @@ TextureImporter:
       name: Ablaze Icon
       rect:
         serializedVersion: 2
-        x: 1278
-        y: 714
+        x: 1549
+        y: 680
         width: 261
         height: 258
       alignment: 0
@@ -816,8 +841,8 @@ TextureImporter:
       name: Burn Resistance Icon
       rect:
         serializedVersion: 2
-        x: 1051
-        y: 424
+        x: 497
+        y: 680
         width: 263
         height: 261
       alignment: 0
@@ -838,8 +863,8 @@ TextureImporter:
       name: Die Icon Face 1
       rect:
         serializedVersion: 2
-        x: 497
-        y: 977
+        x: 762
+        y: 680
         width: 261
         height: 261
       alignment: 0
@@ -861,7 +886,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 497
-        y: 714
+        y: 1732
         width: 261
         height: 261
       alignment: 0
@@ -882,8 +907,8 @@ TextureImporter:
       name: Die Icon Face 3
       rect:
         serializedVersion: 2
-        x: 1579
-        y: 424
+        x: 497
+        y: 1469
         width: 261
         height: 261
       alignment: 0
@@ -904,8 +929,8 @@ TextureImporter:
       name: Die Icon Face 4
       rect:
         serializedVersion: 2
-        x: 1316
-        y: 424
+        x: 497
+        y: 1206
         width: 261
         height: 261
       alignment: 0
@@ -927,7 +952,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 497
-        y: 1240
+        y: 943
         width: 261
         height: 261
       alignment: 0
@@ -948,8 +973,8 @@ TextureImporter:
       name: Die Icon Face 6
       rect:
         serializedVersion: 2
-        x: 497
-        y: 1503
+        x: 1025
+        y: 680
         width: 261
         height: 261
       alignment: 0
@@ -1022,6 +1047,7 @@ TextureImporter:
       Die Icon Face 4: 9192458185809667784
       Die Icon Face 5: 2753783077020577227
       Die Icon Face 6: 5790224405844098233
+      Double Burn: 3074123495765528857
       Freeze Icon: -2081690915641676523
       Green Icon BG: 1850640359596639596
       Heal Icon: 1282992654924848832

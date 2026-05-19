@@ -10,6 +10,8 @@ public static class GameActionIconUtility
             return apply.ResolveStatusIcon();
         if (action is GameActionWithIcon withIcon)
             return withIcon.ResolveActionIcon();
+        if (action is FaceResolveModifierWithIcon modWithIcon)
+            return modWithIcon.ResolveActionIcon();
         return null;
     }
 }

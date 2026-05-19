@@ -6,10 +6,14 @@ using UnityEngine;
 /// all enemy-target <see cref="BurnEffectSO"/> stacks applied from that Fire resolve are doubled (including roll-watcher burn on that face).
 /// </summary>
 [Serializable]
-public class PrimeNextFireRollDoubleEnemyBurnModifier : FaceResolveModifierBase
+public class PrimeNextFireRollDoubleEnemyBurnModifier : FaceResolveModifierWithIcon
 {
+    protected override ActionVisualId VisualKey => ActionVisualId.PrimeNextFireRollDoubleEnemyBurn;
+
     public override void Modify(DieFaceSO face, FaceResult result, CombatManager combat, TurnRegistry registry)
     {
         registry.PendingNextFireRollDoubleEnemyBurn = true;
+        if (ActivateImmediately)
+            SetPlayerBarBuffActive(registry, active: true);
     }
 }

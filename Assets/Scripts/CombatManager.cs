@@ -705,7 +705,10 @@ public class CombatManager : MonoBehaviour
     private void BindStatusBars()
     {
         if (playerStatusBar != null && player != null && player.StatusEffects != null)
+        {
             playerStatusBar.Bind(player.StatusEffects);
+            playerStatusBar.BindPlayerCombatBarBuffs(_turnRegistry);
+        }
 
         if (enemyStatusBar != null && activeEnemy != null && activeEnemy.StatusEffects != null)
         {
@@ -1044,6 +1047,7 @@ public class CombatManager : MonoBehaviour
         {
             result.DoubleEnemyBurnStacksThisResolve = true;
             _turnRegistry.PendingNextFireRollDoubleEnemyBurn = false;
+            _turnRegistry.SetPlayerBarBuff(ActionVisualId.PrimeNextFireRollDoubleEnemyBurn, active: false);
         }
 
         ApplyQueuedNextRollMultiplier(result, _turnRegistry);
@@ -1181,6 +1185,12 @@ public class CombatManager : MonoBehaviour
         if (result.Actions == null || player == null) return;
         foreach (var a in result.Actions)
         {
+            if (a is FaceResolveModifierWithIcon modWithIcon)
+            {
+                modWithIcon.AppendFlyoutContributionIfAny(result);
+                continue;
+            }
+
             if (a is FaceResolveModifierBase) continue;
             if (a is ApplyStatusEffectAction apply)
                 apply.AppendPoolContributionIfAny(result, player, apply.ActivateImmediately);
@@ -1422,7 +1432,8 @@ public class CombatManager : MonoBehaviour
                     Amount = extra.Amount,
                     IconOverride = extra.Icon,
                     BackgroundOverride = rowBg,
-                    IsVisualFlyoutOnly = extra.VisualFlyoutOnly
+                    IsVisualFlyoutOnly = extra.VisualFlyoutOnly,
+                    FlyToPlayerStatusBar = extra.FlyToPlayerStatusBar
                 });
             }
         }

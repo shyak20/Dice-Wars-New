@@ -95,6 +95,14 @@ static class UnknownMapEventDieChoiceUtility
         || step is UnknownMapEventOutcomeReplaceRandomFaceWithRarityOnChosenDie
         || step is UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseForDieLine;
 
+    public static bool StepMutatesDeckComposition(UnknownMapEventOutcomeBase step) =>
+        step is UnknownMapEventOutcomeDuplicateChosenDeckDie
+        || step is UnknownMapEventOutcomeRemoveChosenDeckDie;
+
+    public static bool StepAddsDeckDie(UnknownMapEventOutcomeBase step) =>
+        step is UnknownMapEventOutcomeDuplicateChosenDeckDie
+        || step is UnknownMapEventOutcomeDuplicateRandomDeckDie;
+
     public static bool DieHasCurseFace(DieAssetSO die)
     {
         if (die?.faces == null)
@@ -388,6 +396,52 @@ public sealed class UnknownMapEventOutcomeAddRunPermanentStrengthStacks : Unknow
         if (stacks <= 0)
             return;
         RunManager.Instance?.AddRunPermanentStrengthStacks(stacks);
+    }
+}
+
+/// <summary>Spends a rounded percent of a run currency (see <see cref="UnknownMapEventRunCurrencyUtility"/>).</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeSpendRunCurrencyPercent : UnknownMapEventOutcomeBase
+{
+    public UnknownMapEventRunCurrency currency = UnknownMapEventRunCurrency.Coins;
+
+    [Range(0f, 100f)]
+    public float percent = 50f;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (percent <= 0f)
+            return;
+
+        if (!UnknownMapEventRunCurrencyUtility.TrySpendPercent(currency, percent, out var spent))
+        {
+            Debug.LogWarning(
+                $"UnknownMapEventOutcomeSpendRunCurrencyPercent: could not spend {percent}% of {currency} (cost {spent}, current {UnknownMapEventRunCurrencyUtility.GetCurrentAmount(currency)}).");
+        }
+    }
+}
+
+/// <summary>Duplicates <see cref="UnknownMapEventOutcomeContext.ChosenDie"/> in the run deck.</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeDuplicateChosenDeckDie : UnknownMapEventOutcomeBase
+{
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (ctx.ChosenDie == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeDuplicateChosenDeckDie: ChosenDie is required.");
+            return;
+        }
+
+        var pdc = PlayerDataContainer.Instance;
+        if (pdc == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeDuplicateChosenDeckDie: PlayerDataContainer missing.");
+            return;
+        }
+
+        if (pdc.TryDuplicateDeckDie(ctx.ChosenDie) == null)
+            Debug.LogWarning("UnknownMapEventOutcomeDuplicateChosenDeckDie: chosen die was not duplicated.");
     }
 }
 

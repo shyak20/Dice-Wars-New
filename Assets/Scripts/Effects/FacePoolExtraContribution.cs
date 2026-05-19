@@ -27,4 +27,6 @@ public struct FacePoolExtraContribution
     /// Omitted from <see cref="CombatManager.BuildStoredActionsPool"/> pending totals; use a short resync after flyout to clear display drift.
     /// </summary>
     public bool VisualFlyoutOnly;
+    /// <summary>When true with <see cref="VisualFlyoutOnly"/>, fly to the player status bar instead of the element pool.</summary>
+    public bool FlyToPlayerStatusBar;
 }

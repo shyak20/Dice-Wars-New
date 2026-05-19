@@ -22,6 +22,28 @@ public static class DieFaceGameIconOnlyTooltipText
         var seenStatuses = new HashSet<StatusEffectSO>();
         var seenActionVisualIds = new HashSet<ActionVisualId>();
 
+        void TryAppendActionVisual(ActionVisualId id)
+        {
+            if (id == ActionVisualId.None)
+                return;
+            if (!seenActionVisualIds.Add(id))
+                return;
+            if (!GameIconCatalog.TryGetActionTooltip(id, out var catalogTitle, out var catalogDesc))
+                return;
+
+            var namePart = !string.IsNullOrWhiteSpace(catalogTitle) ? catalogTitle.Trim() : (string)null;
+            var descPart = !string.IsNullOrWhiteSpace(catalogDesc) ? catalogDesc.Trim() : (string)null;
+            if (namePart == null && descPart == null)
+                return;
+
+            if (namePart == null)
+                namePart = id.ToString();
+
+            effectNames.Add(namePart);
+            if (descPart != null)
+                descriptions.Add(descPart);
+        }
+
         for (var i = 0; i < face.actions.Count; i++)
         {
             var action = face.actions[i];
@@ -43,26 +65,12 @@ public static class DieFaceGameIconOnlyTooltipText
 
             if (action is GameActionWithIcon gai)
             {
-                var id = gai.GetActionVisualId();
-                if (id == ActionVisualId.None)
-                    continue;
-                if (!seenActionVisualIds.Add(id))
-                    continue;
-                if (!GameIconCatalog.TryGetActionTooltip(id, out var catalogTitle, out var catalogDesc))
-                    continue;
-
-                var namePart = !string.IsNullOrWhiteSpace(catalogTitle) ? catalogTitle.Trim() : (string)null;
-                var descPart = !string.IsNullOrWhiteSpace(catalogDesc) ? catalogDesc.Trim() : (string)null;
-                if (namePart == null && descPart == null)
-                    continue;
-
-                if (namePart == null)
-                    namePart = id.ToString();
-
-                effectNames.Add(namePart);
-                if (descPart != null)
-                    descriptions.Add(descPart);
+                TryAppendActionVisual(gai.GetActionVisualId());
+                continue;
             }
+
+            if (action is FaceResolveModifierWithIcon modWithIcon)
+                TryAppendActionVisual(modWithIcon.GetActionVisualId());
         }
 
         if (effectNames.Count == 0 && descriptions.Count == 0)

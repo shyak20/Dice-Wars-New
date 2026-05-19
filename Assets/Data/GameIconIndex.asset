@@ -92,6 +92,12 @@ MonoBehaviour:
     background: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
     title: Resonance bonus
     description: Gain a bonus equal to your Resonance Meter before this roll resolves.
+  - id: 26
+    sprite: {fileID: 21300000, guid: 6b19323866fe52142850c295da715bc3, type: 3}
+    background: {fileID: 4443186488756482793, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+    title: Double Burn
+    description: Your nexr <style=Burn>Burn</style> this turn will receive <style=Burn>Double
+      Burn</style>
   enemyActionIcons:
   - actionTypeName: MultiplyPlayerBurnPoisonStacksAction
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}

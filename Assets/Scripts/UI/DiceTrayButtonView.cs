@@ -17,6 +17,10 @@ public class DiceTrayButtonView : MonoBehaviour
     [SerializeField, Min(0f)] private float shakeSpeed = 12f;
     [SerializeField] private bool randomizeShakePhase = true;
 
+    [Header("Appear Animation")]
+    [SerializeField] private Animator appearAnimator;
+    [SerializeField] private string appearStateName = "Appear Anim";
+
     /// <summary>
     /// When false, selected-icon shake is off (e.g. shop / other UI). Combat enables this after spawning tray buttons.
     /// </summary>
@@ -25,6 +29,7 @@ public class DiceTrayButtonView : MonoBehaviour
     private bool isSelected;
     private Quaternion iconBaseRotation;
     private float shakePhase;
+    private int _appearStateHash;
 
     /// <param name="enabled">Pass true only in the combat scene when using the dice hand for rolls.</param>
     public void SetSelectedIconShakeEnabled(bool enabled) => _selectedIconShakeEnabled = enabled;
@@ -42,6 +47,14 @@ public class DiceTrayButtonView : MonoBehaviour
         iconBaseRotation = iconImage != null ? iconImage.rectTransform.localRotation : Quaternion.identity;
         if (randomizeShakePhase)
             shakePhase = Random.Range(0f, 1000f);
+
+        if (appearAnimator == null)
+            appearAnimator = GetComponentInChildren<Animator>(true);
+        _appearStateHash = string.IsNullOrWhiteSpace(appearStateName)
+            ? 0
+            : Animator.StringToHash(appearStateName.Trim());
+        if (appearAnimator != null)
+            appearAnimator.enabled = false;
 
         SetSelected(false);
     }
@@ -70,5 +83,17 @@ public class DiceTrayButtonView : MonoBehaviour
 
         if (!selected && iconImage != null)
             iconImage.rectTransform.localRotation = iconBaseRotation;
+    }
+
+    /// <summary>Plays the tray appear animation (shop purchase, unknown-event duplicate, etc.). Other tray buttons stay idle.</summary>
+    public void PlayAppearAnimation()
+    {
+        if (appearAnimator == null || appearAnimator.runtimeAnimatorController == null || _appearStateHash == 0)
+            return;
+
+        appearAnimator.enabled = true;
+        appearAnimator.Rebind();
+        appearAnimator.Update(0f);
+        appearAnimator.Play(_appearStateHash, 0, 0f);
     }
 }
