@@ -16,11 +16,11 @@ MonoBehaviour:
   description: A pool of liquid mercury-mana sits perfectly still. As you approach,
     your Resonance Meter begins to hum in sympathy. The water reflects not your face,
     but the potential of your spells.
-  eventArt: {fileID: 0}
+  eventArt: {fileID: 21300000, guid: c1e96b4edf5464c48bd3f498a6140ee0, type: 3}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 1
   choices:
-  - label: Increase Max Power by 1 - Lose 5 Max HP
+  - label: 'Drink: Increase Max Power by 1 - Lose <style=Max HP>5 Max HP</style>'
     enabledWhen:
     - rid: 6434882266773586140
     registerEventCompletedOnPick: 0
@@ -50,6 +50,7 @@ MonoBehaviour:
         steps:
         - rid: 6434882266773586144
         - rid: 6434882266773586145
+        - rid: 6434882266773586161
     - rid: 6434882266773586142
       type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
       data: 
@@ -64,3 +65,7 @@ MonoBehaviour:
       type: {class: UnknownMapEventOutcomeApplyShrineMaxPowerBonus, ns: , asm: Assembly-CSharp}
       data:
         amount: 1
+    - rid: 6434882266773586161
+      type: {class: UnknownMapEventOutcomeOpenUnknownMapEvent, ns: , asm: Assembly-CSharp}
+      data:
+        nextEvent: {fileID: 11400000, guid: fe182c98b9932f34c8c8a71fa6304d78, type: 2}

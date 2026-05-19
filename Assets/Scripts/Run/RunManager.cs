@@ -113,6 +113,9 @@ public class RunManager : MonoBehaviour
     /// <summary>Fired after run HP changes from map overflow, shrine heal, etc. (not every combat frame).</summary>
     public event Action OnRunVitalityChanged;
 
+    /// <summary>Map runs: fired when current run HP decreases (overflow, events, max-HP costs that clamp current HP).</summary>
+    public event Action<int, int, int> OnRunDamageTaken;
+
     /// <summary>Fired when shrine max-power bonus changes (map HUD max-power meter).</summary>
     public event Action OnRunMaxPowerBudgetChanged;
 
@@ -1078,8 +1081,11 @@ public class RunManager : MonoBehaviour
             return;
 
         EnsureRunVitalityBaseline();
+        var hpBefore = _runCurrentHp;
         _runCurrentHp = Mathf.Clamp(_runCurrentHp + delta, 0, _runMaxHp);
         NotifyRunVitalityChanged();
+        if (delta < 0)
+            RaiseRunDamageTaken(-delta, hpBefore - _runCurrentHp);
 
         if (_runCurrentHp <= 0)
             MarkRunDefeated();
@@ -1100,12 +1106,16 @@ public class RunManager : MonoBehaviour
             return;
 
         EnsureRunVitalityBaseline();
+        var hpBefore = _runCurrentHp;
         _runMaxHp = Mathf.Max(1, _runMaxHp + delta);
         if (delta > 0)
             _runCurrentHp = Mathf.Min(_runCurrentHp + delta, _runMaxHp);
         else
             _runCurrentHp = Mathf.Clamp(_runCurrentHp, 0, _runMaxHp);
         NotifyRunVitalityChanged();
+        var hpLost = hpBefore - _runCurrentHp;
+        if (hpLost > 0)
+            RaiseRunDamageTaken(hpLost, hpLost);
 
         if (_runCurrentHp <= 0)
             MarkRunDefeated();
@@ -1146,8 +1156,10 @@ public class RunManager : MonoBehaviour
             return;
 
         EnsureRunVitalityBaseline();
+        var hpBefore = _runCurrentHp;
         _runCurrentHp = Mathf.Max(0, _runCurrentHp - finalDamage);
         NotifyRunVitalityChanged();
+        RaiseRunDamageTaken(finalDamage, hpBefore - _runCurrentHp);
 
         CombatEvents.OnPlayerDamageNumber?.Invoke(finalDamage, damageNumberWorldAnchor);
 
@@ -1156,6 +1168,15 @@ public class RunManager : MonoBehaviour
     }
 
     private void NotifyRunVitalityChanged() => OnRunVitalityChanged?.Invoke();
+
+    private void RaiseRunDamageTaken(int grossDamage, int hpLost)
+    {
+        if (!_useMapBasedRun || hpLost <= 0)
+            return;
+
+        EnsureRunVitalityBaseline();
+        OnRunDamageTaken?.Invoke(grossDamage, hpLost, _runMaxHp);
+    }
 
     /// <summary>Map run ended because current HP reached 0. UI is handled by <see cref="MapMovementManager"/>.</summary>
     public void MarkRunDefeated()

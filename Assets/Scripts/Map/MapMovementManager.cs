@@ -49,6 +49,8 @@ public sealed class MapMovementManager : MonoBehaviour
     [Tooltip("Lose overlay root (e.g. Lose Prefab instance). Shown when run HP reaches 0.")]
     [SerializeField] private GameObject loseScreen;
     [SerializeField] private Button loseScreenMainMenuButton;
+    [Header("Run damage feedback")]
+    [SerializeField] private MapRunHitFeedback runHitFeedback;
 
     private MapGrid _grid;
     private System.Random _rng;
@@ -80,6 +82,15 @@ public sealed class MapMovementManager : MonoBehaviour
     {
         _rng = useFixedSeed ? new System.Random(fixedSeed) : new System.Random();
         RefreshEffectiveMapLayoutFromActOrDefaults();
+        EnsureRunHitFeedback();
+    }
+
+    private void EnsureRunHitFeedback()
+    {
+        if (runHitFeedback == null)
+            runHitFeedback = GetComponent<MapRunHitFeedback>();
+        if (runHitFeedback == null)
+            runHitFeedback = gameObject.AddComponent<MapRunHitFeedback>();
     }
 
     private void OnEnable()

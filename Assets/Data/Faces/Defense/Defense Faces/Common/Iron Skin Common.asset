@@ -10,29 +10,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Iron Skin Legendary
+  m_Name: Iron Skin Common
   m_EditorClassIdentifier: 
-  title: Iron Skin Legendary
+  title: Iron Skin Common
   description: 
   descriptionLines:
-  - Gain <style=Shield>6</style>
-  - This turn, whenever you roll a <style=Die4>,<style=Die6> gain <style=Shield>6</style>
-  value: 6
+  - Gain <style=Shield>2</style>
+  - This turn, whenever you roll a <style=Die2> gain <style=Shield>2</style>
+  value: 2
   type: 1
-  faceMaterial: {fileID: 2100000, guid: 3f7122d4f64a56341a40bc26b951971d, type: 2}
-  rarity: 0
+  faceMaterial: {fileID: 2100000, guid: 1df214fcb0dce354abf802f527c2f8b2, type: 2}
+  rarity: 1
   damage: 0
   damageAttackTimes: 1
-  armor: 6
+  armor: 2
   selfDamage: 0
-  uiIcon: {fileID: 21300000, guid: ee8a5f538c79db44493b373daa0529b1, type: 3}
+  uiIcon: {fileID: 21300000, guid: 35fafc76b913db9428e26104a75a77b1, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: a23ba4a22aa7b0446992b3aaba7d3ea3, type: 3}
   actions:
-  - rid: 6494956272364552432
+  - rid: 6494956272364552434
   references:
     version: 2
     RefIds:
-    - rid: 6494956272364552432
+    - rid: 6494956272364552434
       type: {class: AddValueBasedOnRollAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 0
@@ -40,8 +40,8 @@ MonoBehaviour:
         legacyRequiredFaceValuesArray: 
         legacyBonusOnAnyDieRollRestOfTurn: 0
         requiredFaceValues:
-          values: 0400000006000000
+          values: 02000000
         bonusType: 0
-        amount: 6
+        amount: 2
         burnDefinition: {fileID: 0}
         duration: 1

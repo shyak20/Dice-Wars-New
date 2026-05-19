@@ -16,12 +16,12 @@ MonoBehaviour:
   description: A pool of liquid mercury-mana sits perfectly still. As you approach,
     your Resonance Meter begins to hum in sympathy. The water reflects not your face,
     but the potential of your spells.
-  eventArt: {fileID: 0}
+  eventArt: {fileID: 21300000, guid: c1e96b4edf5464c48bd3f498a6140ee0, type: 3}
   visibilityConditions:
   - rid: 6434882266773586153
   excludeFromDrawIfCompletedThisRun: 1
   choices:
-  - label: Increase Max Power by 3 - Lose 20 Max HP
+  - label: 'Drink: Increase Max Power by 3 - Lose <style=Max HP>20 Max HP</style>'
     enabledWhen:
     - rid: 6434882266773586154
     registerEventCompletedOnPick: 1

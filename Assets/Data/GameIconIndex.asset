@@ -36,9 +36,10 @@ MonoBehaviour:
     description: Perfect Cast multiplies all elements by x3 instead of x2
   - id: 5
     sprite: {fileID: 21300000, guid: 1a9b3b51a36f6b8419fb0fd7b44b5ddb, type: 3}
-    background: {fileID: 0}
-    title: 
-    description: 
+    background: {fileID: 21300000, guid: 18e27bc9eab91344e8f331588002bb1d, type: 3}
+    title: Kinetic Shield
+    description: Gain <style=Shield>+1</style> for every die roll until the end of
+      turn
   - id: 6
     sprite: {fileID: 0}
     background: {fileID: 0}

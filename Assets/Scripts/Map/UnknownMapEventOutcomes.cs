@@ -11,7 +11,8 @@ public readonly struct UnknownMapEventOutcomeContext
         MapGrid combatGrid,
         Vector2Int playerCell,
         int movesTaken,
-        DieAssetSO chosenDie = null)
+        DieAssetSO chosenDie = null,
+        IUnknownMapEventOutcomeHost host = null)
     {
         Evaluation = evaluation;
         SourceEvent = sourceEvent;
@@ -19,6 +20,7 @@ public readonly struct UnknownMapEventOutcomeContext
         PlayerCell = playerCell;
         MovesTaken = movesTaken;
         ChosenDie = chosenDie;
+        Host = host;
     }
 
     public UnknownMapEventEvaluationContext Evaluation { get; }
@@ -27,9 +29,16 @@ public readonly struct UnknownMapEventOutcomeContext
     public Vector2Int PlayerCell { get; }
     public int MovesTaken { get; }
     public DieAssetSO ChosenDie { get; }
+    internal IUnknownMapEventOutcomeHost Host { get; }
 
     public UnknownMapEventOutcomeContext WithChosenDie(DieAssetSO die) =>
-        new UnknownMapEventOutcomeContext(Evaluation, SourceEvent, CombatGrid, PlayerCell, MovesTaken, die);
+        new UnknownMapEventOutcomeContext(Evaluation, SourceEvent, CombatGrid, PlayerCell, MovesTaken, die, Host);
+}
+
+/// <summary>Map panel hook for outcomes that chain into another unknown event without closing the UI.</summary>
+public interface IUnknownMapEventOutcomeHost
+{
+    void RequestOpenChainedEvent(UnknownMapEventSO nextEvent);
 }
 
 /// <summary>Polymorphic effect run when the player selects an unknown event option (SerializeReference on <see cref="UnknownMapEventOptionEntry"/>).</summary>
@@ -359,6 +368,24 @@ public sealed class UnknownMapEventOutcomeMarkEventCompleted : UnknownMapEventOu
             ? explicitEventId.Trim()
             : (ctx.SourceEvent != null ? ctx.SourceEvent.ResolvedEventId : string.Empty);
         RunManager.Instance?.RegisterUnknownMapEventCompleted(id);
+    }
+}
+
+/// <summary>Immediately opens another unknown map event on the active panel (step chain, e.g. Resonating Fountain 1 → 2).</summary>
+[Serializable]
+public sealed class UnknownMapEventOutcomeOpenUnknownMapEvent : UnknownMapEventOutcomeBase
+{
+    public UnknownMapEventSO nextEvent;
+
+    public override void Execute(UnknownMapEventOutcomeContext ctx)
+    {
+        if (nextEvent == null)
+        {
+            Debug.LogError("UnknownMapEventOutcomeOpenUnknownMapEvent: nextEvent is not assigned.");
+            return;
+        }
+
+        ctx.Host?.RequestOpenChainedEvent(nextEvent);
     }
 }
 

@@ -60,7 +60,10 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         created.Add(f2);
         var f3Ev = BuildResonatingFountain3(f2);
         f3Ev.excludeFromDrawIfCompletedThisRun = true;
-        created.Add(Save("UE_ResonatingFountain3", f3Ev));
+        var f3 = Save("UE_ResonatingFountain3", f3Ev);
+        created.Add(f3);
+        AppendFountainChainStep(f1Ev, f2);
+        AppendFountainChainStep(f2Ev, f3);
         created.Add(Save("UE_SplittingPrism", BuildSplittingPrism()));
         created.Add(Save("UE_StarlightBasin", BuildStarlightBasin()));
         created.Add(Save("UE_CatalystOfSacrifice", BuildCatalystOfSacrifice()));
@@ -254,6 +257,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
                     {
                         new UnknownMapEventOutcomeApplyRunMaxHpDelta { maxHpDelta = -10 },
                         new UnknownMapEventOutcomeApplyShrineMaxPowerBonus { amount = 1 },
+                        new UnknownMapEventOutcomeMarkEventCompleted(),
                     },
                 }),
             Row("Leave", new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() }, new UnknownMapEventOutcomeNoOp()),
@@ -282,6 +286,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
                     {
                         new UnknownMapEventOutcomeApplyRunMaxHpDelta { maxHpDelta = -20 },
                         new UnknownMapEventOutcomeApplyShrineMaxPowerBonus { amount = 1 },
+                        new UnknownMapEventOutcomeMarkEventCompleted(),
                     },
                 }),
             Row("Leave", new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() }, new UnknownMapEventOutcomeNoOp()),
@@ -479,6 +484,18 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             Row("Spit on the Statue and move on", new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() }, new UnknownMapEventOutcomeNoOp()),
         };
         return ev;
+    }
+
+    static void AppendFountainChainStep(UnknownMapEventSO from, UnknownMapEventSO to)
+    {
+        if (from?.choices == null || from.choices.Length == 0 || to == null)
+            return;
+
+        var entry = from.choices[0];
+        if (entry?.outcome is not UnknownMapEventOutcomeComposite composite || composite.steps == null)
+            return;
+
+        composite.steps.Add(new UnknownMapEventOutcomeOpenUnknownMapEvent { nextEvent = to });
     }
 
     static UnknownMapEventOptionEntry Row(string label, List<UnknownMapEventConditionBase> when, UnknownMapEventOutcomeBase outcome)

@@ -11,7 +11,7 @@ using TMPro;
 /// Legacy combat-on-enter is unchanged; otherwise the player always dismisses via option rows built from <see cref="optionRowPrefab"/>.
 /// </summary>
 [DefaultExecutionOrder(-100)]
-public sealed class MapUnknownEventPanel : MonoBehaviour
+public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcomeHost
 {
     [SerializeField] private GameObject root;
     [SerializeField] private TextMeshProUGUI titleTextMesh;
@@ -42,6 +42,8 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
     private Coroutine _openPresentationRoutine;
     private CanvasGroup _optionsGroupClickabilityOverride;
     private bool _enforceOptionsClickable;
+    private UnknownMapEventSO _pendingChainedEvent;
+    private bool _openedChainedEventThisOutcome;
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -431,7 +433,88 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
         }
 
         ExecuteOptionOutcome(ev, entry, chosenDie: null);
-        Hide();
+        if (!_openedChainedEventThisOutcome)
+            Hide();
+    }
+
+    public void RequestOpenChainedEvent(UnknownMapEventSO nextEvent)
+    {
+        if (nextEvent == null)
+        {
+            Debug.LogError("MapUnknownEventPanel.RequestOpenChainedEvent: nextEvent is null.", this);
+            return;
+        }
+
+        _pendingChainedEvent = nextEvent;
+    }
+
+    private void OpenChainedEvent(UnknownMapEventSO nextEvent)
+    {
+        if (nextEvent == null)
+            return;
+
+        _currentEvent = nextEvent;
+        PopulateStaticUi(_currentEvent);
+
+        EnsureRuntimeChoicesLayout();
+        var listRoot = EffectiveChoicesRect;
+        if (listRoot == null)
+        {
+            Debug.LogError("MapUnknownEventPanel.OpenChainedEvent: missing options list root.", this);
+            Hide();
+            return;
+        }
+
+        ClearOptionRows();
+
+        if (_currentEvent.HasChoiceOptions)
+        {
+            BuildOptionRowsForEvent(_currentEvent, listRoot);
+            if (listRoot.childCount == 0)
+            {
+                Debug.LogWarning(
+                    $"MapUnknownEventPanel: chained event '{_currentEvent.DisplayLabel}' has no enabled options — adding Leave.",
+                    this);
+                AddDismissRow(listRoot, "Leave");
+            }
+        }
+        else
+        {
+            AddDismissRow(listRoot, "Leave");
+        }
+
+        OpenChainedEventImmediately(listRoot);
+    }
+
+    private void OpenChainedEventImmediately(RectTransform listRoot)
+    {
+        if (_openPresentationRoutine != null)
+        {
+            StopCoroutine(_openPresentationRoutine);
+            _openPresentationRoutine = null;
+        }
+
+        _enforceOptionsClickable = false;
+
+        if (listRoot != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(listRoot);
+
+        Canvas.ForceUpdateCanvases();
+
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(null);
+
+        ForceOptionChoicesInteractable(ResolveOptionChoicesCanvasGroup());
+    }
+
+    private void TryConsumePendingChainedEvent()
+    {
+        if (_pendingChainedEvent == null)
+            return;
+
+        OpenChainedEvent(_pendingChainedEvent);
+        _pendingChainedEvent = null;
+        _openedChainedEventThisOutcome = true;
     }
 
     private void OnDieChoiceCommitted(DieAssetSO die)
@@ -468,19 +551,25 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             yield break;
         }
 
+        _openedChainedEventThisOutcome = false;
+        _pendingChainedEvent = null;
+
         if (entry.outcome is UnknownMapEventOutcomeAfterDieChoice afterDieChoice)
         {
             yield return CoRunAfterDieChoiceSteps(ev, entry, afterDieChoice, die);
             dieChoicePopup?.Hide();
             if (entry.registerEventCompletedOnPick)
                 RunManager.Instance.RegisterUnknownMapEventCompleted(ev.ResolvedEventId);
-            Hide();
+            TryConsumePendingChainedEvent();
+            if (!_openedChainedEventThisOutcome)
+                Hide();
             yield break;
         }
 
         ExecuteOptionOutcome(ev, entry, die);
         dieChoicePopup?.Hide();
-        Hide();
+        if (!_openedChainedEventThisOutcome)
+            Hide();
     }
 
     IEnumerator CoRunAfterDieChoiceSteps(
@@ -503,7 +592,8 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             _pendingGrid,
             _pendingPlayerCell,
             _pendingMovesTaken,
-            die);
+            die,
+            host: this);
 
         var usedFaceSlots = new HashSet<int>();
         var faceSwapPreviewSlots = new List<int>();
@@ -585,10 +675,15 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
 
         if (faceSwapPreviewSlots.Count > 0)
             yield return dieChoicePopup.CoResolveFaceSwapsOnDie(die, faceSwapPreviewSlots);
+
+        TryConsumePendingChainedEvent();
     }
 
     private void ExecuteOptionOutcome(UnknownMapEventSO ev, UnknownMapEventOptionEntry entry, DieAssetSO chosenDie)
     {
+        _openedChainedEventThisOutcome = false;
+        _pendingChainedEvent = null;
+
         var evalCtx = new UnknownMapEventEvaluationContext(
             RunManager.Instance,
             _pendingGrid,
@@ -600,13 +695,16 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
             _pendingGrid,
             _pendingPlayerCell,
             _pendingMovesTaken,
-            chosenDie);
+            chosenDie,
+            host: this);
 
         if (entry.outcome != null)
             entry.outcome.Execute(outcomeCtx);
 
         if (entry.registerEventCompletedOnPick)
             RunManager.Instance.RegisterUnknownMapEventCompleted(ev.ResolvedEventId);
+
+        TryConsumePendingChainedEvent();
     }
 
     private void ClearOptionRows()
@@ -647,6 +745,8 @@ public sealed class MapUnknownEventPanel : MonoBehaviour
         _pendingGrid = null;
         _pendingOptionEvent = null;
         _pendingOptionEntry = null;
+        _pendingChainedEvent = null;
+        _openedChainedEventThisOutcome = false;
         dieChoicePopup?.Hide();
         ClearOptionRows();
         if (root != null)
