@@ -22,6 +22,9 @@ MonoBehaviour:
   startArmor: 0
   minGoldReward: 30
   maxGoldReward: 50
+  rubyShardDropChance: 1
+  rubyShardDropMin: 1
+  rubyShardDropMax: 1
   additionalRewardDrops: []
   faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
   dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}

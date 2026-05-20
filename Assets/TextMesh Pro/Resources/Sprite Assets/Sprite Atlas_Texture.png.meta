@@ -101,6 +101,12 @@ TextureImporter:
   - first:
       213: 3074123495765528857
     second: Double Burn
+  - first:
+      213: 1996197610122327019
+    second: Gem Shard Icon
+  - first:
+      213: -6586867150429461379
+    second: Ruby Shard Icon
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -225,8 +231,8 @@ TextureImporter:
       name: Attack Icon
       rect:
         serializedVersion: 2
-        x: 762
-        y: 943
+        x: 995
+        y: 850
         width: 255
         height: 267
       alignment: 0
@@ -247,8 +253,8 @@ TextureImporter:
       name: Shield Icon
       rect:
         serializedVersion: 2
-        x: 1812
-        y: 680
+        x: 1253
+        y: 1352
         width: 189
         height: 229
       alignment: 0
@@ -269,8 +275,8 @@ TextureImporter:
       name: Self Damage Icon
       rect:
         serializedVersion: 2
-        x: 762
-        y: 1212
+        x: 732
+        y: 1639
         width: 255
         height: 267
       alignment: 0
@@ -357,8 +363,8 @@ TextureImporter:
       name: Heal Icon
       rect:
         serializedVersion: 2
-        x: 1729
-        y: 424
+        x: 1699
+        y: 1119
         width: 210
         height: 220
       alignment: 0
@@ -401,7 +407,7 @@ TextureImporter:
       name: Cleanse Icon
       rect:
         serializedVersion: 2
-        x: 497
+        x: 1531
         y: 424
         width: 275
         height: 254
@@ -423,8 +429,8 @@ TextureImporter:
       name: Green Icon BG
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1371
+        x: 964
+        y: 424
         width: 288
         height: 283
       alignment: 0
@@ -467,8 +473,8 @@ TextureImporter:
       name: Kinetic Shield Icon
       rect:
         serializedVersion: 2
-        x: 774
-        y: 424
+        x: 995
+        y: 1119
         width: 256
         height: 236
       alignment: 0
@@ -489,8 +495,8 @@ TextureImporter:
       name: Thorns Icon
       rect:
         serializedVersion: 2
-        x: 256
-        y: 850
+        x: 1808
+        y: 424
         width: 227
         height: 249
       alignment: 0
@@ -511,8 +517,8 @@ TextureImporter:
       name: Max HP Icon
       rect:
         serializedVersion: 2
-        x: 1032
-        y: 424
+        x: 995
+        y: 1357
         width: 249
         height: 227
       alignment: 0
@@ -533,8 +539,8 @@ TextureImporter:
       name: Defense Dice 5
       rect:
         serializedVersion: 2
-        x: 762
-        y: 1748
+        x: 1531
+        y: 680
         width: 144
         height: 144
       alignment: 0
@@ -577,8 +583,8 @@ TextureImporter:
       name: Double Burn
       rect:
         serializedVersion: 2
-        x: 762
-        y: 1481
+        x: 1776
+        y: 850
         width: 248
         height: 265
       alignment: 0
@@ -599,10 +605,10 @@ TextureImporter:
       name: Burn Icon BG
       rect:
         serializedVersion: 2
-        x: 964
-        y: 359
-        width: 15
-        height: 15
+        x: 839
+        y: 414
+        width: 8
+        height: 8
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -621,8 +627,8 @@ TextureImporter:
       name: Burn Icon
       rect:
         serializedVersion: 2
-        x: 1288
-        y: 680
+        x: 1252
+        y: 850
         width: 259
         height: 261
       alignment: 0
@@ -643,8 +649,8 @@ TextureImporter:
       name: Power Icon
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1656
+        x: 1254
+        y: 424
         width: 275
         height: 288
       alignment: 0
@@ -665,8 +671,8 @@ TextureImporter:
       name: Strength Icon
       rect:
         serializedVersion: 2
-        x: 1513
-        y: 424
+        x: 1483
+        y: 1119
         width: 214
         height: 216
       alignment: 0
@@ -687,7 +693,7 @@ TextureImporter:
       name: Water_Splash_16_07
       rect:
         serializedVersion: 2
-        x: 0
+        x: 467
         y: 424
         width: 495
         height: 424
@@ -709,8 +715,8 @@ TextureImporter:
       name: Freeze Icon
       rect:
         serializedVersion: 2
-        x: 1283
-        y: 424
+        x: 1253
+        y: 1119
         width: 228
         height: 231
       alignment: 0
@@ -731,8 +737,8 @@ TextureImporter:
       name: Vulnerable Icon
       rect:
         serializedVersion: 2
-        x: 290
-        y: 1371
+        x: 256
+        y: 1396
         width: 202
         height: 258
       alignment: 0
@@ -754,7 +760,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 850
+        y: 1396
         width: 254
         height: 519
       alignment: 0
@@ -775,7 +781,7 @@ TextureImporter:
       name: Poison Icon
       rect:
         serializedVersion: 2
-        x: 277
+        x: 256
         y: 1656
         width: 190
         height: 271
@@ -797,8 +803,8 @@ TextureImporter:
       name: Ablaze Icon
       rect:
         serializedVersion: 2
-        x: 1549
-        y: 680
+        x: 1513
+        y: 850
         width: 261
         height: 258
       alignment: 0
@@ -819,8 +825,8 @@ TextureImporter:
       name: Pyromaniac Icon
       rect:
         serializedVersion: 2
-        x: 256
-        y: 1101
+        x: 995
+        y: 1586
         width: 215
         height: 247
       alignment: 0
@@ -841,8 +847,8 @@ TextureImporter:
       name: Burn Resistance Icon
       rect:
         serializedVersion: 2
-        x: 497
-        y: 680
+        x: 467
+        y: 850
         width: 263
         height: 261
       alignment: 0
@@ -863,8 +869,8 @@ TextureImporter:
       name: Die Icon Face 1
       rect:
         serializedVersion: 2
-        x: 762
-        y: 680
+        x: 467
+        y: 1113
         width: 261
         height: 261
       alignment: 0
@@ -885,8 +891,8 @@ TextureImporter:
       name: Die Icon Face 2
       rect:
         serializedVersion: 2
-        x: 497
-        y: 1732
+        x: 467
+        y: 1376
         width: 261
         height: 261
       alignment: 0
@@ -907,8 +913,8 @@ TextureImporter:
       name: Die Icon Face 3
       rect:
         serializedVersion: 2
-        x: 497
-        y: 1469
+        x: 467
+        y: 1639
         width: 261
         height: 261
       alignment: 0
@@ -929,8 +935,8 @@ TextureImporter:
       name: Die Icon Face 4
       rect:
         serializedVersion: 2
-        x: 497
-        y: 1206
+        x: 732
+        y: 850
         width: 261
         height: 261
       alignment: 0
@@ -951,8 +957,8 @@ TextureImporter:
       name: Die Icon Face 5
       rect:
         serializedVersion: 2
-        x: 497
-        y: 943
+        x: 732
+        y: 1113
         width: 261
         height: 261
       alignment: 0
@@ -973,8 +979,8 @@ TextureImporter:
       name: Die Icon Face 6
       rect:
         serializedVersion: 2
-        x: 1025
-        y: 680
+        x: 732
+        y: 1376
         width: 261
         height: 261
       alignment: 0
@@ -1009,6 +1015,50 @@ TextureImporter:
       bones: []
       spriteID: 7934409716121c630800000000000000
       internalID: 3945471451079132055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Gem Shard Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 914
+        width: 465
+        height: 480
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be333dc662be3bb10800000000000000
+      internalID: 1996197610122327019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ruby Shard Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 424
+        width: 465
+        height: 488
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7466f3b93fb694a0800000000000000
+      internalID: -6586867150429461379
       vertices: []
       indices: 
       edges: []
@@ -1049,6 +1099,7 @@ TextureImporter:
       Die Icon Face 6: 5790224405844098233
       Double Burn: 3074123495765528857
       Freeze Icon: -2081690915641676523
+      Gem Shard Icon: 1996197610122327019
       Green Icon BG: 1850640359596639596
       Heal Icon: 1282992654924848832
       Heal Icon BG: 1600010482700210598
@@ -1057,6 +1108,7 @@ TextureImporter:
       Poison Icon: 6346943658632662112
       Power Icon: 633350421133112441
       Pyromaniac Icon: -6456651685181505503
+      Ruby Shard Icon: -6586867150429461379
       Self Damage Icon: -3499936154177569583
       Shield Icon: -5171152565747068557
       Strength Icon: -8130133584056446798
