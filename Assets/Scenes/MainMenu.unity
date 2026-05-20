@@ -32754,6 +32754,7 @@ GameObject:
   - component: {fileID: 1943770115}
   - component: {fileID: 1943770116}
   - component: {fileID: 1943770117}
+  - component: {fileID: 1943770118}
   m_Layer: 0
   m_Name: Run Manager
   m_TagString: Untagged
@@ -32849,6 +32850,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fc40baae8ba5c342b69d4796276731d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaProgressionManager
+--- !u!114 &1943770118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1943770112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccb2887ca3952a9438ffa16b13271a03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MetaCharacterUpgradeManager
+  upgradePrices: {fileID: 11400000, guid: 80e73562a2b76884696123bcc3f9550d, type: 2}
 --- !u!1 &2036009300
 GameObject:
   m_ObjectHideFlags: 0

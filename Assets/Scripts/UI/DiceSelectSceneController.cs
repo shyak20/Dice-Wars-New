@@ -17,6 +17,8 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     [SerializeField] private Image characterPortraitImage;
     [SerializeField] private TMP_Text characterNameLabel;
     [SerializeField] private TMP_Text characterDescriptionLabel;
+    [Header("Meta upgrades")]
+    [SerializeField] private DiceSelectCharacterUpgradePanel characterUpgradePanel;
     [Header("Flow")]
     [SerializeField] private Button continueButton;
     [Tooltip("Optional blocker visual shown while Continue is locked.")]
@@ -52,6 +54,9 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (startingDiceLayout == null)
             startingDiceLayout = GetComponentInChildren<DiceSelectStartingDiceLayout>(true);
 
+        if (characterUpgradePanel == null)
+            characterUpgradePanel = GetComponentInChildren<DiceSelectCharacterUpgradePanel>(true);
+
         if (startingDiceLayout == null)
         {
             Debug.LogError("DiceSelectSceneController: assign startingDiceLayout.", this);
@@ -80,6 +85,9 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         RefreshCharacterButtonSelection();
         RefreshFlowUi();
     }
+
+    public PlayerDataSO SelectedCharacterTemplate =>
+        TryGetSelectedCharacter(out var character) ? character : null;
 
     void BuildSelectableCharacterList()
     {
@@ -158,7 +166,26 @@ public sealed class DiceSelectSceneController : MonoBehaviour
             characterPortraitImage.enabled = character.Portrait != null;
         }
 
-        startingDiceLayout.RefreshDeck(character.currentDeck);
+        startingDiceLayout.RefreshDeck(GetEffectiveStartingDeckPreview(character));
+        characterUpgradePanel?.Refresh(character);
+    }
+
+    /// <summary>Called by <see cref="DiceSelectCharacterUpgradePanel"/> after a purchase so deck/stats preview updates.</summary>
+    public void RefreshSelectedCharacterPreview()
+    {
+        if (!TryGetSelectedCharacter(out var character))
+            return;
+
+        startingDiceLayout?.RefreshDeck(GetEffectiveStartingDeckPreview(character));
+    }
+
+    IReadOnlyList<DieAssetSO> GetEffectiveStartingDeckPreview(PlayerDataSO character)
+    {
+        var upgrades = MetaCharacterUpgradeManager.TryGetRuntime();
+        if (upgrades != null)
+            return upgrades.BuildEffectiveStartingDeckTemplates(character);
+
+        return character.currentDeck;
     }
 
     void RefreshFlowUi()
@@ -186,7 +213,12 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (!TryGetSelectedCharacter(out var character))
             return;
 
-        if (character.currentDeck == null || character.currentDeck.Count == 0)
+        var upgrades = MetaCharacterUpgradeManager.TryGetRuntime();
+        var effectiveDeck = upgrades != null
+            ? upgrades.BuildEffectiveStartingDeckTemplates(character)
+            : character.currentDeck;
+
+        if (effectiveDeck == null || effectiveDeck.Count == 0)
         {
             Debug.LogError($"DiceSelectSceneController: '{character.DisplayName}' has an empty currentDeck.", this);
             return;

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a946a3e6cfe1a194a88ba5d5c4944b77, type: 3}
+  m_Name: Character Meta Upgrade Prices
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterMetaUpgradePricesSO
+  healthIncreasePerUpgrade: 5
+  maxPowerIncreasePerUpgrade: 1
+  healthUpgradePrices: 010000000200000004000000070000000a0000000e00000012000000160000001a0000001e000000
+  maxPowerUpgradePrices: 03000000060000000a00000014000000230000003200000050000000
+  startingDiceUnlockPrices: 140000003c00000078000000

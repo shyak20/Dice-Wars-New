@@ -14,13 +14,20 @@ public class PlayerDataSO : ScriptableObject
     [TextArea(2, 6)]
     [Tooltip("Flavor or mechanical summary shown when this character is selected on the dice-select screen.")]
     [SerializeField] private string description;
+    [Tooltip("Stable id for meta upgrade save data. Defaults to this asset's name when empty.")]
+    [SerializeField] private string metaSaveId;
 
     public string DisplayName => string.IsNullOrWhiteSpace(characterDisplayName) ? name : characterDisplayName.Trim();
     public Sprite Portrait => portrait;
     public Sprite SmallPortrait => smallPortrait != null ? smallPortrait : portrait;
     public string Description => description ?? string.Empty;
+    public string MetaSaveId => string.IsNullOrWhiteSpace(metaSaveId) ? name : metaSaveId.Trim();
 
+    [Tooltip("Dice always included in this character's starting deck.")]
     public List<DieAssetSO> currentDeck = new List<DieAssetSO>();
+
+    [Tooltip("Extra starting dice unlocked one at a time via meta upgrades (see Character Meta Upgrade Prices SO).")]
+    public List<DieAssetSO> lockedStartingDice = new List<DieAssetSO>();
 
     [Header("Vitality")]
     [Tooltip("Starting and default max HP for a new run (before relics/shrines). Applied to PlayerStatus when combat initializes.")]
