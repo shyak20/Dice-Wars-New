@@ -4,180 +4,201 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Dice pick screen: wires 3× <see cref="DiceSelectDieSlot"/>, title &quot;X/Y Starting dice&quot;, Continue → <see cref="RunManager.LoadMapAfterDiceSelect"/>.
+/// Character select screen: pick a <see cref="PlayerCharacterRosterSO"/> profile via character buttons,
+/// preview that character's <see cref="PlayerDataSO.currentDeck"/>, then continue with the full profile.
 /// </summary>
 public sealed class DiceSelectSceneController : MonoBehaviour
 {
-    [SerializeField] private DiceSelectDieSlot[] dieSlots = new DiceSelectDieSlot[3];
-    [SerializeField] private TMP_Text titleLabel;
+    [SerializeField] private PlayerCharacterRosterSO characterRoster;
+    [SerializeField] private DiceSelectStartingDiceLayout startingDiceLayout;
+    [Header("Character UI")]
+    [SerializeField] private Transform characterButtonContainer;
+    [SerializeField] private DiceSelectCharacterButton characterButtonPrefab;
+    [SerializeField] private Image characterPortraitImage;
+    [SerializeField] private TMP_Text characterNameLabel;
+    [SerializeField] private TMP_Text characterDescriptionLabel;
+    [Header("Flow")]
     [SerializeField] private Button continueButton;
     [Tooltip("Optional blocker visual shown while Continue is locked.")]
     [SerializeField] private GameObject continueLockedOverlay;
-    [SerializeField, Min(1)] private int requiredStartingDiceCount = 3;
-    [SerializeField] private string titleFormat = "{0}/{1} Starting dice";
-    /// <summary>Hard cap for dice the player may pick on this screen.</summary>
-    private const int MaxSelectableDiceCount = 2;
 
-    [Header("Testing")]
-    [Tooltip("Optional. Wire a UI Button to fill the run deck with Test Starting Die Asset (Required Starting Dice Count copies) and continue — same as Continue, skipping manual picks.")]
-    [SerializeField] private Button testDiceButton;
-    [SerializeField] private DieAssetSO testStartingDieAsset;
-
-    /// <summary>Last die clicked — its tooltip stays visible until another die is hovered.</summary>
-    private DiceSelectDieSlot _pinnedTooltipSlot;
-    /// <summary>While non-null, overrides pinned tooltip (hover takes priority).</summary>
-    private DiceSelectDieSlot _hoverTooltipSlot;
+    private readonly List<PlayerDataSO> _selectableCharacters = new List<PlayerDataSO>();
+    private readonly List<DiceSelectCharacterButton> _characterButtons = new List<DiceSelectCharacterButton>();
+    private int _selectedCharacterIndex = -1;
 
     private void Awake()
     {
         if (continueButton != null)
             continueButton.onClick.AddListener(OnContinueClicked);
-        if (testDiceButton != null)
-            testDiceButton.onClick.AddListener(OnTestDiceButtonClicked);
     }
 
     private void Start()
     {
-        // Keep gameplay consistent if the inspector value was set above 2.
-        if (requiredStartingDiceCount > MaxSelectableDiceCount)
+        if (characterRoster == null)
         {
-            Debug.LogWarning(
-                $"DiceSelectSceneController: requiredStartingDiceCount was {requiredStartingDiceCount}, clamping to {MaxSelectableDiceCount} (max selection for this screen).",
-                this);
-            requiredStartingDiceCount = MaxSelectableDiceCount;
-        }
-
-        if (dieSlots == null || dieSlots.Length == 0)
-            dieSlots = GetComponentsInChildren<DiceSelectDieSlot>(true);
-
-        if (dieSlots.Length < requiredStartingDiceCount)
-            Debug.LogError($"DiceSelectSceneController: need at least {requiredStartingDiceCount} die slots (found {dieSlots.Length}).", this);
-
-        foreach (var s in dieSlots)
-        {
-            if (s != null)
-                s.Initialize(this);
-        }
-
-        RefreshSelectionUi();
-        RefreshTooltips();
-    }
-
-    internal void NotifyTooltipHoverEnter(DiceSelectDieSlot slot)
-    {
-        if (slot == null)
+            Debug.LogError("DiceSelectSceneController: assign characterRoster.", this);
+            RefreshFlowUi();
             return;
-        _hoverTooltipSlot = slot;
-        RefreshTooltips();
-    }
-
-    internal void NotifyTooltipHoverExit(DiceSelectDieSlot slot)
-    {
-        if (_hoverTooltipSlot == slot)
-            _hoverTooltipSlot = null;
-        RefreshTooltips();
-    }
-
-    /// <summary>Call after the player clicks a die — that tooltip stays until hover moves to another die.</summary>
-    internal void NotifyTooltipPinned(DiceSelectDieSlot slot)
-    {
-        _pinnedTooltipSlot = slot;
-        RefreshTooltips();
-    }
-
-    internal void NotifyTooltipSlotDisabled(DiceSelectDieSlot slot)
-    {
-        if (_hoverTooltipSlot == slot)
-            _hoverTooltipSlot = null;
-        if (_pinnedTooltipSlot == slot)
-            _pinnedTooltipSlot = null;
-        RefreshTooltips();
-    }
-
-    private void RefreshTooltips()
-    {
-        var active = _hoverTooltipSlot != null ? _hoverTooltipSlot : _pinnedTooltipSlot;
-        if (dieSlots == null)
-            return;
-        foreach (var s in dieSlots)
-        {
-            if (s == null)
-                continue;
-            var show = active != null && s == active;
-            s.ApplyTooltipVisibility(show);
         }
+
+        BuildSelectableCharacterList();
+        if (_selectableCharacters.Count == 0)
+        {
+            Debug.LogError("DiceSelectSceneController: characterRoster has no valid PlayerDataSO entries.", this);
+            RefreshFlowUi();
+            return;
+        }
+
+        if (startingDiceLayout == null)
+            startingDiceLayout = GetComponentInChildren<DiceSelectStartingDiceLayout>(true);
+
+        if (startingDiceLayout == null)
+        {
+            Debug.LogError("DiceSelectSceneController: assign startingDiceLayout.", this);
+            RefreshFlowUi();
+            return;
+        }
+
+        BuildCharacterButtons();
+        SelectCharacter(0);
+        RefreshFlowUi();
     }
 
     private void OnDestroy()
     {
         if (continueButton != null)
             continueButton.onClick.RemoveListener(OnContinueClicked);
-        if (testDiceButton != null)
-            testDiceButton.onClick.RemoveListener(OnTestDiceButtonClicked);
     }
 
-    public void RefreshSelectionUi()
+    public void SelectCharacter(int characterIndex)
     {
-        var count = 0;
-        if (dieSlots != null)
+        if (characterIndex < 0 || characterIndex >= _selectableCharacters.Count)
+            return;
+
+        _selectedCharacterIndex = characterIndex;
+        RefreshCharacterDisplay();
+        RefreshCharacterButtonSelection();
+        RefreshFlowUi();
+    }
+
+    void BuildSelectableCharacterList()
+    {
+        _selectableCharacters.Clear();
+        if (characterRoster?.characters == null)
+            return;
+
+        for (var i = 0; i < characterRoster.characters.Count; i++)
         {
-            foreach (var s in dieSlots)
-            {
-                if (s != null && s.IsSelected)
-                    count++;
-            }
+            var character = characterRoster.characters[i];
+            if (character != null)
+                _selectableCharacters.Add(character);
+        }
+    }
+
+    void BuildCharacterButtons()
+    {
+        ClearCharacterButtons();
+
+        if (characterButtonContainer == null)
+        {
+            Debug.LogError("DiceSelectSceneController: assign characterButtonContainer.", this);
+            return;
         }
 
-        if (titleLabel != null)
-            titleLabel.text = string.Format(titleFormat, count, requiredStartingDiceCount);
+        if (characterButtonPrefab == null)
+        {
+            Debug.LogError("DiceSelectSceneController: assign characterButtonPrefab.", this);
+            return;
+        }
 
-        var canContinue = count == requiredStartingDiceCount;
+        for (var i = 0; i < _selectableCharacters.Count; i++)
+        {
+            var character = _selectableCharacters[i];
+            var buttonView = Instantiate(characterButtonPrefab, characterButtonContainer);
+            buttonView.Bind(i, character, SelectCharacter);
+            _characterButtons.Add(buttonView);
+        }
+    }
+
+    void ClearCharacterButtons()
+    {
+        for (var i = 0; i < _characterButtons.Count; i++)
+        {
+            if (_characterButtons[i] != null)
+                Destroy(_characterButtons[i].gameObject);
+        }
+
+        _characterButtons.Clear();
+    }
+
+    void RefreshCharacterButtonSelection()
+    {
+        for (var i = 0; i < _characterButtons.Count; i++)
+        {
+            var button = _characterButtons[i];
+            if (button != null)
+                button.SetSelected(i == _selectedCharacterIndex);
+        }
+    }
+
+    void RefreshCharacterDisplay()
+    {
+        if (!TryGetSelectedCharacter(out var character))
+            return;
+
+        if (characterNameLabel != null)
+            characterNameLabel.text = character.DisplayName;
+
+        if (characterDescriptionLabel != null)
+            characterDescriptionLabel.text = character.Description;
+
+        if (characterPortraitImage != null)
+        {
+            characterPortraitImage.sprite = character.Portrait;
+            characterPortraitImage.enabled = character.Portrait != null;
+        }
+
+        startingDiceLayout.RefreshDeck(character.currentDeck);
+    }
+
+    void RefreshFlowUi()
+    {
+        var hasCharacter = TryGetSelectedCharacter(out _);
+
         if (continueButton != null)
-            continueButton.interactable = canContinue;
+            continueButton.interactable = hasCharacter;
         if (continueLockedOverlay != null)
-            continueLockedOverlay.SetActive(!canContinue);
+            continueLockedOverlay.SetActive(!hasCharacter);
     }
 
-    internal int GetSelectedDiceCount()
+    bool TryGetSelectedCharacter(out PlayerDataSO character)
     {
-        var count = 0;
-        if (dieSlots == null)
-            return count;
+        character = null;
+        if (_selectedCharacterIndex < 0 || _selectedCharacterIndex >= _selectableCharacters.Count)
+            return false;
 
-        foreach (var s in dieSlots)
-        {
-            if (s != null && s.IsSelected)
-                count++;
-        }
-
-        return count;
+        character = _selectableCharacters[_selectedCharacterIndex];
+        return character != null;
     }
 
-    internal int GetMaxSelectableDiceCount() => requiredStartingDiceCount;
-
-    private void OnContinueClicked()
+    void OnContinueClicked()
     {
-        var picked = new List<DieAssetSO>();
-        if (dieSlots != null)
-        {
-            foreach (var s in dieSlots)
-            {
-                if (s == null || !s.IsSelected || s.StartingDie == null)
-                    continue;
-                picked.Add(s.StartingDie);
-            }
-        }
-
-        if (picked.Count != requiredStartingDiceCount)
+        if (!TryGetSelectedCharacter(out var character))
             return;
 
-        if (PlayerDataContainer.Instance == null || PlayerDataContainer.Instance.RuntimeData == null)
+        if (character.currentDeck == null || character.currentDeck.Count == 0)
         {
-            Debug.LogError("DiceSelectSceneController: PlayerDataContainer missing — ensure it exists (e.g. DontDestroyOnLoad from Main Menu).", this);
+            Debug.LogError($"DiceSelectSceneController: '{character.DisplayName}' has an empty currentDeck.", this);
             return;
         }
 
-        PlayerDataContainer.Instance.ReplaceStartingDeck(picked);
+        if (PlayerDataContainer.Instance == null)
+        {
+            Debug.LogError("DiceSelectSceneController: PlayerDataContainer missing.", this);
+            return;
+        }
+
+        PlayerDataContainer.Instance.ApplyCharacterProfile(character);
 
         if (RunManager.Instance == null)
         {
@@ -185,34 +206,6 @@ public sealed class DiceSelectSceneController : MonoBehaviour
             return;
         }
 
-        RunManager.Instance.LoadMapAfterDiceSelect();
-    }
-
-    private void OnTestDiceButtonClicked()
-    {
-        if (testStartingDieAsset == null)
-        {
-            Debug.LogError("DiceSelectSceneController: assign Test Starting Die Asset to use the test dice button.", this);
-            return;
-        }
-
-        if (PlayerDataContainer.Instance == null || PlayerDataContainer.Instance.RuntimeData == null)
-        {
-            Debug.LogError("DiceSelectSceneController: PlayerDataContainer missing — ensure it exists (e.g. DontDestroyOnLoad from Main Menu).", this);
-            return;
-        }
-
-        if (RunManager.Instance == null)
-        {
-            Debug.LogError("DiceSelectSceneController: RunManager missing.", this);
-            return;
-        }
-
-        var picked = new List<DieAssetSO>(requiredStartingDiceCount);
-        for (var i = 0; i < requiredStartingDiceCount; i++)
-            picked.Add(testStartingDieAsset);
-
-        PlayerDataContainer.Instance.ReplaceStartingDeck(picked);
         RunManager.Instance.LoadMapAfterDiceSelect();
     }
 }

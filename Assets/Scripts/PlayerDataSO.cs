@@ -4,6 +4,22 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "NewPlayerData", menuName = "DiceGame/PlayerData")]
 public class PlayerDataSO : ScriptableObject
 {
+    [Header("Character")]
+    [Tooltip("Shown on the dice-select screen and other character pickers.")]
+    [SerializeField] private string characterDisplayName;
+    [Tooltip("Large portrait shown in the dice-select preview panel.")]
+    [SerializeField] private Sprite portrait;
+    [Tooltip("Compact portrait shown on each character button in the dice-select screen.")]
+    [SerializeField] private Sprite smallPortrait;
+    [TextArea(2, 6)]
+    [Tooltip("Flavor or mechanical summary shown when this character is selected on the dice-select screen.")]
+    [SerializeField] private string description;
+
+    public string DisplayName => string.IsNullOrWhiteSpace(characterDisplayName) ? name : characterDisplayName.Trim();
+    public Sprite Portrait => portrait;
+    public Sprite SmallPortrait => smallPortrait != null ? smallPortrait : portrait;
+    public string Description => description ?? string.Empty;
+
     public List<DieAssetSO> currentDeck = new List<DieAssetSO>();
 
     [Header("Vitality")]

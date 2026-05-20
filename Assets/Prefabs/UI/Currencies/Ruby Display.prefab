@@ -1728,7 +1728,7 @@ GameObject:
   - component: {fileID: 1981825587767995819}
   - component: {fileID: 5713544803566334058}
   m_Layer: 0
-  m_Name: Gems
+  m_Name: Ruby Display
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

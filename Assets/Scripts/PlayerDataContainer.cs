@@ -14,6 +14,7 @@ public class PlayerDataContainer : MonoBehaviour
 
     public static PlayerDataContainer Instance { get; private set; }
     public PlayerDataSO RuntimeData { get; private set; }
+    public PlayerDataSO ActiveCharacterTemplate { get; private set; }
 
     /// <summary>Most recent runtime die instance added by <see cref="AddDieToDeck"/> or duplicate helpers.</summary>
     public DieAssetSO LastAddedDeckDie { get; private set; }
@@ -35,7 +36,61 @@ public class PlayerDataContainer : MonoBehaviour
             return;
         }
 
-        CloneDeckForRuntime();
+        ApplyCharacterProfile(sourcePlayerData);
+    }
+
+    /// <summary>
+    /// Clones a character profile (deck + combat settings) into <see cref="RuntimeData"/> for the run.
+    /// </summary>
+    public void ApplyCharacterProfile(PlayerDataSO profile)
+    {
+        if (profile == null)
+        {
+            Debug.LogError("PlayerDataContainer.ApplyCharacterProfile: profile is null.");
+            return;
+        }
+
+        DestroyRuntimeDeckInstances();
+        if (RuntimeData != null)
+            Destroy(RuntimeData);
+
+        ActiveCharacterTemplate = profile;
+        RuntimeData = Instantiate(profile);
+        RuntimeData.name = profile.name;
+
+        if (RuntimeData.currentDeck == null)
+            RuntimeData.currentDeck = new List<DieAssetSO>();
+
+        var templateDeck = profile.currentDeck ?? new List<DieAssetSO>();
+        RuntimeData.currentDeck.Clear();
+        for (var d = 0; d < templateDeck.Count; d++)
+        {
+            var templateDie = templateDeck[d];
+            if (templateDie == null)
+            {
+                Debug.LogError($"PlayerDataContainer.ApplyCharacterProfile: '{profile.name}' deck slot {d} is null.");
+                continue;
+            }
+
+            var clonedDie = Instantiate(templateDie);
+            clonedDie.name = templateDie.name;
+            RuntimeData.currentDeck.Add(clonedDie);
+        }
+
+        OnRuntimeDeckChanged?.Invoke();
+    }
+
+    void DestroyRuntimeDeckInstances()
+    {
+        if (RuntimeData?.currentDeck == null)
+            return;
+
+        for (var i = 0; i < RuntimeData.currentDeck.Count; i++)
+        {
+            var die = RuntimeData.currentDeck[i];
+            if (die != null)
+                Destroy(die);
+        }
     }
 
     /// <summary>Runtime clone of <paramref name="template"/> is appended to the deck (e.g. shop purchase).</summary>
@@ -186,48 +241,5 @@ public class PlayerDataContainer : MonoBehaviour
         LastAddedDeckDie = copy;
         OnRuntimeDeckChanged?.Invoke();
         return copy;
-    }
-
-    private void CloneDeckForRuntime()
-    {
-        RuntimeData = Instantiate(sourcePlayerData);
-        for (var d = 0; d < RuntimeData.currentDeck.Count; d++)
-        {
-            var clonedDie = Instantiate(RuntimeData.currentDeck[d]);
-            clonedDie.name = RuntimeData.currentDeck[d].name;
-            RuntimeData.currentDeck[d] = clonedDie;
-        }
-    }
-
-    /// <summary>Replaces the run deck when the player confirms starting dice in <see cref="DiceSelectSceneController"/>.</summary>
-    public void ReplaceStartingDeck(IReadOnlyList<DieAssetSO> templates)
-    {
-        if (RuntimeData == null)
-        {
-            Debug.LogError("PlayerDataContainer.ReplaceStartingDeck: RuntimeData is null.");
-            return;
-        }
-
-        if (templates == null || templates.Count == 0)
-        {
-            Debug.LogError("PlayerDataContainer.ReplaceStartingDeck: templates is null or empty.");
-            return;
-        }
-
-        RuntimeData.currentDeck.Clear();
-        foreach (var template in templates)
-        {
-            if (template == null)
-            {
-                Debug.LogError("PlayerDataContainer.ReplaceStartingDeck: null entry in templates list.");
-                continue;
-            }
-
-            var clone = Instantiate(template);
-            clone.name = template.name;
-            RuntimeData.currentDeck.Add(clone);
-        }
-
-        OnRuntimeDeckChanged?.Invoke();
     }
 }

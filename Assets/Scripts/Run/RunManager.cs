@@ -325,7 +325,7 @@ public class RunManager : MonoBehaviour
         LoadSceneSingleWithMusic(mapSceneName);
     }
 
-    /// <summary>Called from <see cref="DiceSelectSceneController"/> after starting dice are written to <see cref="PlayerDataContainer"/>.</summary>
+    /// <summary>Called from <see cref="DiceSelectSceneController"/> after the player confirms a character profile.</summary>
     public void LoadMapAfterDiceSelect()
     {
         if (!_useMapBasedRun)

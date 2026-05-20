@@ -10,8 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f8795f3b5ba6c14f8be468dcba7eb44, type: 3}
-  m_Name: Player Stats & Inventory
+  m_Name: Arthur - Player Stats
   m_EditorClassIdentifier: 
+  characterDisplayName: Arthur
+  portrait: {fileID: 21300000, guid: 0195ac8b56c6e564a8ee86dbd1375d59, type: 3}
+  smallPortrait: {fileID: 21300000, guid: b8f41f31bcf9fc944a95c5d1c8f56c5f, type: 3}
+  description: "A relentless frontline commander who relies on heavy armor, flawless
+    martial instincts, and an unbreakable willpower. \nHis strength comes from heavy
+    sword techniques, tactical shield-work, and a kinetic fighting style that turns
+    an enemy's own momentum against them."
   currentDeck:
   - {fileID: 11400000, guid: 67dbaeb1290737340a509d4831d1fd1b, type: 2}
   - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
