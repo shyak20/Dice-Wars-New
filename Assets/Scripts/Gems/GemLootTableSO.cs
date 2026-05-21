@@ -8,10 +8,12 @@ public class GemLootTableSO : ScriptableObject
     public RarityConfigSO rarityConfig;
     public List<GemSO> allPossibleGems = new List<GemSO>();
 
-    public List<GemSO> GetRandomGems(int count)
+    public List<GemSO> GetRandomGems(int count) => GetRandomGemsFromPool(count, allPossibleGems);
+
+    public List<GemSO> GetRandomGemsFromPool(int count, List<GemSO> candidatePool)
     {
         var selected = new List<GemSO>();
-        if (allPossibleGems == null || allPossibleGems.Count == 0)
+        if (candidatePool == null || candidatePool.Count == 0)
         {
             Debug.LogError("GemLootTableSO: allPossibleGems is empty.", this);
             return selected;
@@ -23,7 +25,7 @@ public class GemLootTableSO : ScriptableObject
             return selected;
         }
 
-        var pool = allPossibleGems.Where(g => g != null).ToList();
+        var pool = candidatePool.Where(g => g != null).ToList();
         for (var i = 0; i < count && pool.Count > 0; i++)
         {
             var totalWeight = pool.Sum(g => rarityConfig.GetWeight(g.rarity));

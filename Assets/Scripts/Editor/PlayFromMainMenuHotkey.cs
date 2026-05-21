@@ -23,10 +23,7 @@ public static class PlayFromMainMenuHotkey
             return;
 
         if (clearPlayerPrefs)
-        {
-            PlayerPrefs.DeleteAll();
-            PlayerPrefs.Save();
-        }
+            PlayerSaveReset.DeleteAllPlayerPrefsAndProgression();
 
         var scene = EditorSceneManager.OpenScene(MainMenuScenePath);
         if (!scene.IsValid())

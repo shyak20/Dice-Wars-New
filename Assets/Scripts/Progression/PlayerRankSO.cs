@@ -1,0 +1,25 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "NewPlayerRank", menuName = "DiceGame/Progression/Player Rank")]
+public class PlayerRankSO : ScriptableObject
+{
+    [Min(0)] public int rankIndex;
+    public string rankName;
+    [TextArea(2, 4)] public string rankFlavorText;
+
+    public List<PlayerTrialSO> associatedTrials = new List<PlayerTrialSO>();
+
+    [Header("Rank-up rewards")]
+    [Tooltip("Granted when all trials on this rank are complete. Use + to add typed rewards (stat bonus, unlock faces, etc.).")]
+    [SerializeReference] public List<ProgressionRewardBase> rankUpRewards = new List<ProgressionRewardBase>();
+
+    void OnValidate()
+    {
+        if (rankIndex < 0)
+            rankIndex = 0;
+
+        if (string.IsNullOrWhiteSpace(rankName))
+            rankName = name;
+    }
+}

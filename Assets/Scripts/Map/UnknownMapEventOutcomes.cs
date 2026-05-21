@@ -166,7 +166,12 @@ public sealed class UnknownMapEventOutcomeSpendGold : UnknownMapEventOutcomeBase
         }
 
         if (!eco.TrySpend(amount))
+        {
             Debug.LogWarning($"UnknownMapEventOutcomeSpendGold: could not spend {amount} (current {eco.CurrentGold}).");
+            return;
+        }
+
+        ProgressionEventBridge.NotifyCoinsSpent(amount, ProgressionCoinSpendSource.UnknownMapEvent);
     }
 }
 

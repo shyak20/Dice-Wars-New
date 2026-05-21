@@ -360,6 +360,7 @@ public sealed class MapMovementManager : MonoBehaviour
         PlayerGridPosition = target;
         MovesTaken++;
         OnPlayerMoved?.Invoke();
+        ProgressionEventBridge.NotifyMapTileMoved();
         moveCounterUI?.Refresh();
 
         if (MovesTaken > _effectiveMoveLimit)

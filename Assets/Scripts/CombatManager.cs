@@ -1087,7 +1087,13 @@ public class CombatManager : MonoBehaviour
 
         channeledFaces.Add(result);
         if (!_echoSkipsPowerThisBatch)
+        {
             currentPower += result.PowerContributionThisResolve;
+            if (result.PowerContributionThisResolve > 0)
+                ProgressionEventBridge.NotifyAccumulatedPower(result.PowerContributionThisResolve);
+        }
+
+        ProgressionEventBridge.NotifyExactRoll(modifiedValue);
 
         var relicAfterPowerCtx = BuildRelicContext(result);
         relicAfterPowerCtx.RelicPhase = RelicPhases.AfterPowerChangedFromRoll;
@@ -1589,7 +1595,12 @@ public class CombatManager : MonoBehaviour
             var entry = pendingPrecisionChoices.Dequeue();
             precisionPanel.Show(entry.Amount, entry.Presentation, accepted =>
             {
-                if (accepted) { currentPower += entry.Amount; CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower); }
+                if (accepted)
+                {
+                    currentPower += entry.Amount;
+                    CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
+                    ProgressionEventBridge.NotifyPerfectCast();
+                }
                 ProcessPrecisionQueue();
             });
         }
@@ -1661,6 +1672,7 @@ public class CombatManager : MonoBehaviour
             }
             else
             {
+                ProgressionEventBridge.NotifyCastOverload();
                 ChangeState(CombatState.BustCheck);
                 CombatEvents.OnBustOccurred?.Invoke(GetPendingAttack(), GetPendingDefense());
             }
@@ -1914,7 +1926,10 @@ public class CombatManager : MonoBehaviour
         bool forceStartingVisibleScale)
     {
         if (pendingDefense > 0 && player != null)
+        {
             player.AddArmor(pendingDefense);
+            ProgressionEventBridge.NotifyDamageBlocked(pendingDefense);
+        }
 
         bool impactAnnounced = false;
         bool attackResolved = false;
@@ -2081,9 +2096,16 @@ public class CombatManager : MonoBehaviour
         totalNature = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalNature);
 
         if (totalPhysical > 0)
+        {
             activeEnemy.TakeDamage(totalPhysical, DieType.Damage, EnemyDamagePresentationKind.Physical);
+            ProgressionEventBridge.NotifyPhysicalDamageDealt(totalPhysical);
+        }
+
         if (totalFire > 0)
+        {
             activeEnemy.TakeDamage(totalFire, DieType.Fire, EnemyDamagePresentationKind.Physical);
+            ProgressionEventBridge.NotifyFireDamageDealt(totalFire);
+        }
         if (totalIce > 0)
             activeEnemy.TakeDamage(totalIce, DieType.Ice, EnemyDamagePresentationKind.Physical);
         if (totalNature > 0)
@@ -2130,7 +2152,10 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CoApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
     {
         if (pendingDefense > 0 && player != null)
+        {
             player.AddArmor(pendingDefense);
+            ProgressionEventBridge.NotifyDamageBlocked(pendingDefense);
+        }
 
         if (!RunPlayerPhysicalResolution(pendingAttack)) yield break;
 
@@ -2330,6 +2355,8 @@ public class CombatManager : MonoBehaviour
         }
 
         RelicActionRunner.RunPhase(this, RelicPhases.OnCombatVictory);
+        if (activeEnemy != null && activeEnemy.enemyData != null)
+            ProgressionEventBridge.NotifyCombatVictory(activeEnemy.enemyData);
         CombatEvents.OnPlayerVictory?.Invoke();
         return true;
     }

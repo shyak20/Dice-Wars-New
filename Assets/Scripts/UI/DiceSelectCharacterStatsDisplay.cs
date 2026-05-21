@@ -26,7 +26,7 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
         if (sceneController != null)
             sceneController.CharacterPreviewChanged += OnCharacterPreviewChanged;
 
-        MetaCharacterUpgradeManager.OnCharacterUpgradesChanged += OnCharacterUpgradesChanged;
+        ProgressionManager.OnCharacterProgressionChanged += OnCharacterProgressionChanged;
     }
 
     void OnDisable()
@@ -34,7 +34,7 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
         if (sceneController != null)
             sceneController.CharacterPreviewChanged -= OnCharacterPreviewChanged;
 
-        MetaCharacterUpgradeManager.OnCharacterUpgradesChanged -= OnCharacterUpgradesChanged;
+        ProgressionManager.OnCharacterProgressionChanged -= OnCharacterProgressionChanged;
     }
 
     void Start()
@@ -45,7 +45,7 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
 
     void OnCharacterPreviewChanged(PlayerDataSO character) => Refresh(character);
 
-    void OnCharacterUpgradesChanged(PlayerDataSO character)
+    void OnCharacterProgressionChanged(PlayerDataSO character)
     {
         if (sceneController == null || !sceneController.TryGetPreviewCharacter(out var preview))
             return;
@@ -59,25 +59,27 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
         if (character == null)
             return;
 
-        var upgrades = MetaCharacterUpgradeManager.TryGetRuntime();
+        var progression = ProgressionManager.TryGetRuntime();
 
         if (maxHealthText != null)
         {
-            var maxHealth = upgrades != null
-                ? upgrades.GetEffectiveStartingMaxHealth(character)
-                : Mathf.Max(1, character.startingMaxHealth);
+            var maxHealth = Mathf.Max(1, character.startingMaxHealth
+                + (progression != null ? progression.GetStartingHPModifier() : 0));
             maxHealthText.text = maxHealth.ToString();
         }
 
         if (baseMaxPowerText != null)
         {
-            var baseMaxPower = upgrades != null
-                ? upgrades.GetEffectiveBaseMaxPower(character)
-                : Mathf.Max(1, character.baseMaxPower);
+            var baseMaxPower = Mathf.Max(1, character.baseMaxPower
+                + (progression != null ? progression.GetMaxPowerModifier() : 0));
             baseMaxPowerText.text = baseMaxPower.ToString();
         }
 
         if (moveLimitText != null)
-            moveLimitText.text = Mathf.Max(1, character.moveLimit).ToString();
+        {
+            var moves = Mathf.Max(1, character.moveLimit
+                + (progression != null ? progression.GetGridMoveModifier() : 0));
+            moveLimitText.text = moves.ToString();
+        }
     }
 }

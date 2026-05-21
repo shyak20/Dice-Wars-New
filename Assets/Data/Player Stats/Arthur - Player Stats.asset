@@ -32,3 +32,4 @@ MonoBehaviour:
   baseMaxPower: 10
   moveLimit: 10
   perfectStrikeBaseMultiplier: 2
+  progressionCatalog: {fileID: 11400000, guid: b0fc6a71a2b399f49968d34ce045cfd6, type: 2}

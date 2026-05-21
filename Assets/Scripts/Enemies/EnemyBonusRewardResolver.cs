@@ -44,7 +44,7 @@ public static class EnemyBonusRewardResolver
     private static void GrantRandomFace(EnemyTypeSO enemy)
     {
         if (enemy.faceRewardPool == null) return;
-        var faceRoll = enemy.faceRewardPool.GetRandomRewards(1, null);
+        var faceRoll = ProgressionLootRolls.RollFaces(enemy.faceRewardPool, 1, null);
         if (faceRoll.Count == 0 || faceRoll[0] == null) return;
         var face = faceRoll[0];
 
@@ -80,7 +80,7 @@ public static class EnemyBonusRewardResolver
     private static void GrantRandomDie(EnemyTypeSO enemy)
     {
         if (enemy.dieRewardPool == null) return;
-        var roll = enemy.dieRewardPool.GetRandomDice(1, null, 0f, uniqueInBatch: false);
+        var roll = ProgressionLootRolls.RollDice(enemy.dieRewardPool, 1, null, 0f, uniqueInBatch: false);
         if (roll.Count == 0 || roll[0] == null) return;
         VictoryRewardBuffer.PendingDice.Add(roll[0]);
         Debug.Log($"Enemy bonus reward: queued die '{roll[0].name}' for win-stage collection.");
@@ -89,7 +89,7 @@ public static class EnemyBonusRewardResolver
     private static void GrantRandomRelic(EnemyTypeSO enemy)
     {
         if (enemy.relicRewardPool == null) return;
-        var roll = enemy.relicRewardPool.GetRandomRelics(1);
+        var roll = ProgressionLootRolls.RollRelics(enemy.relicRewardPool, 1);
         if (roll.Count == 0 || roll[0] == null) return;
         VictoryRewardBuffer.PendingRelics.Add(roll[0]);
         Debug.Log($"Enemy bonus reward: queued relic '{roll[0].title}' for win-stage collection.");
@@ -98,7 +98,7 @@ public static class EnemyBonusRewardResolver
     private static void GrantRandomGem(EnemyTypeSO enemy)
     {
         if (enemy.gemRewardPool == null) return;
-        var roll = enemy.gemRewardPool.GetRandomGems(1);
+        var roll = ProgressionLootRolls.RollGems(enemy.gemRewardPool, 1);
         if (roll.Count == 0 || roll[0] == null) return;
         var gem = roll[0];
 

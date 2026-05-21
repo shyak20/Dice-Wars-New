@@ -168,6 +168,9 @@ public class PlayerStatus : MonoBehaviour
             currentHealth -= damageRemaining;
             currentHealth = Mathf.Max(0, currentHealth);
             UnityEngine.Debug.Log($"<color=red>Player took {damageRemaining} Health damage!</color>");
+            var hpLost = hpBefore - currentHealth;
+            if (hpLost > 0)
+                ProgressionEventBridge.NotifyHpLost(hpLost);
         }
 
         UpdateUI();

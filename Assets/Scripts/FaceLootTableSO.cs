@@ -8,12 +8,16 @@ public class FaceLootTableSO : ScriptableObject
     public RarityConfigSO rarityConfig;
     public List<DieFaceSO> allPossibleFaces;
 
-    public List<DieFaceSO> GetRandomRewards(int count, HashSet<DieType> preferredTypes = null)
+    public List<DieFaceSO> GetRandomRewards(int count, HashSet<DieType> preferredTypes = null) =>
+        GetRandomRewardsFromPool(count, preferredTypes, allPossibleFaces);
+
+    /// <summary>Roll from a pre-filtered pool (e.g. progression-gated faces).</summary>
+    public List<DieFaceSO> GetRandomRewardsFromPool(int count, HashSet<DieType> preferredTypes, List<DieFaceSO> candidatePool)
     {
         List<DieFaceSO> selected = new List<DieFaceSO>();
-        if (allPossibleFaces == null || allPossibleFaces.Count == 0)
+        if (candidatePool == null || candidatePool.Count == 0)
         {
-            Debug.LogError("FaceLootTableSO: allPossibleFaces is empty — assign faces on the loot table asset.");
+            Debug.LogError("FaceLootTableSO: candidate pool is empty — assign faces on the loot table asset.");
             return selected;
         }
 
@@ -23,7 +27,7 @@ public class FaceLootTableSO : ScriptableObject
             return selected;
         }
 
-        var validFaces = allPossibleFaces.FindAll(f => f != null);
+        var validFaces = candidatePool.FindAll(f => f != null);
         if (validFaces.Count == 0)
         {
             Debug.LogError("FaceLootTableSO: allPossibleFaces contains only null entries — fix the loot table asset.");

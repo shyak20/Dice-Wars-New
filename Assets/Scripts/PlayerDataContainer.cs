@@ -77,7 +77,10 @@ public class PlayerDataContainer : MonoBehaviour
             RuntimeData.currentDeck.Add(clonedDie);
         }
 
-        MetaCharacterUpgradeManager.TryGetRuntime()?.ApplyUpgradesToRuntimeProfile(RuntimeData, profile);
+        var progression = ProgressionManager.TryGetRuntime();
+        if (progression != null)
+            progression.InitializeForCharacter(profile);
+        progression?.ApplyToRuntimeProfile(RuntimeData, profile);
 
         OnRuntimeDeckChanged?.Invoke();
     }

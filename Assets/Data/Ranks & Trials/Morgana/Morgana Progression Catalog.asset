@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443592534c4e8e549a0700a8df9a6319, type: 3}
+  m_Name: Morgana Progression Catalog
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressionCatalogSO
+  ranks:
+  - {fileID: 11400000, guid: d2404e5197e44324c94d41bb4c59df14, type: 2}
+  - {fileID: 11400000, guid: 51bdc1ad792811d42bad56ba3fffa394, type: 2}
+  baseAlwaysAvailableIds: []

@@ -19,6 +19,10 @@ Dice Wars is a turn-based deck-building combat game built in Unity 2022.3.5f1 LT
 
 The combat loop is driven by `CombatManager` cycling through `CombatState` enum states (`WaitingForRoll → Rolling → BustCheck → TurnEnd → EnemyTurn`). Cross-system communication happens through static events in `CombatEvents` — UI, enemies, and dice all subscribe to these events rather than holding direct references.
 
+### Meta Progression: Ranks & Trials
+
+Per-character rank/trial progression lives in `Assets/Scripts/Progression/`. Each `PlayerDataSO` references its ladder via `progressionCatalog` only (not the other way around); saves use `MetaSaveId` in obfuscated `PlayerPrefs` via `ProgressionSaveService` (legacy `persistentDataPath/Progression/*.json` is imported once then deleted). `ProgressionManager` subscribes to `ProgressionEvents` for active trial types only and applies stat bonuses at run start via `PlayerDataContainer`. Rewards are polymorphic `[SerializeReference]` types under `Assets/Scripts/Progression/Rewards/` (stat bonuses, `ProgressionUnlockFacesReward` with face lists, gems, relics, dice — like die-face `IGameAction`). Rank-up and trial completion use `+` in the inspector to pick reward types. Unlocks gate loot via `ProgressionLootFilter` / `ProgressionLootRolls`. Author via **Dice Wars → Progression → Create Starter Catalog** (select a `PlayerDataSO` first). Wire `ProgressionEventBridge` in the bootstrap scene next to `RunManager`.
+
 ### Data Layer: ScriptableObjects
 
 All game data (dice definitions, face values, enemy types, enemy actions) lives in ScriptableObjects under `Assets/Data/`. Runtime code reads from these — they are the single source of truth for game configuration.

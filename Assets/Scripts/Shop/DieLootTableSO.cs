@@ -23,13 +23,21 @@ public class DieLootTableSO : ScriptableObject
     /// <summary>
     /// Picks up to <paramref name="count"/> dice. If <paramref name="uniqueInBatch"/> is true, the same die is not offered twice in one shop restock.
     /// </summary>
-    public List<DieAssetSO> GetRandomDice(int count, HashSet<DieType> preferredTypes = null, float preferredChance = 0.7f, bool uniqueInBatch = true)
+    public List<DieAssetSO> GetRandomDice(int count, HashSet<DieType> preferredTypes = null, float preferredChance = 0.7f, bool uniqueInBatch = true) =>
+        GetRandomDiceFromPool(count, allPossibleDice, preferredTypes, preferredChance, uniqueInBatch);
+
+    public List<DieAssetSO> GetRandomDiceFromPool(
+        int count,
+        List<DieAssetSO> candidatePool,
+        HashSet<DieType> preferredTypes = null,
+        float preferredChance = 0.7f,
+        bool uniqueInBatch = true)
     {
         var result = new List<DieAssetSO>();
         if (count <= 0) return result;
-        if (allPossibleDice == null || allPossibleDice.Count == 0) return result;
+        if (candidatePool == null || candidatePool.Count == 0) return result;
 
-        var pool = allPossibleDice.Where(d => d != null).ToList();
+        var pool = candidatePool.Where(d => d != null).ToList();
         if (pool.Count == 0) return result;
 
         for (var i = 0; i < count; i++)

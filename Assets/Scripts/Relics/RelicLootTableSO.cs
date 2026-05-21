@@ -8,10 +8,12 @@ public class RelicLootTableSO : ScriptableObject
     public RarityConfigSO rarityConfig;
     public List<RelicSO> allPossibleRelics = new List<RelicSO>();
 
-    public List<RelicSO> GetRandomRelics(int count)
+    public List<RelicSO> GetRandomRelics(int count) => GetRandomRelicsFromPool(count, allPossibleRelics);
+
+    public List<RelicSO> GetRandomRelicsFromPool(int count, List<RelicSO> candidatePool)
     {
         var selected = new List<RelicSO>();
-        if (allPossibleRelics == null || allPossibleRelics.Count == 0)
+        if (candidatePool == null || candidatePool.Count == 0)
         {
             Debug.LogError("RelicLootTableSO: allPossibleRelics is empty.", this);
             return selected;
@@ -23,7 +25,7 @@ public class RelicLootTableSO : ScriptableObject
             return selected;
         }
 
-        var pool = allPossibleRelics.Where(r => r != null).ToList();
+        var pool = candidatePool.Where(r => r != null).ToList();
         for (var i = 0; i < count && pool.Count > 0; i++)
         {
             var totalWeight = pool.Sum(r => rarityConfig.GetWeight(r.rarity));

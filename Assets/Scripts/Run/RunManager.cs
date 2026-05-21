@@ -249,7 +249,10 @@ public class RunManager : MonoBehaviour
         VictoryRewardBuffer.Clear();
         RunEncounterBuffer.AbortPendingMapCombatState();
         if (RunEconomyManager.Instance != null)
-            RunEconomyManager.Instance.ResetEconomyForNewRun();
+        {
+            var bonus = ProgressionManager.TryGetRuntime()?.GetStartingGoldForNewRun() ?? 0;
+            RunEconomyManager.Instance.ResetEconomyForNewRunWithProgressionBonus(bonus);
+        }
         ClearMapFightShopPreloadState();
         ClearMapSubsceneTransitionSnapshot();
     }
@@ -1158,8 +1161,11 @@ public class RunManager : MonoBehaviour
         EnsureRunVitalityBaseline();
         var hpBefore = _runCurrentHp;
         _runCurrentHp = Mathf.Max(0, _runCurrentHp - finalDamage);
+        var hpLost = hpBefore - _runCurrentHp;
+        if (hpLost > 0)
+            ProgressionEventBridge.NotifyHpLost(hpLost);
         NotifyRunVitalityChanged();
-        RaiseRunDamageTaken(finalDamage, hpBefore - _runCurrentHp);
+        RaiseRunDamageTaken(finalDamage, hpLost);
 
         CombatEvents.OnPlayerDamageNumber?.Invoke(finalDamage, damageNumberWorldAnchor);
 

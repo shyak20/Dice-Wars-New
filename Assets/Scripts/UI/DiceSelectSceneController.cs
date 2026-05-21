@@ -149,6 +149,10 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (!TryGetSelectedCharacter(out var character))
             return;
 
+        if (character.progressionCatalog != null)
+            ProgressionManager.EnsureRuntime(character.progressionCatalog);
+        ProgressionManager.TryGetRuntime()?.RefreshCharacterProgression(character);
+
         if (characterNameLabel != null)
             characterNameLabel.text = character.DisplayName;
 
@@ -169,9 +173,9 @@ public sealed class DiceSelectSceneController : MonoBehaviour
 
     IReadOnlyList<DieAssetSO> GetEffectiveStartingDeckPreview(PlayerDataSO character)
     {
-        var upgrades = MetaCharacterUpgradeManager.TryGetRuntime();
-        if (upgrades != null)
-            return upgrades.BuildEffectiveStartingDeckTemplates(character);
+        var progression = ProgressionManager.TryGetRuntime();
+        if (progression != null)
+            return progression.BuildEffectiveStartingDeckTemplates(character);
 
         return character.currentDeck;
     }
@@ -201,9 +205,9 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (!TryGetSelectedCharacter(out var character))
             return;
 
-        var upgrades = MetaCharacterUpgradeManager.TryGetRuntime();
-        var effectiveDeck = upgrades != null
-            ? upgrades.BuildEffectiveStartingDeckTemplates(character)
+        var progression = ProgressionManager.TryGetRuntime();
+        var effectiveDeck = progression != null
+            ? progression.BuildEffectiveStartingDeckTemplates(character)
             : character.currentDeck;
 
         if (effectiveDeck == null || effectiveDeck.Count == 0)

@@ -150,6 +150,10 @@ public sealed class HoverTooltipManager : MonoBehaviour
                 title = string.IsNullOrEmpty(status.effectName) ? status.name : status.effectName;
                 description = status.description ?? string.Empty;
                 return true;
+            case PlayerTrialSO trial:
+                title = string.IsNullOrWhiteSpace(trial.trialID) ? trial.name : trial.trialID;
+                description = trial.description ?? string.Empty;
+                return true;
             default:
                 title = source.name;
                 description = string.Empty;

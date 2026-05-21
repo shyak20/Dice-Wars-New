@@ -41,7 +41,7 @@ public class FaceRewardManager : MonoBehaviour
 
         var preferredTypes = new HashSet<DieType>(
             PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
-        var options = lootTable.GetRandomRewards(3, preferredTypes);
+        var options = ProgressionLootRolls.RollFaces(lootTable, 3, preferredTypes);
         facePickerView.Show(options, OnFaceChosen, OnReplacementSlotChosen, onRewindToFacePick: RewindFacePickProgress);
         gameObject.SetActive(true);
     }
@@ -74,7 +74,7 @@ public class FaceRewardManager : MonoBehaviour
         var options = _winStageFaceOfferCache;
         if (options == null || options.Count == 0)
         {
-            options = lootTable.GetRandomRewards(3, preferredTypes);
+            options = ProgressionLootRolls.RollFaces(lootTable, 3, preferredTypes);
             if (options == null || options.Count == 0)
             {
                 Debug.LogError("FaceRewardManager.StartFaceRewardFromWinStage: loot roll returned no faces.");

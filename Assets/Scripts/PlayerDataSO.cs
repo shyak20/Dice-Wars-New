@@ -45,4 +45,8 @@ public class PlayerDataSO : ScriptableObject
 
     [Tooltip("Perfect strike pool multiplier when no higher relic multiplier applies (overcharge stacks add on top).")]
     [Min(1)] public int perfectStrikeBaseMultiplier = 2;
+
+    [Header("Progression")]
+    [Tooltip("Per-character rank/trial ladder. Required for meta progression on this character.")]
+    public ProgressionCatalogSO progressionCatalog;
 }

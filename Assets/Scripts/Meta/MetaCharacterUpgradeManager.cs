@@ -12,9 +12,9 @@ public enum MetaCharacterUpgradePurchaseResult
 }
 
 /// <summary>
-/// Per-character meta upgrades purchased with ruby shards. Progress persists in <see cref="PlayerPrefs"/>.
-/// Applies upgraded starting stats and unlocked dice when <see cref="PlayerDataContainer"/> loads a character.
+/// Deprecated: replaced by <see cref="ProgressionManager"/> rank/trial system.
 /// </summary>
+[System.Obsolete("Use ProgressionManager and rank/trial ScriptableObjects instead.")]
 public sealed class MetaCharacterUpgradeManager : MonoBehaviour
 {
     const string SaveKeyPrefix = "DiceWars_Meta_CharUpgrade_";

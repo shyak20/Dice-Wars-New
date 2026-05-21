@@ -63,7 +63,10 @@ public static class UnknownMapEventRunCurrencyUtility
                     return false;
                 }
 
-                return eco.TrySpend(amount);
+                if (!eco.TrySpend(amount))
+                    return false;
+                ProgressionEventBridge.NotifyCoinsSpent(amount, ProgressionCoinSpendSource.UnknownMapEvent);
+                return true;
             }
             case UnknownMapEventRunCurrency.CurrentHp:
             {

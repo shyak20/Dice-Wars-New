@@ -68,6 +68,12 @@ public class RunEconomyManager : MonoBehaviour
         OnGoldChanged?.Invoke(CurrentGold);
     }
 
+    public void ResetEconomyForNewRunWithProgressionBonus(int progressionGoldBonus)
+    {
+        CurrentGold = startingGold + Mathf.Max(0, progressionGoldBonus);
+        OnGoldChanged?.Invoke(CurrentGold);
+    }
+
     public bool CanAfford(int amount) => amount >= 0 && CurrentGold >= amount;
 
     public bool TrySpend(int amount)

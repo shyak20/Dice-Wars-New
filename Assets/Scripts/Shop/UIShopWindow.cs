@@ -57,10 +57,10 @@ public class UIShopWindow : MonoBehaviour
             return;
         var shopDiscountPercent = Mathf.Clamp(RelicActionRunner.QueryIntMax(RelicPhases.QueryShopDiscountPercent), 0, 95);
         var preferred = BuildPreferredTypes();
-        if (faceLootTable != null) foreach (var f in faceLootTable.GetRandomRewards(faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = ApplyDiscount(pricingManager.GetDieFacePrice(f), shopDiscountPercent) });
-        if (gemLootTable != null) foreach (var g in gemLootTable.GetRandomGems(gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = ApplyDiscount(pricingManager.GetGemPrice(g), shopDiscountPercent) });
-        if (relicLootTable != null) foreach (var r in relicLootTable.GetRandomRelics(relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = ApplyDiscount(pricingManager.GetRelicPrice(r), shopDiscountPercent) });
-        if (dieLootTable != null) foreach (var d in dieLootTable.GetRandomDice(dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = ApplyDiscount(pricingManager.GetDiePrice(d), shopDiscountPercent) });
+        if (faceLootTable != null) foreach (var f in ProgressionLootRolls.RollFaces(faceLootTable, faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = ApplyDiscount(pricingManager.GetDieFacePrice(f), shopDiscountPercent) });
+        if (gemLootTable != null) foreach (var g in ProgressionLootRolls.RollGems(gemLootTable, gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = ApplyDiscount(pricingManager.GetGemPrice(g), shopDiscountPercent) });
+        if (relicLootTable != null) foreach (var r in ProgressionLootRolls.RollRelics(relicLootTable, relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = ApplyDiscount(pricingManager.GetRelicPrice(r), shopDiscountPercent) });
+        if (dieLootTable != null) foreach (var d in ProgressionLootRolls.RollDice(dieLootTable, dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = ApplyDiscount(pricingManager.GetDiePrice(d), shopDiscountPercent) });
     }
 
     static int ApplyDiscount(int basePrice, int discountPercent)
@@ -285,7 +285,14 @@ public class UIShopWindow : MonoBehaviour
         RebuildOfferUi();
         RebuildPlayerDice(addedDie);
     }
-    bool SpendGold(int amount) { var eco = RunEconomyManager.Instance; return eco != null && eco.CanAfford(amount) && eco.TrySpend(amount); }
+    bool SpendGold(int amount)
+    {
+        var eco = RunEconomyManager.Instance;
+        if (eco == null || !eco.CanAfford(amount) || !eco.TrySpend(amount))
+            return false;
+        ProgressionEventBridge.NotifyCoinsSpent(amount, ProgressionCoinSpendSource.Shop);
+        return true;
+    }
 
     void RebuildPlayerDice(DieAssetSO playAppearForDie = null, bool hideDieTooltipOverlay = true)
     {
