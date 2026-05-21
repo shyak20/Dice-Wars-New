@@ -11,8 +11,8 @@ public class StatusEffectIconUI : MonoBehaviour
     [Header("Tooltip")]
     [Tooltip("Tooltip offset in screen pixels relative to the hovered status icon.")]
     [SerializeField] private Vector2 tooltipScreenOffset = new Vector2(0f, 24f);
-    [Tooltip("When on, tooltips use HoverTooltipManager's above-bar offset (recommended for bottom HUD icons).")]
-    [SerializeField] private bool showTooltipAbove = true;
+    [Tooltip("When on, tooltips use HoverTooltipManager's Hover Above Tooltip Screen Offset instead of the regular tooltip offset.")]
+    [SerializeField] private bool showTooltipAbove;
 
     private HoverTooltipTargetUI hoverTooltipTarget;
     private Image _hitAreaImage;
@@ -107,9 +107,22 @@ public class StatusEffectIconUI : MonoBehaviour
         }
 
         hoverTooltipTarget = GetComponent<HoverTooltipTargetUI>() ?? gameObject.AddComponent<HoverTooltipTargetUI>();
+        SyncHoverTooltipTarget();
+    }
+
+    /// <summary>Called by <see cref="StatusEffectBarUI"/> so player/enemy bars can pick above vs regular manager offset.</summary>
+    public void ApplyBarTooltipPlacement(bool useHoverAboveScreenOffset)
+    {
+        showTooltipAbove = useHoverAboveScreenOffset;
+        SyncHoverTooltipTarget();
+    }
+
+    void SyncHoverTooltipTarget()
+    {
+        if (hoverTooltipTarget == null)
+            return;
         hoverTooltipTarget.SetTooltipScreenOffset(tooltipScreenOffset);
-        if (showTooltipAbove)
-            hoverTooltipTarget.SetIsAbove(true);
+        hoverTooltipTarget.SetIsAbove(showTooltipAbove);
     }
 
     void DisableDecorativeRaycasts()

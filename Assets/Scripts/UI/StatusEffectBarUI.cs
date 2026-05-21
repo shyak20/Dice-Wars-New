@@ -6,6 +6,8 @@ public class StatusEffectBarUI : MonoBehaviour
 {
     [SerializeField] private Transform iconContainer;
     [SerializeField] private GameObject statusEffectIconPrefab;
+    [Tooltip("When on, status icons use HoverTooltipManager's Hover Above Tooltip Screen Offset (player bottom HUD). Off uses each icon's tooltip screen offset plus the manager's regular offset.")]
+    [SerializeField] private bool tooltipUseHoverAboveScreenOffset;
 
     private readonly Dictionary<string, StatusEffectIconUI> activeIcons = new();
 
@@ -213,6 +215,7 @@ public class StatusEffectBarUI : MonoBehaviour
         {
             if (!existingIcon.gameObject.activeSelf)
                 existingIcon.gameObject.SetActive(true);
+            existingIcon.ApplyBarTooltipPlacement(tooltipUseHoverAboveScreenOffset);
             existingIcon.transform.SetAsLastSibling();
             return existingIcon;
         }
@@ -226,6 +229,7 @@ public class StatusEffectBarUI : MonoBehaviour
             return null;
         }
 
+        iconUI.ApplyBarTooltipPlacement(tooltipUseHoverAboveScreenOffset);
         activeIcons[key] = iconUI;
         iconUI.transform.SetAsLastSibling();
         return iconUI;
