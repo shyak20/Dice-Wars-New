@@ -93,6 +93,9 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
 
+        if (CurrentDie == die && dieTooltipPanel.activeSelf)
+            return;
+
         CurrentDie = die;
         dieTooltipPanel.SetActive(true);
         DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
@@ -196,6 +199,38 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             slot.SetInteractable(interactable);
             slot.SetHoverRevealEnabled(interactable);
         }
+    }
+
+    /// <summary>
+    /// Disables raycasts on decorative tooltip graphics so the panel does not steal hover from dice underneath.
+    /// Face/gem slot graphics are left unchanged so nested hover tooltips still work.
+    /// </summary>
+    public void SetDecorativeRaycastBlocking(bool blocks)
+    {
+        if (dieTooltipPanel == null)
+            return;
+
+        foreach (var graphic in dieTooltipPanel.GetComponentsInChildren<Graphic>(true))
+        {
+            if (IsDescendantOf(graphic.transform, dieTooltipSlotContainer))
+                continue;
+            if (IsDescendantOf(graphic.transform, dieTooltipGemIconContainer))
+                continue;
+            if (IsDescendantOf(graphic.transform, faceHoverTooltipPanel != null ? faceHoverTooltipPanel.transform : null))
+                continue;
+            if (IsDescendantOf(graphic.transform, statusHoverTooltipPanel != null ? statusHoverTooltipPanel.transform : null))
+                continue;
+
+            graphic.raycastTarget = blocks;
+        }
+    }
+
+    static bool IsDescendantOf(Transform transform, Transform ancestor)
+    {
+        if (transform == null || ancestor == null)
+            return false;
+
+        return transform == ancestor || transform.IsChildOf(ancestor);
     }
 
     public void Hide()

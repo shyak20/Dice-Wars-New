@@ -5,7 +5,6 @@ using UnityEngine;
 public enum TreasureRewardKind
 {
     Gold,
-    RubyShards,
 }
 
 [Serializable]
@@ -14,8 +13,6 @@ public struct TreasureRewardEntry
     public TreasureRewardKind kind;
     [Min(0)] public int goldMin;
     [Min(0)] public int goldMax;
-    [Min(0)] public int rubyShardMin;
-    [Min(0)] public int rubyShardMax;
 }
 
 /// <summary>One treasure chest definition for map <see cref="MapEventType.Treasure"/> tiles; rolled per act from <see cref="MapActDefinitionSO"/>.</summary>
@@ -30,24 +27,10 @@ public class MapTreasurePackSO : ScriptableObject
     public DieLootTableSO dieDropLootTable;
     [Range(0f, 1f)] public float relicDropChance;
     public RelicLootTableSO relicDropLootTable;
-    [Header("Meta currency (persistent)")]
-    [Range(0f, 1f)] public float rubyShardBonusDropChance;
-    [Min(0)] public int rubyShardBonusMin = 1;
-    [Min(0)] public int rubyShardBonusMax = 3;
 
     private void OnValidate()
     {
         dieDropChance = Mathf.Clamp01(dieDropChance);
         relicDropChance = Mathf.Clamp01(relicDropChance);
-        rubyShardBonusDropChance = Mathf.Clamp01(rubyShardBonusDropChance);
-        rubyShardBonusMax = Mathf.Max(rubyShardBonusMin, rubyShardBonusMax);
-
-        if (rewards == null) return;
-        for (var i = 0; i < rewards.Count; i++)
-        {
-            var e = rewards[i];
-            if (e.kind != TreasureRewardKind.Gold) continue;
-            rewards[i] = e;
-        }
     }
 }

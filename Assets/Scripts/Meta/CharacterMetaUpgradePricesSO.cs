@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
-/// Ruby shard costs and constant stat increments for per-character meta upgrades.
-/// Each price list length defines the maximum number of purchases for that upgrade track.
+/// Per-character meta upgrade tier limits and constant stat increments.
+/// Each tier list length defines the maximum number of upgrades for that track (list values are unused until a future unlock source is added).
 /// </summary>
 [CreateAssetMenu(fileName = "Character Meta Upgrade Prices", menuName = "DiceGame/Meta/Character Meta Upgrade Prices")]
 public sealed class CharacterMetaUpgradePricesSO : ScriptableObject
@@ -12,34 +13,27 @@ public sealed class CharacterMetaUpgradePricesSO : ScriptableObject
     [SerializeField, Min(1)] private int healthIncreasePerUpgrade = 5;
     [SerializeField, Min(1)] private int maxPowerIncreasePerUpgrade = 1;
 
-    [Header("Ruby shard cost per tier (list length = max upgrades)")]
-    [SerializeField] private List<int> healthUpgradePrices = new List<int>();
-    [SerializeField] private List<int> maxPowerUpgradePrices = new List<int>();
-    [SerializeField] private List<int> startingDiceUnlockPrices = new List<int>();
+    [Header("Upgrade tiers (list length = max upgrades per track)")]
+    [FormerlySerializedAs("healthUpgradePrices")]
+    [SerializeField] private List<int> healthUpgradeTiers = new List<int>();
+    [FormerlySerializedAs("maxPowerUpgradePrices")]
+    [SerializeField] private List<int> maxPowerUpgradeTiers = new List<int>();
+    [FormerlySerializedAs("startingDiceUnlockPrices")]
+    [SerializeField] private List<int> startingDiceUnlockTiers = new List<int>();
 
     public int HealthIncreasePerUpgrade => healthIncreasePerUpgrade;
     public int MaxPowerIncreasePerUpgrade => maxPowerIncreasePerUpgrade;
 
-    public int MaxHealthUpgrades => healthUpgradePrices != null ? healthUpgradePrices.Count : 0;
-    public int MaxMaxPowerUpgrades => maxPowerUpgradePrices != null ? maxPowerUpgradePrices.Count : 0;
-    public int MaxStartingDiceUnlocks => startingDiceUnlockPrices != null ? startingDiceUnlockPrices.Count : 0;
+    public int MaxHealthUpgrades => healthUpgradeTiers != null ? healthUpgradeTiers.Count : 0;
+    public int MaxMaxPowerUpgrades => maxPowerUpgradeTiers != null ? maxPowerUpgradeTiers.Count : 0;
+    public int MaxStartingDiceUnlocks => startingDiceUnlockTiers != null ? startingDiceUnlockTiers.Count : 0;
 
-    public bool TryGetHealthUpgradePrice(int currentLevel, out int price) =>
-        TryGetPriceAtLevel(healthUpgradePrices, currentLevel, out price);
+    public bool HasNextHealthUpgradeTier(int currentLevel) => HasNextTier(healthUpgradeTiers, currentLevel);
 
-    public bool TryGetMaxPowerUpgradePrice(int currentLevel, out int price) =>
-        TryGetPriceAtLevel(maxPowerUpgradePrices, currentLevel, out price);
+    public bool HasNextMaxPowerUpgradeTier(int currentLevel) => HasNextTier(maxPowerUpgradeTiers, currentLevel);
 
-    public bool TryGetStartingDiceUnlockPrice(int currentLevel, out int price) =>
-        TryGetPriceAtLevel(startingDiceUnlockPrices, currentLevel, out price);
+    public bool HasNextStartingDiceUnlockTier(int currentLevel) => HasNextTier(startingDiceUnlockTiers, currentLevel);
 
-    static bool TryGetPriceAtLevel(List<int> prices, int currentLevel, out int price)
-    {
-        price = 0;
-        if (prices == null || currentLevel < 0 || currentLevel >= prices.Count)
-            return false;
-
-        price = Mathf.Max(0, prices[currentLevel]);
-        return true;
-    }
+    static bool HasNextTier(List<int> tiers, int currentLevel) =>
+        tiers != null && currentLevel >= 0 && currentLevel < tiers.Count;
 }

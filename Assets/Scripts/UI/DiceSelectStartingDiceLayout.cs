@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using TMPro;
 
@@ -14,11 +12,18 @@ public sealed class DiceSelectStartingDiceLayout : MonoBehaviour
 {
     [Tooltip("Parent with a Layout Group (Horizontal or Grid) that arranges spawned die previews.")]
     [SerializeField] private Transform slotContainer;
-    [FormerlySerializedAs("dieSlotPrefab")]
     [SerializeField] private GameObject dieSlotUiPrefab;
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
+    [Tooltip("Instantiated under the scene Canvas when no DieTooltipOverlayUI is found (e.g. Selected Die Tooltip prefab).")]
+    [SerializeField] private GameObject dieTooltipOverlayPrefab;
 
     private readonly List<GameObject> _activeSlotObjects = new List<GameObject>();
+    private DieTooltipOverlayUI _runtimeTooltipOverlay;
+
+    void Awake()
+    {
+        EnsureTooltipOverlay();
+    }
 
     public void RefreshDeck(IReadOnlyList<DieAssetSO> deck)
     {
@@ -39,6 +44,9 @@ public sealed class DiceSelectStartingDiceLayout : MonoBehaviour
             return;
         }
 
+        if (!EnsureTooltipOverlay())
+            return;
+
         if (slotContainer.GetComponent<LayoutGroup>() == null)
         {
             Debug.LogWarning(
@@ -56,6 +64,62 @@ public sealed class DiceSelectStartingDiceLayout : MonoBehaviour
             SetupDieSlot(go, die);
             _activeSlotObjects.Add(go);
         }
+    }
+
+    bool EnsureTooltipOverlay()
+    {
+        if (_runtimeTooltipOverlay != null)
+            return true;
+
+        if (dieTooltipOverlay != null)
+        {
+            _runtimeTooltipOverlay = dieTooltipOverlay;
+            ConfigureOverlayForDiceSelect();
+            return true;
+        }
+
+        _runtimeTooltipOverlay = GetComponentInChildren<DieTooltipOverlayUI>(true);
+        if (_runtimeTooltipOverlay != null)
+        {
+            ConfigureOverlayForDiceSelect();
+            return true;
+        }
+
+        _runtimeTooltipOverlay = FindObjectOfType<DieTooltipOverlayUI>(true);
+        if (_runtimeTooltipOverlay != null)
+        {
+            ConfigureOverlayForDiceSelect();
+            return true;
+        }
+
+        if (dieTooltipOverlayPrefab != null)
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            var parent = canvas != null ? canvas.transform : transform;
+            var instance = Instantiate(dieTooltipOverlayPrefab, parent);
+            _runtimeTooltipOverlay = instance.GetComponent<DieTooltipOverlayUI>();
+            if (_runtimeTooltipOverlay == null)
+            {
+                Debug.LogError(
+                    $"DiceSelectStartingDiceLayout: dieTooltipOverlayPrefab '{dieTooltipOverlayPrefab.name}' needs DieTooltipOverlayUI.",
+                    dieTooltipOverlayPrefab);
+                Destroy(instance);
+                return false;
+            }
+
+            ConfigureOverlayForDiceSelect();
+            return true;
+        }
+
+        Debug.LogError(
+            "DiceSelectStartingDiceLayout: assign dieTooltipOverlay or dieTooltipOverlayPrefab (Selected Die Tooltip).",
+            this);
+        return false;
+    }
+
+    void ConfigureOverlayForDiceSelect()
+    {
+        _runtimeTooltipOverlay.SetDecorativeRaycastBlocking(false);
     }
 
     void SetupDieSlot(GameObject slotObject, DieAssetSO die)
@@ -92,27 +156,43 @@ public sealed class DiceSelectStartingDiceLayout : MonoBehaviour
 
     void RegisterDieTooltipHover(GameObject slotObject, DieAssetSO die, DiceTrayButtonView trayView)
     {
-        if (dieTooltipOverlay == null || slotObject == null || die == null)
+        if (_runtimeTooltipOverlay == null || slotObject == null || die == null)
             return;
 
-        var et = slotObject.GetComponent<EventTrigger>() ?? slotObject.AddComponent<EventTrigger>();
-        et.triggers.RemoveAll(entry =>
-            entry.eventID == EventTriggerType.PointerEnter || entry.eventID == EventTriggerType.PointerExit);
+        var hoverTarget = ResolveHoverTarget(slotObject);
+        if (hoverTarget == null)
+        {
+            Debug.LogWarning($"DiceSelectStartingDiceLayout: no hover target on '{slotObject.name}'.", slotObject);
+            return;
+        }
 
-        var iconRect = trayView != null ? trayView.IconRectTransform : slotObject.transform as RectTransform;
+        var hover = hoverTarget.GetComponent<DiceSelectDieTooltipHover>();
+        if (hover == null)
+            hover = hoverTarget.gameObject.AddComponent<DiceSelectDieTooltipHover>();
 
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => dieTooltipOverlay.ShowDie(die, false, null, iconRect));
-        et.triggers.Add(enter);
+        hover.Bind(die, _runtimeTooltipOverlay);
+    }
 
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ => dieTooltipOverlay.Hide());
-        et.triggers.Add(exit);
+    static GameObject ResolveHoverTarget(GameObject slotObject)
+    {
+        var button = slotObject.GetComponent<Button>();
+        if (button != null)
+            return button.gameObject;
+
+        button = slotObject.GetComponentInChildren<Button>(true);
+        if (button != null)
+            return button.gameObject;
+
+        if (slotObject.GetComponent<Graphic>() != null)
+            return slotObject;
+
+        var graphic = slotObject.GetComponentInChildren<Graphic>(true);
+        return graphic != null ? graphic.gameObject : null;
     }
 
     void ClearSlots()
     {
-        dieTooltipOverlay?.Hide();
+        _runtimeTooltipOverlay?.Hide();
 
         for (var i = 0; i < _activeSlotObjects.Count; i++)
         {

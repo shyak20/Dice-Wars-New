@@ -3174,7 +3174,7 @@ MonoBehaviour:
   winStagePanel: {fileID: 1222476796}
   rewardsLayout: {fileID: 1195403602}
   goldRewardRowPrefab: {fileID: 161149463819161139, guid: 95db9d0d92f04f34cac180c389cc4397, type: 3}
-  rubyShardRewardRowPrefab: {fileID: 161149463819161139, guid: 6d4e2515b9b45d34494baff6c0a90fd4, type: 3}
+  rubyShardRewardRowPrefab: {fileID: 0}
   gemRewardRowPrefab: {fileID: 161149463819161139, guid: 71a30750c4cfa7148bdd7dfbf9b03956, type: 3}
   relicRewardRowPrefab: {fileID: 161149463819161139, guid: 70ab58cd50c26dd4bad69de75d9bbb5d, type: 3}
   faceRewardRowPrefab: {fileID: 161149463819161139, guid: 2dd23be1bd7d1e94ca34bf4f4f5dd87a, type: 3}

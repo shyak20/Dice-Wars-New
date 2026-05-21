@@ -39,6 +39,10 @@ public class PlayerDataSO : ScriptableObject
     [Tooltip("Base max power before deck slots 3+, shrine bonus, and relic query modifiers.")]
     [Min(1)] public int baseMaxPower = 12;
 
+    [Header("Map")]
+    [Tooltip("Moves allowed per map before corruption / overflow damage (see MapMovementManager).")]
+    [Min(1)] public int moveLimit = 8;
+
     [Tooltip("Perfect strike pool multiplier when no higher relic multiplier applies (overcharge stacks add on top).")]
     [Min(1)] public int perfectStrikeBaseMultiplier = 2;
 }

@@ -22,8 +22,6 @@ public class MapActDefinitionSO : ScriptableObject
     [Min(1)] public int gridWidth = 4;
     [Tooltip("Grid rows for maps generated this act.")]
     [Min(1)] public int gridHeight = 4;
-    [Tooltip("Moves allowed before corruption / overflow damage (see MapMovementManager).")]
-    [Min(1)] public int moveLimit = 8;
 
     [Header("Map Events (min/max per map, excluding start & boss)")]
     [Tooltip("Elite combat tiles — not orthogonally adjacent to each other.")]
@@ -80,7 +78,6 @@ public class MapActDefinitionSO : ScriptableObject
     {
         gridWidth = Mathf.Max(1, gridWidth);
         gridHeight = Mathf.Max(1, gridHeight);
-        moveLimit = Mathf.Max(1, moveLimit);
         eliteMaxOnMap = Mathf.Max(eliteMaxOnMap, eliteMinOnMap);
         shopMaxOnMap = Mathf.Max(shopMaxOnMap, shopMinOnMap);
         shrineMaxOnMap = Mathf.Max(shrineMaxOnMap, shrineMinOnMap);

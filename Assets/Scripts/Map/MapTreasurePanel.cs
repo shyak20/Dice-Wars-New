@@ -11,8 +11,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
     [SerializeField] private Transform rewardsLayout;
     [Header("Reward row prefabs (each root must have RunRewardOfferRow)")]
     [SerializeField] private GameObject goldRewardRowPrefab;
-    [Tooltip("Optional. Falls back to gold row prefab when unset.")]
-    [SerializeField] private GameObject rubyShardRewardRowPrefab;
     [SerializeField] private GameObject relicRewardRowPrefab;
     [SerializeField] private GameObject dieRewardRowPrefab;
     [Header("UI")]
@@ -51,7 +49,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
     private enum RolledRewardKind
     {
         Gold,
-        RubyShards,
         Die,
         Relic
     }
@@ -60,7 +57,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
     {
         public RolledRewardKind Kind;
         public int GoldAmount;
-        public int RubyShardAmount;
         public DieAssetSO Die;
         public RelicSO Relic;
     }
@@ -243,15 +239,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
                     _pendingRowCompletions++;
                     break;
                 }
-                case RolledRewardKind.RubyShards:
-                {
-                    var prefab = rubyShardRewardRowPrefab != null ? rubyShardRewardRowPrefab : goldRewardRowPrefab;
-                    if (!TryInstantiateRow(prefab, "ruby shard", out var row))
-                        return;
-                    row.SetupRubyShards(reward.RubyShardAmount, OnOneRewardRowDone);
-                    _pendingRowCompletions++;
-                    break;
-                }
                 case RolledRewardKind.Relic:
                 {
                     if (!TryInstantiateRow(relicRewardRowPrefab, "relic", out var row))
@@ -356,22 +343,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
 
                         break;
                     }
-                    case TreasureRewardKind.RubyShards:
-                    {
-                        var lo = Mathf.Min(e.rubyShardMin, e.rubyShardMax);
-                        var hi = Mathf.Max(e.rubyShardMin, e.rubyShardMax);
-                        var amount = Random.Range(lo, hi + 1);
-                        if (amount > 0)
-                        {
-                            destination.Add(new RolledReward
-                            {
-                                Kind = RolledRewardKind.RubyShards,
-                                RubyShardAmount = amount
-                            });
-                        }
-
-                        break;
-                    }
                 }
             }
         }
@@ -398,21 +369,6 @@ public sealed class MapTreasurePanel : MonoBehaviour
                 {
                     Kind = RolledRewardKind.Relic,
                     Relic = rolled[0]
-                });
-            }
-        }
-
-        if (pack.rubyShardBonusDropChance > 0f && Random.value <= pack.rubyShardBonusDropChance)
-        {
-            var lo = Mathf.Min(pack.rubyShardBonusMin, pack.rubyShardBonusMax);
-            var hi = Mathf.Max(pack.rubyShardBonusMin, pack.rubyShardBonusMax);
-            var amount = Random.Range(lo, hi + 1);
-            if (amount > 0)
-            {
-                destination.Add(new RolledReward
-                {
-                    Kind = RolledRewardKind.RubyShards,
-                    RubyShardAmount = amount
                 });
             }
         }

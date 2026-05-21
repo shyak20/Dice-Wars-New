@@ -33,7 +33,6 @@ public class RunRewardOfferRow : MonoBehaviour
     private FaceRewardManager _faceRewards;
 
     private int _goldAmount;
-    private int _rubyShardAmount;
     private GemSO _gem;
     private RelicSO _relic;
     private DieAssetSO _die;
@@ -62,17 +61,6 @@ public class RunRewardOfferRow : MonoBehaviour
         ApplyGoldAmountDisplay(_goldAmount);
         DisableTooltipTarget();
         WireButtonGold();
-    }
-
-    public void SetupRubyShards(int amount, Action onCollected)
-    {
-        ClearRowState();
-        _rubyShardAmount = Mathf.Max(0, amount);
-        _onCollected = onCollected;
-
-        ApplyRubyShardAmountDisplay(_rubyShardAmount);
-        DisableTooltipTarget();
-        WireButtonRubyShards();
     }
 
     public void SetupGem(
@@ -153,7 +141,6 @@ public class RunRewardOfferRow : MonoBehaviour
         _host = null;
         _faceRewards = null;
         _goldAmount = 0;
-        _rubyShardAmount = 0;
         _gem = null;
         _relic = null;
         _die = null;
@@ -191,11 +178,6 @@ public class RunRewardOfferRow : MonoBehaviour
         {
             numberTextField.text = amount.ToString();
         }
-    }
-
-    private void ApplyRubyShardAmountDisplay(int amount)
-    {
-        ApplyGoldAmountDisplay(amount);
     }
 
     private void HideNumberLine()
@@ -299,14 +281,6 @@ public class RunRewardOfferRow : MonoBehaviour
         actionButton.onClick.AddListener(OnGoldClicked);
     }
 
-    private void WireButtonRubyShards()
-    {
-        if (actionButton == null)
-            return;
-        actionButton.onClick.RemoveAllListeners();
-        actionButton.onClick.AddListener(OnRubyShardsClicked);
-    }
-
     private void WireButtonGem()
     {
         if (actionButton == null)
@@ -337,15 +311,6 @@ public class RunRewardOfferRow : MonoBehaviour
             return;
         actionButton.onClick.RemoveAllListeners();
         actionButton.onClick.AddListener(OnFaceClicked);
-    }
-
-    private void OnRubyShardsClicked()
-    {
-        if (_rubyShardAmount > 0)
-            MetaProgressionManager.TryGetRuntime()?.GrantRubyShards(_rubyShardAmount);
-
-        _onCollected?.Invoke();
-        Destroy(gameObject);
     }
 
     private void OnGoldClicked()

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -17,8 +18,6 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     [SerializeField] private Image characterPortraitImage;
     [SerializeField] private TMP_Text characterNameLabel;
     [SerializeField] private TMP_Text characterDescriptionLabel;
-    [Header("Meta upgrades")]
-    [SerializeField] private DiceSelectCharacterUpgradePanel characterUpgradePanel;
     [Header("Flow")]
     [SerializeField] private Button continueButton;
     [Tooltip("Optional blocker visual shown while Continue is locked.")]
@@ -27,6 +26,8 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     private readonly List<PlayerDataSO> _selectableCharacters = new List<PlayerDataSO>();
     private readonly List<DiceSelectCharacterButton> _characterButtons = new List<DiceSelectCharacterButton>();
     private int _selectedCharacterIndex = -1;
+
+    public event Action<PlayerDataSO> CharacterPreviewChanged;
 
     private void Awake()
     {
@@ -53,9 +54,6 @@ public sealed class DiceSelectSceneController : MonoBehaviour
 
         if (startingDiceLayout == null)
             startingDiceLayout = GetComponentInChildren<DiceSelectStartingDiceLayout>(true);
-
-        if (characterUpgradePanel == null)
-            characterUpgradePanel = GetComponentInChildren<DiceSelectCharacterUpgradePanel>(true);
 
         if (startingDiceLayout == null)
         {
@@ -85,9 +83,6 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         RefreshCharacterButtonSelection();
         RefreshFlowUi();
     }
-
-    public PlayerDataSO SelectedCharacterTemplate =>
-        TryGetSelectedCharacter(out var character) ? character : null;
 
     void BuildSelectableCharacterList()
     {
@@ -167,17 +162,10 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         }
 
         startingDiceLayout.RefreshDeck(GetEffectiveStartingDeckPreview(character));
-        characterUpgradePanel?.Refresh(character);
+        CharacterPreviewChanged?.Invoke(character);
     }
 
-    /// <summary>Called by <see cref="DiceSelectCharacterUpgradePanel"/> after a purchase so deck/stats preview updates.</summary>
-    public void RefreshSelectedCharacterPreview()
-    {
-        if (!TryGetSelectedCharacter(out var character))
-            return;
-
-        startingDiceLayout?.RefreshDeck(GetEffectiveStartingDeckPreview(character));
-    }
+    public bool TryGetPreviewCharacter(out PlayerDataSO character) => TryGetSelectedCharacter(out character);
 
     IReadOnlyList<DieAssetSO> GetEffectiveStartingDeckPreview(PlayerDataSO character)
     {

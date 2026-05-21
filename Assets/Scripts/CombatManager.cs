@@ -2323,11 +2323,9 @@ public class CombatManager : MonoBehaviour
         SimulationSpeedController.ApplyRealtimeGlobally();
 
         VictoryRewardBuffer.PendingGold = 0;
-        VictoryRewardBuffer.PendingRubyShards = 0;
         if (activeEnemy != null && activeEnemy.enemyData != null)
         {
             VictoryRewardBuffer.PendingGold = activeEnemy.enemyData.RollGoldReward();
-            VictoryRewardBuffer.PendingRubyShards = activeEnemy.enemyData.RollRubyShardReward();
             EnemyBonusRewardResolver.RollAndGrant(activeEnemy.enemyData);
         }
 

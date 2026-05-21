@@ -25,7 +25,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 78ee3181637c4034a873ce0e5835a0d8, type: 2}
   gridWidth: 5
   gridHeight: 3
-  moveLimit: 10
   eliteMinOnMap: 1
   eliteMaxOnMap: 2
   shopMinOnMap: 1

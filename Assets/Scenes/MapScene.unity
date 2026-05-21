@@ -24145,7 +24145,7 @@ MonoBehaviour:
   root: {fileID: 1677661259}
   rewardsLayout: {fileID: 1497314059}
   goldRewardRowPrefab: {fileID: 161149463819161139, guid: 95db9d0d92f04f34cac180c389cc4397, type: 3}
-  rubyShardRewardRowPrefab: {fileID: 161149463819161139, guid: 6d4e2515b9b45d34494baff6c0a90fd4, type: 3}
+  rubyShardRewardRowPrefab: {fileID: 0}
   relicRewardRowPrefab: {fileID: 161149463819161139, guid: 70ab58cd50c26dd4bad69de75d9bbb5d, type: 3}
   dieRewardRowPrefab: {fileID: 161149463819161139, guid: dfb7b411d57636344ad10798d63a1ffa, type: 3}
   closeButton: {fileID: 855657482}

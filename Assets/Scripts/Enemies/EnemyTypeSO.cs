@@ -102,11 +102,6 @@ public class EnemyTypeSO : ScriptableObject
     [Min(0)] public int minGoldReward;
     [Tooltip("Maximum gold granted when this enemy is defeated (run currency).")]
     [Min(0)] public int maxGoldReward;
-    [Header("Meta currency (persistent between runs)")]
-    [Tooltip("Chance to drop Ruby Shards when this enemy is defeated.")]
-    [Range(0f, 1f)] public float rubyShardDropChance;
-    [Min(0)] public int rubyShardDropMin = 1;
-    [Min(0)] public int rubyShardDropMax = 1;
     [Tooltip("Optional: extra reward rolls when this enemy dies.")]
     public List<EnemyBonusRewardDrop> additionalRewardDrops = new List<EnemyBonusRewardDrop>();
     [Tooltip("Pool used by additionalRewardDrops when pool = DieFaces.")]
@@ -141,22 +136,5 @@ public class EnemyTypeSO : ScriptableObject
         var min = Mathf.Max(0, minGoldReward);
         var max = Mathf.Max(min, maxGoldReward);
         return Random.Range(min, max + 1);
-    }
-
-    /// <summary>Rolls a Ruby Shard amount for victory rewards; returns 0 when the drop fails.</summary>
-    public int RollRubyShardReward()
-    {
-        if (rubyShardDropChance <= 0f || Random.value > rubyShardDropChance)
-            return 0;
-
-        var min = Mathf.Max(0, rubyShardDropMin);
-        var max = Mathf.Max(min, rubyShardDropMax);
-        return Random.Range(min, max + 1);
-    }
-
-    private void OnValidate()
-    {
-        rubyShardDropChance = Mathf.Clamp01(rubyShardDropChance);
-        rubyShardDropMax = Mathf.Max(rubyShardDropMin, rubyShardDropMax);
     }
 }

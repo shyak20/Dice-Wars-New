@@ -6,7 +6,6 @@ public enum MetaCharacterUpgradePurchaseResult
 {
     Success,
     MaxLevelReached,
-    InsufficientRubyShards,
     InvalidCharacter,
     ConfigMissing,
     InvalidLockedDie
@@ -129,11 +128,8 @@ public sealed class MetaCharacterUpgradeManager : MonoBehaviour
         if (state.healthLevel >= upgradePrices.MaxHealthUpgrades)
             return MetaCharacterUpgradePurchaseResult.MaxLevelReached;
 
-        if (!upgradePrices.TryGetHealthUpgradePrice(state.healthLevel, out var price))
+        if (!upgradePrices.HasNextHealthUpgradeTier(state.healthLevel))
             return MetaCharacterUpgradePurchaseResult.MaxLevelReached;
-
-        if (!TrySpendRubyShards(price))
-            return MetaCharacterUpgradePurchaseResult.InsufficientRubyShards;
 
         state.healthLevel++;
         SaveState(character, state);
@@ -152,11 +148,8 @@ public sealed class MetaCharacterUpgradeManager : MonoBehaviour
         if (state.maxPowerLevel >= upgradePrices.MaxMaxPowerUpgrades)
             return MetaCharacterUpgradePurchaseResult.MaxLevelReached;
 
-        if (!upgradePrices.TryGetMaxPowerUpgradePrice(state.maxPowerLevel, out var price))
+        if (!upgradePrices.HasNextMaxPowerUpgradeTier(state.maxPowerLevel))
             return MetaCharacterUpgradePurchaseResult.MaxLevelReached;
-
-        if (!TrySpendRubyShards(price))
-            return MetaCharacterUpgradePurchaseResult.InsufficientRubyShards;
 
         state.maxPowerLevel++;
         SaveState(character, state);
@@ -182,11 +175,8 @@ public sealed class MetaCharacterUpgradeManager : MonoBehaviour
             return MetaCharacterUpgradePurchaseResult.InvalidLockedDie;
         }
 
-        if (!upgradePrices.TryGetStartingDiceUnlockPrice(state.startingDiceUnlockLevel, out var price))
+        if (!upgradePrices.HasNextStartingDiceUnlockTier(state.startingDiceUnlockLevel))
             return MetaCharacterUpgradePurchaseResult.MaxLevelReached;
-
-        if (!TrySpendRubyShards(price))
-            return MetaCharacterUpgradePurchaseResult.InsufficientRubyShards;
 
         state.startingDiceUnlockLevel++;
         SaveState(character, state);
@@ -288,18 +278,6 @@ public sealed class MetaCharacterUpgradeManager : MonoBehaviour
 
         state = LoadState(character);
         return true;
-    }
-
-    bool TrySpendRubyShards(int price)
-    {
-        var meta = MetaProgressionManager.TryGetRuntime();
-        if (meta == null)
-        {
-            Debug.LogError("MetaCharacterUpgradeManager: MetaProgressionManager missing.", this);
-            return false;
-        }
-
-        return meta.TrySpendRubyShards(price);
     }
 
     void NotifyChanged(PlayerDataSO character) => OnCharacterUpgradesChanged?.Invoke(character);

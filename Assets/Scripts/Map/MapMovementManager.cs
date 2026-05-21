@@ -552,11 +552,14 @@ public sealed class MapMovementManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Map runs: <see cref="MapActDefinitionSO.gridWidth"/>, <see cref="MapActDefinitionSO.gridHeight"/>, <see cref="MapActDefinitionSO.moveLimit"/>.
+    /// Map runs: grid size from <see cref="MapActDefinitionSO"/>; move limit from <see cref="PlayerDataSO.moveLimit"/>.
     /// Otherwise uses serialized defaults on this component.
     /// </summary>
     private void RefreshEffectiveMapLayoutFromActOrDefaults()
     {
+        var moveBonus = RelicActionRunner.QueryIntSum(RelicPhases.QueryMapMoveBonus);
+        var playerMoveLimit = ResolveMoveLimitFromPlayerDataOrInspectorFallback();
+
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
         {
             var act = RunManager.Instance.GetCurrentMapActDefinitionOrNull();
@@ -564,7 +567,7 @@ public sealed class MapMovementManager : MonoBehaviour
             {
                 _effectiveGridWidth = Mathf.Max(1, act.gridWidth);
                 _effectiveGridHeight = Mathf.Max(1, act.gridHeight);
-                _effectiveMoveLimit = Mathf.Max(1, act.moveLimit) + RelicActionRunner.QueryIntSum(RelicPhases.QueryMapMoveBonus);
+                _effectiveMoveLimit = playerMoveLimit + moveBonus;
                 return;
             }
 
@@ -573,6 +576,16 @@ public sealed class MapMovementManager : MonoBehaviour
 
         _effectiveGridWidth = Mathf.Max(1, gridWidth);
         _effectiveGridHeight = Mathf.Max(1, gridHeight);
-        _effectiveMoveLimit = Mathf.Max(1, moveLimit) + RelicActionRunner.QueryIntSum(RelicPhases.QueryMapMoveBonus);
+        _effectiveMoveLimit = playerMoveLimit + moveBonus;
+    }
+
+    int ResolveMoveLimitFromPlayerDataOrInspectorFallback()
+    {
+        var playerData = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+        if (playerData != null)
+            return Mathf.Max(1, playerData.moveLimit);
+
+        Debug.LogError("MapMovementManager: PlayerDataContainer.RuntimeData is null — using inspector move limit fallback.", this);
+        return Mathf.Max(1, moveLimit);
     }
 }

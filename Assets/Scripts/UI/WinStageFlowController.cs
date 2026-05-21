@@ -17,8 +17,6 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     [FormerlySerializedAs("rewardRowPrefab")]
     [Tooltip("Row prefab for gold; tune presentation on RunRewardOfferRow on that prefab.")]
     [SerializeField] private GameObject goldRewardRowPrefab;
-    [Tooltip("Row prefab for Ruby Shards (meta currency). Falls back to gold row prefab when unset.")]
-    [SerializeField] private GameObject rubyShardRewardRowPrefab;
     [SerializeField] private GameObject gemRewardRowPrefab;
     [SerializeField] private GameObject relicRewardRowPrefab;
     [SerializeField] private GameObject faceRewardRowPrefab;
@@ -39,7 +37,6 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         "You still have unclaimed rewards.\nContinue without collecting them?";
 
     private int _uncollectedGold;
-    private int _uncollectedRubyShards;
     private int _uncollectedGemRewards;
     private int _uncollectedRelicRewards;
     private int _uncollectedDieRewards;
@@ -86,7 +83,6 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         }
 
         _uncollectedGold = VictoryRewardBuffer.PendingGold;
-        _uncollectedRubyShards = VictoryRewardBuffer.PendingRubyShards;
         _pendingGemRewards.Clear();
         _pendingGemRewards.AddRange(VictoryRewardBuffer.PendingGems);
         _pendingRelicRewards.Clear();
@@ -135,9 +131,6 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
 
         if (_uncollectedGold > 0)
             InstantiateGoldRow();
-
-        if (_uncollectedRubyShards > 0)
-            InstantiateRubyShardRow();
 
         if (_pendingGemRewards.Count > 0 && faceRewardManager != null)
         {
@@ -207,23 +200,6 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
                 UpdateContinueInteractable();
             });
         }
-    }
-
-    private void InstantiateRubyShardRow()
-    {
-        var prefab = rubyShardRewardRowPrefab != null ? rubyShardRewardRowPrefab : goldRewardRowPrefab;
-        if (!TryInstantiateRow(prefab, "ruby shard", out var row))
-        {
-            MetaProgressionManager.TryGetRuntime()?.GrantRubyShards(_uncollectedRubyShards);
-            _uncollectedRubyShards = 0;
-            return;
-        }
-
-        row.SetupRubyShards(_uncollectedRubyShards, () =>
-        {
-            _uncollectedRubyShards = 0;
-            UpdateContinueInteractable();
-        });
     }
 
     private void InstantiateGoldRow()
@@ -298,7 +274,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
             return;
         if (!IsWinStageVisible)
             return;
-        if (_uncollectedGold > 0 || _uncollectedRubyShards > 0 || _uncollectedGemRewards > 0 || _uncollectedRelicRewards > 0 || _uncollectedDieRewards > 0)
+        if (_uncollectedGold > 0 || _uncollectedGemRewards > 0 || _uncollectedRelicRewards > 0 || _uncollectedDieRewards > 0)
             return;
         if (_faceRewardRowPending)
             return;
@@ -330,7 +306,6 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
 
     private bool HasUncollectedRewards() =>
         _uncollectedGold > 0
-        || _uncollectedRubyShards > 0
         || _uncollectedGemRewards > 0
         || _uncollectedRelicRewards > 0
         || _uncollectedDieRewards > 0
