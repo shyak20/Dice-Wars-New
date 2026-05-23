@@ -204,6 +204,13 @@ public sealed class MapMovementManager : MonoBehaviour
 
     private void OnRunVitalityChanged() => TryShowLoseScreenIfHpDepleted();
 
+    /// <summary>Shows the map defeat screen when run HP is already 0 (e.g. options abandon run).</summary>
+    public void ForceShowDefeatScreen()
+    {
+        _loseScreenShown = false;
+        TryShowLoseScreenIfHpDepleted();
+    }
+
     private void TryShowLoseScreenIfHpDepleted()
     {
         if (_loseScreenShown)

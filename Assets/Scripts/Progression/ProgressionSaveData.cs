@@ -20,11 +20,15 @@ public struct TrialTypeLifetimeCounter
 [Serializable]
 public class ProgressionProfileSaveData
 {
-    public int saveVersion = 2;
+    public int saveVersion = 3;
     public int currentRankIndex;
     public List<TrialSaveData> activeTrialStates = new List<TrialSaveData>();
     /// <summary>Lifetime totals per <see cref="TrialType"/> (and exact roll value for <see cref="TrialType.ExactRoll"/>).</summary>
     public List<TrialTypeLifetimeCounter> lifetimeTrialCounters = new List<TrialTypeLifetimeCounter>();
     public List<string> unlockedContentIDs = new List<string>();
     public List<string> completedTrialIDs = new List<string>();
+    /// <summary>Trials completed in gameplay but not yet acknowledged on the Dice Select celebration popups.</summary>
+    public List<string> unacknowledgedTrialIds = new List<string>();
+    /// <summary>All trials on the current rank are done; rank-up is deferred until the Dice Select level-up popup is dismissed.</summary>
+    public bool pendingRankUpCelebration;
 }

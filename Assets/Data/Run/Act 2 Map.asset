@@ -18,9 +18,22 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e90e4b2912d70c2419b7be11cca5a37d, type: 2}
   possibleUnknownEvents:
   - {fileID: 11400000, guid: 7e1da11a59278e24199798074da7997d, type: 2}
-  gridWidth: 3
-  gridHeight: 3
+  treasurePacks: []
+  gridWidth: 5
+  gridHeight: 4
   eliteMinOnMap: 3
   eliteMaxOnMap: 4
   shopMinOnMap: 1
   shopMaxOnMap: 2
+  shrineMinOnMap: 0
+  shrineMaxOnMap: 0
+  unknownMinOnMap: 0
+  unknownMaxOnMap: 0
+  treasureMinOnMap: 0
+  treasureMaxOnMap: 0
+  eliteMinStepsFromStart: 0
+  shopMinStepsFromStart: 0
+  shrineMinStepsFromStart: 0
+  treasureMinStepsFromStart: 0
+  unknownMinStepsFromStart: 0
+  maxSameNumericValueFacesPerDie: 6

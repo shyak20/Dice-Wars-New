@@ -79,11 +79,15 @@ public class WinLoseUIController : MonoBehaviour
         }
     }
 
-    private void ShowGameOver()
+    private void ShowGameOver() => ShowDefeatScreen();
+
+    /// <summary>Shows the combat defeat panel (e.g. abandon run from options while in <c>FightScene</c>).</summary>
+    public void ShowDefeatScreen()
     {
         if (winStageFlow != null)
             winStageFlow.ApplyVictoryHideListImmediately();
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(true);
     }
 
     public void GoToMainMenu()

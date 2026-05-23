@@ -207,6 +207,66 @@ public sealed class ProgressionManager : MonoBehaviour
         }
     }
 
+    public bool HasPendingCelebrations()
+    {
+        if (_save == null)
+            return false;
+
+        return HasUnacknowledgedTrialCelebrations() || _save.pendingRankUpCelebration;
+    }
+
+    public bool HasUnacknowledgedTrialCelebrations() =>
+        _save?.unacknowledgedTrialIds != null && _save.unacknowledgedTrialIds.Count > 0;
+
+    public bool HasPendingRankUpCelebration() =>
+        _save != null && _save.pendingRankUpCelebration;
+
+    /// <summary>Pending trial completions for the active rank, in catalog order.</summary>
+    public void CollectUnacknowledgedTrials(List<PlayerTrialSO> into)
+    {
+        into.Clear();
+        if (_save?.unacknowledgedTrialIds == null || _activeRank?.associatedTrials == null)
+            return;
+
+        for (var i = 0; i < _activeRank.associatedTrials.Count; i++)
+        {
+            var trial = _activeRank.associatedTrials[i];
+            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.trialID))
+                continue;
+
+            if (IsTrialUnacknowledged(trial.trialID))
+                into.Add(trial);
+        }
+    }
+
+    public void AcknowledgeTrialCelebration(string trialId)
+    {
+        if (_save?.unacknowledgedTrialIds == null || ProgressionContentIds.IsNullOrEmpty(trialId))
+            return;
+
+        _save.unacknowledgedTrialIds.RemoveAll(id => string.Equals(id, trialId, StringComparison.Ordinal));
+        Persist();
+        NotifyChanged();
+    }
+
+    /// <summary>Applies rank-up rewards and advances rank after the Dice Select level-up popup is dismissed.</summary>
+    public void AcknowledgeRankUpCelebration()
+    {
+        if (_save == null || !_save.pendingRankUpCelebration)
+            return;
+
+        _save.pendingRankUpCelebration = false;
+        TryAdvanceRank();
+    }
+
+    public static string BuildTrialCelebrationTitle(PlayerTrialSO trial)
+    {
+        if (trial == null)
+            return "Trial Complete";
+
+        return string.IsNullOrWhiteSpace(trial.trialID) ? "Trial Complete" : $"Trial Complete: {trial.trialID}";
+    }
+
     public static string BuildTrialTooltipBody(PlayerTrialSO trial, TrialSaveData state)
     {
         if (trial == null)
@@ -859,11 +919,40 @@ public sealed class ProgressionManager : MonoBehaviour
             _save.completedTrialIDs.Add(trial.trialID);
 
         ApplyTrialReward(trial);
+        QueueTrialCelebration(trial.trialID);
+        if (AllActiveTrialsCompleted())
+            _save.pendingRankUpCelebration = true;
+
         OnTrialCompleted?.Invoke(trial);
         RebuildEventSubscriptions();
         Persist();
         NotifyChanged();
-        CheckRankUpCondition();
+    }
+
+    void QueueTrialCelebration(string trialId)
+    {
+        if (_save == null || ProgressionContentIds.IsNullOrEmpty(trialId))
+            return;
+
+        _save.unacknowledgedTrialIds ??= new List<string>();
+        if (IsTrialUnacknowledged(trialId))
+            return;
+
+        _save.unacknowledgedTrialIds.Add(trialId);
+    }
+
+    bool IsTrialUnacknowledged(string trialId)
+    {
+        if (_save?.unacknowledgedTrialIds == null)
+            return false;
+
+        for (var i = 0; i < _save.unacknowledgedTrialIds.Count; i++)
+        {
+            if (string.Equals(_save.unacknowledgedTrialIds[i], trialId, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
     }
 
     void Persist()

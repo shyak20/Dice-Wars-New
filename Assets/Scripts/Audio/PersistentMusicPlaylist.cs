@@ -14,6 +14,7 @@ using UnityEngine;
 public class PersistentMusicPlaylist : MonoBehaviour
 {
     public const string MusicMutedPlayerPrefKey = "DiceWars_MusicMuted";
+    public const string MusicVolumePlayerPrefKey = "DiceWars_MusicVolume";
 
     public static PersistentMusicPlaylist Instance { get; private set; }
 
@@ -23,6 +24,8 @@ public class PersistentMusicPlaylist : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
     [Tooltip("When true, PlayerPrefs remembers mute across runs.")]
     [SerializeField] private bool persistMutePreference = true;
+    [Tooltip("When true, PlayerPrefs remembers music volume (0–1).")]
+    [SerializeField] private bool persistVolumePreference = true;
 
     [Header("Scene transitions")]
     [Tooltip("Optional. Scene names (Scene.name) → clip/crossfade for transitions before that scene has loaded once.")]
@@ -91,6 +94,9 @@ public class PersistentMusicPlaylist : MonoBehaviour
 
         if (persistMutePreference && PlayerPrefs.GetInt(MusicMutedPlayerPrefKey, 0) != 0)
             _muted = true;
+
+        if (persistVolumePreference && PlayerPrefs.HasKey(MusicVolumePlayerPrefKey))
+            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(MusicVolumePlayerPrefKey, volume));
 
         ApplyMuteAndVolume();
         MuteStateChanged?.Invoke(_muted);
@@ -261,9 +267,13 @@ public class PersistentMusicPlaylist : MonoBehaviour
     private static bool BusPlayingClip(AudioSource s, AudioClip clip) =>
         s != null && s.isPlaying && s.clip == clip;
 
+    public float MusicVolume => volume;
+
     public void SetVolume(float normalized)
     {
         volume = Mathf.Clamp01(normalized);
+        if (persistVolumePreference)
+            PlayerPrefs.SetFloat(MusicVolumePlayerPrefKey, volume);
         ApplyMuteAndVolume();
     }
 

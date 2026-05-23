@@ -17,6 +17,7 @@ MonoBehaviour:
   rankFlavorText: 
   associatedTrials:
   - {fileID: 11400000, guid: 80e7fe667746a394a986cb2e826a4fa4, type: 2}
+  - {fileID: 11400000, guid: a8c9e73572e2f2640b701e2d30b10c0c, type: 2}
   rankUpRewards:
   - rid: 6434882374853722188
   references:

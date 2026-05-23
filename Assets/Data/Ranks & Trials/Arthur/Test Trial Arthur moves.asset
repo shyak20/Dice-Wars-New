@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a8850dbf3a07e44dbe01b7e89ef2118, type: 3}
-  m_Name: Test Trial
+  m_Name: Test Trial Arthur moves
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
-  trialID: Test Trial
-  description: Kill 3 Monsters
+  trialID: Movement
+  description: Move 15 in the map
   trialIcon: {fileID: 21300000, guid: 7148a07abce224045a809b01300414b0, type: 3}
-  type: 0
-  targetValue: 2
+  type: 4
+  targetValue: 15
   exactRollValue: 1
   completionReward:
     rid: 6434882374853722192

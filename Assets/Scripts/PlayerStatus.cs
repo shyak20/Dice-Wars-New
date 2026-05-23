@@ -15,6 +15,8 @@ public class PlayerStatus : MonoBehaviour
     public TMP_Text healthText;
     public TMP_Text armorText;
     public GameObject armorIcon; // Optional: A shield icon that shows when armor > 0
+    [Tooltip("Masked portrait inside the player HP bar (Player Mask → Player Image). Uses PlayerDataSO.SmallPortrait.")]
+    [SerializeField] private Image characterPortraitImage;
 
     [Header("Floating damage numbers")]
     [Tooltip("World position used for damage popups; defaults to this transform.")]
@@ -31,6 +33,21 @@ public class PlayerStatus : MonoBehaviour
     public StatusEffectManager StatusEffects { get; private set; }
 
     public int GetCurrentHealth() => currentHealth;
+
+    /// <summary>Sets HP to 0 and raises <see cref="CombatEvents.OnPlayerHealthDepleted"/> (e.g. abandon run from options).</summary>
+    public void ForceDefeatAtZeroHealth()
+    {
+        if (currentHealth <= 0)
+        {
+            CombatEvents.OnPlayerHealthDepleted?.Invoke();
+            return;
+        }
+
+        currentHealth = 0;
+        currentArmor = 0;
+        UpdateUI();
+        CombatEvents.OnPlayerHealthDepleted?.Invoke();
+    }
 
     public Vector3 GetDamageNumberWorldPosition()
     {
@@ -66,6 +83,7 @@ public class PlayerStatus : MonoBehaviour
             return;
         }
 
+        ApplyCharacterPortrait(data);
         maxHealth = Mathf.Max(1, data.startingMaxHealth);
         currentHealth = maxHealth;
         UpdateUI();
@@ -116,6 +134,37 @@ public class PlayerStatus : MonoBehaviour
         maxHealth = 1;
         currentHealth = 1;
         UpdateUI();
+    }
+
+    private void OnEnable()
+    {
+        TryApplyPortraitFromContainer();
+    }
+
+    /// <summary>Sets the HUD portrait from <see cref="PlayerDataSO.SmallPortrait"/>.</summary>
+    public void ApplyCharacterPortrait(PlayerDataSO data)
+    {
+        if (characterPortraitImage == null)
+            return;
+
+        if (data == null)
+        {
+            Debug.LogError("PlayerStatus.ApplyCharacterPortrait: PlayerDataSO is null.");
+            return;
+        }
+
+        var sprite = data.SmallPortrait;
+        characterPortraitImage.sprite = sprite;
+        characterPortraitImage.enabled = sprite != null;
+    }
+
+    void TryApplyPortraitFromContainer()
+    {
+        var container = PlayerDataContainer.Instance;
+        if (container?.RuntimeData == null)
+            return;
+
+        ApplyCharacterPortrait(container.RuntimeData);
     }
 
     /// <summary>

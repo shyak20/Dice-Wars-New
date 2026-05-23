@@ -54,6 +54,14 @@ public sealed class DiceSelectCharacterButton : MonoBehaviour
             selectedVisual.SetActive(selected);
     }
 
+    public void SetInteractable(bool interactable)
+    {
+        if (button == null)
+            button = GetComponent<Button>();
+        if (button != null)
+            button.interactable = interactable;
+    }
+
     void HandleClicked()
     {
         if (_characterIndex < 0)

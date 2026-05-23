@@ -87,6 +87,30 @@ public class RunManager : MonoBehaviour
 
     /// <summary>True after map run HP hits 0 until a new run starts.</summary>
     public bool IsRunDefeated => _runDefeated;
+
+    /// <summary>True when abandon-run is allowed: active map-based run on map, fight, or shop scene (not menu / dice select).</summary>
+    public bool IsAbandonRunAvailableInCurrentScene()
+    {
+        if (!_useMapBasedRun || _runDefeated || !_runVitalityInitialized)
+            return false;
+
+        var sceneName = SceneManager.GetActiveScene().name;
+        return string.Equals(sceneName, mapSceneName, StringComparison.Ordinal)
+               || string.Equals(sceneName, combatSceneName, StringComparison.Ordinal)
+               || string.Equals(sceneName, shopSceneName, StringComparison.Ordinal);
+    }
+
+    /// <summary>Sets run HP to 0 and shows defeat UI for the current gameplay scene.</summary>
+    public void ForceAbandonRunToDefeat()
+    {
+        if (!IsAbandonRunAvailableInCurrentScene())
+        {
+            Debug.LogError("RunManager.ForceAbandonRunToDefeat: abandon is not available in the current scene or run state.", this);
+            return;
+        }
+
+        StartCoroutine(CoForceAbandonRunToDefeat());
+    }
     public bool PreloadsFightShopOnMap => preloadFightAndShopWhileOnMap;
     public int CurrentActIndex => _currentActIndex;
     public int RunShrineBonusMaxPower => _runShrineBonusMaxPower;
@@ -1296,6 +1320,51 @@ public class RunManager : MonoBehaviour
         }
 
         ReturnToMapFromSubScene();
+    }
+
+    IEnumerator CoForceAbandonRunToDefeat()
+    {
+        var startingScene = SceneManager.GetActiveScene().name;
+        if (string.Equals(startingScene, shopSceneName, StringComparison.Ordinal))
+        {
+            yield return CoReturnToMapFromSubScene();
+            yield return null;
+        }
+
+        EnsureRunVitalityBaseline();
+        if (_runCurrentHp > 0)
+            ApplyRunCurrentHpDelta(-_runCurrentHp);
+        else if (!_runDefeated)
+            MarkRunDefeated();
+
+        PresentAbandonDefeatUi();
+    }
+
+    void PresentAbandonDefeatUi()
+    {
+        var sceneName = SceneManager.GetActiveScene().name;
+        if (string.Equals(sceneName, combatSceneName, StringComparison.Ordinal))
+        {
+            var player = FindObjectOfType<PlayerStatus>(true);
+            if (player != null)
+                player.ForceDefeatAtZeroHealth();
+            else
+            {
+                var winLose = FindObjectOfType<WinLoseUIController>(true);
+                if (winLose != null)
+                    winLose.ShowDefeatScreen();
+                else
+                    Debug.LogError("RunManager.PresentAbandonDefeatUi: no PlayerStatus or WinLoseUIController in fight scene.", this);
+            }
+
+            return;
+        }
+
+        var mapMovement = FindObjectOfType<MapMovementManager>(true);
+        if (mapMovement != null)
+            mapMovement.ForceShowDefeatScreen();
+        else
+            Debug.LogError("RunManager.PresentAbandonDefeatUi: MapMovementManager not found for defeat UI.", this);
     }
 
     private void EnsureRunVitalityBaseline()

@@ -144,6 +144,26 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         }
     }
 
+    /// <summary>Re-runs preview bind (e.g. after rank-up celebration). Called by <see cref="DiceSelectProgressionCelebrationController"/>.</summary>
+    public void RefreshCharacterDisplayPublic() => RefreshCharacterDisplay();
+
+    public void SetInteractionBlocked(bool blocked)
+    {
+        var hasCharacter = TryGetSelectedCharacter(out _);
+
+        if (continueButton != null)
+            continueButton.interactable = !blocked && hasCharacter;
+        if (continueLockedOverlay != null)
+            continueLockedOverlay.SetActive(!continueButton.interactable);
+
+        for (var i = 0; i < _characterButtons.Count; i++)
+        {
+            var button = _characterButtons[i];
+            if (button != null)
+                button.SetInteractable(!blocked);
+        }
+    }
+
     void RefreshCharacterDisplay()
     {
         if (!TryGetSelectedCharacter(out var character))

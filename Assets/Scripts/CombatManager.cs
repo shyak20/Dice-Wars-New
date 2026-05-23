@@ -611,6 +611,7 @@ public class CombatManager : MonoBehaviour
         ApplyTestStartingFaces();
         if (player != null && playerData != null)
         {
+            player.ApplyCharacterPortrait(playerData);
             if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun)
                 RunManager.Instance.ApplyRunVitalityToPlayerIfAny(player);
             else
