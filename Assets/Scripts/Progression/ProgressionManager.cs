@@ -298,7 +298,9 @@ public sealed class ProgressionManager : MonoBehaviour
         ProgressionRunModifiers.SumMapMoveLimit(Catalog, _save);
 
     public int GetMaxRollsModifier() =>
-        ProgressionRunModifiers.SumMaxRolls(Catalog, _save);
+        ProgressionRunModifiers.SumExtraRolls(Catalog, _save);
+
+    public int GetExtraRollModifier() => GetMaxRollsModifier();
 
     public bool IsContentUnlocked(string contentId) =>
         ProgressionRunModifiers.IsContentUnlocked(Catalog, _save, contentId);
@@ -346,6 +348,14 @@ public sealed class ProgressionManager : MonoBehaviour
     }
 
     public int GetStartingGoldForNewRun() => GetStartingGoldModifier();
+
+    /// <summary>Relics equipped when a new run begins (rank-up / trial <see cref="ProgressionStartingRelicReward"/>).</summary>
+    public IReadOnlyList<RelicSO> GetStartingRelicsForNewRun()
+    {
+        var relics = new List<RelicSO>();
+        ProgressionRunModifiers.CollectStartingRelics(Catalog, _save, relics);
+        return relics;
+    }
 
     void AppendUnlockedStartingDice(PlayerDataSO runtimeProfile, PlayerDataSO template)
     {

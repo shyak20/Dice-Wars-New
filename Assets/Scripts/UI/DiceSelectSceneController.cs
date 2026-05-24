@@ -78,8 +78,9 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (characterIndex < 0 || characterIndex >= _selectableCharacters.Count)
             return;
 
+        var replayPortraitReveal = _selectedCharacterIndex >= 0 && _selectedCharacterIndex != characterIndex;
         _selectedCharacterIndex = characterIndex;
-        RefreshCharacterDisplay();
+        RefreshCharacterDisplay(replayPortraitReveal);
         RefreshCharacterButtonSelection();
         RefreshFlowUi();
     }
@@ -145,7 +146,7 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     }
 
     /// <summary>Re-runs preview bind (e.g. after rank-up celebration). Called by <see cref="DiceSelectProgressionCelebrationController"/>.</summary>
-    public void RefreshCharacterDisplayPublic() => RefreshCharacterDisplay();
+    public void RefreshCharacterDisplayPublic() => RefreshCharacterDisplay(replayPortraitReveal: false);
 
     public void SetInteractionBlocked(bool blocked)
     {
@@ -164,7 +165,7 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         }
     }
 
-    void RefreshCharacterDisplay()
+    void RefreshCharacterDisplay(bool replayPortraitReveal = false)
     {
         if (!TryGetSelectedCharacter(out var character))
             return;
@@ -181,8 +182,18 @@ public sealed class DiceSelectSceneController : MonoBehaviour
 
         if (characterPortraitImage != null)
         {
-            characterPortraitImage.sprite = character.Portrait;
-            characterPortraitImage.enabled = character.Portrait != null;
+            var portrait = character.Portrait;
+            characterPortraitImage.sprite = portrait;
+
+            if (replayPortraitReveal && portrait != null)
+            {
+                var portraitRoot = characterPortraitImage.gameObject;
+                portraitRoot.SetActive(false);
+                portraitRoot.SetActive(true);
+                characterPortraitImage.enabled = true;
+            }
+            else
+                characterPortraitImage.enabled = portrait != null;
         }
 
         startingDiceLayout.RefreshDeck(GetEffectiveStartingDeckPreview(character));

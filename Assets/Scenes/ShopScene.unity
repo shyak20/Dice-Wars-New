@@ -1078,9 +1078,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a8525c206b7d824cbc339c4b7612ca1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISettingsEscapeToggle
-  settingsRoot: {fileID: 0}
-  settingsPrefab: {fileID: 1835529854950792296, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
-  settingsParent: {fileID: 394332462}
+  settingsRoot: {fileID: 591769528}
 --- !u!114 &308379234
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2363,6 +2361,11 @@ PrefabInstance:
 --- !u!224 &591769527 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6605648850771468305, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
+  m_PrefabInstance: {fileID: 591769526}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &591769528 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1835529854950792296, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
   m_PrefabInstance: {fileID: 591769526}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &616916103

@@ -277,6 +277,8 @@ public class RunManager : MonoBehaviour
             var bonus = ProgressionManager.TryGetRuntime()?.GetStartingGoldForNewRun() ?? 0;
             RunEconomyManager.Instance.ResetEconomyForNewRunWithProgressionBonus(bonus);
         }
+
+        ApplyProgressionStartingRelics();
         ClearMapFightShopPreloadState();
         ClearMapSubsceneTransitionSnapshot();
     }
@@ -425,6 +427,26 @@ public class RunManager : MonoBehaviour
     {
         _runRelics.Clear();
         OnRunRelicsChanged?.Invoke();
+    }
+
+    void ApplyProgressionStartingRelics()
+    {
+        var progression = ProgressionManager.TryGetRuntime();
+        if (progression == null)
+            return;
+
+        var startingRelics = progression.GetStartingRelicsForNewRun();
+        for (var i = 0; i < startingRelics.Count; i++)
+        {
+            var relic = startingRelics[i];
+            if (relic == null)
+                continue;
+
+            if (_runRelics.Contains(relic))
+                continue;
+
+            AddRunRelic(relic);
+        }
     }
 
     /// <summary>Random treasure pack for the current act’s map (null if none configured).</summary>

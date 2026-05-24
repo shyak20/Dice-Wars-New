@@ -19,14 +19,20 @@ public static class ProgressionRewardDescriptionUtility
                 return $"+{r.amount} Starting Gold";
             case ProgressionMapMoveLimitReward r:
                 return $"+{r.amount} Map Moves";
-            case ProgressionMaxRollsReward r:
-                return $"+{r.amount} Max Rolls";
+            case ProgressionMaxRollsReward maxRolls:
+                return DescribeExtraRollGain(maxRolls.amount);
+            case ProgressionExtraRollReward extraRoll:
+                return DescribeExtraRollGain(extraRoll.amount);
             case ProgressionUnlockFacesReward r:
                 return DescribeUnlockCount("face", r.faces?.Count ?? 0);
             case ProgressionUnlockGemsReward r:
                 return DescribeUnlockCount("gem", r.gems?.Count ?? 0);
             case ProgressionUnlockRelicsReward r:
                 return DescribeUnlockCount("relic", r.relics?.Count ?? 0);
+            case ProgressionStartingRelicReward r:
+                return r.relic != null && !string.IsNullOrWhiteSpace(r.relic.title)
+                    ? $"Start each run with {r.relic.title.Trim()}"
+                    : "Start each run with relic";
             case ProgressionUnlockDiceReward r:
                 return DescribeUnlockCount("die", r.dice?.Count ?? 0);
             default:
@@ -57,4 +63,7 @@ public static class ProgressionRewardDescriptionUtility
 
     static string DescribeUnlockCount(string label, int count) =>
         count <= 0 ? $"Unlock {label}" : $"Unlock {count} {label}(s)";
+
+    static string DescribeExtraRollGain(int amount) =>
+        amount == 1 ? "Gain +1 Extra Roll" : $"Gain +{amount} Extra Rolls";
 }

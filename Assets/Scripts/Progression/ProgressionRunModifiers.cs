@@ -15,8 +15,52 @@ public static class ProgressionRunModifiers
     public static int SumMapMoveLimit(ProgressionCatalogSO catalog, ProgressionProfileSaveData save) =>
         SumStatBonus(catalog, save, typeof(ProgressionMapMoveLimitReward));
 
+    public static int SumExtraRolls(ProgressionCatalogSO catalog, ProgressionProfileSaveData save) =>
+        SumExtraRollBonus(catalog, save);
+
     public static int SumMaxRolls(ProgressionCatalogSO catalog, ProgressionProfileSaveData save) =>
-        SumStatBonus(catalog, save, typeof(ProgressionMaxRollsReward));
+        SumExtraRolls(catalog, save);
+
+    public static int SumExtraRollBonus(ProgressionCatalogSO catalog, ProgressionProfileSaveData save)
+    {
+        var rewards = new List<ProgressionRewardBase>();
+        CollectGrantedRewards(catalog, save, rewards);
+
+        var total = 0;
+        for (var i = 0; i < rewards.Count; i++)
+            total += GetExtraRollAmount(rewards[i]);
+
+        return total;
+    }
+
+    public static int GetExtraRollAmount(ProgressionRewardBase reward) => reward switch
+    {
+        ProgressionExtraRollReward extra => extra.amount,
+        ProgressionMaxRollsReward maxRolls => maxRolls.amount,
+        _ => 0
+    };
+
+    /// <summary>Relics granted at run start from completed rank-up / trial rewards.</summary>
+    public static void CollectStartingRelics(
+        ProgressionCatalogSO catalog,
+        ProgressionProfileSaveData save,
+        List<RelicSO> into)
+    {
+        if (into == null)
+            return;
+
+        var rewards = new List<ProgressionRewardBase>();
+        CollectGrantedRewards(catalog, save, rewards);
+
+        for (var i = 0; i < rewards.Count; i++)
+        {
+            if (rewards[i] is not ProgressionStartingRelicReward startingRelic || startingRelic.relic == null)
+                continue;
+
+            if (!into.Contains(startingRelic.relic))
+                into.Add(startingRelic.relic);
+        }
+    }
 
     static int SumStatBonus(ProgressionCatalogSO catalog, ProgressionProfileSaveData save, System.Type statRewardType)
     {

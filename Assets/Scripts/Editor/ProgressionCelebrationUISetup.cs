@@ -45,7 +45,6 @@ public static class ProgressionCelebrationUISetup
         var root = FindOrCreateRoot(canvasRt);
         var trialPopup = FindOrCreateTrialPopup(root);
         var rankPopup = FindOrCreateRankUpPopup(root);
-        var blocker = FindOrCreateBlocker(root);
 
         var celebration = controller.GetComponent<DiceSelectProgressionCelebrationController>();
         if (celebration == null)
@@ -56,8 +55,9 @@ public static class ProgressionCelebrationUISetup
         so.FindProperty("trialCompletedPopup").objectReferenceValue = trialPopup;
         so.FindProperty("rankUpPopup").objectReferenceValue = rankPopup;
         so.FindProperty("progressionCelebrationRoot").objectReferenceValue = root.gameObject;
-        so.FindProperty("inputBlocker").objectReferenceValue = blocker;
         so.ApplyModifiedPropertiesWithoutUndo();
+
+        root.gameObject.SetActive(false);
 
         EditorSceneManager.MarkSceneDirty(scene);
         Debug.Log("Progression celebration UI created on DiceSelect. Save the scene.", celebration);
@@ -78,22 +78,6 @@ public static class ProgressionCelebrationUISetup
         rt.offsetMax = Vector2.zero;
         rt.SetAsLastSibling();
         return rt;
-    }
-
-    static GameObject FindOrCreateBlocker(Transform root)
-    {
-        var existing = root.Find("Input Blocker");
-        if (existing != null)
-            return existing.gameObject;
-
-        var go = CreateUiObject("Input Blocker", root);
-        var rt = go.GetComponent<RectTransform>();
-        StretchFull(rt);
-        var image = go.AddComponent<Image>();
-        image.color = new Color(0f, 0f, 0f, 0.55f);
-        image.raycastTarget = true;
-        go.SetActive(false);
-        return go;
     }
 
     static ProgressionTrialCompletedPopupView FindOrCreateTrialPopup(Transform root)

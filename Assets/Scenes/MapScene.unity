@@ -11916,7 +11916,6 @@ GameObject:
   - component: {fileID: 755979337}
   - component: {fileID: 755979336}
   - component: {fileID: 755979338}
-  - component: {fileID: 755979339}
   - component: {fileID: 755979340}
   - component: {fileID: 755979341}
   - component: {fileID: 755979342}
@@ -12014,77 +12013,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapRunVitalityHUD
   healthSlider: {fileID: 1149793974}
   healthText: {fileID: 1149793973}
---- !u!114 &755979339
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 755979335}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c57ad23eabd9e74c94af8fe0563c491, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerFloatingDamageNumberController
-  canvas: {fileID: 219642502}
-  spawnParent: {fileID: 1149793972}
-  worldCamera: {fileID: 1045246952}
-  style:
-    prefab: {fileID: 8121471973030696828, guid: 810403edda846fe47b88f9113b05d07c, type: 3}
-    textColor: {r: 1, g: 1, b: 1, a: 1}
-    duration: 0.85
-    fadeStartNormalized: 0.6
-    horizontalAmplitudeMinMax: {x: -72, y: 72}
-    verticalFallMinMax: {x: 48, y: 120}
-    horizontalMotionGraph:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 1
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 1
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    verticalMotionGraph:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-  spawnAtSpawnParentCenter: 0
 --- !u!114 &755979340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12098,8 +12026,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISettingsEscapeToggle
   settingsRoot: {fileID: 2042434861}
-  settingsPrefab: {fileID: 1835529854950792296, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
-  settingsParent: {fileID: 219642503}
 --- !u!114 &755979341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14803,6 +14729,10 @@ PrefabInstance:
       propertyPath: worldCamera
       value: 
       objectReference: {fileID: 1045246952}
+    - target: {fileID: 8548448075212068740, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
+      propertyPath: spawnAtSpawnParentCenter
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

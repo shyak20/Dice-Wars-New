@@ -40,3 +40,15 @@ public sealed class ProgressionMaxRollsReward : ProgressionRewardBase
 
     public override void Apply(ProgressionRewardApplyContext context) { }
 }
+
+/// <summary>
+/// Permanent +<see cref="amount"/> to <see cref="PlayerDataSO.maxRollsPerTurn"/> for this character
+/// (summed with other rank/trial rewards via <see cref="ProgressionRunModifiers.SumExtraRolls"/>).
+/// </summary>
+[Serializable]
+public sealed class ProgressionExtraRollReward : ProgressionRewardBase
+{
+    [Min(1)] public int amount = 1;
+
+    public override void Apply(ProgressionRewardApplyContext context) { }
+}

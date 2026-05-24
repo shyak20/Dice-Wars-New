@@ -102,7 +102,10 @@ public static class OptionsMenuPrefabSetup
     {
         var existing = settingsRoot.GetComponentInChildren<UIAbandonRunButton>(true);
         if (existing != null)
+        {
+            RemoveMisplacedQuitHandlerFromAbandonRow(existing);
             return existing;
+        }
 
         var row = CreateRow(settingsRoot, "Abandon Run", new Vector2(0f, 20f));
         var button = CreateButton(row.transform, "Abandon Run Button", "Abandon Run", Vector2.zero);
@@ -112,6 +115,13 @@ public static class OptionsMenuPrefabSetup
         abandonSo.FindProperty("abandonControlRoot").objectReferenceValue = row;
         abandonSo.ApplyModifiedPropertiesWithoutUndo();
         return abandon;
+    }
+
+    static void RemoveMisplacedQuitHandlerFromAbandonRow(UIAbandonRunButton abandon)
+    {
+        var quitOnAbandonRow = abandon.GetComponent<UIQuitGameButton>();
+        if (quitOnAbandonRow != null)
+            Object.DestroyImmediate(quitOnAbandonRow, true);
     }
 
     static GameObject CreateRow(Transform parent, string name, Vector2 anchoredY)

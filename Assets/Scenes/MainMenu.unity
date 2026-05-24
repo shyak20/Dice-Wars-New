@@ -32840,8 +32840,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISettingsEscapeToggle
   settingsRoot: {fileID: 1943749692}
-  settingsPrefab: {fileID: 1835529854950792296, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
-  settingsParent: {fileID: 792408968}
 --- !u!114 &1943770119
 MonoBehaviour:
   m_ObjectHideFlags: 0

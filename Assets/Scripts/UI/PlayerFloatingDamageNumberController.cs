@@ -18,12 +18,32 @@ public class PlayerFloatingDamageNumberController : MonoBehaviour
 
     private void Awake()
     {
+        ResolveReferencesIfNeeded();
+
         if (canvas == null)
-            Debug.LogError($"PlayerFloatingDamageNumberController on '{gameObject.name}': canvas is not assigned.");
+            Debug.LogError($"PlayerFloatingDamageNumberController on '{gameObject.name}': canvas is not assigned.", this);
         if (spawnParent == null)
-            Debug.LogError($"PlayerFloatingDamageNumberController on '{gameObject.name}': spawnParent is not assigned.");
+            Debug.LogError($"PlayerFloatingDamageNumberController on '{gameObject.name}': spawnParent is not assigned.", this);
         if (worldCamera == null)
             worldCamera = Camera.main;
+    }
+
+    void ResolveReferencesIfNeeded()
+    {
+        if (canvas == null)
+            canvas = GetComponentInParent<Canvas>();
+
+        if (spawnParent == null)
+        {
+            foreach (var rt in GetComponentsInChildren<RectTransform>(true))
+            {
+                if (rt.name == "Text Flying Position")
+                {
+                    spawnParent = rt;
+                    break;
+                }
+            }
+        }
     }
 
     private void OnEnable()

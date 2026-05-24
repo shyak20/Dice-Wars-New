@@ -1,17 +1,22 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// One trial cell for a rank panel. Assign complete/locked roots each with an <see cref="Image"/> using <see cref="PlayerTrialSO.trialIcon"/>.
+/// One trial cell for a rank panel. Assign complete/locked visuals; complete roots are toggled together when the trial is done.
 /// Hover tooltip uses <see cref="HoverTooltipTargetUI"/> (no Button required) — needs a raycast target on <see cref="tooltipHoverArea"/>.
 /// </summary>
 public sealed class ProgressionTrialSlotUI : MonoBehaviour
 {
-    [SerializeField] private GameObject completeVisualRoot;
+    [SerializeField] private List<GameObject> completeVisualRoots = new List<GameObject>();
     [SerializeField] private Image completeIconImage;
     [SerializeField] private GameObject lockedVisualRoot;
     [SerializeField] private Image lockedIconImage;
+    [Tooltip("Shows PlayerTrialSO.trialID (falls back to asset name only if trialID is empty).")]
+    [SerializeField] private TMP_Text trialTitleText;
+    [Tooltip("Fills from 0 to target as trial progress increases.")]
+    [SerializeField] private Slider progressSlider;
     [Tooltip("Optional progress text while the trial is incomplete.")]
     [SerializeField] private TMP_Text progressText;
     [Tooltip("Object that receives hover (usually this slot root). Needs a Graphic with raycastTarget, or one is added.")]
@@ -36,10 +41,14 @@ public sealed class ProgressionTrialSlotUI : MonoBehaviour
         ApplyIcon(lockedIconImage, icon);
 
         var completed = state.isCompleted;
-        if (completeVisualRoot != null)
-            completeVisualRoot.SetActive(completed);
+        SetCompleteVisualsActive(completed);
         if (lockedVisualRoot != null)
             lockedVisualRoot.SetActive(!completed);
+
+        if (trialTitleText != null)
+            trialTitleText.text = GetTrialDisplayName(trial);
+
+        UpdateProgressSlider(trial, state);
 
         if (progressText != null)
         {
@@ -58,6 +67,45 @@ public sealed class ProgressionTrialSlotUI : MonoBehaviour
         ConfigureTooltip(trial, state);
     }
 
+    void SetCompleteVisualsActive(bool active)
+    {
+        if (completeVisualRoots == null)
+            return;
+
+        for (var i = 0; i < completeVisualRoots.Count; i++)
+        {
+            var root = completeVisualRoots[i];
+            if (root != null)
+                root.SetActive(active);
+        }
+    }
+
+    static string GetTrialDisplayName(PlayerTrialSO trial)
+    {
+        if (!string.IsNullOrWhiteSpace(trial.trialID))
+            return trial.trialID.Trim();
+
+        return string.IsNullOrWhiteSpace(trial.name) ? string.Empty : trial.name.Trim();
+    }
+
+    void UpdateProgressSlider(PlayerTrialSO trial, TrialSaveData state)
+    {
+        if (progressSlider == null)
+            return;
+
+        progressSlider.interactable = false;
+
+        var target = Mathf.Max(1, trial.targetValue);
+        var current = state.isCompleted
+            ? target
+            : Mathf.Clamp(state.currentValue, 0, target);
+
+        progressSlider.minValue = 0f;
+        progressSlider.maxValue = target;
+        progressSlider.wholeNumbers = true;
+        progressSlider.value = current;
+    }
+
     static void ApplyIcon(Image image, Sprite sprite)
     {
         if (image == null)
@@ -74,8 +122,7 @@ public sealed class ProgressionTrialSlotUI : MonoBehaviour
         if (hoverTooltip == null)
             return;
 
-        var title = string.IsNullOrWhiteSpace(trial.trialID) ? trial.name : trial.trialID;
-        hoverTooltip.SetContent(title, ProgressionManager.BuildTrialTooltipBody(trial, state));
+        hoverTooltip.SetContent(GetTrialDisplayName(trial), ProgressionManager.BuildTrialTooltipBody(trial, state));
         hoverTooltip.SetIsAbove(true);
     }
 

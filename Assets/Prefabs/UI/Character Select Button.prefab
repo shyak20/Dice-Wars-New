@@ -203,7 +203,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 70, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3714094657855175837
 MonoBehaviour:
@@ -221,6 +221,43 @@ MonoBehaviour:
   portraitImage: {fileID: 6765351329598795452}
   nameLabel: {fileID: 0}
   selectedVisual: {fileID: 1784744278655524767}
+  deselectedPortraitColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
+  deselectedPortraitScale: 0.8
+  selectionTransitionDuration: 0.5
+  selectionTransitionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.606833
+      value: 4.968055
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  useUnscaledTime: 0
 --- !u!1 &3444087260482318024
 GameObject:
   m_ObjectHideFlags: 0
@@ -255,8 +292,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -13}
-  m_SizeDelta: {x: 282.63, y: 158.9805}
+  m_AnchoredPosition: {x: 0, y: -0.2}
+  m_SizeDelta: {x: 154.3033, y: 121.1522}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &127262856597755770
 CanvasRenderer:

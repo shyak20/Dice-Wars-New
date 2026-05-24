@@ -59,6 +59,7 @@ public static class ProgressionRewardRegistry
         ProgressionStartingGoldReward gold => gold.amount,
         ProgressionMapMoveLimitReward moves => moves.amount,
         ProgressionMaxRollsReward rolls => rolls.amount,
+        ProgressionExtraRollReward extraRoll => extraRoll.amount,
         _ => 0
     };
 }

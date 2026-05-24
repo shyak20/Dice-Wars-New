@@ -5,16 +5,15 @@ using UnityEngine;
 /// <summary>
 /// On Dice Select, shows one popup per unacknowledged completed trial for the previewed character,
 /// then a level-up popup when all trials on the rank were finished.
+/// Enables <see cref="progressionCelebrationRoot"/> only while a popup is visible; disables it when done.
 /// </summary>
 public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController diceSelectSceneController;
     [SerializeField] private ProgressionTrialCompletedPopupView trialCompletedPopup;
     [SerializeField] private ProgressionRankUpPopupView rankUpPopup;
-    [Tooltip("Root object for trial/rank-up popups (hidden after rank-up is acknowledged).")]
+    [Tooltip("Parent of celebration popups (and optional overlay art). Disabled whenever no popup is showing.")]
     [SerializeField] private GameObject progressionCelebrationRoot;
-    [Tooltip("Full-screen raycast blocker; active only while a trial-complete or rank-up popup is open.")]
-    [SerializeField] private GameObject inputBlocker;
 
     readonly List<PlayerTrialSO> _pendingTrials = new List<PlayerTrialSO>();
     Coroutine _flowCoroutine;
@@ -32,6 +31,8 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
             Debug.LogError("DiceSelectProgressionCelebrationController: assign rankUpPopup.", this);
         if (progressionCelebrationRoot == null)
             Debug.LogError("DiceSelectProgressionCelebrationController: assign progressionCelebrationRoot.", this);
+
+        SetCelebrationRootActive(false);
     }
 
     void OnEnable()
@@ -64,6 +65,9 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 
     void TryStartCelebrationFlow()
     {
+        if (_flowRunning)
+            return;
+
         StopFlow();
 
         if (!diceSelectSceneController.TryGetPreviewCharacter(out var character))
@@ -73,60 +77,62 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
         if (progression == null || !progression.HasPendingCelebrations())
             return;
 
-        ShowCelebrationRoot();
         _flowCoroutine = StartCoroutine(RunCelebrationFlow(character, progression));
     }
 
     IEnumerator RunCelebrationFlow(PlayerDataSO character, ProgressionManager progression)
     {
         _flowRunning = true;
-        var completedRankUpSequence = false;
 
-        progression.CollectUnacknowledgedTrials(_pendingTrials);
-        for (var i = 0; i < _pendingTrials.Count; i++)
+        try
         {
-            var trial = _pendingTrials[i];
-            if (trial == null)
-                continue;
-
-            var acknowledged = false;
-            SetPopupBlocking(true);
-            trialCompletedPopup.Show(trial, () => acknowledged = true);
-            while (!acknowledged)
-                yield return null;
-            SetPopupBlocking(false);
-
-            progression.AcknowledgeTrialCelebration(trial.trialID);
-
-            if (!progression.IsInitializedFor(character))
-                break;
-        }
-
-        _pendingTrials.Clear();
-
-        if (progression.HasPendingRankUpCelebration())
-        {
-            var rankToCelebrate = progression.GetActiveRank();
-            if (rankToCelebrate != null)
+            progression.CollectUnacknowledgedTrials(_pendingTrials);
+            for (var i = 0; i < _pendingTrials.Count; i++)
             {
-                var rankAcknowledged = false;
-                SetPopupBlocking(true);
-                rankUpPopup.Show(rankToCelebrate, () => rankAcknowledged = true);
-                while (!rankAcknowledged)
+                var trial = _pendingTrials[i];
+                if (trial == null)
+                    continue;
+
+                var acknowledged = false;
+                SetCelebrationRootActive(true);
+                trialCompletedPopup.Show(trial, () => acknowledged = true);
+                while (!acknowledged)
                     yield return null;
-                SetPopupBlocking(false);
+
+                trialCompletedPopup.Hide();
+                SetCelebrationRootActive(false);
+                progression.AcknowledgeTrialCelebration(trial.trialID);
+
+                if (!progression.IsInitializedFor(character))
+                    break;
             }
 
-            progression.AcknowledgeRankUpCelebration();
-            completedRankUpSequence = true;
+            _pendingTrials.Clear();
+
+            if (progression.HasPendingRankUpCelebration())
+            {
+                var rankToCelebrate = progression.GetActiveRank();
+                if (rankToCelebrate != null)
+                {
+                    var rankAcknowledged = false;
+                    SetCelebrationRootActive(true);
+                    rankUpPopup.Show(rankToCelebrate, () => rankAcknowledged = true);
+                    while (!rankAcknowledged)
+                        yield return null;
+
+                    rankUpPopup.Hide();
+                    SetCelebrationRootActive(false);
+                }
+
+                progression.AcknowledgeRankUpCelebration();
+            }
+
+            diceSelectSceneController.RefreshCharacterDisplayPublic();
         }
-
-        if (completedRankUpSequence)
-            HideCelebrationRoot();
-        _flowRunning = false;
-        _flowCoroutine = null;
-
-        diceSelectSceneController.RefreshCharacterDisplayPublic();
+        finally
+        {
+            EndCelebrationFlow();
+        }
     }
 
     void StopFlow()
@@ -137,31 +143,23 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
             _flowCoroutine = null;
         }
 
+        EndCelebrationFlow();
+    }
+
+    void EndCelebrationFlow()
+    {
         _flowRunning = false;
+        _flowCoroutine = null;
         _pendingTrials.Clear();
         trialCompletedPopup?.Hide();
         rankUpPopup?.Hide();
-        SetPopupBlocking(false);
+        SetCelebrationRootActive(false);
     }
 
-    void SetPopupBlocking(bool active)
-    {
-        if (inputBlocker != null)
-            inputBlocker.SetActive(active);
-
-        diceSelectSceneController?.SetInteractionBlocked(active);
-    }
-
-    void ShowCelebrationRoot()
+    void SetCelebrationRootActive(bool active)
     {
         if (progressionCelebrationRoot != null)
-            progressionCelebrationRoot.SetActive(true);
-    }
-
-    void HideCelebrationRoot()
-    {
-        if (progressionCelebrationRoot != null)
-            progressionCelebrationRoot.SetActive(false);
+            progressionCelebrationRoot.SetActive(active);
     }
 
     static ProgressionManager ResolveProgression(PlayerDataSO character)

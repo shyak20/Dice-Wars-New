@@ -1997,7 +1997,6 @@ GameObject:
   - component: {fileID: 3929185895262991024}
   - component: {fileID: 6534890465311053900}
   - component: {fileID: 3663180349982485062}
-  - component: {fileID: 7658756046061099702}
   - component: {fileID: 5320165373754684126}
   m_Layer: 5
   m_Name: Abandon Run
@@ -2108,19 +2107,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &7658756046061099702
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8724526741620279126}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b9f48ac176167d498d174abdebd3103, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIQuitGameButton
-  button: {fileID: 3663180349982485062}
 --- !u!114 &5320165373754684126
 MonoBehaviour:
   m_ObjectHideFlags: 0

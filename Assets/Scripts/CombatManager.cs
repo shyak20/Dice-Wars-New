@@ -1600,7 +1600,6 @@ public class CombatManager : MonoBehaviour
                 {
                     currentPower += entry.Amount;
                     CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
-                    ProgressionEventBridge.NotifyPerfectCast();
                 }
                 ProcessPrecisionQueue();
             });
@@ -1617,6 +1616,7 @@ public class CombatManager : MonoBehaviour
                                   RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this);
         if (perfectAtMax || perfectAtMaxMinusOne || perfectAtMaxPlusOne)
         {
+            ProgressionEventBridge.NotifyPerfectCast();
             var poolsBefore = SnapshotStoredActionsPool();
             appliedMultiplier = GetPerfectStrikeBaseMultiplier();
             var relicPerfect = RelicActionRunner.QueryIntMax(RelicPhases.QueryPerfectStrikeMultiplier, this);

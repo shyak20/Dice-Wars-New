@@ -94,19 +94,46 @@ public sealed class ProgressionTrialsPanelUI : MonoBehaviour
         if (rank?.associatedTrials == null || trialSlotPrefab == null || trialLayoutRoot == null)
             return;
 
-        for (var i = 0; i < rank.associatedTrials.Count; i++)
+        var displayOrder = BuildTrialDisplayOrder(rank.associatedTrials, progression);
+        for (var i = 0; i < displayOrder.Count; i++)
         {
-            var trial = rank.associatedTrials[i];
+            var entry = displayOrder[i];
+            var slot = Instantiate(trialSlotPrefab, trialLayoutRoot);
+            slot.Bind(entry.trial, entry.state);
+            _spawnedSlots.Add(slot);
+        }
+    }
+
+    /// <summary>Completed trials first (top of layout group), then incomplete; catalog order within each group.</summary>
+    static List<(PlayerTrialSO trial, TrialSaveData state)> BuildTrialDisplayOrder(
+        IReadOnlyList<PlayerTrialSO> trials,
+        ProgressionManager progression)
+    {
+        var ordered = new List<(PlayerTrialSO trial, TrialSaveData state, int catalogIndex)>();
+        for (var i = 0; i < trials.Count; i++)
+        {
+            var trial = trials[i];
             if (trial == null)
                 continue;
 
             if (!progression.TryGetTrialState(trial.trialID, out var state))
                 state = new TrialSaveData { trialID = trial.trialID, currentValue = 0, isCompleted = false };
 
-            var slot = Instantiate(trialSlotPrefab, trialLayoutRoot);
-            slot.Bind(trial, state);
-            _spawnedSlots.Add(slot);
+            ordered.Add((trial, state, i));
         }
+
+        ordered.Sort((a, b) =>
+        {
+            if (a.state.isCompleted != b.state.isCompleted)
+                return a.state.isCompleted ? -1 : 1;
+
+            return a.catalogIndex.CompareTo(b.catalogIndex);
+        });
+
+        var result = new List<(PlayerTrialSO trial, TrialSaveData state)>(ordered.Count);
+        for (var i = 0; i < ordered.Count; i++)
+            result.Add((ordered[i].trial, ordered[i].state));
+        return result;
     }
 
     void UpdateRankHeader(PlayerRankSO rank, int completed, int total)
