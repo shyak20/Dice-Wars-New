@@ -74,6 +74,7 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 - `SimulationSpeedController` controls `Time.timeScale` (0.2x–4x range)
 - Don't create `.meta` files — let Unity handle them
 - **Loot tables**: after adding faces (non-curse) under `Assets/Data/Faces/`, run **DiceGame → Loot Tables → Refresh All From Project** in Unity — do not hand-maintain `Faces Loot Table.asset` or add per-face setup menus
+- **Generic face actions**: prefer reusable modifiers in `Assets/Scripts/Effects/FaceModifiers/` (`AddDamageFromDeckPipsModifier`, `AddDamageFromEnemyStatusStacksModifier`, etc.) with inspector-configured element/status/step sizes — see [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md)
 - Split code into files, methods, and classes logically; use folders as the project grows
 - Encapsulate logic in the leaf class that owns it (e.g., call `PauseRunning()` instead of saving speed and setting it to zero from the caller)
 - Propose using libraries/Asset Store packages before reinventing the wheel

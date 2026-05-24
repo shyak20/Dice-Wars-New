@@ -74,6 +74,7 @@ public class CombatManager : MonoBehaviour
     private int maxPower;
     private int _enemyMaxPowerReductionThisCombat;
     private int _enemyMaxPowerMinimumFloor = 1;
+    private int _combatMaxPowerBonus;
     private int overchargeBonus;
     private int appliedMultiplier;
     private int bonusDamageFromActions;
@@ -301,6 +302,15 @@ public class CombatManager : MonoBehaviour
     /// Enemy-intent debuff: reduce player's max power for this combat only.
     /// Final max power = max(floor, computedBase - totalReduction).
     /// </summary>
+    public void AddCombatMaxPowerBonus(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        _combatMaxPowerBonus += amount;
+        CalculateMaxPower();
+    }
+
     public void ApplyEnemyMaxPowerReductionForCombat(int reductionAmount, int minimumAllowedMaxPower)
     {
         if (reductionAmount <= 0)
@@ -670,6 +680,7 @@ public class CombatManager : MonoBehaviour
         currentPower = 0;
         _enemyMaxPowerReductionThisCombat = 0;
         _enemyMaxPowerMinimumFloor = 1;
+        _combatMaxPowerBonus = 0;
         maxRolls = playerData.maxRollsPerTurn + RelicActionRunner.QueryIntSum(RelicPhases.QueryMaxRollsBonus, this);
         if (maxRolls < 1)
             maxRolls = 1;
@@ -760,7 +771,7 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
-        maxPower = PlayerMaxPowerForRun.Compute(playerData);
+        maxPower = PlayerMaxPowerForRun.Compute(playerData) + _combatMaxPowerBonus;
         maxPower = Mathf.Max(_enemyMaxPowerMinimumFloor, maxPower - _enemyMaxPowerReductionThisCombat);
         if (currentPower > maxPower)
             currentPower = maxPower;
@@ -831,13 +842,13 @@ public class CombatManager : MonoBehaviour
         return true;
     }
 
-    private static int CountRerollGrantsOnFace(DieFaceSO face)
+    private static int CountRerollGrantsOnFace(DieFaceSO face, RerollDieAction.RerollDieScope scope)
     {
         if (face?.actions == null) return 0;
         var n = 0;
-        foreach (var a in face.actions)
+        for (var i = 0; i < face.actions.Count; i++)
         {
-            if (a is RerollDieAction)
+            if (face.actions[i] is RerollDieAction reroll && reroll.Scope == scope)
                 n++;
         }
 
@@ -856,10 +867,17 @@ public class CombatManager : MonoBehaviour
         _rollBatchPipelineRunning = true;
 
         // --- Special effects (reroll, and later more) run before combat state receives the batch. ---
-        if (rerollDieSelection == null && CountRerollGrantsFromAllPendingFaces() > 0)
+        var playerChoiceRerolls = CountRerollGrantsFromAllPendingFaces(RerollDieAction.RerollDieScope.PlayerChoosesAnyDie);
+        if (rerollDieSelection == null && playerChoiceRerolls > 0)
             Debug.LogError("CombatManager: Reroll Die on a face but rerollDieSelection is not assigned.");
 
-        _pendingRerollGrants = CountRerollGrantsFromAllPendingFaces();
+        if (_pendingTopFaceByDieIndex != null)
+        {
+            for (var dieIdx = 0; dieIdx < _pendingTopFaceByDieIndex.Length; dieIdx++)
+                yield return CoProcessTriggeringRerollsAtDieIndex(dieIdx);
+        }
+
+        _pendingRerollGrants = CountRerollGrantsFromAllPendingFaces(RerollDieAction.RerollDieScope.PlayerChoosesAnyDie);
         while (_pendingRerollGrants > 0 && rerollDieSelection != null)
         {
             var dice = spawner.GetActiveDiceSnapshot();
@@ -895,7 +913,10 @@ public class CombatManager : MonoBehaviour
                     yield return new WaitUntil(() => _pendingTopFaceByDieIndex[idx] != null);
                     var newFace = _pendingTopFaceByDieIndex[idx];
                     if (newFace != null)
-                        _pendingRerollGrants += CountRerollGrantsOnFace(newFace);
+                    {
+                        _pendingRerollGrants += CountRerollGrantsOnFace(newFace, RerollDieAction.RerollDieScope.PlayerChoosesAnyDie);
+                        yield return CoProcessTriggeringRerollsAtDieIndex(idx);
+                    }
                 }
             }
         }
@@ -923,6 +944,7 @@ public class CombatManager : MonoBehaviour
         }
 
         QueueAddPowerChoicesAfterBatchGather(batchGatherStart, channeledFaces.Count);
+        ApplyPostBatchFaceEffects(batchGatherStart, channeledFaces.Count);
 
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
@@ -954,7 +976,64 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private int CountRerollGrantsFromAllPendingFaces()
+    IEnumerator CoProcessTriggeringRerollsAtDieIndex(int dieIdx)
+    {
+        if (_pendingTopFaceByDieIndex == null || dieIdx < 0 || dieIdx >= _pendingTopFaceByDieIndex.Length)
+            yield break;
+
+        var pendingFace = _pendingTopFaceByDieIndex[dieIdx];
+        var grantsRemaining = CountRerollGrantsOnFace(pendingFace, RerollDieAction.RerollDieScope.RerollTriggeringDieOnly);
+        while (grantsRemaining > 0 && pendingFace != null)
+        {
+            grantsRemaining--;
+            if (!TryGetTriggeringRerollAction(pendingFace, out var rerollAction))
+                break;
+
+            var dieGo = spawner.GetActiveDieGameObject(dieIdx);
+            if (dieGo == null)
+            {
+                Debug.LogWarning($"CombatManager: Auto reroll — no die at batch index {dieIdx}.");
+                yield break;
+            }
+
+            var keepFace = rerollAction.KeepSameFaceOnReroll;
+            var faceToCommit = keepFace ? pendingFace : null;
+
+            _pendingTopFaceByDieIndex[dieIdx] = null;
+            if (!keepFace)
+                _pendingDieSourceByIndex[dieIdx] = null;
+
+            spawner.RerollDiePhysics(dieGo);
+            yield return new WaitUntil(() => _pendingTopFaceByDieIndex[dieIdx] != null);
+
+            if (keepFace && faceToCommit != null)
+                _pendingTopFaceByDieIndex[dieIdx] = faceToCommit;
+
+            pendingFace = _pendingTopFaceByDieIndex[dieIdx];
+            if (!keepFace && pendingFace != null)
+                grantsRemaining += CountRerollGrantsOnFace(pendingFace, RerollDieAction.RerollDieScope.RerollTriggeringDieOnly);
+        }
+    }
+
+    static bool TryGetTriggeringRerollAction(DieFaceSO face, out RerollDieAction reroll)
+    {
+        reroll = null;
+        if (face?.actions == null)
+            return false;
+
+        for (var i = 0; i < face.actions.Count; i++)
+        {
+            if (face.actions[i] is RerollDieAction r && r.Scope == RerollDieAction.RerollDieScope.RerollTriggeringDieOnly)
+            {
+                reroll = r;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private int CountRerollGrantsFromAllPendingFaces(RerollDieAction.RerollDieScope scope)
     {
         if (_pendingTopFaceByDieIndex == null) return 0;
         var n = 0;
@@ -962,10 +1041,37 @@ public class CombatManager : MonoBehaviour
         {
             var f = _pendingTopFaceByDieIndex[i];
             if (f == null) continue;
-            n += CountRerollGrantsOnFace(f);
+            n += CountRerollGrantsOnFace(f, scope);
         }
 
         return n;
+    }
+
+    void ApplyPostBatchFaceEffects(int startInclusive, int endExclusive)
+    {
+        var perfectCast = currentPower == maxPower;
+        for (var i = startInclusive; i < endExclusive; i++)
+        {
+            if (i < 0 || i >= channeledFaces.Count) continue;
+            var fr = channeledFaces[i];
+            if (fr?.Actions == null) continue;
+
+            foreach (var a in fr.Actions)
+            {
+                if (a is not ReducePowerUnlessPerfectCastAfterBatchAction reduce || perfectCast)
+                    continue;
+
+                var amount = reduce.PowerReduction;
+                if (amount <= 0)
+                    continue;
+
+                currentPower = Mathf.Max(0, currentPower - amount);
+                if (GameActionDebug.Enabled)
+                    Debug.Log($"[ReducePowerUnlessPerfectCast] Power reduced by {amount} (no perfect cast). New power: {currentPower}/{maxPower}");
+            }
+        }
+
+        CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
     }
 
     private IEnumerator CoDrainGemScheduledRerolls()

@@ -51,4 +51,8 @@ public enum ActionVisualId
 
     /// <summary><see cref="PrimeNextFireRollDoubleEnemyBurnModifier"/> — next Fire roll doubles enemy burn stacks applied.</summary>
     PrimeNextFireRollDoubleEnemyBurn = 26,
+
+    DealPlayerDamageOnSubmit = 27,
+    IncreaseCombatMaxPower = 28,
+    ReducePowerUnlessPerfectCast = 29,
 }

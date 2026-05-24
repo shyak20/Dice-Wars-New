@@ -32,6 +32,20 @@ public class MyAction : IGameAction
 ```
 Examples: `OverchargeAction`, `SafetyNetAction`
 
+### Reusable face modifiers (configure in inspector)
+
+| Modifier | Use |
+|----------|-----|
+| `AddDamageFromEnemyStatusStacksModifier` | Damage from enemy status stacks (optional specific `StatusEffectSO`, or all effects). Modes: sum stacks or count active effects. Flaming Sword, Damage per Status. |
+| `AddDamageFromDeckPipsModifier` | Deal X damage per Y pips summed across deck faces (`DeckPipMetric` + `ElementType` filter). White Heat, Damage per Pips variants. |
+| `AddDamageFromEnemyArmorModifier` | Damage equal to enemy's current armor. |
+| `MultiplyEnemyStatusStacksModifier` | Multiply stacks of a chosen enemy status (e.g. double Vulnerable). |
+| `AddDamageFromAccumulatedPhysicalModifier` | Damage from physical accumulated earlier this turn (Harnessed). |
+
+`RerollDieAction.RerollDieScope`: `PlayerChoosesAnyDie` (picker) vs `RerollTriggeringDieOnly` (Roll Again).
+
+Post-batch markers (handled in `CombatManager`, like `AddPowerAction`): `ReducePowerUnlessPerfectCastAfterBatchAction`, deferred `DealPlayerDamageOnSubmitAction`, immediate `IncreaseCombatMaxPowerAction`.
+
 **Turn-end** — queues work for turn end via `QueueTurnEndAction`. The callback receives a `GameActionContext` so it can read final turn state. **Must multiply values by `GetAppliedMultiplier()`** to scale with Perfect Strike + Overcharge.
 ```csharp
 public void Execute(GameActionContext context)

@@ -146,6 +146,31 @@ public class StatusEffectManager : MonoBehaviour
         }
     }
 
+    /// <summary>Multiplies stacks on every instance whose definition matches <paramref name="definition"/>.</summary>
+    public void MultiplyStacks(StatusEffectSO definition, int multiplier, StatusEffectContext ctx)
+    {
+        if (definition == null || multiplier <= 1)
+            return;
+
+        var changed = false;
+        for (var i = 0; i < effects.Count; i++)
+        {
+            var effect = effects[i];
+            if (effect?.Definition != definition || effect.Stacks <= 0)
+                continue;
+
+            var delta = effect.Stacks * (multiplier - 1);
+            if (delta <= 0)
+                continue;
+
+            effect.AddStacks(delta);
+            changed = true;
+        }
+
+        if (changed)
+            NotifyChanged();
+    }
+
     /// <summary>Multiplies every <see cref="BurnEffectSO"/> on this manager: each instance’s stacks become stacks × <paramref name="multiplier"/>.</summary>
     public void MultiplyAllBurnStacks(int multiplier, StatusEffectContext ctx)
     {
