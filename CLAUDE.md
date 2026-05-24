@@ -63,6 +63,7 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 - Before writing code, outline: what will change, why, risks/assumptions
 - Prefer small, reversible changes
 - **No direct scene interaction** — create scripts and provide instructions for engine setup
+- **No one-off content editor tools** — Do not add `MenuItem` / editor scripts whose main job is generating a single die face, relic, enemy, or other data asset you create once. Author those as ScriptableObjects under `Assets/Data/` (Inspector or by duplicating an existing `.asset`). Editor automation is only for **repeatable** workflows (e.g. rebuilding all loot tables from the project, batch-importing CSVs, scaffolding a new character progression catalog, wiring a scene prefab layout). If unsure, default to creating the asset files directly, not a generator.
 
 ## Conventions
 
@@ -72,6 +73,7 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 - Both 2D (sprites, UI) and 3D (dice physics) coexist — dice use Rigidbody3D
 - `SimulationSpeedController` controls `Time.timeScale` (0.2x–4x range)
 - Don't create `.meta` files — let Unity handle them
+- **Loot tables**: after adding faces (non-curse) under `Assets/Data/Faces/`, run **DiceGame → Loot Tables → Refresh All From Project** in Unity — do not hand-maintain `Faces Loot Table.asset` or add per-face setup menus
 - Split code into files, methods, and classes logically; use folders as the project grows
 - Encapsulate logic in the leaf class that owns it (e.g., call `PauseRunning()` instead of saving speed and setting it to zero from the caller)
 - Propose using libraries/Asset Store packages before reinventing the wheel
