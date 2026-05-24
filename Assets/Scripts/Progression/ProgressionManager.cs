@@ -516,6 +516,30 @@ public sealed class ProgressionManager : MonoBehaviour
         }
 
         RebuildActiveTrialListFromDictionary();
+        EnsurePendingRankUpCelebrationState();
+    }
+
+    /// <summary>
+    /// Trials finished during a run are stored in <see cref="ProgressionProfileSaveData.completedTrialIDs"/>.
+    /// On reload we restore them via <see cref="EnsureCompletedState"/> without calling <see cref="TryCompleteTrial"/>,
+    /// so <see cref="ProgressionProfileSaveData.pendingRankUpCelebration"/> must be reconciled here.
+    /// </summary>
+    void EnsurePendingRankUpCelebrationState()
+    {
+        if (_save == null || Catalog == null || _activeRank == null)
+            return;
+
+        if (!AllActiveTrialsCompleted())
+            return;
+
+        if (!Catalog.TryGetNextRank(_save.currentRankIndex, out _))
+            return;
+
+        if (_save.pendingRankUpCelebration)
+            return;
+
+        _save.pendingRankUpCelebration = true;
+        Persist();
     }
 
     void EnsureCompletedState(string trialId)
@@ -560,7 +584,7 @@ public sealed class ProgressionManager : MonoBehaviour
             if (trial == null)
                 continue;
 
-            if (!_trialStateById.TryGetValue(trial.trialID, out var state) || !state.isCompleted)
+            if (!IsTrialCompletedGlobally(trial.trialID))
                 return false;
         }
 

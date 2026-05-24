@@ -122,7 +122,7 @@ public sealed class ProgressionTrialSlotUI : MonoBehaviour
         if (hoverTooltip == null)
             return;
 
-        hoverTooltip.SetContent(GetTrialDisplayName(trial), ProgressionManager.BuildTrialTooltipBody(trial, state));
+        hoverTooltip.SetTrialTooltip(trial, state);
         hoverTooltip.SetIsAbove(true);
     }
 

@@ -39,6 +39,18 @@ public class GameIconIndexSO : ScriptableObject
     [Header("Enemy Starting Buffs")]
     [SerializeField] private List<EnemyResistanceIconEntry> enemyResistanceIcons = new List<EnemyResistanceIconEntry>();
 
+    [Header("Main Attribute Icons")]
+    [SerializeField] private Sprite hpIcon;
+    [SerializeField] private Sprite powerIcon;
+    [SerializeField] private Sprite extraRollIcon;
+    [SerializeField] private Sprite physicalDieUnlockIcon;
+    [SerializeField] private Sprite defenseDieUnlockIcon;
+    [SerializeField] private Sprite fireDieUnlockIcon;
+    [SerializeField] private Sprite natureDieUnlockIcon;
+    [SerializeField] private Sprite frostDieUnlockIcon;
+    [SerializeField] private Sprite coinsIcon;
+    [SerializeField] private Sprite movementIcon;
+
     [Serializable]
     public struct ActionIconEntry
     {
@@ -271,6 +283,49 @@ public class GameIconIndexSO : ScriptableObject
         return _enemyResistanceBackgroundLookup.TryGetValue(resistanceElement, out var s) ? s : null;
     }
 
+    public Sprite GetMainAttributeIcon(MainAttributeIconId id) => id switch
+    {
+        MainAttributeIconId.Hp => hpIcon,
+        MainAttributeIconId.Power => powerIcon,
+        MainAttributeIconId.ExtraRoll => extraRollIcon,
+        MainAttributeIconId.PhysicalDieUnlock => physicalDieUnlockIcon,
+        MainAttributeIconId.DefenseDieUnlock => defenseDieUnlockIcon,
+        MainAttributeIconId.FireDieUnlock => fireDieUnlockIcon,
+        MainAttributeIconId.NatureDieUnlock => natureDieUnlockIcon,
+        MainAttributeIconId.FrostDieUnlock => frostDieUnlockIcon,
+        MainAttributeIconId.Coins => coinsIcon,
+        MainAttributeIconId.Movement => movementIcon,
+        _ => null
+    };
+
+    public Sprite GetDieUnlockMainAttributeIcon(DieType dieType) =>
+        TryMapDieTypeToMainAttributeIcon(dieType, out var id) ? GetMainAttributeIcon(id) : null;
+
+    public static bool TryMapDieTypeToMainAttributeIcon(DieType dieType, out MainAttributeIconId iconId)
+    {
+        switch (dieType)
+        {
+            case DieType.Damage:
+                iconId = MainAttributeIconId.PhysicalDieUnlock;
+                return true;
+            case DieType.Armor:
+                iconId = MainAttributeIconId.DefenseDieUnlock;
+                return true;
+            case DieType.Fire:
+                iconId = MainAttributeIconId.FireDieUnlock;
+                return true;
+            case DieType.Nature:
+                iconId = MainAttributeIconId.NatureDieUnlock;
+                return true;
+            case DieType.Ice:
+                iconId = MainAttributeIconId.FrostDieUnlock;
+                return true;
+            default:
+                iconId = default;
+                return false;
+        }
+    }
+
     /// <summary>True if either title or description is configured for this enemy resistance icon.</summary>
     public bool TryGetEnemyResistanceTooltip(EnemyResistanceElement resistanceElement, out string title, out string description)
     {
@@ -441,6 +496,25 @@ public class GameIconIndexSO : ScriptableObject
                 });
         }
 
+        AddMainAttributeEntry(entries, MainAttributeIconId.Hp, hpIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Power, powerIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.ExtraRoll, extraRollIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.PhysicalDieUnlock, physicalDieUnlockIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.DefenseDieUnlock, defenseDieUnlockIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.FireDieUnlock, fireDieUnlockIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.NatureDieUnlock, natureDieUnlockIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.FrostDieUnlock, frostDieUnlockIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Coins, coinsIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Movement, movementIcon);
+
         return entries;
+    }
+
+    static void AddMainAttributeEntry(List<NamedIconEntry> entries, MainAttributeIconId id, Sprite sprite)
+    {
+        if (sprite == null)
+            return;
+
+        entries.Add(new NamedIconEntry { key = $"MainAttribute.{id}", sprite = sprite });
     }
 }

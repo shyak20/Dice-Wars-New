@@ -1173,7 +1173,6 @@ RectTransform:
   - {fileID: 1527083091}
   - {fileID: 940268617}
   - {fileID: 1875969563}
-  - {fileID: 1446780865}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3053,8 +3052,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4287293181
+  m_fontColor: {r: 0.99215686, g: 0.9019608, b: 0.5411765, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -3530,10 +3529,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60dce03366490204a96b34ad2599df9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoverTooltipManager
-  panelPrefab: {fileID: 2238994438057304230, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
+  panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  trialRewardsPanelPrefab: {fileID: -7010648954486959870, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
+  gameIconIndex: {fileID: 11400000, guid: e7a9d94c00e44a54a8e1204408a75e96, type: 2}
   fallbackCanvas: {fileID: 94979826}
   hoverTooltipScreenOffset: {x: 30, y: 60}
-  hoverAboveTooltipScreenOffset: {x: 240, y: 60}
+  hoverAboveTooltipScreenOffset: {x: 360, y: -140}
 --- !u!114 &338194162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3550,6 +3551,7 @@ MonoBehaviour:
   trialCompletedPopup: {fileID: 753428134}
   rankUpPopup: {fileID: 1305560260}
   progressionCelebrationRoot: {fileID: 1875969562}
+  inputBlocker: {fileID: 0}
 --- !u!1 &347291626
 GameObject:
   m_ObjectHideFlags: 0
@@ -3793,8 +3795,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4287293181
+  m_fontColor: {r: 0.9921569, g: 0.90196085, b: 0.5411765, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6338,7 +6340,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0124bad2492ed45469ff7925ec11d973, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProgressionTrialCompletedPopupView
-  panelRoot: {fileID: 753428132}
+  panelRoot: {fileID: 757334387}
   titleText: {fileID: 1020153955}
   bodyText: {fileID: 464736222}
   trialIconImage: {fileID: 1552154430}
@@ -6622,8 +6624,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4282233343
+  m_fontColor: {r: 1, g: 0.69411767, b: 0.23921569, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -8259,8 +8261,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4287293181
+  m_fontColor: {r: 0.99215686, g: 0.9019608, b: 0.5411765, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -11216,8 +11218,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4282233343
+  m_fontColor: {r: 1, g: 0.6933486, b: 0.24056602, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -11857,7 +11859,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48e16c48265867247af15a7e241ec784, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProgressionRankUpPopupView
-  panelRoot: {fileID: 1305560258}
+  panelRoot: {fileID: 632517909}
   titleText: {fileID: 666858206}
   bodyText: {fileID: 336859744}
   completeButton: {fileID: 1852886880}
@@ -12529,108 +12531,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1914548475}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1446780864
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 94979827}
-    m_Modifications:
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_Pivot.x
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_Pivot.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 340.26
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 158.56
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 5476.152
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 676.2143
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -1080.1404
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6735281126238105356, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-      propertyPath: m_Name
-      value: Trials Tooltip Prefab
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
---- !u!224 &1446780865 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 2462135274162802174, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
-  m_PrefabInstance: {fileID: 1446780864}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1455922370
 GameObject:
   m_ObjectHideFlags: 0

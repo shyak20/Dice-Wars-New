@@ -29,7 +29,7 @@ public sealed class HoverTooltipManager : MonoBehaviour
                     continue;
                 if (m.gameObject.scene != activeScene)
                     continue;
-                if (m.panelPrefab == null)
+                if (m.panelPrefab == null && m.trialRewardsPanelPrefab == null)
                     continue;
                 return m;
             }
@@ -41,6 +41,12 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [Tooltip("Prefab whose root has HoverTooltipPanelUI (same layout as legacy scene instances).")]
     [SerializeField] private HoverTooltipPanelUI panelPrefab;
 
+    [Tooltip("Prefab whose root has HoverTrialRewardsTooltipPanelUI (trial slots on Dice Select).")]
+    [SerializeField] private HoverTrialRewardsTooltipPanelUI trialRewardsPanelPrefab;
+
+    [Tooltip("Icons for trial reward rows. Uses GameIconCatalog.Active when unset.")]
+    [SerializeField] private GameIconIndexSO gameIconIndex;
+
     [Tooltip("When the hovered UI has no Canvas in parents (rare), parent the tooltip here.")]
     [SerializeField] private Canvas fallbackCanvas;
 
@@ -51,10 +57,13 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [SerializeField] private Vector2 hoverAboveTooltipScreenOffset;
 
     HoverTooltipPanelUI _panel;
+    HoverTrialRewardsTooltipPanelUI _trialRewardsPanel;
     Canvas _panelParentCanvas;
 
     /// <summary>True when a prefab is assigned so <see cref="HoverTooltipTargetUI"/> can present tooltips.</summary>
     public bool HasValidPrefab => panelPrefab != null;
+
+    public bool HasValidTrialRewardsPrefab => trialRewardsPanelPrefab != null;
 
     void Awake()
     {
@@ -110,10 +119,18 @@ public sealed class HoverTooltipManager : MonoBehaviour
 
     void DestroyPanelIfOwned()
     {
-        if (_panel == null)
-            return;
-        Destroy(_panel.gameObject);
-        _panel = null;
+        if (_panel != null)
+        {
+            Destroy(_panel.gameObject);
+            _panel = null;
+        }
+
+        if (_trialRewardsPanel != null)
+        {
+            Destroy(_trialRewardsPanel.gameObject);
+            _trialRewardsPanel = null;
+        }
+
         _panelParentCanvas = null;
     }
 
@@ -150,10 +167,8 @@ public sealed class HoverTooltipManager : MonoBehaviour
                 title = string.IsNullOrEmpty(status.effectName) ? status.name : status.effectName;
                 description = status.description ?? string.Empty;
                 return true;
-            case PlayerTrialSO trial:
-                title = string.IsNullOrWhiteSpace(trial.trialID) ? trial.name : trial.trialID;
-                description = trial.description ?? string.Empty;
-                return true;
+            case PlayerTrialSO:
+                return false;
             default:
                 title = source.name;
                 description = string.Empty;
@@ -188,18 +203,11 @@ public sealed class HoverTooltipManager : MonoBehaviour
         if (panelPrefab == null || anchor == null)
             return;
 
-        var targetCanvas = anchor.GetComponentInParent<Canvas>();
+        var targetCanvas = ResolveCanvas(anchor);
         if (targetCanvas == null)
-            targetCanvas = fallbackCanvas;
-        if (targetCanvas == null)
-            targetCanvas = FindObjectOfType<Canvas>();
-
-        if (targetCanvas == null)
-        {
-            Debug.LogError("HoverTooltipManager.Show: no Canvas found for tooltip parenting.", this);
             return;
-        }
 
+        _trialRewardsPanel?.Hide();
         EnsurePanelUnderCanvas(targetCanvas);
 
         _panel.Show(title, description, tooltipBackground);
@@ -209,17 +217,73 @@ public sealed class HoverTooltipManager : MonoBehaviour
     Vector2 ResolveScreenOffset(Vector2 callerScreenOffset, bool isAbove) =>
         (isAbove ? hoverAboveTooltipScreenOffset : callerScreenOffset) + hoverTooltipScreenOffset;
 
-    public void Hide() => _panel?.Hide();
+    public void ShowTrialRewards(
+        RectTransform anchor,
+        Vector2 screenPixelOffset,
+        PlayerTrialSO trial,
+        TrialSaveData state,
+        bool isAbove = false)
+    {
+        if (trialRewardsPanelPrefab == null || anchor == null || trial == null)
+            return;
+
+        var targetCanvas = ResolveCanvas(anchor);
+        if (targetCanvas == null)
+            return;
+
+        EnsureTrialRewardsPanelUnderCanvas(targetCanvas);
+        _panel?.Hide();
+
+        _trialRewardsPanel.Show(trial, state, ResolveIconIndex());
+        _trialRewardsPanel.AlignToRectWithScreenOffset(anchor, ResolveScreenOffset(screenPixelOffset, isAbove));
+    }
+
+    public void Hide()
+    {
+        _panel?.Hide();
+        _trialRewardsPanel?.Hide();
+    }
+
+    GameIconIndexSO ResolveIconIndex() =>
+        gameIconIndex != null ? gameIconIndex : GameIconCatalog.Active;
+
+    Canvas ResolveCanvas(RectTransform anchor)
+    {
+        var targetCanvas = anchor.GetComponentInParent<Canvas>();
+        if (targetCanvas == null)
+            targetCanvas = fallbackCanvas;
+        if (targetCanvas == null)
+            targetCanvas = FindObjectOfType<Canvas>();
+
+        if (targetCanvas == null)
+            Debug.LogError("HoverTooltipManager: no Canvas found for tooltip parenting.", this);
+
+        return targetCanvas;
+    }
 
     void EnsurePanelUnderCanvas(Canvas canvas)
     {
         if (_panel != null && _panelParentCanvas == canvas)
             return;
 
-        DestroyPanelIfOwned();
+        if (_panelParentCanvas != canvas)
+            DestroyPanelIfOwned();
 
         _panel = Instantiate(panelPrefab, canvas.transform);
         _panel.name = $"{panelPrefab.name} (Runtime)";
+        _panelParentCanvas = canvas;
+    }
+
+    void EnsureTrialRewardsPanelUnderCanvas(Canvas canvas)
+    {
+        if (_trialRewardsPanel != null && _panelParentCanvas == canvas)
+            return;
+
+        if (_panelParentCanvas != canvas)
+            DestroyPanelIfOwned();
+
+        _trialRewardsPanel = Instantiate(trialRewardsPanelPrefab, canvas.transform);
+        _trialRewardsPanel.name = $"{trialRewardsPanelPrefab.name} (Runtime)";
         _panelParentCanvas = canvas;
     }
 }

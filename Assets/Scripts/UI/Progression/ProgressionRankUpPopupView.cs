@@ -4,9 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>Dice Select level-up popup shown after all trials on a rank are acknowledged.</summary>
-public sealed class ProgressionRankUpPopupView : MonoBehaviour
+public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupViewBase
 {
-    [SerializeField] private GameObject panelRoot;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private Button completeButton;
@@ -17,6 +16,7 @@ public sealed class ProgressionRankUpPopupView : MonoBehaviour
 
     void Awake()
     {
+        ResolvePanelRootInAwake();
         if (panelRoot == null)
             Debug.LogError($"ProgressionRankUpPopupView on '{name}': assign panelRoot.", this);
         if (completeButton == null)
@@ -64,8 +64,7 @@ public sealed class ProgressionRankUpPopupView : MonoBehaviour
         if (bodyText != null)
             bodyText.text = BuildBody(completedRank);
 
-        if (panelRoot != null)
-            panelRoot.SetActive(true);
+        ShowPanel();
     }
 
     public void Hide()
@@ -74,11 +73,7 @@ public sealed class ProgressionRankUpPopupView : MonoBehaviour
         HideImmediate();
     }
 
-    void HideImmediate()
-    {
-        if (panelRoot != null)
-            panelRoot.SetActive(false);
-    }
+    void HideImmediate() => HidePanelImmediate();
 
     void HandleCompleteClicked()
     {

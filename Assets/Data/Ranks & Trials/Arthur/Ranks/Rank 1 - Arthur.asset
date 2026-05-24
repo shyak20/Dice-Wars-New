@@ -27,8 +27,10 @@ MonoBehaviour:
     - rid: 6434882425854361676
       type: {class: ProgressionStartingRelicReward, ns: , asm: Assembly-CSharp}
       data:
+        rowFormat: Start with {0}
         relic: {fileID: 11400000, guid: 86c3ebfb4d820444ea01a17cbf3f7e86, type: 2}
     - rid: 6434882425854361677
       type: {class: ProgressionMaxRollsReward, ns: , asm: Assembly-CSharp}
       data:
+        rowFormat: Get +1 Max Rolls per turn
         amount: 1

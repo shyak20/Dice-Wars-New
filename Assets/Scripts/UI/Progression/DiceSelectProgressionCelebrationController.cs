@@ -14,6 +14,8 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
     [SerializeField] private ProgressionRankUpPopupView rankUpPopup;
     [Tooltip("Parent of celebration popups (and optional overlay art). Disabled whenever no popup is showing.")]
     [SerializeField] private GameObject progressionCelebrationRoot;
+    [Tooltip("Optional full-screen blocker under celebration root.")]
+    [SerializeField] private GameObject inputBlocker;
 
     readonly List<PlayerTrialSO> _pendingTrials = new List<PlayerTrialSO>();
     Coroutine _flowCoroutine;
@@ -32,6 +34,13 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
         if (progressionCelebrationRoot == null)
             Debug.LogError("DiceSelectProgressionCelebrationController: assign progressionCelebrationRoot.", this);
 
+        if (inputBlocker == null && progressionCelebrationRoot != null)
+        {
+            var blocker = progressionCelebrationRoot.transform.Find("Input Blocker");
+            if (blocker != null)
+                inputBlocker = blocker.gameObject;
+        }
+
         SetCelebrationRootActive(false);
     }
 
@@ -42,6 +51,8 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 
         ProgressionManager.OnCharacterProgressionChanged += OnProgressionDataChanged;
     }
+
+    void Start() => TryStartCelebrationFlow();
 
     void OnDisable()
     {
@@ -160,6 +171,9 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
     {
         if (progressionCelebrationRoot != null)
             progressionCelebrationRoot.SetActive(active);
+
+        if (inputBlocker != null)
+            inputBlocker.SetActive(active);
     }
 
     static ProgressionManager ResolveProgression(PlayerDataSO character)

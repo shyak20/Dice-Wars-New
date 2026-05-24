@@ -23,6 +23,10 @@ public class PlayerTrialSO : ScriptableObject
     [Tooltip("Use + to pick a typed reward granted when this trial is completed.")]
     [SerializeReference] public ProgressionRewardBase completionReward;
 
+    [Header("Reward tooltip")]
+    [Tooltip("Row text for completion reward in trial hover tooltip. {0} = amount or relic name. Overrides reward.rowFormat when set.")]
+    public string completionRewardRowFormat;
+
     void OnValidate()
     {
         if (string.IsNullOrWhiteSpace(trialID))

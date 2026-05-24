@@ -4,9 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>Dice Select popup for a single completed trial. Invokes <see cref="OnCompleteClicked"/> when dismissed.</summary>
-public sealed class ProgressionTrialCompletedPopupView : MonoBehaviour
+public sealed class ProgressionTrialCompletedPopupView : ProgressionCelebrationPopupViewBase
 {
-    [SerializeField] private GameObject panelRoot;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private Image trialIconImage;
@@ -16,6 +15,7 @@ public sealed class ProgressionTrialCompletedPopupView : MonoBehaviour
 
     void Awake()
     {
+        ResolvePanelRootInAwake();
         if (panelRoot == null)
             Debug.LogError($"ProgressionTrialCompletedPopupView on '{name}': assign panelRoot.", this);
         if (completeButton == null)
@@ -55,8 +55,7 @@ public sealed class ProgressionTrialCompletedPopupView : MonoBehaviour
             trialIconImage.enabled = trial.trialIcon != null;
         }
 
-        if (panelRoot != null)
-            panelRoot.SetActive(true);
+        ShowPanel();
     }
 
     public void Hide()
@@ -65,11 +64,7 @@ public sealed class ProgressionTrialCompletedPopupView : MonoBehaviour
         HideImmediate();
     }
 
-    void HideImmediate()
-    {
-        if (panelRoot != null)
-            panelRoot.SetActive(false);
-    }
+    void HideImmediate() => HidePanelImmediate();
 
     void HandleCompleteClicked()
     {

@@ -9,9 +9,11 @@ using UnityEngine.UI;
 /// <summary>Creates Dice Select progression celebration popups and wires <see cref="DiceSelectProgressionCelebrationController"/>.</summary>
 public static class ProgressionCelebrationUISetup
 {
-    const string MenuPath = "Dice Wars/UI/Setup Progression Celebration Popups (Dice Select)";
+    const string MenuPathUi = "Dice Wars/UI/Setup Progression Celebration Popups (Dice Select)";
+    const string MenuPathProgression = "Dice Wars/Progression/Setup Celebration UI In Dice Select Scene";
 
-    [MenuItem(MenuPath)]
+    [MenuItem(MenuPathUi)]
+    [MenuItem(MenuPathProgression)]
     public static void SetupInDiceSelectScene()
     {
         var scene = SceneManager.GetActiveScene();
@@ -45,6 +47,8 @@ public static class ProgressionCelebrationUISetup
         var root = FindOrCreateRoot(canvasRt);
         var trialPopup = FindOrCreateTrialPopup(root);
         var rankPopup = FindOrCreateRankUpPopup(root);
+        FixPanelRootReference(trialPopup);
+        FixPanelRootReference(rankPopup);
 
         var celebration = controller.GetComponent<DiceSelectProgressionCelebrationController>();
         if (celebration == null)
@@ -122,7 +126,7 @@ public static class ProgressionCelebrationUISetup
 
         var view = popupRoot.AddComponent<ProgressionTrialCompletedPopupView>();
         var so = new SerializedObject(view);
-        so.FindProperty("panelRoot").objectReferenceValue = popupRoot;
+        so.FindProperty("panelRoot").objectReferenceValue = panel;
         so.FindProperty("titleText").objectReferenceValue = title;
         so.FindProperty("bodyText").objectReferenceValue = body;
         so.FindProperty("trialIconImage").objectReferenceValue = icon;
@@ -152,7 +156,7 @@ public static class ProgressionCelebrationUISetup
 
         var view = popupRoot.AddComponent<ProgressionRankUpPopupView>();
         var so = new SerializedObject(view);
-        so.FindProperty("panelRoot").objectReferenceValue = popupRoot;
+        so.FindProperty("panelRoot").objectReferenceValue = panel;
         so.FindProperty("titleText").objectReferenceValue = title;
         so.FindProperty("bodyText").objectReferenceValue = body;
         so.FindProperty("completeButton").objectReferenceValue = completeBtn;
@@ -160,6 +164,24 @@ public static class ProgressionCelebrationUISetup
 
         popupRoot.SetActive(false);
         return view;
+    }
+
+    static void FixPanelRootReference(ProgressionCelebrationPopupViewBase view)
+    {
+        if (view == null)
+            return;
+
+        var panel = view.transform.Find("Panel");
+        if (panel == null)
+            return;
+
+        var so = new SerializedObject(view);
+        var panelRoot = so.FindProperty("panelRoot");
+        if (panelRoot.objectReferenceValue == view.gameObject)
+        {
+            panelRoot.objectReferenceValue = panel.gameObject;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
     }
 
     static GameObject CreatePanel(Transform parent, string name, Vector2 size)

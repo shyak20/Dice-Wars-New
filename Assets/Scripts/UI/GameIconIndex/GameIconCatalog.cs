@@ -65,4 +65,10 @@ public static class GameIconCatalog
         target = default;
         return _active != null && _active.TryGetStatusTargetForPoolRow(key, out target);
     }
+
+    public static Sprite GetMainAttributeIcon(MainAttributeIconId id) =>
+        _active != null ? _active.GetMainAttributeIcon(id) : null;
+
+    public static Sprite GetDieUnlockMainAttributeIcon(DieType dieType) =>
+        _active != null ? _active.GetDieUnlockMainAttributeIcon(dieType) : null;
 }

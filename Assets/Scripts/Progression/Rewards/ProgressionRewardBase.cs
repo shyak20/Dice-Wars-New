@@ -7,5 +7,8 @@ using UnityEngine;
 [Serializable]
 public abstract class ProgressionRewardBase
 {
+    [Tooltip("Optional trial-reward row text. {0} = numeric amount or relic name. Empty uses type default.")]
+    public string rowFormat;
+
     public abstract void Apply(ProgressionRewardApplyContext context);
 }
