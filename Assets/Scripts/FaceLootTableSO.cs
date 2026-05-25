@@ -78,17 +78,30 @@ public class FaceLootTableSO : ScriptableObject
     public List<DieFaceSO> GetCandidatesForDieAndRarity(DieAssetSO die, FaceRarity rarity)
     {
         var candidates = new List<DieFaceSO>();
-        if (die == null || allPossibleFaces == null || allPossibleFaces.Count == 0)
+        var pool = GetProgressionEligibleFaces();
+        if (die == null || pool == null || pool.Count == 0)
             return candidates;
 
-        for (var i = 0; i < allPossibleFaces.Count; i++)
+        for (var i = 0; i < pool.Count; i++)
         {
-            var face = allPossibleFaces[i];
+            var face = pool[i];
             if (face != null && face.rarity == rarity && face.MatchesDie(die))
                 candidates.Add(face);
         }
 
         return candidates;
+    }
+
+    List<DieFaceSO> GetProgressionEligibleFaces()
+    {
+        if (allPossibleFaces == null || allPossibleFaces.Count == 0)
+            return allPossibleFaces;
+
+        var mgr = ProgressionManager.TryGetRuntime();
+        if (mgr != null && mgr.Catalog != null)
+            return ProgressionLootFilter.FilterFaces(allPossibleFaces, mgr.Catalog, mgr);
+
+        return allPossibleFaces;
     }
 
     /// <summary>Uniform random pick from <see cref="GetCandidatesForDieAndRarity"/>; null when none match.</summary>

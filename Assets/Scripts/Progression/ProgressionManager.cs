@@ -306,7 +306,7 @@ public sealed class ProgressionManager : MonoBehaviour
         ProgressionRunModifiers.IsContentUnlocked(Catalog, _save, contentId);
 
     public bool HasHorizontalUnlockGates() =>
-        ProgressionRunModifiers.HasHorizontalUnlocks(_save);
+        ProgressionRunModifiers.HasHorizontalUnlocks(Catalog);
 
     public void ApplyToRuntimeProfile(PlayerDataSO runtimeProfile, PlayerDataSO template)
     {

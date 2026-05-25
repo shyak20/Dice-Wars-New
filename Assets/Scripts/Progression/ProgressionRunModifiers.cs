@@ -115,6 +115,9 @@ public static class ProgressionRunModifiers
         if (catalog != null && catalog.IsAlwaysAvailable(contentId))
             return true;
 
+        if (catalog != null && !ProgressionGatedContent.IsGated(catalog, contentId))
+            return true;
+
         if (save?.unlockedContentIDs == null)
             return false;
 
@@ -127,8 +130,8 @@ public static class ProgressionRunModifiers
         return false;
     }
 
-    public static bool HasHorizontalUnlocks(ProgressionProfileSaveData save) =>
-        save?.unlockedContentIDs != null && save.unlockedContentIDs.Count > 0;
+    public static bool HasHorizontalUnlocks(ProgressionCatalogSO catalog) =>
+        ProgressionGatedContent.HasGatedContent(catalog);
 
     public static HashSet<string> BuildUnlockedSet(ProgressionProfileSaveData save)
     {

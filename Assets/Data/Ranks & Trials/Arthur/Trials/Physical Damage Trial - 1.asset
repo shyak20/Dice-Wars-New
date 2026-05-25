@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a8850dbf3a07e44dbe01b7e89ef2118, type: 3}
+  m_Name: Physical Damage Trial - 1
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
+  trialID: Physical Damage
+  description: Deal 100<style=Attack></style>
+  trialIcon: {fileID: 21300000, guid: 5a82c1d08c4c36a438cb81762a370f7b, type: 3}
+  type: 8
+  targetValue: 10
+  exactRollValue: 1
+  completionReward:
+    rid: 6434882480546250827
+  completionRewardRowFormat: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882480546250827
+      type: {class: ProgressionUnlockFacesReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: New Faces Unlocked
+        faces:
+        - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
+        - {fileID: 11400000, guid: 54329b8f680c9e3479923b8e99730339, type: 2}
+        - {fileID: 11400000, guid: f760bc552e9fddb478ea495adb18fc3c, type: 2}

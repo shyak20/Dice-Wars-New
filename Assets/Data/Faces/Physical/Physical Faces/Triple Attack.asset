@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: Triple Attack
   m_EditorClassIdentifier: 
-  title: Double Attack
+  title: Triple Attack
   description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>3</style> three times

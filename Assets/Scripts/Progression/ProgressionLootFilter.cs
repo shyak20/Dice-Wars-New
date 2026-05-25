@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>Restricts loot tables to horizontally unlocked content plus catalog base pool.</summary>
+/// <summary>
+/// Restricts loot to catalog base pool plus content unlocked via trial/rank rewards.
+/// Gated unlock rewards are excluded until their trial or rank is completed.
+/// </summary>
 public static class ProgressionLootFilter
 {
     public static List<DieFaceSO> FilterFaces(IReadOnlyList<DieFaceSO> pool, ProgressionCatalogSO catalog, ProgressionManager manager)
@@ -9,7 +12,7 @@ public static class ProgressionLootFilter
         if (pool == null || pool.Count == 0)
             return new List<DieFaceSO>();
 
-        if (manager == null || !manager.HasHorizontalUnlockGates())
+        if (catalog == null || manager == null)
             return CopyNonNull(pool);
 
         var result = new List<DieFaceSO>();
@@ -30,7 +33,7 @@ public static class ProgressionLootFilter
         if (pool == null || pool.Count == 0)
             return new List<GemSO>();
 
-        if (manager == null || !manager.HasHorizontalUnlockGates())
+        if (catalog == null || manager == null)
             return CopyNonNull(pool);
 
         var result = new List<GemSO>();
@@ -51,7 +54,7 @@ public static class ProgressionLootFilter
         if (pool == null || pool.Count == 0)
             return new List<RelicSO>();
 
-        if (manager == null || !manager.HasHorizontalUnlockGates())
+        if (catalog == null || manager == null)
             return CopyNonNull(pool);
 
         var result = new List<RelicSO>();
@@ -72,7 +75,7 @@ public static class ProgressionLootFilter
         if (pool == null || pool.Count == 0)
             return new List<DieAssetSO>();
 
-        if (manager == null || !manager.HasHorizontalUnlockGates())
+        if (catalog == null || manager == null)
             return CopyNonNull(pool);
 
         var result = new List<DieAssetSO>();
@@ -90,8 +93,12 @@ public static class ProgressionLootFilter
 
     static bool IsAllowed(string contentId, ProgressionCatalogSO catalog, ProgressionManager manager)
     {
-        if (catalog != null && catalog.IsAlwaysAvailable(contentId))
+        if (catalog.IsAlwaysAvailable(contentId))
             return true;
+
+        if (!ProgressionGatedContent.IsGated(catalog, contentId))
+            return true;
+
         return manager.IsContentUnlocked(contentId);
     }
 

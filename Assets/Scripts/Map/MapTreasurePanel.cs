@@ -349,7 +349,8 @@ public sealed class MapTreasurePanel : MonoBehaviour
 
         if (pack.dieDropLootTable != null && Random.value <= pack.dieDropChance)
         {
-            var die = pack.dieDropLootTable.GetRandomDie();
+            var dieRoll = ProgressionLootRolls.RollDice(pack.dieDropLootTable, 1, null, 0.7f, uniqueInBatch: false);
+            var die = dieRoll.Count > 0 ? dieRoll[0] : null;
             if (die != null)
             {
                 destination.Add(new RolledReward
@@ -362,7 +363,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
 
         if (pack.relicDropLootTable != null && Random.value <= pack.relicDropChance)
         {
-            var rolled = pack.relicDropLootTable.GetRandomRelics(1);
+            var rolled = ProgressionLootRolls.RollRelics(pack.relicDropLootTable, 1);
             if (rolled.Count > 0 && rolled[0] != null)
             {
                 destination.Add(new RolledReward
