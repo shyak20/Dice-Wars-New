@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   descriptionLines:
   - Gain <style=Shield>6</style>
-  - This turn, whenever you roll a <style=Die4>,<style=Die6> gain <style=Shield>6</style>
+  - This turn, whenever you roll a <style=Die4></style> or <style=Die6></style> gain <style=Shield>6</style>
   value: 6
   type: 1
   faceMaterial: {fileID: 2100000, guid: 3f7122d4f64a56341a40bc26b951971d, type: 2}

@@ -18,7 +18,7 @@ MonoBehaviour:
   - Double the <style=Burn>Burn</style> amount on the enemy
   value: 6
   type: 2
-  faceMaterial: {fileID: 2100000, guid: e1be335986f1bca4f8e6be4b12db220e, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 3e0141633dd484c4ea2beb1a03e5d504, type: 2}
   rarity: 2
   damage: 0
   damageAttackTimes: 1

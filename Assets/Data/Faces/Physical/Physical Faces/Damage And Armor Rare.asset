@@ -19,13 +19,13 @@ MonoBehaviour:
   - Gain <style=Shield>4</style> Armor
   value: 4
   type: 0
-  faceMaterial: {fileID: 2100000, guid: f35ae15ee7e93c149b27a0d43069dfd5, type: 2}
+  faceMaterial: {fileID: 2100000, guid: e7f2e895d671c5343bdd66a43248d860, type: 2}
   rarity: 1
   damage: 4
   damageAttackTimes: 1
   armor: 4
   selfDamage: 0
-  uiIcon: {fileID: 21300000, guid: 00dda7a098b7ec6478fd1355f4741d3d, type: 3}
+  uiIcon: {fileID: 21300000, guid: fdf4d84fdc9b7424481735ecf9c89bd3, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: 7cb1ca40abd697a4d907cdec17ec9928, type: 3}
   actions: []
   references:
