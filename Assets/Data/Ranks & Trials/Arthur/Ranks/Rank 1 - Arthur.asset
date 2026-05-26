@@ -20,8 +20,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f6b2014e6e6e7bd4285db240f2662061, type: 2}
   rankUpRewards:
   - rid: 6434882425854361676
-  - rid: 6434882425854361677
-  - rid: 6434882480546250831
+  - rid: 6434882480546251013
   references:
     version: 2
     RefIds:
@@ -30,13 +29,8 @@ MonoBehaviour:
       data:
         rowFormat: Start with {0}
         relic: {fileID: 11400000, guid: 86c3ebfb4d820444ea01a17cbf3f7e86, type: 2}
-    - rid: 6434882425854361677
-      type: {class: ProgressionMaxRollsReward, ns: , asm: Assembly-CSharp}
-      data:
-        rowFormat: Get +1 Max Rolls per turn
-        amount: 1
-    - rid: 6434882480546250831
+    - rid: 6434882480546251013
       type: {class: ProgressionAddStartingDieReward, ns: , asm: Assembly-CSharp}
       data:
-        rowFormat: Bonus Starting Die
+        rowFormat: Start with 1 Extra Die
         die: {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}

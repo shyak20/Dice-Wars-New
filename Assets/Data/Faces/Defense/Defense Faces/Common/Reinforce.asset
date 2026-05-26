@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Reinforce
   description: 
   descriptionLines:
-  - Gain <style=Shield>3</style>
+  - Gain <style=Shield>4</style>
   - Next <style=Shield>Shield</style> roll this turn is DOUBLED
   value: 4
   type: 1

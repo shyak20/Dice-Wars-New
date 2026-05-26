@@ -20,8 +20,8 @@ MonoBehaviour:
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:
-  - label: Choose a die, add a <style=Legendary>Legendary</style> and an unremovable
-      <style=Curse>curse</style> faces to it.
+  - label: Choose a die, add a <style=Legendary>Legendary</style> and an <style=Curse>unremovable
+      Curse</style> faces to it.
     enabledWhen:
     - rid: 6434882266773586124
     registerEventCompletedOnPick: 1

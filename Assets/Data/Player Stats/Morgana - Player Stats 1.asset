@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f8795f3b5ba6c14f8be468dcba7eb44, type: 3}
   m_Name: Morgana - Player Stats 1
   m_EditorClassIdentifier: 
-  characterDisplayName: Morgana - The Ashbound Disciple
+  characterDisplayName: Morgana
   portrait: {fileID: 21300000, guid: c368f3009007b38438e06cb89ef89ed4, type: 3}
   smallPortrait: {fileID: 21300000, guid: 0a31fcf4bae5acf4181199fd4990fd4c, type: 3}
   description: "Merlin's most gifted disciple. \nA brilliant sorceress whose magic

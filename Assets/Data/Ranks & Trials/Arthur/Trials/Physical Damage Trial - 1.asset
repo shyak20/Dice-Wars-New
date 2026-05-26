@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
   trialID: Physical Damage Trial - 1
   trialName: Damage Dealer
-  description: Deal 100<style=Attack></style>
+  description: Deal a total of <style=Attack>100</style>
   trialIcon: {fileID: 21300000, guid: b5f1afc8336270944b4343bd476a9387, type: 3}
   type: 8
   targetValue: 100
