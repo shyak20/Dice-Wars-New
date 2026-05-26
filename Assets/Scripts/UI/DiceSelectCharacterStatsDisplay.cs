@@ -5,6 +5,7 @@ using UnityEngine;
 /// Dice-select preview for the selected character's rank, max health, base max power, map move limit, and max rolls per turn.
 /// Rank uses a <see cref="TMP_Text"/>; other stats use <see cref="CharacterInfoStat"/> rows.
 /// </summary>
+[DefaultExecutionOrder(50)]
 public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController sceneController;
@@ -29,6 +30,13 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
             sceneController.CharacterPreviewChanged += OnCharacterPreviewChanged;
 
         ProgressionManager.OnCharacterProgressionChanged += OnCharacterProgressionChanged;
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested += OnDeferredProgressionRefreshRequested;
+    }
+
+    void Start()
+    {
+        if (sceneController != null && sceneController.TryGetPreviewCharacter(out var character))
+            TryRefresh(character);
     }
 
     void OnDisable()
@@ -37,15 +45,10 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
             sceneController.CharacterPreviewChanged -= OnCharacterPreviewChanged;
 
         ProgressionManager.OnCharacterProgressionChanged -= OnCharacterProgressionChanged;
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested -= OnDeferredProgressionRefreshRequested;
     }
 
-    void Start()
-    {
-        if (sceneController != null && sceneController.TryGetPreviewCharacter(out var character))
-            Refresh(character);
-    }
-
-    void OnCharacterPreviewChanged(PlayerDataSO character) => Refresh(character);
+    void OnCharacterPreviewChanged(PlayerDataSO character) => TryRefresh(character);
 
     void OnCharacterProgressionChanged(PlayerDataSO character)
     {
@@ -53,7 +56,21 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
             return;
 
         if (preview == character)
-            Refresh(preview);
+            TryRefresh(preview);
+    }
+
+    void OnDeferredProgressionRefreshRequested()
+    {
+        if (sceneController != null && sceneController.TryGetPreviewCharacter(out var character))
+            Refresh(character);
+    }
+
+    void TryRefresh(PlayerDataSO character)
+    {
+        if (!DiceSelectProgressionDisplayGate.ShouldRefreshProgressionDisplays())
+            return;
+
+        Refresh(character);
     }
 
     void Refresh(PlayerDataSO character)

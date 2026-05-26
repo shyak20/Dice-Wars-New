@@ -65,7 +65,7 @@ public sealed class ProgressionUnlockRelicsReward : ProgressionRewardBase
 [Serializable]
 public sealed class ProgressionAddStartingDieReward : ProgressionRewardBase
 {
-    [Tooltip("Die added to the character's PlayerDataSO.currentDeck when this reward is granted.")]
+    [Tooltip("Die granted in progression save (PlayerPrefs): +1 copy of this die for the character's starting deck.")]
     public DieAssetSO die;
 
     public override void Apply(ProgressionRewardApplyContext context)
@@ -73,8 +73,7 @@ public sealed class ProgressionAddStartingDieReward : ProgressionRewardBase
         if (context?.Save == null || die == null)
             return;
 
-        ProgressionStartingDiceUtility.ApplyAddedDie(
-            context.Save, die, context.CharacterTemplate, context.Catalog);
+        ProgressionStartingDiceUtility.ApplyAddedDie(context.Save, die);
     }
 }
 
@@ -90,7 +89,6 @@ public sealed class ProgressionUnlockDiceReward : ProgressionRewardBase
             return;
 
         for (var i = 0; i < dice.Count; i++)
-            ProgressionStartingDiceUtility.ApplyAddedDie(
-                context.Save, dice[i], context.CharacterTemplate, context.Catalog);
+            ProgressionStartingDiceUtility.ApplyAddedDie(context.Save, dice[i]);
     }
 }

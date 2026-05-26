@@ -58,13 +58,9 @@ public class PlayerDataContainer : MonoBehaviour
 
         var progression = ProgressionManager.TryGetRuntime();
         if (progression != null)
-            progression.EnsureGrantedDiceOnTemplate(profile);
-        else if (profile.progressionCatalog != null)
-        {
-            var save = ProgressionSaveService.Load(profile.MetaSaveId);
-            ProgressionStartingDiceUtility.ReconcileGrantedDiceOnTemplate(
-                profile.progressionCatalog, save, profile);
-        }
+            progression.InitializeForCharacter(profile);
+
+        var deckTemplates = ResolveStartingDeckTemplates(profile, progression);
 
         RuntimeData = Instantiate(profile);
         RuntimeData.name = profile.name;
@@ -72,11 +68,10 @@ public class PlayerDataContainer : MonoBehaviour
         if (RuntimeData.currentDeck == null)
             RuntimeData.currentDeck = new List<DieAssetSO>();
 
-        var templateDeck = profile.currentDeck ?? new List<DieAssetSO>();
         RuntimeData.currentDeck.Clear();
-        for (var d = 0; d < templateDeck.Count; d++)
+        for (var d = 0; d < deckTemplates.Count; d++)
         {
-            var templateDie = templateDeck[d];
+            var templateDie = deckTemplates[d];
             if (templateDie == null)
             {
                 Debug.LogError($"PlayerDataContainer.ApplyCharacterProfile: '{profile.name}' deck slot {d} is null.");
@@ -88,13 +83,26 @@ public class PlayerDataContainer : MonoBehaviour
             RuntimeData.currentDeck.Add(clonedDie);
         }
 
-        if (progression != null)
-        {
-            progression.InitializeForCharacter(profile);
-            progression.ApplyToRuntimeProfile(RuntimeData, profile);
-        }
+        progression?.ApplyToRuntimeProfile(RuntimeData, profile);
 
         OnRuntimeDeckChanged?.Invoke();
+    }
+
+    static List<DieAssetSO> ResolveStartingDeckTemplates(PlayerDataSO profile, ProgressionManager progression)
+    {
+        if (profile == null)
+            return new List<DieAssetSO>();
+
+        if (progression != null)
+            return progression.BuildEffectiveStartingDeckTemplates(profile);
+
+        if (profile.progressionCatalog == null)
+            return ProgressionStartingDiceUtility.CopyDeckReferences(profile.currentDeck);
+
+        var catalog = profile.progressionCatalog;
+        var save = ProgressionSaveService.Load(profile.MetaSaveId);
+        ProgressionStartingDiceUtility.StripLegacyGrantsFromTemplate(catalog, save, profile);
+        return ProgressionStartingDiceUtility.BuildEffectiveDeck(catalog, save, profile);
     }
 
     void DestroyRuntimeDeckInstances()

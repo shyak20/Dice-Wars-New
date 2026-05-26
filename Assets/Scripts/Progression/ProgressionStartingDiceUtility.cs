@@ -1,58 +1,82 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>Starting dice granted by <see cref="ProgressionAddStartingDieReward"/>.</summary>
+/// <summary>Starting dice granted by <see cref="ProgressionAddStartingDieReward"/> (PlayerPrefs only).</summary>
 public static class ProgressionStartingDiceUtility
 {
-    /// <summary>Records a grant and appends one die copy to the character template and active runtime deck.</summary>
-    public static void ApplyAddedDie(
-        ProgressionProfileSaveData save,
-        DieAssetSO die,
-        PlayerDataSO characterTemplate,
-        ProgressionCatalogSO catalog = null)
+    /// <summary>Records a grant in progression save (PlayerPrefs). Applied to the deck on the next run via <see cref="BuildEffectiveDeck"/>.</summary>
+    public static void ApplyAddedDie(ProgressionProfileSaveData save, DieAssetSO die)
     {
         if (save == null || die == null)
             return;
 
-        characterTemplate ??= ResolveCharacterTemplate();
-        if (characterTemplate == null)
-            return;
-
-        catalog ??= ResolveCatalog(characterTemplate);
         RecordGrantedDie(save, die);
-
-        if (catalog != null)
-            ReconcileGrantedDiceOnTemplate(catalog, save, characterTemplate);
-        else
-            AppendOneGrantedDieToTemplate(characterTemplate, die);
-
-        save.grantedDiceDeckEntriesApplied = save.addedStartingDieIds.Count;
-        AppendCloneToActiveRuntimeDeck(characterTemplate, die);
     }
 
-    /// <summary>Appends deck entries for any recorded grants not yet written to <paramref name="template"/>.</summary>
-    public static void ReconcileGrantedDiceOnTemplate(
+    /// <summary>Base <see cref="PlayerDataSO.currentDeck"/> plus one entry per saved grant.</summary>
+    public static List<DieAssetSO> BuildEffectiveDeck(
         ProgressionCatalogSO catalog,
         ProgressionProfileSaveData save,
         PlayerDataSO template)
     {
-        if (catalog == null || save == null || template == null)
-            return;
+        var deck = CopyDeckReferences(template != null ? template.currentDeck : null);
+        if (catalog == null || save == null)
+            return deck;
 
-        save.addedStartingDieIds ??= new List<string>();
-        template.currentDeck ??= new List<DieAssetSO>();
+        var grants = save.grantedStartingDice;
+        if (grants == null || grants.Count == 0)
+            return deck;
 
-        var applied = Mathf.Max(0, save.grantedDiceDeckEntriesApplied);
-        for (var i = applied; i < save.addedStartingDieIds.Count; i++)
+        for (var i = 0; i < grants.Count; i++)
         {
-            var id = save.addedStartingDieIds[i];
-            if (!TryResolveDie(catalog, id, out var die) || die == null)
+            var entry = grants[i];
+            if (ProgressionContentIds.IsNullOrEmpty(entry.dieAssetId))
                 continue;
-
-            template.currentDeck.Add(die);
+            if (!TryResolveDie(catalog, entry.dieAssetId, out var die) || die == null)
+                continue;
+            deck.Add(die);
         }
 
-        save.grantedDiceDeckEntriesApplied = save.addedStartingDieIds.Count;
+        return deck;
+    }
+
+    /// <summary>Removes grant copies that older builds appended to the PlayerDataSO asset file.</summary>
+    public static void StripLegacyGrantsFromTemplate(
+        ProgressionCatalogSO catalog,
+        ProgressionProfileSaveData save,
+        PlayerDataSO template)
+    {
+        if (catalog == null || save == null || template == null || save.legacyTemplateGrantsStripped)
+            return;
+
+        var grants = save.grantedStartingDice;
+        if (grants == null || grants.Count == 0)
+        {
+            save.legacyTemplateGrantsStripped = true;
+            return;
+        }
+
+        template.currentDeck ??= new List<DieAssetSO>();
+        for (var g = grants.Count - 1; g >= 0; g--)
+        {
+            var entry = grants[g];
+            if (ProgressionContentIds.IsNullOrEmpty(entry.dieAssetId))
+                continue;
+            if (!TryResolveDie(catalog, entry.dieAssetId, out var die) || die == null)
+                continue;
+
+            for (var d = template.currentDeck.Count - 1; d >= 0; d--)
+            {
+                var deckDie = template.currentDeck[d];
+                if (deckDie != null && deckDie.name == die.name)
+                {
+                    template.currentDeck.RemoveAt(d);
+                    break;
+                }
+            }
+        }
+
+        save.legacyTemplateGrantsStripped = true;
         MarkTemplateDirty(template);
     }
 
@@ -65,18 +89,28 @@ public static class ProgressionStartingDiceUtility
         if (ProgressionContentIds.IsNullOrEmpty(id))
             return;
 
-        save.addedStartingDieIds ??= new List<string>();
-        save.addedStartingDieIds.Add(id);
+        save.grantedStartingDice ??= new List<GrantedStartingDieSaveEntry>();
+        save.grantedStartingDice.Add(new GrantedStartingDieSaveEntry
+        {
+            dieAssetId = id,
+            dieType = die.dieType
+        });
     }
 
-    static void AppendOneGrantedDieToTemplate(PlayerDataSO template, DieAssetSO die)
+    public static void UpgradeGrantEntryDieTypes(ProgressionCatalogSO catalog, ProgressionProfileSaveData save)
     {
-        if (template == null || die == null)
+        if (catalog == null || save?.grantedStartingDice == null)
             return;
 
-        template.currentDeck ??= new List<DieAssetSO>();
-        template.currentDeck.Add(die);
-        MarkTemplateDirty(template);
+        for (var i = 0; i < save.grantedStartingDice.Count; i++)
+        {
+            var entry = save.grantedStartingDice[i];
+            if (!TryResolveDie(catalog, entry.dieAssetId, out var die) || die == null)
+                continue;
+
+            entry.dieType = die.dieType;
+            save.grantedStartingDice[i] = entry;
+        }
     }
 
     public static void CollectDiceFromRewards(IReadOnlyList<ProgressionRewardBase> rewards, List<DieAssetSO> into)
@@ -103,10 +137,10 @@ public static class ProgressionStartingDiceUtility
         }
     }
 
-    public static bool TryResolveDie(ProgressionCatalogSO catalog, string contentId, out DieAssetSO die)
+    public static bool TryResolveDie(ProgressionCatalogSO catalog, string dieAssetId, out DieAssetSO die)
     {
         die = null;
-        if (catalog?.ranks == null || ProgressionContentIds.IsNullOrEmpty(contentId))
+        if (catalog?.ranks == null || ProgressionContentIds.IsNullOrEmpty(dieAssetId))
             return false;
 
         for (var r = 0; r < catalog.ranks.Count; r++)
@@ -119,7 +153,7 @@ public static class ProgressionStartingDiceUtility
             {
                 for (var t = 0; t < rank.associatedTrials.Count; t++)
                 {
-                    if (TryGetDieFromReward(rank.associatedTrials[t]?.completionReward, contentId, out die))
+                    if (TryGetDieFromReward(rank.associatedTrials[t]?.completionReward, dieAssetId, out die))
                         return true;
                 }
             }
@@ -128,7 +162,7 @@ public static class ProgressionStartingDiceUtility
             {
                 for (var i = 0; i < rank.rankUpRewards.Count; i++)
                 {
-                    if (TryGetDieFromReward(rank.rankUpRewards[i], contentId, out die))
+                    if (TryGetDieFromReward(rank.rankUpRewards[i], dieAssetId, out die))
                         return true;
                 }
             }
@@ -137,15 +171,15 @@ public static class ProgressionStartingDiceUtility
         return false;
     }
 
-    static bool TryGetDieFromReward(ProgressionRewardBase reward, string contentId, out DieAssetSO die)
+    static bool TryGetDieFromReward(ProgressionRewardBase reward, string dieAssetId, out DieAssetSO die)
     {
         die = null;
-        if (reward == null || ProgressionContentIds.IsNullOrEmpty(contentId))
+        if (reward == null || ProgressionContentIds.IsNullOrEmpty(dieAssetId))
             return false;
 
         if (reward is ProgressionAddStartingDieReward add && add.die != null)
         {
-            if (!string.Equals(ProgressionContentIds.ForDie(add.die), contentId, System.StringComparison.Ordinal))
+            if (!string.Equals(ProgressionContentIds.ForDie(add.die), dieAssetId, System.StringComparison.Ordinal))
                 return false;
             die = add.die;
             return true;
@@ -158,7 +192,7 @@ public static class ProgressionStartingDiceUtility
                 var entry = unlock.dice[i];
                 if (entry == null)
                     continue;
-                if (!string.Equals(ProgressionContentIds.ForDie(entry), contentId, System.StringComparison.Ordinal))
+                if (!string.Equals(ProgressionContentIds.ForDie(entry), dieAssetId, System.StringComparison.Ordinal))
                     continue;
                 die = entry;
                 return true;
@@ -181,36 +215,6 @@ public static class ProgressionStartingDiceUtility
         }
 
         return false;
-    }
-
-    static PlayerDataSO ResolveCharacterTemplate()
-    {
-        var progression = ProgressionManager.TryGetRuntime();
-        if (progression != null && progression.ActiveCharacterTemplate != null)
-            return progression.ActiveCharacterTemplate;
-
-        var container = PlayerDataContainer.Instance;
-        return container != null ? container.ActiveCharacterTemplate : null;
-    }
-
-    static ProgressionCatalogSO ResolveCatalog(PlayerDataSO template)
-    {
-        if (template?.progressionCatalog != null)
-            return template.progressionCatalog;
-
-        return ProgressionManager.TryGetRuntime()?.Catalog;
-    }
-
-    static void AppendCloneToActiveRuntimeDeck(PlayerDataSO template, DieAssetSO die)
-    {
-        if (template == null || die == null)
-            return;
-
-        var container = PlayerDataContainer.Instance;
-        if (container == null || container.ActiveCharacterTemplate != template || container.RuntimeData == null)
-            return;
-
-        container.AddDieToDeck(die);
     }
 
     static void MarkTemplateDirty(PlayerDataSO template)

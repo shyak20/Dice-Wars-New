@@ -7,6 +7,7 @@ using UnityEngine;
 /// Debug/readout UI: lists reward faces that are loot-eligible vs trial-gated and still locked.
 /// Wire to two <see cref="TMP_Text"/> fields and assign <see cref="facesLootTable"/> (Faces Loot Table).
 /// </summary>
+[DefaultExecutionOrder(50)]
 public sealed class ProgressionFaceAvailabilityDebugUI : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController diceSelectSceneController;
@@ -31,8 +32,10 @@ public sealed class ProgressionFaceAvailabilityDebugUI : MonoBehaviour
             diceSelectSceneController.CharacterPreviewChanged += OnCharacterPreviewChanged;
 
         ProgressionManager.OnCharacterProgressionChanged += OnProgressionChanged;
-        Refresh();
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested += OnDeferredProgressionRefreshRequested;
     }
+
+    void Start() => TryRefresh();
 
     void OnDisable()
     {
@@ -40,11 +43,22 @@ public sealed class ProgressionFaceAvailabilityDebugUI : MonoBehaviour
             diceSelectSceneController.CharacterPreviewChanged -= OnCharacterPreviewChanged;
 
         ProgressionManager.OnCharacterProgressionChanged -= OnProgressionChanged;
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested -= OnDeferredProgressionRefreshRequested;
     }
 
-    void OnCharacterPreviewChanged(PlayerDataSO _) => Refresh();
+    void OnCharacterPreviewChanged(PlayerDataSO _) => TryRefresh();
 
-    void OnProgressionChanged(PlayerDataSO _) => Refresh();
+    void OnProgressionChanged(PlayerDataSO _) => TryRefresh();
+
+    void OnDeferredProgressionRefreshRequested() => Refresh();
+
+    void TryRefresh()
+    {
+        if (!DiceSelectProgressionDisplayGate.ShouldRefreshProgressionDisplays())
+            return;
+
+        Refresh();
+    }
 
     public void Refresh()
     {

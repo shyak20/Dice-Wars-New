@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Kill 3 Monsters
   trialIcon: {fileID: 21300000, guid: 7f4429031dc7f1c49b9ab56968be78c0, type: 3}
   type: 0
-  targetValue: 3
+  targetValue: 1
   exactRollValue: 1
   completionReward:
     rid: 6434882374853722192

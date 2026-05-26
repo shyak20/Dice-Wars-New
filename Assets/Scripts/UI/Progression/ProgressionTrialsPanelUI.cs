@@ -6,6 +6,7 @@ using UnityEngine.UI;
 /// <summary>
 /// Spawns <see cref="ProgressionTrialSlotUI"/> for the active rank and shows rank completion on a slider + X/Y label.
 /// </summary>
+[DefaultExecutionOrder(50)]
 public sealed class ProgressionTrialsPanelUI : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController diceSelectSceneController;
@@ -38,8 +39,10 @@ public sealed class ProgressionTrialsPanelUI : MonoBehaviour
             diceSelectSceneController.CharacterPreviewChanged += OnCharacterPreviewChanged;
 
         ProgressionManager.OnCharacterProgressionChanged += OnProgressionDataChanged;
-        Refresh();
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested += OnDeferredProgressionRefreshRequested;
     }
+
+    void Start() => TryRefresh();
 
     void OnDisable()
     {
@@ -47,16 +50,27 @@ public sealed class ProgressionTrialsPanelUI : MonoBehaviour
             diceSelectSceneController.CharacterPreviewChanged -= OnCharacterPreviewChanged;
 
         ProgressionManager.OnCharacterProgressionChanged -= OnProgressionDataChanged;
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested -= OnDeferredProgressionRefreshRequested;
     }
 
-    void OnCharacterPreviewChanged(PlayerDataSO character) => Refresh();
+    void OnCharacterPreviewChanged(PlayerDataSO character) => TryRefresh();
 
     void OnProgressionDataChanged(PlayerDataSO character)
     {
         if (!TryGetSelectedCharacter(out var selected))
             return;
         if (selected == character)
-            Refresh();
+            TryRefresh();
+    }
+
+    void OnDeferredProgressionRefreshRequested() => Refresh();
+
+    void TryRefresh()
+    {
+        if (!DiceSelectProgressionDisplayGate.ShouldRefreshProgressionDisplays())
+            return;
+
+        Refresh();
     }
 
     public void Refresh()

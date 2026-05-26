@@ -23,7 +23,6 @@ MonoBehaviour:
   currentDeck:
   - {fileID: 11400000, guid: 6c7bee20a819954459132192b2dcf977, type: 2}
   - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
-  - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
   startingMaxHealth: 40
   maxRollsPerTurn: 2
   baseMaxPower: 8

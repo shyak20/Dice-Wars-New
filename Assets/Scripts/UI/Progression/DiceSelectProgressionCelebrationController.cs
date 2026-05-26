@@ -7,6 +7,7 @@ using UnityEngine;
 /// then a level-up popup when all trials on the rank were finished.
 /// Enables <see cref="progressionCelebrationRoot"/> only while a popup is visible; disables it when done.
 /// </summary>
+[DefaultExecutionOrder(100)]
 public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController diceSelectSceneController;
@@ -88,6 +89,8 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
         if (progression == null || !progression.HasPendingCelebrations())
             return;
 
+        DiceSelectProgressionDisplayGate.SetDeferred(true);
+        diceSelectSceneController.SetInteractionBlocked(true);
         _flowCoroutine = StartCoroutine(RunCelebrationFlow(character, progression));
     }
 
@@ -137,11 +140,11 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 
                 progression.AcknowledgeRankUpCelebration();
             }
-
-            diceSelectSceneController.RefreshCharacterDisplayPublic();
         }
         finally
         {
+            diceSelectSceneController.SetInteractionBlocked(false);
+            DiceSelectProgressionDisplayGate.SetDeferred(false);
             EndCelebrationFlow();
         }
     }
@@ -165,6 +168,12 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
         trialCompletedPopup?.Hide();
         rankUpPopup?.Hide();
         SetCelebrationRootActive(false);
+
+        if (DiceSelectProgressionDisplayGate.IsDeferred)
+        {
+            diceSelectSceneController.SetInteractionBlocked(false);
+            DiceSelectProgressionDisplayGate.SetDeferred(false);
+        }
     }
 
     void SetCelebrationRootActive(bool active)

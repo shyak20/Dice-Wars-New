@@ -23,7 +23,7 @@ public class PlayerDataSO : ScriptableObject
     public string Description => description ?? string.Empty;
     public string MetaSaveId => string.IsNullOrWhiteSpace(metaSaveId) ? name : metaSaveId.Trim();
 
-    [Tooltip("Dice always included in this character's starting deck. Trial/rank Add Starting Die rewards append here.")]
+    [Tooltip("Base starting dice for this character (authored on the asset). Extra dice from progression Add Starting Die rewards are stored in PlayerPrefs per character, not here.")]
     public List<DieAssetSO> currentDeck = new List<DieAssetSO>();
 
     [Header("Vitality")]

@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public static class ProgressionSaveService
 {
-    const int CurrentSaveVersion = 5;
+    const int CurrentSaveVersion = 6;
     const string SaveKeyPrefix = "DiceWars_Progression_";
     const string SaveIndexKey = "DiceWars_Progression_Index";
     const string LegacyFolderName = "Progression";
@@ -98,12 +98,33 @@ public static class ProgressionSaveService
         data.completedTrialIDs ??= new List<string>();
 
         data.unlockedContentIDs = Dedupe(data.unlockedContentIDs);
-        data.addedStartingDieIds ??= new List<string>();
+        data.grantedStartingDice ??= new List<GrantedStartingDieSaveEntry>();
         data.completedTrialIDs = Dedupe(data.completedTrialIDs);
         data.unacknowledgedTrialIds = Dedupe(data.unacknowledgedTrialIds);
         data.currentRankIndex = Mathf.Max(0, data.currentRankIndex);
-        var grantCount = data.addedStartingDieIds.Count;
-        data.grantedDiceDeckEntriesApplied = Mathf.Clamp(data.grantedDiceDeckEntriesApplied, 0, grantCount);
+        MigrateLegacyGrantedStartingDice(data);
+    }
+
+    static void MigrateLegacyGrantedStartingDice(ProgressionProfileSaveData data)
+    {
+        if (data.addedStartingDieIds == null || data.addedStartingDieIds.Count == 0)
+            return;
+
+        if (data.grantedStartingDice.Count > 0)
+            return;
+
+        for (var i = 0; i < data.addedStartingDieIds.Count; i++)
+        {
+            var id = data.addedStartingDieIds[i];
+            if (ProgressionContentIds.IsNullOrEmpty(id))
+                continue;
+
+            data.grantedStartingDice.Add(new GrantedStartingDieSaveEntry
+            {
+                dieAssetId = id,
+                dieType = DieType.Damage
+            });
+        }
     }
 
     static List<string> Dedupe(List<string> ids)

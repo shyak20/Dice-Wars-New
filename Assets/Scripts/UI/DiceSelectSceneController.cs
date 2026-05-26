@@ -35,6 +35,12 @@ public sealed class DiceSelectSceneController : MonoBehaviour
             continueButton.onClick.AddListener(OnContinueClicked);
     }
 
+    void OnEnable() => DiceSelectProgressionDisplayGate.DeferredRefreshRequested += OnDeferredProgressionRefreshRequested;
+
+    void OnDisable() => DiceSelectProgressionDisplayGate.DeferredRefreshRequested -= OnDeferredProgressionRefreshRequested;
+
+    void OnDeferredProgressionRefreshRequested() => RefreshCharacterDisplay(replayPortraitReveal: false);
+
     private void Start()
     {
         if (characterRoster == null)
@@ -170,10 +176,20 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (!TryGetSelectedCharacter(out var character))
             return;
 
-        if (character.progressionCatalog != null)
-            ProgressionManager.EnsureRuntime(character.progressionCatalog);
-        ProgressionManager.TryGetRuntime()?.RefreshCharacterProgression(character);
+        if (DiceSelectProgressionDisplayGate.HasPendingCelebrationsFor(character))
+            DiceSelectProgressionDisplayGate.SetDeferred(true);
 
+        if (DiceSelectProgressionDisplayGate.IsDeferred)
+        {
+            RefreshCharacterPresentationOnly(character, replayPortraitReveal);
+            return;
+        }
+
+        RefreshCharacterProgressionAndDisplays(character, replayPortraitReveal);
+    }
+
+    void RefreshCharacterPresentationOnly(PlayerDataSO character, bool replayPortraitReveal)
+    {
         if (characterNameLabel != null)
             characterNameLabel.text = character.DisplayName;
 
@@ -195,8 +211,19 @@ public sealed class DiceSelectSceneController : MonoBehaviour
             else
                 characterPortraitImage.enabled = portrait != null;
         }
+    }
 
-        startingDiceLayout.RefreshDeck(GetEffectiveStartingDeckPreview(character));
+    void RefreshCharacterProgressionAndDisplays(PlayerDataSO character, bool replayPortraitReveal)
+    {
+        if (character.progressionCatalog != null)
+            ProgressionManager.EnsureRuntime(character.progressionCatalog);
+        ProgressionManager.TryGetRuntime()?.RefreshCharacterProgression(character);
+
+        RefreshCharacterPresentationOnly(character, replayPortraitReveal);
+
+        if (startingDiceLayout != null)
+            startingDiceLayout.RefreshDeck(GetEffectiveStartingDeckPreview(character));
+
         CharacterPreviewChanged?.Invoke(character);
     }
 

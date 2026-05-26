@@ -139,7 +139,7 @@ public sealed class ProgressionManager : MonoBehaviour
         SyncActiveRankAndTrials();
         RebuildEventSubscriptions();
         BackfillUnappliedRankUpRewards();
-        ReconcileGrantedDiceOnTemplate();
+        SyncGrantedStartingDiceFromSave();
         Persist();
         NotifyChanged();
     }
@@ -170,7 +170,7 @@ public sealed class ProgressionManager : MonoBehaviour
         SyncActiveRankAndTrials();
         RebuildEventSubscriptions();
         BackfillUnappliedRankUpRewards();
-        ReconcileGrantedDiceOnTemplate();
+        SyncGrantedStartingDiceFromSave();
         if (migratedLegacySave)
             Persist();
         NotifyChanged();
@@ -333,39 +333,21 @@ public sealed class ProgressionManager : MonoBehaviour
 
     }
 
-    public void EnsureGrantedDiceOnTemplate(PlayerDataSO template)
-    {
-        if (template == null)
-            return;
-
-        var catalog = ResolveCatalogForCharacter(template);
-        if (catalog == null)
-            return;
-
-        if (!IsInitializedFor(template))
-        {
-            var save = ProgressionSaveService.Load(template.MetaSaveId);
-            ProgressionStartingDiceUtility.ReconcileGrantedDiceOnTemplate(catalog, save, template);
-            ProgressionSaveService.Save(template.MetaSaveId, save);
-            return;
-        }
-
-        if (_activeTemplate != template)
-            InitializeForCharacter(template);
-        else
-        {
-            ReconcileGrantedDiceOnTemplate();
-            Persist();
-        }
-    }
-
     public List<DieAssetSO> BuildEffectiveStartingDeckTemplates(PlayerDataSO template)
     {
         if (template == null)
             return new List<DieAssetSO>();
 
-        EnsureGrantedDiceOnTemplate(template);
-        return ProgressionStartingDiceUtility.CopyDeckReferences(template.currentDeck);
+        var catalog = ResolveCatalogForCharacter(template);
+        if (catalog == null)
+            return ProgressionStartingDiceUtility.CopyDeckReferences(template.currentDeck);
+
+        if (IsInitializedFor(template))
+            return ProgressionStartingDiceUtility.BuildEffectiveDeck(Catalog, _save, template);
+
+        var save = ProgressionSaveService.Load(template.MetaSaveId);
+        ProgressionStartingDiceUtility.StripLegacyGrantsFromTemplate(catalog, save, template);
+        return ProgressionStartingDiceUtility.BuildEffectiveDeck(catalog, save, template);
     }
 
     public int GetStartingGoldForNewRun() => GetStartingGoldModifier();
@@ -378,12 +360,13 @@ public sealed class ProgressionManager : MonoBehaviour
         return relics;
     }
 
-    void ReconcileGrantedDiceOnTemplate()
+    void SyncGrantedStartingDiceFromSave()
     {
         if (_activeTemplate == null || _save == null || Catalog == null)
             return;
 
-        ProgressionStartingDiceUtility.ReconcileGrantedDiceOnTemplate(Catalog, _save, _activeTemplate);
+        ProgressionStartingDiceUtility.StripLegacyGrantsFromTemplate(Catalog, _save, _activeTemplate);
+        ProgressionStartingDiceUtility.UpgradeGrantEntryDieTypes(Catalog, _save);
     }
 
     void BackfillUnappliedRankUpRewards()
