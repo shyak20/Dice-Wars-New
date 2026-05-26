@@ -12,18 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a8850dbf3a07e44dbe01b7e89ef2118, type: 3}
   m_Name: Movement Trial
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
-  trialID: Movement
-  description: Move 15 in the map
+  trialID: Movement Trial
+  trialName: Movement
+  description: Move 15 steps in the map
   trialIcon: {fileID: 21300000, guid: 7148a07abce224045a809b01300414b0, type: 3}
   type: 4
   targetValue: 15
   exactRollValue: 1
-  completionReward:
-    rid: 6434882374853722192
+  completionRewards:
+  - rid: 6434882374853722192
+  completionRewardRowFormat: 
   references:
     version: 2
     RefIds:
     - rid: 6434882374853722192
       type: {class: ProgressionMaxHpReward, ns: , asm: Assembly-CSharp}
       data:
+        rowFormat: 
         amount: 200

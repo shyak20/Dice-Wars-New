@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a8850dbf3a07e44dbe01b7e89ef2118, type: 3}
   m_Name: Block Damage Trial - 1
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
-  trialID: Block Damage
+  trialID: Block Damage Trial - 1
+  trialName: Block Damage
   description: Block 50<style=Shield></style>
   trialIcon: {fileID: 21300000, guid: d2ac7be4f8cb64f498cc3d1b7df6d8ed, type: 3}
   type: 3
   targetValue: 50
   exactRollValue: 1
-  completionReward:
-    rid: 6434882480546250827
+  completionRewards:
+  - rid: 6434882480546250827
   completionRewardRowFormat: 
   references:
     version: 2

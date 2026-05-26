@@ -11,6 +11,7 @@ public static class ProgressionContentIds
     }
 
     public static string ForDie(DieAssetSO die) => For(die);
+    public static string ForTrial(PlayerTrialSO trial) => trial != null ? trial.TrialId : string.Empty;
     public static string ForFace(DieFaceSO face) => For(face);
     public static string ForGem(GemSO gem) => For(gem);
     public static string ForRelic(RelicSO relic) => For(relic);

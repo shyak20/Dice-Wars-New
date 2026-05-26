@@ -115,7 +115,7 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 
                 trialCompletedPopup.Hide();
                 SetCelebrationRootActive(false);
-                progression.AcknowledgeTrialCelebration(trial.trialID);
+                progression.AcknowledgeTrialCelebration(trial.TrialId);
 
                 if (!progression.IsInitializedFor(character))
                     break;

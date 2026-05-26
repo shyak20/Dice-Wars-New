@@ -33,8 +33,15 @@ public static class ProgressionGatedContent
                 for (var t = 0; t < rank.associatedTrials.Count; t++)
                 {
                     var trial = rank.associatedTrials[t];
-                    if (trial?.completionReward != null)
-                        CollectFromReward(trial.completionReward, gated);
+                    if (trial?.completionRewards == null)
+                        continue;
+
+                    for (var i = 0; i < trial.completionRewards.Count; i++)
+                    {
+                        var reward = trial.completionRewards[i];
+                        if (reward != null)
+                            CollectFromReward(reward, gated);
+                    }
                 }
             }
 

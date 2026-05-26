@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa6dd1933fda734988cc4ecf4f04540, type: 3}
+  m_Name: Rank 1 - Morgana
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerRankSO
+  rankIndex: 0
+  rankName: Spark Apprentice
+  rankFlavorText: 
+  associatedTrials:
+  - {fileID: 11400000, guid: b31c2403da857fd45b8fb90bf2b675be, type: 2}
+  - {fileID: 11400000, guid: d06837ad1da2f2341939b221ad9b8ef7, type: 2}
+  rankUpRewards:
+  - rid: 6434882480546250833
+  - rid: 6434882480546250834
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882480546250833
+      type: {class: ProgressionMaxPowerReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Max Cast Power
+        amount: 1
+    - rid: 6434882480546250834
+      type: {class: ProgressionMaxRollsReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Max Rolls +1
+        amount: 1

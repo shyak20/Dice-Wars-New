@@ -161,6 +161,14 @@ public sealed class ProgressionManager : MonoBehaviour
             return;
         }
 
+        if (!_activeCatalog.ValidateUniqueTrialIds())
+        {
+            Debug.LogError(
+                $"ProgressionManager.InitializeForCharacter: fix duplicate or empty trialID values on catalog '{_activeCatalog.name}'.",
+                _activeCatalog);
+            return;
+        }
+
         _activeTemplate = template;
         _save = ProgressionSaveService.Load(template.MetaSaveId);
         ClampRankIndex();
@@ -205,11 +213,11 @@ public sealed class ProgressionManager : MonoBehaviour
         for (var i = 0; i < _activeRank.associatedTrials.Count; i++)
         {
             var trial = _activeRank.associatedTrials[i];
-            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.trialID))
+            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.TrialId))
                 continue;
 
             total++;
-            if (_trialStateById.TryGetValue(trial.trialID, out var state) && state.isCompleted)
+            if (_trialStateById.TryGetValue(trial.TrialId, out var state) && state.isCompleted)
                 completed++;
         }
     }
@@ -238,10 +246,10 @@ public sealed class ProgressionManager : MonoBehaviour
         for (var i = 0; i < _activeRank.associatedTrials.Count; i++)
         {
             var trial = _activeRank.associatedTrials[i];
-            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.trialID))
+            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.TrialId))
                 continue;
 
-            if (IsTrialUnacknowledged(trial.trialID))
+            if (IsTrialUnacknowledged(trial.TrialId))
                 into.Add(trial);
         }
     }
@@ -271,7 +279,9 @@ public sealed class ProgressionManager : MonoBehaviour
         if (trial == null)
             return "Trial Complete";
 
-        return string.IsNullOrWhiteSpace(trial.trialID) ? "Trial Complete" : $"Trial Complete: {trial.trialID}";
+        return string.IsNullOrWhiteSpace(trial.DisplayName)
+            ? "Trial Complete"
+            : $"Trial Complete: {trial.DisplayName}";
     }
 
     public static string BuildTrialTooltipBody(PlayerTrialSO trial, TrialSaveData state)
@@ -440,10 +450,11 @@ public sealed class ProgressionManager : MonoBehaviour
 
     void ApplyTrialReward(PlayerTrialSO trial)
     {
-        if (trial?.completionReward == null)
+        if (trial?.completionRewards == null || _save == null)
             return;
 
-        ProgressionRewardRegistry.Apply(_save, trial.completionReward, _activeTemplate, Catalog);
+        for (var i = 0; i < trial.completionRewards.Count; i++)
+            ProgressionRewardRegistry.Apply(_save, trial.completionRewards[i], _activeTemplate, Catalog);
     }
 
     static ProgressionCatalogSO ResolveCatalogForCharacter(PlayerDataSO template)
@@ -479,18 +490,18 @@ public sealed class ProgressionManager : MonoBehaviour
         for (var i = 0; i < _activeRank.associatedTrials.Count; i++)
         {
             var trial = _activeRank.associatedTrials[i];
-            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.trialID))
+            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.TrialId))
                 continue;
 
-            if (IsTrialCompletedGlobally(trial.trialID))
+            if (IsTrialCompletedGlobally(trial.TrialId))
             {
-                EnsureCompletedState(trial.trialID);
+                EnsureCompletedState(trial.TrialId);
                 continue;
             }
 
             var state = new TrialSaveData
             {
-                trialID = trial.trialID,
+                trialID = trial.TrialId,
                 currentValue = GetLifetimeAccumulated(trial),
                 isCompleted = false
             };
@@ -498,7 +509,7 @@ public sealed class ProgressionManager : MonoBehaviour
             if (state.currentValue >= trial.targetValue)
                 TryCompleteTrial(trial, ref state);
 
-            _trialStateById[trial.trialID] = state;
+            _trialStateById[trial.TrialId] = state;
         }
 
         RebuildActiveTrialListFromDictionary();
@@ -570,7 +581,7 @@ public sealed class ProgressionManager : MonoBehaviour
             if (trial == null)
                 continue;
 
-            if (!IsTrialCompletedGlobally(trial.trialID))
+            if (!IsTrialCompletedGlobally(trial.TrialId))
                 return false;
         }
 
@@ -607,7 +618,7 @@ public sealed class ProgressionManager : MonoBehaviour
         for (var i = 0; i < _activeRank.associatedTrials.Count; i++)
         {
             var t = _activeRank.associatedTrials[i];
-            if (t != null && string.Equals(t.trialID, trialId, StringComparison.Ordinal))
+            if (t != null && string.Equals(t.TrialId, trialId, StringComparison.Ordinal))
                 return t;
         }
 
@@ -914,7 +925,7 @@ public sealed class ProgressionManager : MonoBehaviour
             for (var t = 0; t < rank.associatedTrials.Count; t++)
             {
                 var trial = rank.associatedTrials[t];
-                if (trial != null && string.Equals(trial.trialID, trialId, StringComparison.Ordinal))
+                if (trial != null && string.Equals(trial.TrialId, trialId, StringComparison.Ordinal))
                     return trial;
             }
         }
@@ -932,14 +943,14 @@ public sealed class ProgressionManager : MonoBehaviour
 
         state.currentValue = trial.targetValue;
         state.isCompleted = true;
-        _trialStateById[trial.trialID] = state;
+        _trialStateById[trial.TrialId] = state;
 
         _save.completedTrialIDs ??= new List<string>();
-        if (!IsTrialCompletedGlobally(trial.trialID))
-            _save.completedTrialIDs.Add(trial.trialID);
+        if (!IsTrialCompletedGlobally(trial.TrialId))
+            _save.completedTrialIDs.Add(trial.TrialId);
 
         ApplyTrialReward(trial);
-        QueueTrialCelebration(trial.trialID);
+        QueueTrialCelebration(trial.TrialId);
         if (AllActiveTrialsCompleted())
         {
             _save.pendingRankUpCelebration = true;

@@ -10,19 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: faa6dd1933fda734988cc4ecf4f04540, type: 3}
-  m_Name: Rank 1 - Morgana
+  m_Name: Rank 3 - Morgana
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRankSO
-  rankIndex: 0
-  rankName: Rank 1 - Arthur
+  rankIndex: 2
+  rankName: The Pyre Priestess
   rankFlavorText: 
-  associatedTrials:
-  - {fileID: 11400000, guid: 1eaa1e0c59fd5e7439987ed07029c59e, type: 2}
-  rankUpRewards:
-  - rid: 6434882374853722188
+  associatedTrials: []
+  rankUpRewards: []
   references:
     version: 2
-    RefIds:
-    - rid: 6434882374853722188
-      type: {class: ProgressionMaxHpReward, ns: , asm: Assembly-CSharp}
-      data:
-        amount: 500
+    RefIds: []

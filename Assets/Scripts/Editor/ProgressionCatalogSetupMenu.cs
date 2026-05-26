@@ -35,11 +35,11 @@ public static class ProgressionCatalogSetupMenu
         EnsureFolder(TrialsFolder);
         EnsureFolder(RanksFolder);
 
-        var trialKill = CreateTrial($"{character.name}_Trial_MonstersKilled10", "trial_monsters_killed_10",
+        var trialKill = CreateTrial($"{character.name}_Trial_MonstersKilled10",
             "Defeat 10 monsters (includes elites and bosses).", TrialType.MonstersKilled, 10,
             new ProgressionMaxHpReward { amount = 5 });
 
-        var trialGold = CreateTrial($"{character.name}_Trial_CoinsSpend100", "trial_coins_spend_100",
+        var trialGold = CreateTrial($"{character.name}_Trial_CoinsSpend100",
             "Spend 100 coins in shops and unknown events.", TrialType.CoinsSpend, 100,
             new ProgressionStartingGoldReward { amount = 10 });
 
@@ -74,7 +74,6 @@ public static class ProgressionCatalogSetupMenu
 
     static PlayerTrialSO CreateTrial(
         string fileName,
-        string trialId,
         string description,
         TrialType type,
         int target,
@@ -88,11 +87,13 @@ public static class ProgressionCatalogSetupMenu
             AssetDatabase.CreateAsset(trial, path);
         }
 
-        trial.trialID = trialId;
         trial.description = description;
         trial.type = type;
         trial.targetValue = target;
-        trial.completionReward = completionReward;
+        trial.completionRewards = completionReward != null
+            ? new List<ProgressionRewardBase> { completionReward }
+            : new List<ProgressionRewardBase>();
+        trial.SyncTrialIdFromAssetName();
         EditorUtility.SetDirty(trial);
         return trial;
     }

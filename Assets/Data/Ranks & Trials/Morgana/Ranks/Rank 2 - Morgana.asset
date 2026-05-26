@@ -13,10 +13,9 @@ MonoBehaviour:
   m_Name: Rank 2 - Morgana
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRankSO
   rankIndex: 1
-  rankName: Rank 2 - Arthur
+  rankName: The Ashbound Disciple
   rankFlavorText: 
-  associatedTrials:
-  - {fileID: 11400000, guid: b31c2403da857fd45b8fb90bf2b675be, type: 2}
+  associatedTrials: []
   rankUpRewards: []
   references:
     version: 2

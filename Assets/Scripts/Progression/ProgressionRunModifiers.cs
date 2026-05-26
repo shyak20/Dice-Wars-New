@@ -83,8 +83,15 @@ public static class ProgressionRunModifiers
             for (var i = 0; i < save.completedTrialIDs.Count; i++)
             {
                 var trial = FindTrialById(catalog, save.completedTrialIDs[i]);
-                if (trial?.completionReward != null)
-                    buffer.Add(trial.completionReward);
+                if (trial?.completionRewards == null)
+                    continue;
+
+                for (var r = 0; r < trial.completionRewards.Count; r++)
+                {
+                    var reward = trial.completionRewards[r];
+                    if (reward != null)
+                        buffer.Add(reward);
+                }
             }
         }
 
@@ -175,7 +182,7 @@ public static class ProgressionRunModifiers
             for (var t = 0; t < rank.associatedTrials.Count; t++)
             {
                 var trial = rank.associatedTrials[t];
-                if (trial != null && string.Equals(trial.trialID, trialId, System.StringComparison.Ordinal))
+                if (trial != null && string.Equals(trial.TrialId, trialId, System.StringComparison.Ordinal))
                     return trial;
             }
         }

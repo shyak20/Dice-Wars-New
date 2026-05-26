@@ -13,7 +13,7 @@ public sealed class ProgressionTrialSlotUI : MonoBehaviour
     [SerializeField] private Image completeIconImage;
     [SerializeField] private GameObject lockedVisualRoot;
     [SerializeField] private Image lockedIconImage;
-    [Tooltip("Shows PlayerTrialSO.trialID (falls back to asset name only if trialID is empty).")]
+    [Tooltip("Shows PlayerTrialSO.trialName (or asset name when empty).")]
     [SerializeField] private TMP_Text trialTitleText;
     [Tooltip("Fills from 0 to target as trial progress increases.")]
     [SerializeField] private Slider progressSlider;
@@ -80,13 +80,7 @@ public sealed class ProgressionTrialSlotUI : MonoBehaviour
         }
     }
 
-    static string GetTrialDisplayName(PlayerTrialSO trial)
-    {
-        if (!string.IsNullOrWhiteSpace(trial.trialID))
-            return trial.trialID.Trim();
-
-        return string.IsNullOrWhiteSpace(trial.name) ? string.Empty : trial.name.Trim();
-    }
+    static string GetTrialDisplayName(PlayerTrialSO trial) => trial.DisplayName;
 
     void UpdateProgressSlider(PlayerTrialSO trial, TrialSaveData state)
     {

@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a8850dbf3a07e44dbe01b7e89ef2118, type: 3}
   m_Name: Bust Trial
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
-  trialID: Cast Overload
+  trialID: Bust Trial
+  trialName: Cast Overload
   description: Cast Overload 20 times
   trialIcon: {fileID: 21300000, guid: 58414bff1567b7046a4e39c047948c65, type: 3}
   type: 12
   targetValue: 20
   exactRollValue: 1
-  completionReward:
-    rid: 6434882480546250828
+  completionRewards:
+  - rid: 6434882480546250828
   completionRewardRowFormat: 
   references:
     version: 2

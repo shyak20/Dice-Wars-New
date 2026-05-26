@@ -153,8 +153,15 @@ public static class ProgressionStartingDiceUtility
             {
                 for (var t = 0; t < rank.associatedTrials.Count; t++)
                 {
-                    if (TryGetDieFromReward(rank.associatedTrials[t]?.completionReward, dieAssetId, out die))
-                        return true;
+                    var trialRewards = rank.associatedTrials[t]?.completionRewards;
+                    if (trialRewards != null)
+                    {
+                        for (var i = 0; i < trialRewards.Count; i++)
+                        {
+                            if (TryGetDieFromReward(trialRewards[i], dieAssetId, out die))
+                                return true;
+                        }
+                    }
                 }
             }
 

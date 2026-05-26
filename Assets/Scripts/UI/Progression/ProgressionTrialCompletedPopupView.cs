@@ -76,12 +76,12 @@ public sealed class ProgressionTrialCompletedPopupView : ProgressionCelebrationP
     static string BuildBody(PlayerTrialSO trial)
     {
         var desc = trial.description ?? string.Empty;
-        var rewardLine = ProgressionRewardDescriptionUtility.Describe(trial.completionReward);
+        var rewardLine = ProgressionRewardDescriptionUtility.DescribeList(trial.completionRewards);
         if (string.IsNullOrWhiteSpace(rewardLine))
             return string.IsNullOrWhiteSpace(desc) ? "Trial completed." : desc;
 
         return string.IsNullOrWhiteSpace(desc)
-            ? $"Reward: {rewardLine}"
-            : $"{desc}\n\nReward: {rewardLine}";
+            ? $"Rewards:\n{rewardLine}"
+            : $"{desc}\n\nRewards:\n{rewardLine}";
     }
 }

@@ -130,8 +130,8 @@ public sealed class ProgressionTrialsPanelUI : MonoBehaviour
             if (trial == null)
                 continue;
 
-            if (!progression.TryGetTrialState(trial.trialID, out var state))
-                state = new TrialSaveData { trialID = trial.trialID, currentValue = 0, isCompleted = false };
+            if (!progression.TryGetTrialState(trial.TrialId, out var state))
+                state = new TrialSaveData { trialID = trial.TrialId, currentValue = 0, isCompleted = false };
 
             ordered.Add((trial, state, i));
         }

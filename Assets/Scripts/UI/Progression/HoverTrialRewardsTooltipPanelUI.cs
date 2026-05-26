@@ -39,9 +39,7 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
 
         if (titleText != null)
         {
-            titleText.text = string.IsNullOrWhiteSpace(trial.trialID)
-                ? trial.name
-                : trial.trialID.Trim();
+            titleText.text = trial.DisplayName;
         }
 
         if (descriptionText != null)
@@ -64,14 +62,22 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
             return;
 
         var rewards = new List<ProgressionRewardBase>();
-        if (trial.completionReward != null)
-            rewards.Add(trial.completionReward);
+        if (trial.completionRewards != null)
+        {
+            for (var i = 0; i < trial.completionRewards.Count; i++)
+            {
+                var reward = trial.completionRewards[i];
+                if (reward != null)
+                    rewards.Add(reward);
+            }
+        }
+
         if (additionalRewards != null)
         {
             for (var i = 0; i < additionalRewards.Count; i++)
             {
                 var reward = additionalRewards[i];
-                if (reward != null && reward != trial.completionReward)
+                if (reward != null && !rewards.Contains(reward))
                     rewards.Add(reward);
             }
         }
@@ -80,7 +86,6 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
         ProgressionTrialRewardRowPresenter.CollectRows(
             iconIndex,
             rewards,
-            trial.completionReward,
             trial.completionRewardRowFormat,
             rows);
 

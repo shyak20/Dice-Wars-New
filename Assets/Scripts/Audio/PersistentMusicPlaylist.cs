@@ -15,13 +15,14 @@ public class PersistentMusicPlaylist : MonoBehaviour
 {
     public const string MusicMutedPlayerPrefKey = "DiceWars_MusicMuted";
     public const string MusicVolumePlayerPrefKey = "DiceWars_MusicVolume";
+    public const float DefaultMusicVolume = 0.5f;
 
     public static PersistentMusicPlaylist Instance { get; private set; }
 
     [SerializeField] private AudioClip[] tracks;
     [SerializeField] private bool playOnStart = true;
     [SerializeField, Min(0.01f)] private float trackToTrackCrossfadeSeconds = 1.5f;
-    [SerializeField, Range(0f, 1f)] private float volume = 1f;
+    [SerializeField, Range(0f, 1f)] private float volume = DefaultMusicVolume;
     [Tooltip("When true, PlayerPrefs remembers mute across runs.")]
     [SerializeField] private bool persistMutePreference = true;
     [Tooltip("When true, PlayerPrefs remembers music volume (0–1).")]

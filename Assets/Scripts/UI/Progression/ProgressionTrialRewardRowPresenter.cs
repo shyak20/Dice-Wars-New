@@ -21,7 +21,6 @@ public static class ProgressionTrialRewardRowPresenter
     public static void CollectRows(
         GameIconIndexSO iconIndex,
         IReadOnlyList<ProgressionRewardBase> rewards,
-        ProgressionRewardBase trialCompletionReward,
         string trialCompletionRowFormatOverride,
         List<RowViewModel> into)
     {
@@ -34,8 +33,7 @@ public static class ProgressionTrialRewardRowPresenter
             if (reward == null)
                 continue;
 
-            var formatOverride = reward == trialCompletionReward ? trialCompletionRowFormatOverride : null;
-            var row = BuildRow(iconIndex, reward, formatOverride);
+            var row = BuildRow(iconIndex, reward, trialCompletionRowFormatOverride);
             if (row.HasContent)
                 into.Add(row);
         }
