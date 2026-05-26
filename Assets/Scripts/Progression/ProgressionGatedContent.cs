@@ -68,10 +68,6 @@ public static class ProgressionGatedContent
                 for (var i = 0; i < unlockRelics.relics.Count; i++)
                     AddIfPresent(gated, ProgressionContentIds.ForRelic(unlockRelics.relics[i]));
                 break;
-            case ProgressionUnlockDiceReward unlockDice when unlockDice.dice != null:
-                for (var i = 0; i < unlockDice.dice.Count; i++)
-                    AddIfPresent(gated, ProgressionContentIds.ForDie(unlockDice.dice[i]));
-                break;
             case ProgressionStartingRelicReward startingRelic:
                 AddIfPresent(gated, ProgressionContentIds.ForRelic(startingRelic.relic));
                 break;

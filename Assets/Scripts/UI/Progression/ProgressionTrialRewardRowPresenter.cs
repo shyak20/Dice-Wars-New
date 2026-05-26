@@ -101,8 +101,28 @@ public static class ProgressionTrialRewardRowPresenter
             case ProgressionExtraRollReward extraRoll:
                 placeholder = extraRoll.amount.ToString();
                 break;
+            case ProgressionAddStartingDieReward addDie:
+                if (addDie.die != null)
+                {
+                    placeholder = !string.IsNullOrWhiteSpace(addDie.die.dieName)
+                        ? addDie.die.dieName.Trim()
+                        : addDie.die.name;
+                    iconOverride = addDie.die.uiIcon;
+                }
+                else
+                    placeholder = string.Empty;
+                break;
             case ProgressionUnlockDiceReward unlockDice:
-                placeholder = unlockDice.dice != null ? unlockDice.dice.Count.ToString() : "0";
+                if (unlockDice.dice != null && unlockDice.dice.Count == 1 && unlockDice.dice[0] != null)
+                {
+                    var legacyDie = unlockDice.dice[0];
+                    placeholder = !string.IsNullOrWhiteSpace(legacyDie.dieName)
+                        ? legacyDie.dieName.Trim()
+                        : legacyDie.name;
+                    iconOverride = legacyDie.uiIcon;
+                }
+                else
+                    placeholder = unlockDice.dice != null ? unlockDice.dice.Count.ToString() : "0";
                 break;
             case ProgressionUnlockFacesReward unlockFaces:
                 placeholder = unlockFaces.faces != null ? unlockFaces.faces.Count.ToString() : "0";
@@ -131,8 +151,10 @@ public static class ProgressionTrialRewardRowPresenter
             case ProgressionMaxRollsReward:
             case ProgressionExtraRollReward:
                 return GetMain(iconIndex, MainAttributeIconId.ExtraRoll);
+            case ProgressionAddStartingDieReward addDie:
+                return ResolveAddStartingDieIcon(iconIndex, addDie);
             case ProgressionUnlockDiceReward unlockDice:
-                return ResolveUnlockDiceIcon(iconIndex, unlockDice);
+                return ResolveLegacyUnlockDiceIcon(iconIndex, unlockDice);
             case ProgressionUnlockFacesReward:
                 return GetMain(iconIndex, MainAttributeIconId.PhysicalDieUnlock);
             case ProgressionUnlockGemsReward:
@@ -146,9 +168,9 @@ public static class ProgressionTrialRewardRowPresenter
         }
     }
 
-    static UnityEngine.Sprite ResolveUnlockDiceIcon(GameIconIndexSO iconIndex, ProgressionUnlockDiceReward unlockDice)
+    static UnityEngine.Sprite ResolveLegacyUnlockDiceIcon(GameIconIndexSO iconIndex, ProgressionUnlockDiceReward unlockDice)
     {
-        if (unlockDice?.dice == null)
+        if (unlockDice?.dice == null || unlockDice.dice.Count == 0)
             return GetMain(iconIndex, MainAttributeIconId.PhysicalDieUnlock);
 
         for (var i = 0; i < unlockDice.dice.Count; i++)
@@ -157,9 +179,29 @@ public static class ProgressionTrialRewardRowPresenter
             if (die == null)
                 continue;
 
+            if (die.uiIcon != null)
+                return die.uiIcon;
+
             var sprite = iconIndex != null
                 ? iconIndex.GetDieUnlockMainAttributeIcon(die.dieType)
                 : GameIconCatalog.GetDieUnlockMainAttributeIcon(die.dieType);
+            if (sprite != null)
+                return sprite;
+        }
+
+        return GetMain(iconIndex, MainAttributeIconId.PhysicalDieUnlock);
+    }
+
+    static UnityEngine.Sprite ResolveAddStartingDieIcon(GameIconIndexSO iconIndex, ProgressionAddStartingDieReward addDie)
+    {
+        if (addDie?.die != null && addDie.die.uiIcon != null)
+            return addDie.die.uiIcon;
+
+        if (addDie?.die != null)
+        {
+            var sprite = iconIndex != null
+                ? iconIndex.GetDieUnlockMainAttributeIcon(addDie.die.dieType)
+                : GameIconCatalog.GetDieUnlockMainAttributeIcon(addDie.die.dieType);
             if (sprite != null)
                 return sprite;
         }
@@ -207,9 +249,10 @@ public static class ProgressionTrialRewardRowPresenter
         ProgressionUnlockRelicsReward r => r.relics != null && r.relics.Count == 1
             ? "Unlock {0}"
             : "Unlock {0} relics",
+        ProgressionAddStartingDieReward => "Add {0} to deck",
         ProgressionUnlockDiceReward r => r.dice != null && r.dice.Count == 1
-            ? "Unlock die"
-            : "Unlock {0} dice",
+            ? "Add {0} to deck"
+            : "Add {0} dice to deck",
         _ => "{0}"
     };
 

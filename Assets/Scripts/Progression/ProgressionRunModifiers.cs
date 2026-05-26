@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>Aggregates vertical bonuses and unlock queries from catalog + save.</summary>
 public static class ProgressionRunModifiers
@@ -69,7 +70,7 @@ public static class ProgressionRunModifiers
         return ProgressionRewardRegistry.SumBonus(rewards, statRewardType);
     }
 
-    static void CollectGrantedRewards(
+    public static void CollectGrantedRewards(
         ProgressionCatalogSO catalog,
         ProgressionProfileSaveData save,
         List<ProgressionRewardBase> buffer)
@@ -90,7 +91,18 @@ public static class ProgressionRunModifiers
         if (catalog == null || save == null)
             return;
 
-        for (var r = 0; r < save.currentRankIndex; r++)
+        var appliedThrough = save.rankUpRewardsAppliedThroughRankIndex;
+        if (save.pendingRankUpCelebration
+            && catalog.TryGetRank(save.currentRankIndex, out var pendingRank)
+            && pendingRank != null)
+        {
+            appliedThrough = Mathf.Max(appliedThrough, pendingRank.rankIndex);
+        }
+
+        if (appliedThrough < 0)
+            return;
+
+        for (var r = 0; r <= appliedThrough; r++)
         {
             if (!catalog.TryGetRank(r, out var rank) || rank?.rankUpRewards == null)
                 continue;

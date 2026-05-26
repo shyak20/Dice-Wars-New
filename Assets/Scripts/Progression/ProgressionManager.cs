@@ -24,6 +24,8 @@ public sealed class ProgressionManager : MonoBehaviour
 
     public ProgressionCatalogSO Catalog => _activeCatalog != null ? _activeCatalog : defaultCatalog;
 
+    public PlayerDataSO ActiveCharacterTemplate => _activeTemplate;
+
     public event Action<PlayerTrialSO> OnTrialCompleted;
     public event Action<PlayerRankSO> OnRankUp;
     public event Action<PlayerDataSO> OnProgressionChanged;
@@ -136,6 +138,9 @@ public sealed class ProgressionManager : MonoBehaviour
         ReloadProgressFromStorage();
         SyncActiveRankAndTrials();
         RebuildEventSubscriptions();
+        BackfillUnappliedRankUpRewards();
+        ReconcileGrantedDiceOnTemplate();
+        Persist();
         NotifyChanged();
     }
 
@@ -164,6 +169,8 @@ public sealed class ProgressionManager : MonoBehaviour
         var migratedLegacySave = MigrateLifetimeCountersFromLegacySave();
         SyncActiveRankAndTrials();
         RebuildEventSubscriptions();
+        BackfillUnappliedRankUpRewards();
+        ReconcileGrantedDiceOnTemplate();
         if (migratedLegacySave)
             Persist();
         NotifyChanged();
@@ -324,27 +331,41 @@ public sealed class ProgressionManager : MonoBehaviour
         runtimeProfile.moveLimit = template.moveLimit + GetGridMoveModifier();
         runtimeProfile.maxRollsPerTurn = template.maxRollsPerTurn + GetMaxRollsModifier();
 
-        AppendUnlockedStartingDice(runtimeProfile, template);
+    }
+
+    public void EnsureGrantedDiceOnTemplate(PlayerDataSO template)
+    {
+        if (template == null)
+            return;
+
+        var catalog = ResolveCatalogForCharacter(template);
+        if (catalog == null)
+            return;
+
+        if (!IsInitializedFor(template))
+        {
+            var save = ProgressionSaveService.Load(template.MetaSaveId);
+            ProgressionStartingDiceUtility.ReconcileGrantedDiceOnTemplate(catalog, save, template);
+            ProgressionSaveService.Save(template.MetaSaveId, save);
+            return;
+        }
+
+        if (_activeTemplate != template)
+            InitializeForCharacter(template);
+        else
+        {
+            ReconcileGrantedDiceOnTemplate();
+            Persist();
+        }
     }
 
     public List<DieAssetSO> BuildEffectiveStartingDeckTemplates(PlayerDataSO template)
     {
-        var deck = new List<DieAssetSO>();
         if (template == null)
-            return deck;
+            return new List<DieAssetSO>();
 
-        if (template.currentDeck != null)
-        {
-            for (var i = 0; i < template.currentDeck.Count; i++)
-            {
-                var die = template.currentDeck[i];
-                if (die != null)
-                    deck.Add(die);
-            }
-        }
-
-        AppendUnlockedStartingDiceTemplates(deck, template);
-        return deck;
+        EnsureGrantedDiceOnTemplate(template);
+        return ProgressionStartingDiceUtility.CopyDeckReferences(template.currentDeck);
     }
 
     public int GetStartingGoldForNewRun() => GetStartingGoldModifier();
@@ -357,56 +378,33 @@ public sealed class ProgressionManager : MonoBehaviour
         return relics;
     }
 
-    void AppendUnlockedStartingDice(PlayerDataSO runtimeProfile, PlayerDataSO template)
+    void ReconcileGrantedDiceOnTemplate()
     {
-        if (template.lockedStartingDice == null)
+        if (_activeTemplate == null || _save == null || Catalog == null)
             return;
 
-        for (var i = 0; i < template.lockedStartingDice.Count; i++)
-        {
-            var dieTemplate = template.lockedStartingDice[i];
-            if (dieTemplate == null)
-                continue;
-
-            var id = ProgressionContentIds.ForDie(dieTemplate);
-            if (!IsContentUnlocked(id))
-                continue;
-
-            if (runtimeProfile.currentDeck == null)
-                runtimeProfile.currentDeck = new List<DieAssetSO>();
-
-            var already = false;
-            for (var d = 0; d < runtimeProfile.currentDeck.Count; d++)
-            {
-                if (runtimeProfile.currentDeck[d] != null && runtimeProfile.currentDeck[d].name == dieTemplate.name)
-                {
-                    already = true;
-                    break;
-                }
-            }
-
-            if (already)
-                continue;
-
-            var clone = Instantiate(dieTemplate);
-            clone.name = dieTemplate.name;
-            runtimeProfile.currentDeck.Add(clone);
-        }
+        ProgressionStartingDiceUtility.ReconcileGrantedDiceOnTemplate(Catalog, _save, _activeTemplate);
     }
 
-    void AppendUnlockedStartingDiceTemplates(List<DieAssetSO> deck, PlayerDataSO template)
+    void BackfillUnappliedRankUpRewards()
     {
-        if (template.lockedStartingDice == null)
+        if (_save == null || Catalog == null)
             return;
 
-        for (var i = 0; i < template.lockedStartingDice.Count; i++)
+        for (var r = 0; r < _save.currentRankIndex; r++)
         {
-            var die = template.lockedStartingDice[i];
-            if (die == null)
+            if (!Catalog.TryGetRank(r, out var rank))
                 continue;
-            if (!IsContentUnlocked(ProgressionContentIds.ForDie(die)))
+            if (_save.rankUpRewardsAppliedThroughRankIndex >= rank.rankIndex)
                 continue;
-            deck.Add(die);
+            ApplyRankUpRewards(rank);
+        }
+
+        if (_save.pendingRankUpCelebration
+            && _activeRank != null
+            && _save.rankUpRewardsAppliedThroughRankIndex < _activeRank.rankIndex)
+        {
+            ApplyRankUpRewards(_activeRank);
         }
     }
 
@@ -445,11 +443,16 @@ public sealed class ProgressionManager : MonoBehaviour
 
     void ApplyRankUpRewards(PlayerRankSO rank)
     {
-        if (rank?.rankUpRewards == null)
+        if (rank?.rankUpRewards == null || _save == null)
+            return;
+
+        if (_save.rankUpRewardsAppliedThroughRankIndex >= rank.rankIndex)
             return;
 
         for (var i = 0; i < rank.rankUpRewards.Count; i++)
-            ProgressionRewardRegistry.Apply(_save, rank.rankUpRewards[i]);
+            ProgressionRewardRegistry.Apply(_save, rank.rankUpRewards[i], _activeTemplate, Catalog);
+
+        _save.rankUpRewardsAppliedThroughRankIndex = rank.rankIndex;
     }
 
     void ApplyTrialReward(PlayerTrialSO trial)
@@ -457,7 +460,7 @@ public sealed class ProgressionManager : MonoBehaviour
         if (trial?.completionReward == null)
             return;
 
-        ProgressionRewardRegistry.Apply(_save, trial.completionReward);
+        ProgressionRewardRegistry.Apply(_save, trial.completionReward, _activeTemplate, Catalog);
     }
 
     static ProgressionCatalogSO ResolveCatalogForCharacter(PlayerDataSO template)
@@ -955,7 +958,10 @@ public sealed class ProgressionManager : MonoBehaviour
         ApplyTrialReward(trial);
         QueueTrialCelebration(trial.trialID);
         if (AllActiveTrialsCompleted())
+        {
             _save.pendingRankUpCelebration = true;
+            ApplyRankUpRewards(_activeRank);
+        }
 
         OnTrialCompleted?.Invoke(trial);
         RebuildEventSubscriptions();

@@ -63,9 +63,25 @@ public sealed class ProgressionUnlockRelicsReward : ProgressionRewardBase
 }
 
 [Serializable]
+public sealed class ProgressionAddStartingDieReward : ProgressionRewardBase
+{
+    [Tooltip("Die added to the character's PlayerDataSO.currentDeck when this reward is granted.")]
+    public DieAssetSO die;
+
+    public override void Apply(ProgressionRewardApplyContext context)
+    {
+        if (context?.Save == null || die == null)
+            return;
+
+        ProgressionStartingDiceUtility.ApplyAddedDie(
+            context.Save, die, context.CharacterTemplate, context.Catalog);
+    }
+}
+
+/// <summary>Legacy reward type — use <see cref="ProgressionAddStartingDieReward"/> instead.</summary>
+[Serializable]
 public sealed class ProgressionUnlockDiceReward : ProgressionRewardBase
 {
-    [Tooltip("Dice unlocked for starting deck (matched against PlayerDataSO.lockedStartingDice by asset name).")]
     public List<DieAssetSO> dice = new List<DieAssetSO>();
 
     public override void Apply(ProgressionRewardApplyContext context)
@@ -74,11 +90,7 @@ public sealed class ProgressionUnlockDiceReward : ProgressionRewardBase
             return;
 
         for (var i = 0; i < dice.Count; i++)
-        {
-            var die = dice[i];
-            if (die == null)
-                continue;
-            ProgressionRewardRegistry.RegisterUnlock(context.Save, ProgressionContentIds.ForDie(die));
-        }
+            ProgressionStartingDiceUtility.ApplyAddedDie(
+                context.Save, dice[i], context.CharacterTemplate, context.Catalog);
     }
 }

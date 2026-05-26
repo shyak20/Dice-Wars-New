@@ -157,32 +157,8 @@ public sealed class MetaCharacterUpgradeManager : MonoBehaviour
         return MetaCharacterUpgradePurchaseResult.Success;
     }
 
-    public MetaCharacterUpgradePurchaseResult TryPurchaseStartingDiceUnlock(PlayerDataSO character)
-    {
-        if (!ValidatePurchaseSetup(character, out var state))
-            return MetaCharacterUpgradePurchaseResult.InvalidCharacter;
-
-        if (upgradePrices == null)
-            return MetaCharacterUpgradePurchaseResult.ConfigMissing;
-
-        if (state.startingDiceUnlockLevel >= upgradePrices.MaxStartingDiceUnlocks)
-            return MetaCharacterUpgradePurchaseResult.MaxLevelReached;
-
-        if (character.lockedStartingDice == null
-            || state.startingDiceUnlockLevel >= character.lockedStartingDice.Count
-            || character.lockedStartingDice[state.startingDiceUnlockLevel] == null)
-        {
-            return MetaCharacterUpgradePurchaseResult.InvalidLockedDie;
-        }
-
-        if (!upgradePrices.HasNextStartingDiceUnlockTier(state.startingDiceUnlockLevel))
-            return MetaCharacterUpgradePurchaseResult.MaxLevelReached;
-
-        state.startingDiceUnlockLevel++;
-        SaveState(character, state);
-        NotifyChanged(character);
-        return MetaCharacterUpgradePurchaseResult.Success;
-    }
+    public MetaCharacterUpgradePurchaseResult TryPurchaseStartingDiceUnlock(PlayerDataSO character) =>
+        MetaCharacterUpgradePurchaseResult.MaxLevelReached;
 
     /// <summary>
     /// Applies purchased meta upgrades onto a runtime <see cref="PlayerDataSO"/> clone.
@@ -208,66 +184,27 @@ public sealed class MetaCharacterUpgradeManager : MonoBehaviour
         if (runtimeProfile.currentDeck == null)
             runtimeProfile.currentDeck = new List<DieAssetSO>();
 
-        AppendUnlockedStartingDice(runtimeProfile, template, state.startingDiceUnlockLevel);
     }
 
-    /// <summary>Deck order: base <see cref="PlayerDataSO.currentDeck"/> then unlocked meta dice.</summary>
+    /// <summary>Deck from <see cref="PlayerDataSO.currentDeck"/> (includes progression Add Starting Die rewards).</summary>
     public List<DieAssetSO> BuildEffectiveStartingDeckTemplates(PlayerDataSO template)
     {
+        var progression = ProgressionManager.TryGetRuntime();
+        if (progression != null)
+            return progression.BuildEffectiveStartingDeckTemplates(template);
+
         var deck = new List<DieAssetSO>();
-        if (template == null)
+        if (template?.currentDeck == null)
             return deck;
 
-        if (template.currentDeck != null)
+        for (var i = 0; i < template.currentDeck.Count; i++)
         {
-            for (var i = 0; i < template.currentDeck.Count; i++)
-            {
-                var die = template.currentDeck[i];
-                if (die != null)
-                    deck.Add(die);
-            }
-        }
-
-        var unlockLevel = GetStartingDiceUnlockLevel(template);
-        AppendUnlockedStartingDiceTemplates(deck, template, unlockLevel);
-        return deck;
-    }
-
-    void AppendUnlockedStartingDice(PlayerDataSO runtimeProfile, PlayerDataSO template, int unlockLevel)
-    {
-        if (template.lockedStartingDice == null || unlockLevel <= 0)
-            return;
-
-        var count = Mathf.Min(unlockLevel, template.lockedStartingDice.Count);
-        for (var i = 0; i < count; i++)
-        {
-            var dieTemplate = template.lockedStartingDice[i];
-            if (dieTemplate == null)
-            {
-                Debug.LogError(
-                    $"MetaCharacterUpgradeManager: '{template.name}' lockedStartingDice slot {i} is null.",
-                    template);
-                continue;
-            }
-
-            var clone = Instantiate(dieTemplate);
-            clone.name = dieTemplate.name;
-            runtimeProfile.currentDeck.Add(clone);
-        }
-    }
-
-    static void AppendUnlockedStartingDiceTemplates(List<DieAssetSO> deck, PlayerDataSO template, int unlockLevel)
-    {
-        if (template.lockedStartingDice == null || unlockLevel <= 0)
-            return;
-
-        var count = Mathf.Min(unlockLevel, template.lockedStartingDice.Count);
-        for (var i = 0; i < count; i++)
-        {
-            var die = template.lockedStartingDice[i];
+            var die = template.currentDeck[i];
             if (die != null)
                 deck.Add(die);
         }
+
+        return deck;
     }
 
     bool ValidatePurchaseSetup(PlayerDataSO character, out CharacterUpgradeSaveData state)

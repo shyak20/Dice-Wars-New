@@ -3,12 +3,21 @@ using System.Collections.Generic;
 /// <summary>Unlock IDs and vertical bonus aggregation for <see cref="ProgressionRewardBase"/> instances.</summary>
 public static class ProgressionRewardRegistry
 {
-    public static void Apply(ProgressionProfileSaveData save, ProgressionRewardBase reward)
+    public static void Apply(
+        ProgressionProfileSaveData save,
+        ProgressionRewardBase reward,
+        PlayerDataSO characterTemplate = null,
+        ProgressionCatalogSO catalog = null)
     {
         if (save == null || reward == null)
             return;
 
-        reward.Apply(new ProgressionRewardApplyContext { Save = save });
+        reward.Apply(new ProgressionRewardApplyContext
+        {
+            Save = save,
+            CharacterTemplate = characterTemplate,
+            Catalog = catalog
+        });
     }
 
     public static void RegisterUnlock(ProgressionProfileSaveData save, string contentId)

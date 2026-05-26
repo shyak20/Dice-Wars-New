@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public static class ProgressionSaveService
 {
-    const int CurrentSaveVersion = 3;
+    const int CurrentSaveVersion = 5;
     const string SaveKeyPrefix = "DiceWars_Progression_";
     const string SaveIndexKey = "DiceWars_Progression_Index";
     const string LegacyFolderName = "Progression";
@@ -98,9 +98,12 @@ public static class ProgressionSaveService
         data.completedTrialIDs ??= new List<string>();
 
         data.unlockedContentIDs = Dedupe(data.unlockedContentIDs);
+        data.addedStartingDieIds ??= new List<string>();
         data.completedTrialIDs = Dedupe(data.completedTrialIDs);
         data.unacknowledgedTrialIds = Dedupe(data.unacknowledgedTrialIds);
         data.currentRankIndex = Mathf.Max(0, data.currentRankIndex);
+        var grantCount = data.addedStartingDieIds.Count;
+        data.grantedDiceDeckEntriesApplied = Mathf.Clamp(data.grantedDiceDeckEntriesApplied, 0, grantCount);
     }
 
     static List<string> Dedupe(List<string> ids)

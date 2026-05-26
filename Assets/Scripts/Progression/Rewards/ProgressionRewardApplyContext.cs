@@ -2,4 +2,6 @@
 public sealed class ProgressionRewardApplyContext
 {
     public ProgressionProfileSaveData Save;
+    public PlayerDataSO CharacterTemplate;
+    public ProgressionCatalogSO Catalog;
 }

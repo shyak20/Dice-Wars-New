@@ -23,11 +23,8 @@ public class PlayerDataSO : ScriptableObject
     public string Description => description ?? string.Empty;
     public string MetaSaveId => string.IsNullOrWhiteSpace(metaSaveId) ? name : metaSaveId.Trim();
 
-    [Tooltip("Dice always included in this character's starting deck.")]
+    [Tooltip("Dice always included in this character's starting deck. Trial/rank Add Starting Die rewards append here.")]
     public List<DieAssetSO> currentDeck = new List<DieAssetSO>();
-
-    [Tooltip("Extra starting dice unlocked one at a time via meta upgrades (see Character Meta Upgrade Prices SO).")]
-    public List<DieAssetSO> lockedStartingDice = new List<DieAssetSO>();
 
     [Header("Vitality")]
     [Tooltip("Starting and default max HP for a new run (before relics/shrines). Applied to PlayerStatus when combat initializes.")]

@@ -21,6 +21,7 @@ MonoBehaviour:
   rankUpRewards:
   - rid: 6434882425854361676
   - rid: 6434882425854361677
+  - rid: 6434882480546250831
   references:
     version: 2
     RefIds:
@@ -34,3 +35,8 @@ MonoBehaviour:
       data:
         rowFormat: Get +1 Max Rolls per turn
         amount: 1
+    - rid: 6434882480546250831
+      type: {class: ProgressionAddStartingDieReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Bonus Starting Die
+        die: {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}

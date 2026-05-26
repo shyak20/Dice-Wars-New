@@ -1,18 +1,18 @@
-using System;
 using TMPro;
 using UnityEngine;
 
 /// <summary>
 /// Dice-select preview for the selected character's rank, max health, base max power, map move limit, and max rolls per turn.
+/// Rank uses a <see cref="TMP_Text"/>; other stats use <see cref="CharacterInfoStat"/> rows.
 /// </summary>
 public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController sceneController;
-    [SerializeField] private TMP_Text maxHealthText;
-    [SerializeField] private TMP_Text baseMaxPowerText;
-    [SerializeField] private TMP_Text moveLimitText;
-    [SerializeField] private TMP_Text maxRollsPerTurnText;
     [SerializeField] private TMP_Text rankNameText;
+    [SerializeField] private CharacterInfoStat maxHealthStat;
+    [SerializeField] private CharacterInfoStat baseMaxPowerStat;
+    [SerializeField] private CharacterInfoStat moveLimitStat;
+    [SerializeField] private CharacterInfoStat maxRollsPerTurnStat;
 
     void Awake()
     {
@@ -62,6 +62,10 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
         {
             if (rankNameText != null)
                 rankNameText.text = string.Empty;
+            ClearStat(maxHealthStat);
+            ClearStat(baseMaxPowerStat);
+            ClearStat(moveLimitStat);
+            ClearStat(maxRollsPerTurnStat);
             return;
         }
 
@@ -78,33 +82,33 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
             rankNameText.text = FormatRankName(rank);
         }
 
-        if (maxHealthText != null)
-        {
-            var maxHealth = Mathf.Max(1, character.startingMaxHealth
-                + (progression != null ? progression.GetStartingHPModifier() : 0));
-            maxHealthText.text = maxHealth.ToString();
-        }
+        var maxHealth = Mathf.Max(1, character.startingMaxHealth
+            + (progression != null ? progression.GetStartingHPModifier() : 0));
+        SetStat(maxHealthStat, maxHealth.ToString());
 
-        if (baseMaxPowerText != null)
-        {
-            var baseMaxPower = Mathf.Max(1, character.baseMaxPower
-                + (progression != null ? progression.GetMaxPowerModifier() : 0));
-            baseMaxPowerText.text = baseMaxPower.ToString();
-        }
+        var baseMaxPower = Mathf.Max(1, character.baseMaxPower
+            + (progression != null ? progression.GetMaxPowerModifier() : 0));
+        SetStat(baseMaxPowerStat, baseMaxPower.ToString());
 
-        if (moveLimitText != null)
-        {
-            var moves = Mathf.Max(1, character.moveLimit
-                + (progression != null ? progression.GetGridMoveModifier() : 0));
-            moveLimitText.text = moves.ToString();
-        }
+        var moves = Mathf.Max(1, character.moveLimit
+            + (progression != null ? progression.GetGridMoveModifier() : 0));
+        SetStat(moveLimitStat, moves.ToString());
 
-        if (maxRollsPerTurnText != null)
-        {
-            var maxRolls = Mathf.Max(1, character.maxRollsPerTurn
-                + (progression != null ? progression.GetMaxRollsModifier() : 0));
-            maxRollsPerTurnText.text = maxRolls.ToString();
-        }
+        var maxRolls = Mathf.Max(1, character.maxRollsPerTurn
+            + (progression != null ? progression.GetMaxRollsModifier() : 0));
+        SetStat(maxRollsPerTurnStat, maxRolls.ToString());
+    }
+
+    static void SetStat(CharacterInfoStat stat, string value)
+    {
+        if (stat != null)
+            stat.SetValue(value);
+    }
+
+    static void ClearStat(CharacterInfoStat stat)
+    {
+        if (stat != null)
+            stat.ClearValue();
     }
 
     static string FormatRankName(PlayerRankSO rank)

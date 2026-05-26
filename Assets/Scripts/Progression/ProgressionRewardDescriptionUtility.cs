@@ -33,8 +33,12 @@ public static class ProgressionRewardDescriptionUtility
                 return r.relic != null && !string.IsNullOrWhiteSpace(r.relic.title)
                     ? $"Start each run with {r.relic.title.Trim()}"
                     : "Start each run with relic";
+            case ProgressionAddStartingDieReward r:
+                return r.die != null
+                    ? $"Add {r.die.dieName} to starting deck"
+                    : "Add die to starting deck";
             case ProgressionUnlockDiceReward r:
-                return DescribeUnlockCount("die", r.dice?.Count ?? 0);
+                return DescribeUnlockCount("starting die", r.dice?.Count ?? 0);
             default:
                 return reward.GetType().Name;
         }

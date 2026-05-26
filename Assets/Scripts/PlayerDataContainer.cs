@@ -55,6 +55,17 @@ public class PlayerDataContainer : MonoBehaviour
             Destroy(RuntimeData);
 
         ActiveCharacterTemplate = profile;
+
+        var progression = ProgressionManager.TryGetRuntime();
+        if (progression != null)
+            progression.EnsureGrantedDiceOnTemplate(profile);
+        else if (profile.progressionCatalog != null)
+        {
+            var save = ProgressionSaveService.Load(profile.MetaSaveId);
+            ProgressionStartingDiceUtility.ReconcileGrantedDiceOnTemplate(
+                profile.progressionCatalog, save, profile);
+        }
+
         RuntimeData = Instantiate(profile);
         RuntimeData.name = profile.name;
 
@@ -77,10 +88,11 @@ public class PlayerDataContainer : MonoBehaviour
             RuntimeData.currentDeck.Add(clonedDie);
         }
 
-        var progression = ProgressionManager.TryGetRuntime();
         if (progression != null)
+        {
             progression.InitializeForCharacter(profile);
-        progression?.ApplyToRuntimeProfile(RuntimeData, profile);
+            progression.ApplyToRuntimeProfile(RuntimeData, profile);
+        }
 
         OnRuntimeDeckChanged?.Invoke();
     }
