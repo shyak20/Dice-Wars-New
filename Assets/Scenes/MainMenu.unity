@@ -26964,7 +26964,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: e81b7cd144983a9409edc77bd733f209, type: 3}
   playOnStart: 1
   trackToTrackCrossfadeSeconds: 1.5
-  volume: 0.5
+  volume: 0.3
   persistMutePreference: 1
   persistVolumePreference: 1
   sceneMusicCatalog: {fileID: 11400000, guid: f8a7d6c5b4a3928170655443322110ab, type: 2}
