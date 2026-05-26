@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: faa6dd1933fda734988cc4ecf4f04540, type: 3}
-  m_Name: Rank 2 - Arthur
+  m_Name: Rank 2 - Arthur 1
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRankSO
-  rankIndex: 1
-  rankName: The Desciple
+  rankIndex: 2
+  rankName: The Brave
   rankFlavorText: 
   associatedTrials:
   - {fileID: 11400000, guid: 280e69362f3ac154ea9132858238af1a, type: 2}

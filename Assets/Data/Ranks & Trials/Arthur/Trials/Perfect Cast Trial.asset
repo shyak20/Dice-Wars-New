@@ -27,5 +27,5 @@ MonoBehaviour:
     - rid: 6434882425854361675
       type: {class: ProgressionMaxPowerReward, ns: , asm: Assembly-CSharp}
       data:
-        rowFormat: 
+        rowFormat: Max Cast Power +1
         amount: 1

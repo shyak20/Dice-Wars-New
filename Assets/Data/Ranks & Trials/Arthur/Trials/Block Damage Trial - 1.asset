@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a8850dbf3a07e44dbe01b7e89ef2118, type: 3}
-  m_Name: Physical Damage Trial - 1
+  m_Name: Block Damage Trial - 1
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
-  trialID: Physical Damage
-  description: Deal 100<style=Attack></style>
-  trialIcon: {fileID: 21300000, guid: b5f1afc8336270944b4343bd476a9387, type: 3}
-  type: 8
-  targetValue: 100
+  trialID: Block Damage
+  description: Block 50<style=Shield></style>
+  trialIcon: {fileID: 21300000, guid: d2ac7be4f8cb64f498cc3d1b7df6d8ed, type: 3}
+  type: 3
+  targetValue: 50
   exactRollValue: 1
   completionReward:
     rid: 6434882480546250827
@@ -29,6 +29,6 @@ MonoBehaviour:
       data:
         rowFormat: New Faces Unlocked
         faces:
-        - {fileID: 11400000, guid: 7521c3a6a55e623409b1c2e8f049c0af, type: 2}
-        - {fileID: 11400000, guid: 54329b8f680c9e3479923b8e99730339, type: 2}
-        - {fileID: 11400000, guid: f760bc552e9fddb478ea495adb18fc3c, type: 2}
+        - {fileID: 11400000, guid: 8fe1d2e21ba9639458ad56ad86290129, type: 2}
+        - {fileID: 11400000, guid: 0b1d7199309ce1142bcb0901731818c7, type: 2}
+        - {fileID: 11400000, guid: 862ec39c6c75b9144b624fc9db2c51a1, type: 2}

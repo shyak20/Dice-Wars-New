@@ -25,9 +25,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
   lockedStartingDice:
   - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
-  startingMaxHealth: 30
+  startingMaxHealth: 40
   maxRollsPerTurn: 2
-  baseMaxPower: 10
+  baseMaxPower: 8
   moveLimit: 10
   perfectStrikeBaseMultiplier: 2
   progressionCatalog: {fileID: 11400000, guid: b0fc6a71a2b399f49968d34ce045cfd6, type: 2}

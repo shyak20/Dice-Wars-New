@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a8850dbf3a07e44dbe01b7e89ef2118, type: 3}
-  m_Name: Test Trial Arthur moves
+  m_Name: Movement Trial
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTrialSO
   trialID: Movement
   description: Move 15 in the map
