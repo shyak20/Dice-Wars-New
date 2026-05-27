@@ -18,8 +18,8 @@ MonoBehaviour:
   idleAnimatorStateName: DIce Head Idle
   enemyRank: 1
   excludeFromFirstFight: 1
-  maxHealth: 40
-  startArmor: 0
+  maxHealth: 50
+  startArmor: 10
   minGoldReward: 110
   maxGoldReward: 180
   additionalRewardDrops:
