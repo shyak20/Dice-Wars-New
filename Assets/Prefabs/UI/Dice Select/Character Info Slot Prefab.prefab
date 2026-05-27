@@ -134,8 +134,10 @@ MonoBehaviour:
   label: Max Health
   labelText: {fileID: 8756720471562022128}
   valueText: {fileID: 1831599233535075692}
+  iconImage: {fileID: 5121817745025323310}
   hoverRoot: {fileID: 366545286331727363}
   hoverArea: {fileID: 8633717075792135036}
+  mainAttributeIconId: 0
 --- !u!1 &6800583299504052242
 GameObject:
   m_ObjectHideFlags: 0
@@ -210,7 +212,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_PixelsPerUnitMultiplier: 2
 --- !u!1 &7928192351378654058
 GameObject:
   m_ObjectHideFlags: 0
@@ -799,4 +801,4 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_PixelsPerUnitMultiplier: 3.36

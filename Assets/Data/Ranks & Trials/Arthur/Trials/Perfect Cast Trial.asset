@@ -17,7 +17,7 @@ MonoBehaviour:
   description: Gain 5 Perfect Cast
   trialIcon: {fileID: 21300000, guid: 2f1e08438bc6fad419bf55265a58892e, type: 3}
   type: 2
-  targetValue: 5
+  targetValue: 1
   exactRollValue: 1
   completionRewards:
   - rid: 6434882425854361675
@@ -28,5 +28,5 @@ MonoBehaviour:
     - rid: 6434882425854361675
       type: {class: ProgressionMaxPowerReward, ns: , asm: Assembly-CSharp}
       data:
-        rowFormat: Max Cast Power +1
+        rowFormat: Max Cast Power
         amount: 1

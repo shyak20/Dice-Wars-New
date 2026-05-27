@@ -152,13 +152,33 @@ MonoBehaviour:
     background: {fileID: 0}
     title: Burn Resistance
     description: Receive 50% of <style=burn>Burn</style> damage.
-  hpIcon: {fileID: 21300000, guid: 92adfdd256c720f469f752c15c513835, type: 3}
-  powerIcon: {fileID: 21300000, guid: f5c0b55348254fe4bbe8fe8159292a7d, type: 3}
-  extraRollIcon: {fileID: 21300000, guid: 6d37a93b8c5f8bf48af501f8676c57ae, type: 3}
-  physicalDieUnlockIcon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
-  defenseDieUnlockIcon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
-  fireDieUnlockIcon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
-  natureDieUnlockIcon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
-  frostDieUnlockIcon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
-  coinsIcon: {fileID: 21300000, guid: f6ba811e2f9f0b84298b96b7b1ecf964, type: 3}
-  movementIcon: {fileID: 21300000, guid: 9ba5044b4f9c8a5499797775d21feaf4, type: 3}
+  hp:
+    icon: {fileID: 21300000, guid: 92adfdd256c720f469f752c15c513835, type: 3}
+    valueTextColor: {r: 0.9960785, g: 0.28235295, b: 0.28235295, a: 1}
+  power:
+    icon: {fileID: 21300000, guid: f5c0b55348254fe4bbe8fe8159292a7d, type: 3}
+    valueTextColor: {r: 0.8745099, g: 0.3019608, b: 0.95294124, a: 1}
+  extraRoll:
+    icon: {fileID: 21300000, guid: 6d37a93b8c5f8bf48af501f8676c57ae, type: 3}
+    valueTextColor: {r: 0.9215687, g: 0.627451, b: 0, a: 1}
+  physicalDieUnlock:
+    icon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
+    valueTextColor: {r: 1, g: 0.6973232, b: 0.2688679, a: 1}
+  defenseDieUnlock:
+    icon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
+    valueTextColor: {r: 0.27058828, g: 0.5706398, b: 1, a: 1}
+  fireDieUnlock:
+    icon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
+    valueTextColor: {r: 1, g: 0.41626292, b: 0.27058828, a: 1}
+  natureDieUnlock:
+    icon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
+    valueTextColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
+  frostDieUnlock:
+    icon: {fileID: 21300000, guid: 0c28083872678a94f98759bc166fe809, type: 3}
+    valueTextColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+  coins:
+    icon: {fileID: 21300000, guid: f6ba811e2f9f0b84298b96b7b1ecf964, type: 3}
+    valueTextColor: {r: 1, g: 0.8745099, b: 0.5019608, a: 1}
+  movement:
+    icon: {fileID: 21300000, guid: 9ba5044b4f9c8a5499797775d21feaf4, type: 3}
+    valueTextColor: {r: 0.9215687, g: 0.627451, b: 0, a: 1}

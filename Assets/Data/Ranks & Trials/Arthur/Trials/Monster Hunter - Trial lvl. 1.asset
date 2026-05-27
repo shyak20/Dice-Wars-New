@@ -17,10 +17,11 @@ MonoBehaviour:
   description: Kill 3 Monsters
   trialIcon: {fileID: 21300000, guid: 7f4429031dc7f1c49b9ab56968be78c0, type: 3}
   type: 0
-  targetValue: 3
+  targetValue: 1
   exactRollValue: 1
   completionRewards:
   - rid: 6434882374853722192
+  - rid: 6434882480546251014
   completionRewardRowFormat: 
   references:
     version: 2
@@ -30,3 +31,8 @@ MonoBehaviour:
       data:
         rowFormat: Max HP +5
         amount: 5
+    - rid: 6434882480546251014
+      type: {class: ProgressionStartingRelicReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Start with Relic
+        relic: {fileID: 11400000, guid: 9931e059caabe2f43a9ae7ea0b922f9d, type: 2}

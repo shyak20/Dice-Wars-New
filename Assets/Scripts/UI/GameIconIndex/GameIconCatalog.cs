@@ -69,6 +69,9 @@ public static class GameIconCatalog
     public static Sprite GetMainAttributeIcon(MainAttributeIconId id) =>
         _active != null ? _active.GetMainAttributeIcon(id) : null;
 
+    public static Color GetMainAttributeValueColor(MainAttributeIconId id) =>
+        _active != null ? _active.GetMainAttributeValueColor(id) : Color.white;
+
     public static Sprite GetDieUnlockMainAttributeIcon(DieType dieType) =>
         _active != null ? _active.GetDieUnlockMainAttributeIcon(dieType) : null;
 }

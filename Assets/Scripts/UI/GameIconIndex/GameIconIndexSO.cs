@@ -40,16 +40,26 @@ public class GameIconIndexSO : ScriptableObject
     [SerializeField] private List<EnemyResistanceIconEntry> enemyResistanceIcons = new List<EnemyResistanceIconEntry>();
 
     [Header("Main Attribute Icons")]
-    [SerializeField] private Sprite hpIcon;
-    [SerializeField] private Sprite powerIcon;
-    [SerializeField] private Sprite extraRollIcon;
-    [SerializeField] private Sprite physicalDieUnlockIcon;
-    [SerializeField] private Sprite defenseDieUnlockIcon;
-    [SerializeField] private Sprite fireDieUnlockIcon;
-    [SerializeField] private Sprite natureDieUnlockIcon;
-    [SerializeField] private Sprite frostDieUnlockIcon;
-    [SerializeField] private Sprite coinsIcon;
-    [SerializeField] private Sprite movementIcon;
+    [FormerlySerializedAs("hpIcon")]
+    [SerializeField] private MainAttributeIconVisual hp;
+    [FormerlySerializedAs("powerIcon")]
+    [SerializeField] private MainAttributeIconVisual power;
+    [FormerlySerializedAs("extraRollIcon")]
+    [SerializeField] private MainAttributeIconVisual extraRoll;
+    [FormerlySerializedAs("physicalDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual physicalDieUnlock;
+    [FormerlySerializedAs("defenseDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual defenseDieUnlock;
+    [FormerlySerializedAs("fireDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual fireDieUnlock;
+    [FormerlySerializedAs("natureDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual natureDieUnlock;
+    [FormerlySerializedAs("frostDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual frostDieUnlock;
+    [FormerlySerializedAs("coinsIcon")]
+    [SerializeField] private MainAttributeIconVisual coins;
+    [FormerlySerializedAs("movementIcon")]
+    [SerializeField] private MainAttributeIconVisual movement;
 
     [Serializable]
     public struct ActionIconEntry
@@ -102,6 +112,14 @@ public class GameIconIndexSO : ScriptableObject
     {
         public string key;
         public Sprite sprite;
+    }
+
+    [Serializable]
+    public struct MainAttributeIconVisual
+    {
+        public Sprite icon;
+        [Tooltip("Tint for CharacterInfoStat value text and other UI that shows this attribute's number.")]
+        public Color valueTextColor;
     }
 
     readonly Dictionary<ActionVisualId, Sprite> _actionLookup = new Dictionary<ActionVisualId, Sprite>();
@@ -283,19 +301,27 @@ public class GameIconIndexSO : ScriptableObject
         return _enemyResistanceBackgroundLookup.TryGetValue(resistanceElement, out var s) ? s : null;
     }
 
-    public Sprite GetMainAttributeIcon(MainAttributeIconId id) => id switch
+    public Sprite GetMainAttributeIcon(MainAttributeIconId id) => GetMainAttributeVisual(id).icon;
+
+    public Color GetMainAttributeValueColor(MainAttributeIconId id)
     {
-        MainAttributeIconId.Hp => hpIcon,
-        MainAttributeIconId.Power => powerIcon,
-        MainAttributeIconId.ExtraRoll => extraRollIcon,
-        MainAttributeIconId.PhysicalDieUnlock => physicalDieUnlockIcon,
-        MainAttributeIconId.DefenseDieUnlock => defenseDieUnlockIcon,
-        MainAttributeIconId.FireDieUnlock => fireDieUnlockIcon,
-        MainAttributeIconId.NatureDieUnlock => natureDieUnlockIcon,
-        MainAttributeIconId.FrostDieUnlock => frostDieUnlockIcon,
-        MainAttributeIconId.Coins => coinsIcon,
-        MainAttributeIconId.Movement => movementIcon,
-        _ => null
+        var color = GetMainAttributeVisual(id).valueTextColor;
+        return color.a > 0f ? color : Color.white;
+    }
+
+    public MainAttributeIconVisual GetMainAttributeVisual(MainAttributeIconId id) => id switch
+    {
+        MainAttributeIconId.Hp => hp,
+        MainAttributeIconId.Power => power,
+        MainAttributeIconId.ExtraRoll => extraRoll,
+        MainAttributeIconId.PhysicalDieUnlock => physicalDieUnlock,
+        MainAttributeIconId.DefenseDieUnlock => defenseDieUnlock,
+        MainAttributeIconId.FireDieUnlock => fireDieUnlock,
+        MainAttributeIconId.NatureDieUnlock => natureDieUnlock,
+        MainAttributeIconId.FrostDieUnlock => frostDieUnlock,
+        MainAttributeIconId.Coins => coins,
+        MainAttributeIconId.Movement => movement,
+        _ => default
     };
 
     public Sprite GetDieUnlockMainAttributeIcon(DieType dieType) =>
@@ -496,16 +522,16 @@ public class GameIconIndexSO : ScriptableObject
                 });
         }
 
-        AddMainAttributeEntry(entries, MainAttributeIconId.Hp, hpIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.Power, powerIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.ExtraRoll, extraRollIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.PhysicalDieUnlock, physicalDieUnlockIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.DefenseDieUnlock, defenseDieUnlockIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.FireDieUnlock, fireDieUnlockIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.NatureDieUnlock, natureDieUnlockIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.FrostDieUnlock, frostDieUnlockIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.Coins, coinsIcon);
-        AddMainAttributeEntry(entries, MainAttributeIconId.Movement, movementIcon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Hp, hp.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Power, power.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.ExtraRoll, extraRoll.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.PhysicalDieUnlock, physicalDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.DefenseDieUnlock, defenseDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.FireDieUnlock, fireDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.NatureDieUnlock, natureDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.FrostDieUnlock, frostDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Coins, coins.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Movement, movement.icon);
 
         return entries;
     }

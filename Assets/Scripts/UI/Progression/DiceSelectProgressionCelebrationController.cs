@@ -130,7 +130,7 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
                 {
                     var rankAcknowledged = false;
                     SetCelebrationRootActive(true);
-                    rankUpPopup.Show(rankToCelebrate, () => rankAcknowledged = true);
+                    rankUpPopup.Show(rankToCelebrate, character, () => rankAcknowledged = true);
                     while (!rankAcknowledged)
                         yield return null;
 

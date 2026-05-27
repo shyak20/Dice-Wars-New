@@ -145,11 +145,15 @@ public static class ProgressionCelebrationUISetup
 
         var panel = CreatePanel(popupRoot.transform, "Panel", new Vector2(560f, 400f));
         var title = CreateTmp(panel.transform, "Title", 32, TextAlignmentOptions.Center);
-        SetAnchored(title.rectTransform, new Vector2(0f, 140f), new Vector2(520f, 56f));
+        SetAnchored(title.rectTransform, new Vector2(0f, 148f), new Vector2(520f, 52f));
         title.text = "Level Up";
 
+        var characterName = CreateTmp(panel.transform, "Character Name", 22, TextAlignmentOptions.Center);
+        SetAnchored(characterName.rectTransform, new Vector2(0f, 94f), new Vector2(520f, 34f));
+        characterName.text = "";
+
         var body = CreateTmp(panel.transform, "Body", 20, TextAlignmentOptions.Top);
-        SetAnchored(body.rectTransform, new Vector2(0f, -20f), new Vector2(500f, 180f));
+        SetAnchored(body.rectTransform, new Vector2(0f, -28f), new Vector2(500f, 172f));
         body.text = "All trials complete.";
 
         var completeBtn = CreateButton(panel.transform, "Complete Button", "Complete", new Vector2(0f, -150f));
@@ -158,6 +162,7 @@ public static class ProgressionCelebrationUISetup
         var so = new SerializedObject(view);
         so.FindProperty("panelRoot").objectReferenceValue = panel;
         so.FindProperty("titleText").objectReferenceValue = title;
+        so.FindProperty("characterNameText").objectReferenceValue = characterName;
         so.FindProperty("bodyText").objectReferenceValue = body;
         so.FindProperty("completeButton").objectReferenceValue = completeBtn;
         so.ApplyModifiedPropertiesWithoutUndo();

@@ -54,6 +54,32 @@ public static class ProgressionTrialRewardRowPresenter
         return new RowViewModel(icon, text);
     }
 
+    /// <summary>
+    /// Build a single relic/gem row title from the reward's Row Format, substituting
+    /// <paramref name="itemDisplayName"/> for the <c>{0}</c> placeholder. Used by the
+    /// celebration popups when iterating per-item over a multi-relic/gem unlock reward.
+    /// </summary>
+    public static string FormatRelicGemRowTitle(ProgressionRewardBase reward, string itemDisplayName)
+    {
+        if (reward == null)
+            return itemDisplayName ?? string.Empty;
+
+        var format = !string.IsNullOrWhiteSpace(reward.rowFormat)
+            ? reward.rowFormat.Trim()
+            : GetDefaultRelicGemFormat(reward);
+
+        return FormatRowText(format, itemDisplayName);
+    }
+
+    static string GetDefaultRelicGemFormat(ProgressionRewardBase reward) => reward switch
+    {
+        ProgressionStartingRelicReward => "Start with {0}",
+        ProgressionUnlockRelicsReward => "Unlock {0}",
+        ProgressionUnlockGemsReward => "Unlock {0}",
+        ProgressionAddStartingDieReward => "Add {0} to deck",
+        _ => "{0}"
+    };
+
     static void ResolveDisplay(
         ProgressionRewardBase reward,
         string trialRowFormatOverride,

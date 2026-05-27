@@ -9,6 +9,7 @@ using UnityEngine;
 public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController sceneController;
+    [SerializeField] private GameIconIndexSO gameIconIndex;
     [SerializeField] private TMP_Text rankNameText;
     [SerializeField] private CharacterInfoStat maxHealthStat;
     [SerializeField] private CharacterInfoStat baseMaxPowerStat;
@@ -22,6 +23,11 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
 
         if (sceneController == null)
             Debug.LogError("DiceSelectCharacterStatsDisplay: assign sceneController.", this);
+
+        maxHealthStat?.SetMainAttributeIconId(MainAttributeIconId.Hp);
+        baseMaxPowerStat?.SetMainAttributeIconId(MainAttributeIconId.Power);
+        moveLimitStat?.SetMainAttributeIconId(MainAttributeIconId.Movement);
+        maxRollsPerTurnStat?.SetMainAttributeIconId(MainAttributeIconId.ExtraRoll);
     }
 
     void OnEnable()
@@ -79,12 +85,15 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
         {
             if (rankNameText != null)
                 rankNameText.text = string.Empty;
-            ClearStat(maxHealthStat);
-            ClearStat(baseMaxPowerStat);
-            ClearStat(moveLimitStat);
-            ClearStat(maxRollsPerTurnStat);
+            var iconIndex = ResolveIconIndex();
+            ClearStat(maxHealthStat, iconIndex);
+            ClearStat(baseMaxPowerStat, iconIndex);
+            ClearStat(moveLimitStat, iconIndex);
+            ClearStat(maxRollsPerTurnStat, iconIndex);
             return;
         }
+
+        var icons = ResolveIconIndex();
 
         var progression = ProgressionManager.TryGetRuntime();
         if (progression == null && character.progressionCatalog != null)
@@ -101,31 +110,34 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
 
         var maxHealth = Mathf.Max(1, character.startingMaxHealth
             + (progression != null ? progression.GetStartingHPModifier() : 0));
-        SetStat(maxHealthStat, maxHealth.ToString());
+        SetStat(maxHealthStat, maxHealth.ToString(), icons);
 
         var baseMaxPower = Mathf.Max(1, character.baseMaxPower
             + (progression != null ? progression.GetMaxPowerModifier() : 0));
-        SetStat(baseMaxPowerStat, baseMaxPower.ToString());
+        SetStat(baseMaxPowerStat, baseMaxPower.ToString(), icons);
 
         var moves = Mathf.Max(1, character.moveLimit
             + (progression != null ? progression.GetGridMoveModifier() : 0));
-        SetStat(moveLimitStat, moves.ToString());
+        SetStat(moveLimitStat, moves.ToString(), icons);
 
         var maxRolls = Mathf.Max(1, character.maxRollsPerTurn
             + (progression != null ? progression.GetMaxRollsModifier() : 0));
-        SetStat(maxRollsPerTurnStat, maxRolls.ToString());
+        SetStat(maxRollsPerTurnStat, maxRolls.ToString(), icons);
     }
 
-    static void SetStat(CharacterInfoStat stat, string value)
+    GameIconIndexSO ResolveIconIndex() =>
+        gameIconIndex != null ? gameIconIndex : GameIconCatalog.Active;
+
+    static void SetStat(CharacterInfoStat stat, string value, GameIconIndexSO iconIndex)
     {
         if (stat != null)
-            stat.SetValue(value);
+            stat.SetValue(value, iconIndex);
     }
 
-    static void ClearStat(CharacterInfoStat stat)
+    static void ClearStat(CharacterInfoStat stat, GameIconIndexSO iconIndex)
     {
         if (stat != null)
-            stat.ClearValue();
+            stat.ClearValue(iconIndex);
     }
 
     static string FormatRankName(PlayerRankSO rank)
