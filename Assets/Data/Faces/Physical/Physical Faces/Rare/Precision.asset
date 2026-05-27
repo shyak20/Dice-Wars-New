@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Stronger
   description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
-  - Deal <style=Attack>4</style>
+  - Deal <style=Attack>2</style>
   - Apply Precision - Option to add +1 to the Power Pool (immediate)
   value: 2
   type: 0

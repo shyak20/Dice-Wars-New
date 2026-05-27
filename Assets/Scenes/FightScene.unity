@@ -3183,6 +3183,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoverTooltipManager
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  trialRewardsPanelPrefab: {fileID: 0}
+  gameIconIndex: {fileID: 0}
   fallbackCanvas: {fileID: 1896576052}
   hoverTooltipScreenOffset: {x: 30, y: -60}
   hoverAboveTooltipScreenOffset: {x: -20, y: 210}
@@ -7615,7 +7617,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &776683534
 RectTransform:
   m_ObjectHideFlags: 0

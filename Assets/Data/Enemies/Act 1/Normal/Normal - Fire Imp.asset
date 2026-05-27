@@ -18,7 +18,7 @@ MonoBehaviour:
   idleAnimatorStateName: Idle
   enemyRank: 0
   excludeFromFirstFight: 1
-  maxHealth: 15
+  maxHealth: 10
   startArmor: 20
   minGoldReward: 30
   maxGoldReward: 50
