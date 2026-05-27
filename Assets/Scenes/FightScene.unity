@@ -24756,7 +24756,6 @@ RectTransform:
   - {fileID: 2110974186}
   - {fileID: 8772609939825398479}
   - {fileID: 1809300543}
-  - {fileID: 7613276264664916397}
   - {fileID: 1222476797}
   - {fileID: 576654136}
   - {fileID: 634037715}
@@ -24772,6 +24771,7 @@ RectTransform:
   - {fileID: 1071086013}
   - {fileID: 484564939}
   - {fileID: 1067698247}
+  - {fileID: 7613276264664916397}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -39533,6 +39533,10 @@ PrefabInstance:
     - target: {fileID: 327566058912559531, guid: 2c953fdbae8b9e949b8b52004499c48e, type: 3}
       propertyPath: m_Name
       value: Lose Screen Prefab
+      objectReference: {fileID: 0}
+    - target: {fileID: 327566058912559531, guid: 2c953fdbae8b9e949b8b52004499c48e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3340041786598838411, guid: 2c953fdbae8b9e949b8b52004499c48e, type: 3}
       propertyPath: m_Pivot.x

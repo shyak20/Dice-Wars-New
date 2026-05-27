@@ -15,6 +15,7 @@ MonoBehaviour:
   characterDisplayName: Morgana
   portrait: {fileID: 21300000, guid: c368f3009007b38438e06cb89ef89ed4, type: 3}
   smallPortrait: {fileID: 21300000, guid: 0a31fcf4bae5acf4181199fd4990fd4c, type: 3}
+  loseScreenImage: {fileID: 21300000, guid: b8f9c5fb71d25fa43a6210c78594714a, type: 3}
   description: "Merlin's most gifted disciple. \nA brilliant sorceress whose magic
     manifested as living flame. \nWhile the others studied illusion, prophecy, and
     healing, Morgana learned to shape fire into shields, blades, and burning sigils

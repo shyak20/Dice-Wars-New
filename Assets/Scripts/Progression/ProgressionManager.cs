@@ -710,6 +710,7 @@ public sealed class ProgressionManager : MonoBehaviour
         AddLifetimeAccumulated(TrialType.ExactRoll, 1, rolledFaceValue);
         RefreshActiveTrialsForType(TrialType.ExactRoll, rolledFaceValue);
         Persist();
+        NotifyChanged();
     }
 
     void HandleAccumulatedPower(int powerFromFace) => IncrementTrials(TrialType.AccumulatedPower, powerFromFace);
@@ -722,6 +723,7 @@ public sealed class ProgressionManager : MonoBehaviour
         AddLifetimeAccumulated(type, delta, 0);
         RefreshActiveTrialsForType(type, exactRollFilter: null);
         Persist();
+        NotifyChanged();
     }
 
     void RefreshActiveTrialsForType(TrialType type, int? exactRollFilter)

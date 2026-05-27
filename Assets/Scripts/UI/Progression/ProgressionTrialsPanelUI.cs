@@ -5,10 +5,14 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Spawns <see cref="ProgressionTrialSlotUI"/> for the active rank and shows rank completion on a slider + X/Y label.
+/// Works in any scene: Dice Select uses the preview character via <see cref="diceSelectSceneController"/>;
+/// Fight / Map / other scenes resolve the character from <see cref="PlayerDataContainer.ActiveCharacterTemplate"/>.
 /// </summary>
 [DefaultExecutionOrder(50)]
 public sealed class ProgressionTrialsPanelUI : MonoBehaviour
 {
+    [Tooltip("Optional. Dice Select scene only — used to follow the previewed character. " +
+             "Leave unassigned in Fight / Map / other run scenes; the panel uses the active runtime character instead.")]
     [SerializeField] private DiceSelectSceneController diceSelectSceneController;
     [SerializeField] private Transform trialLayoutRoot;
     [SerializeField] private ProgressionTrialSlotUI trialSlotPrefab;
@@ -24,6 +28,7 @@ public sealed class ProgressionTrialsPanelUI : MonoBehaviour
 
     void Awake()
     {
+        // Auto-bind only in Dice Select scene; in Fight / Map / other scenes there is no controller and that's fine.
         if (diceSelectSceneController == null)
             diceSelectSceneController = FindObjectOfType<DiceSelectSceneController>(true);
 
@@ -40,6 +45,9 @@ public sealed class ProgressionTrialsPanelUI : MonoBehaviour
 
         ProgressionManager.OnCharacterProgressionChanged += OnProgressionDataChanged;
         DiceSelectProgressionDisplayGate.DeferredRefreshRequested += OnDeferredProgressionRefreshRequested;
+
+        // Persistent canvases re-enable the panel on scene change without re-running Start; re-read latest state.
+        TryRefresh();
     }
 
     void Start() => TryRefresh();

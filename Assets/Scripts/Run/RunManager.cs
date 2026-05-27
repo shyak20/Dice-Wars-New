@@ -1367,17 +1367,19 @@ public class RunManager : MonoBehaviour
         var sceneName = SceneManager.GetActiveScene().name;
         if (string.Equals(sceneName, combatSceneName, StringComparison.Ordinal))
         {
+            // Drive HP UI to 0 and the defeat panel directly: the OnPlayerHealthDepleted → CombatManager → OnPlayerDefeat → WinLoseUIController
+            // event chain can silently break if any link isn't subscribed when abandon fires (e.g. fight scene roots toggled).
             var player = FindObjectOfType<PlayerStatus>(true);
             if (player != null)
                 player.ForceDefeatAtZeroHealth();
             else
-            {
-                var winLose = FindObjectOfType<WinLoseUIController>(true);
-                if (winLose != null)
-                    winLose.ShowDefeatScreen();
-                else
-                    Debug.LogError("RunManager.PresentAbandonDefeatUi: no PlayerStatus or WinLoseUIController in fight scene.", this);
-            }
+                Debug.LogError("RunManager.PresentAbandonDefeatUi: PlayerStatus not found in fight scene — HP bar will not update.", this);
+
+            var winLose = FindObjectOfType<WinLoseUIController>(true);
+            if (winLose != null)
+                winLose.ShowDefeatScreen();
+            else
+                Debug.LogError("RunManager.PresentAbandonDefeatUi: WinLoseUIController not found in fight scene — defeat screen will not show.", this);
 
             return;
         }
