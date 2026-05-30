@@ -550,6 +550,50 @@ public class RunManager : MonoBehaviour
         PersistAndLoadFightSceneWithEnemy(grid, playerCell, movesTaken, enemy, isBossEndTile);
     }
 
+    /// <summary>
+    /// Unknown tile with <see cref="UnknownMapEventSO.triggersCombat"/>: resolve enemy (specific or <see cref="UnknownMapEventSO.combatRank"/> pool) and load fight without opening the event panel.
+    /// </summary>
+    public bool TryBeginUnknownMapEventCombat(
+        UnknownMapEventSO mapEvent,
+        MapGrid grid,
+        Vector2Int playerCell,
+        int movesTaken,
+        bool registerCompletedOnEnter = true)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.TryBeginUnknownMapEventCombat: not in map-based run.", this);
+            return false;
+        }
+
+        if (mapEvent == null)
+        {
+            Debug.LogError("RunManager.TryBeginUnknownMapEventCombat: mapEvent is null.", this);
+            return false;
+        }
+
+        if (grid == null)
+        {
+            Debug.LogError("RunManager.TryBeginUnknownMapEventCombat: grid is null.", this);
+            return false;
+        }
+
+        var enemy = mapEvent.ResolveEnemyForCombat(this);
+        if (enemy == null)
+        {
+            Debug.LogError(
+                $"RunManager.TryBeginUnknownMapEventCombat: no enemy for '{mapEvent.DisplayLabel}' (rank {mapEvent.combatRank}).",
+                mapEvent);
+            return false;
+        }
+
+        if (registerCompletedOnEnter && mapEvent.registerCompletedOnLegacyCombatEnter)
+            RegisterUnknownMapEventCompleted(mapEvent.ResolvedEventId);
+
+        PersistAndLoadFightSceneWithEnemy(grid, playerCell, movesTaken, enemy, mapEvent.countsAsBossTileForRunProgression);
+        return true;
+    }
+
     /// <summary>Map combat with an explicit enemy (e.g. Unknown tile event with <see cref="UnknownMapEventSO.specificEnemy"/>).</summary>
     public void PersistAndLoadFightSceneWithEnemy(MapGrid grid, Vector2Int playerCell, int movesTaken,
         EnemyTypeSO enemy, bool isBossEndTile)

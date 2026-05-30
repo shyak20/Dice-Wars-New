@@ -81,11 +81,8 @@ public class EnemyTypeSO : ScriptableObject
     public Sprite displaySprite;
 
     [Header("Combat animator")]
-    [Tooltip("Optional. Assigned to the enemy's Animator at runtime; drives idle and per-intent states from EnemyActionSO.")]
+    [Tooltip("Optional. Assigned to the enemy's Animator at runtime; drives idle and per-intent triggers from EnemyActionSO.")]
     public RuntimeAnimatorController combatAnimatorController;
-
-    [Tooltip("State name on the controller (e.g. Idle or Base Layer.Idle). Empty uses the controller default entry state.")]
-    public string idleAnimatorStateName;
 
     [Header("Classification")]
     public EnemyRank enemyRank = EnemyRank.Normal;

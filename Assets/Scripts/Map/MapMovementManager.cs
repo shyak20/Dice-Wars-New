@@ -484,13 +484,28 @@ public sealed class MapMovementManager : MonoBehaviour
             case MapEventType.Unknown:
             {
                 var unknown = RunManager.Instance.DrawUnknownMapEvent(_grid, PlayerGridPosition, MovesTaken);
+                var gridClone = _grid.Clone();
+
+                if (unknown != null && unknown.triggersCombat)
+                {
+                    if (!RunManager.Instance.TryBeginUnknownMapEventCombat(
+                            unknown,
+                            gridClone,
+                            PlayerGridPosition,
+                            MovesTaken))
+                        return;
+
+                    MarkCurrentTileConsumedAndRefresh();
+                    return;
+                }
+
                 if (unknownEventPanel == null)
                 {
                     Debug.LogError("MapMovementManager: assign unknownEventPanel for Unknown tiles.", this);
                     return;
                 }
 
-                if (!unknownEventPanel.TryOpenPanel(unknown, _grid.Clone(), PlayerGridPosition, MovesTaken))
+                if (!unknownEventPanel.TryOpenPanel(unknown, gridClone, PlayerGridPosition, MovesTaken))
                     return;
 
                 MarkCurrentTileConsumedAndRefresh();

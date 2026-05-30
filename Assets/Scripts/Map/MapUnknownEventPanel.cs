@@ -8,7 +8,7 @@ using TMPro;
 
 /// <summary>
 /// Map-only panel for <see cref="MapEventType.Unknown"/> tiles.
-/// Legacy combat-on-enter is unchanged; otherwise the player always dismisses via option rows built from <see cref="optionRowPrefab"/>.
+/// Events with <see cref="UnknownMapEventSO.triggersCombat"/> skip the panel and start a fight immediately; otherwise the player dismisses via option rows built from <see cref="optionRowPrefab"/>.
 /// </summary>
 [DefaultExecutionOrder(-100)]
 public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcomeHost
@@ -124,7 +124,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
     }
 
     /// <summary>
-    /// Shows Unknown Event UI for the drawn event, or starts legacy combat immediately when configured.
+    /// Shows Unknown Event UI for the drawn event, or starts combat immediately when <see cref="UnknownMapEventSO.triggersCombat"/> is set.
     /// Returns false if run state is invalid (tile should stay unconsumed).
     /// </summary>
     public bool TryOpenPanel(UnknownMapEventSO unknownEvent, MapGrid grid, Vector2Int playerCell, int movesTaken)
@@ -152,8 +152,8 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
         else
             Debug.Log("Unknown tile: no eligible unknown events for this act (filtered pool empty or unconfigured).");
 
-        if (_currentEvent != null && _currentEvent.triggersCombat && !_currentEvent.HasChoiceOptions)
-            return TryStartLegacyCombatOnEnter();
+        if (_currentEvent != null && _currentEvent.triggersCombat)
+            return TryStartCombatOnEnter();
 
         if (root == null)
             root = gameObject;
@@ -287,32 +287,25 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
         }
     }
 
-    private bool TryStartLegacyCombatOnEnter()
+    private bool TryStartCombatOnEnter()
     {
         if (RunManager.Instance == null || _currentEvent == null || _pendingGrid == null)
         {
-            Debug.LogError("MapUnknownEventPanel.TryStartLegacyCombatOnEnter: missing run, event, or grid.", this);
+            Debug.LogError("MapUnknownEventPanel.TryStartCombatOnEnter: missing run, event, or grid.", this);
             return false;
         }
 
-        var enemy = _currentEvent.ResolveEnemyForCombat(RunManager.Instance);
-        if (enemy == null)
+        if (!RunManager.Instance.TryBeginUnknownMapEventCombat(
+                _currentEvent,
+                _pendingGrid,
+                _pendingPlayerCell,
+                _pendingMovesTaken))
         {
             Debug.LogError(
-                "MapUnknownEventPanel: legacy unknown triggers combat on enter but no enemy could be resolved.",
+                "MapUnknownEventPanel: triggersCombat but no enemy could be resolved.",
                 _currentEvent);
             return false;
         }
-
-        if (_currentEvent.registerCompletedOnLegacyCombatEnter)
-            RunManager.Instance.RegisterUnknownMapEventCompleted(_currentEvent.ResolvedEventId);
-
-        RunManager.Instance.PersistAndLoadFightSceneWithEnemy(
-            _pendingGrid,
-            _pendingPlayerCell,
-            _pendingMovesTaken,
-            enemy,
-            _currentEvent.countsAsBossTileForRunProgression);
 
         _currentEvent = null;
         _pendingGrid = null;
@@ -452,6 +445,25 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
     {
         if (nextEvent == null)
             return;
+
+        if (nextEvent.triggersCombat && RunManager.Instance != null && _pendingGrid != null)
+        {
+            if (RunManager.Instance.TryBeginUnknownMapEventCombat(
+                    nextEvent,
+                    _pendingGrid,
+                    _pendingPlayerCell,
+                    _pendingMovesTaken))
+            {
+                Hide();
+                return;
+            }
+
+            Debug.LogError(
+                "MapUnknownEventPanel.OpenChainedEvent: chained event triggersCombat but no enemy could be resolved.",
+                nextEvent);
+            Hide();
+            return;
+        }
 
         _currentEvent = nextEvent;
         PopulateStaticUi(_currentEvent);

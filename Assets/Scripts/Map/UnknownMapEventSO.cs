@@ -29,8 +29,8 @@ public class UnknownMapEventSO : ScriptableObject
     [Tooltip("If non-empty, the panel shows one button per row (when that row’s conditions pass). Legacy Continue-only flow is used when this is empty.")]
     public UnknownMapEventOptionEntry[] choices;
 
-    [Header("Combat (legacy: no choice rows)")]
-    [Tooltip("When there are no choice rows, combat starts as soon as the player enters the Unknown tile (before the panel). With choices, use a Start Combat outcome instead; this flag is ignored.")]
+    [Header("Combat")]
+    [Tooltip("When true, entering this Unknown tile starts a fight immediately (no event panel). Enemy comes from Specific Enemy, or is drawn from the act pool for Combat Rank.")]
     public bool triggersCombat;
 
     [Tooltip("Used when Specific Enemy is empty — same pool rules as normal map combat for this rank.")]
@@ -71,7 +71,7 @@ public class UnknownMapEventSO : ScriptableObject
     {
         if (choices != null && choices.Length > 0 && triggersCombat)
             Debug.LogWarning(
-                $"{name}: triggersCombat is ignored when choice rows exist — use UnknownMapEventOutcomeStartCombat on an option.",
+                $"{name}: triggersCombat is enabled — choice rows are ignored; combat starts on tile enter instead.",
                 this);
 
         ValidateConditionList(visibilityConditions, "Visibility", this);

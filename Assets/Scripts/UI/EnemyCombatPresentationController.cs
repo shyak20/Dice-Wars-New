@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Fight feedback for an enemy: orb impact, physical vs burn indicator pulses, per-hit-type sprite flash tint, camera shake on damage,
-/// and optional <see cref="Animator"/> driven by <see cref="EnemyTypeSO.combatAnimatorController"/> plus per-intent states on <see cref="EnemyActionSO"/>.
+/// and optional <see cref="Animator"/> driven by <see cref="EnemyTypeSO.combatAnimatorController"/> plus per-intent triggers on <see cref="EnemyActionSO"/>.
 /// Physical indicator replaces the legacy hit-effect object. Wire the enemy's <see cref="SpriteRenderer"/> here.
 /// </summary>
 public sealed class EnemyCombatPresentationController : MonoBehaviour
@@ -108,7 +108,7 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
             enemySprite.sprite = sprite;
     }
 
-    /// <summary>Assigns <see cref="EnemyTypeSO.combatAnimatorController"/> and snaps to idle when configured.</summary>
+    /// <summary>Assigns <see cref="EnemyTypeSO.combatAnimatorController"/> and rebinds the animator.</summary>
     public void SetupCombatAnimatorFromEnemyType(EnemyTypeSO data)
     {
         if (data == null) return;
@@ -131,13 +131,10 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         combatAnimator.Rebind();
         combatAnimator.Update(0f);
 
-        if (!string.IsNullOrWhiteSpace(data.idleAnimatorStateName))
-            combatAnimator.Play(data.idleAnimatorStateName, 0, 0f);
-        else
-            combatAnimator.Play(0, 0, 0f);
+        combatAnimator.Play(0, 0, 0f);
     }
 
-    /// <summary>Cross-fades to the intent's action state (if any) then waits <see cref="EnemyActionSO.actionAnimationLeadInSeconds"/>.</summary>
+    /// <summary>Sets the intent's action trigger (if any) then waits <see cref="EnemyActionSO.actionAnimationLeadInSeconds"/>.</summary>
     public IEnumerator CoPresentEnemyTurnActionIntro(EnemyActionSO action)
     {
         if (action == null || combatAnimator == null || _enemy == null || _enemy.enemyData == null)
@@ -145,24 +142,16 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         if (_enemy.enemyData.combatAnimatorController == null)
             yield break;
 
-        if (!string.IsNullOrWhiteSpace(action.actionAnimatorStateName))
-            combatAnimator.CrossFade(action.actionAnimatorStateName, 0.1f, 0, 0f);
+        if (!string.IsNullOrWhiteSpace(action.actionAnimatorTriggerName))
+            combatAnimator.SetTrigger(action.actionAnimatorTriggerName);
 
         if (action.actionAnimationLeadInSeconds > 0f)
             yield return new WaitForSeconds(action.actionAnimationLeadInSeconds);
     }
 
-    /// <summary>Returns to the enemy type's idle state after the intent resolves.</summary>
+    /// <summary>No-op: action outro transitions are animator-driven.</summary>
     public IEnumerator CoPresentEnemyTurnActionOutro()
     {
-        if (combatAnimator == null || _enemy == null || _enemy.enemyData == null)
-            yield break;
-        if (_enemy.enemyData.combatAnimatorController == null)
-            yield break;
-
-        if (!string.IsNullOrWhiteSpace(_enemy.enemyData.idleAnimatorStateName))
-            combatAnimator.CrossFade(_enemy.enemyData.idleAnimatorStateName, 0.12f, 0, 0f);
-
         yield break;
     }
 

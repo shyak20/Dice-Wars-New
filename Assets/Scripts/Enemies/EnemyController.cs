@@ -116,7 +116,7 @@ public class EnemyController : MonoBehaviour
             yield return _presentation.CoPresentEnemyTurnActionIntro(action);
     }
 
-    /// <summary>Return to idle after the intent's combat effects.</summary>
+    /// <summary>Optional outro hook after intent effects (animator transitions are configured in Animator).</summary>
     public IEnumerator CoPresentEnemyTurnActionOutro()
     {
         if (_presentation != null)

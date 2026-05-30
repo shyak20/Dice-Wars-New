@@ -22,9 +22,10 @@ MonoBehaviour:
   damage: 4
   numberOfAttacks: 1
   armor: 0
-  actionAnimatorStateName: Attack
+  actionAnimatorTriggerName: Attack1
   actionAnimationLeadInSeconds: 0.2
   actions: []
+  actionTooltips: []
   references:
     version: 2
     RefIds: []

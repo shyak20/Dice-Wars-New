@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 using UnityEngine.VFX;
 
 /// <summary>
@@ -29,12 +31,17 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     [SerializeField, Min(0f)] private float movementSpeedMin = 0.75f;
     [SerializeField, Min(0f)] private float movementSpeedMax = 1.5f;
 
-    [Header("Sprite Alpha Pulse (Optional)")]
-    [SerializeField] private SpriteRenderer pulseSpriteRenderer;
-    [SerializeField, Min(0f)] private float spritePulseSpeedMin = 0.75f;
-    [SerializeField, Min(0f)] private float spritePulseSpeedMax = 2f;
-    [SerializeField, Range(0f, 1f)] private float spritePulseStrengthMin = 0.25f;
-    [SerializeField, Range(0f, 1f)] private float spritePulseStrengthMax = 1f;
+    [Header("Image Alpha Pulse (Optional)")]
+    [FormerlySerializedAs("pulseSpriteRenderer")]
+    [SerializeField] private Image pulseImageRenderer;
+    [FormerlySerializedAs("spritePulseSpeedMin")]
+    [SerializeField, Min(0f)] private float imagePulseSpeedMin = 0.75f;
+    [FormerlySerializedAs("spritePulseSpeedMax")]
+    [SerializeField, Min(0f)] private float imagePulseSpeedMax = 2f;
+    [FormerlySerializedAs("spritePulseStrengthMin")]
+    [SerializeField, Range(0f, 1f)] private float imagePulseStrengthMin = 0.25f;
+    [FormerlySerializedAs("spritePulseStrengthMax")]
+    [SerializeField, Range(0f, 1f)] private float imagePulseStrengthMax = 1f;
 
     [Header("Visual Effect — Wave Rate (Optional)")]
     [Tooltip("VFX Graph component on the effect object. Expose a float named like Wave Rate on the blackboard.")]
@@ -84,7 +91,7 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
     private int _currentCombatPower;
     private float _targetNormalizedPower;
     private float _displayedNormalizedPower;
-    private Color _baseSpriteColor = Color.white;
+    private Color _baseImageColor = Color.white;
     private bool _isFlyingToEnemy;
     private bool _postHitHiddenAtEnemy;
     /// <summary>Hides idle power-driven motion (not during <see cref="RunFlightToWorldAnchor"/>). Set on bust, cleared when flight ends or player turn restarts.</summary>
@@ -104,8 +111,8 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             throw new System.InvalidOperationException("PowerReactiveEffectController requires an assigned effectTransform.");
 
         _baseLocalPosition = effectTransform.localPosition;
-        if (pulseSpriteRenderer != null)
-            _baseSpriteColor = pulseSpriteRenderer.color;
+        if (pulseImageRenderer != null)
+            _baseImageColor = pulseImageRenderer.color;
 
         if (waveVisualEffect != null)
         {
@@ -308,11 +315,11 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         {
             effectTransform.localPosition = _baseLocalPosition;
             SetUniformWorldScale(effectTransform, 0f);
-            if (pulseSpriteRenderer != null)
+            if (pulseImageRenderer != null)
             {
-                var c = _baseSpriteColor;
+                var c = _baseImageColor;
                 c.a = 0f;
-                pulseSpriteRenderer.color = c;
+                pulseImageRenderer.color = c;
             }
             return;
         }
@@ -342,7 +349,7 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         float yOffset = Mathf.Cos(movementPhase) * yAmplitude;
 
         effectTransform.localPosition = _baseLocalPosition + new Vector3(xOffset, yOffset, 0f);
-        ApplySpriteAlphaPulse(powerBlend);
+        ApplyImageAlphaPulse(powerBlend);
         ApplyWaveRate(powerBlend);
         ApplyFlareBrightSize(powerBlend);
         ApplySphereTextureSpeed(powerBlend);
@@ -377,11 +384,11 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         if (movementSpeedMax < movementSpeedMin)
             throw new System.InvalidOperationException("PowerReactiveEffectController: movementSpeedMax must be >= movementSpeedMin.");
 
-        if (spritePulseSpeedMax < spritePulseSpeedMin)
-            throw new System.InvalidOperationException("PowerReactiveEffectController: spritePulseSpeedMax must be >= spritePulseSpeedMin.");
+        if (imagePulseSpeedMax < imagePulseSpeedMin)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: imagePulseSpeedMax must be >= imagePulseSpeedMin.");
 
-        if (spritePulseStrengthMax < spritePulseStrengthMin)
-            throw new System.InvalidOperationException("PowerReactiveEffectController: spritePulseStrengthMax must be >= spritePulseStrengthMin.");
+        if (imagePulseStrengthMax < imagePulseStrengthMin)
+            throw new System.InvalidOperationException("PowerReactiveEffectController: imagePulseStrengthMax must be >= imagePulseStrengthMin.");
 
         if (waveRateMax < waveRateMin)
             throw new System.InvalidOperationException("PowerReactiveEffectController: waveRateMax must be >= waveRateMin.");
@@ -411,19 +418,19 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             throw new System.InvalidOperationException("PowerReactiveEffectController: flightArcCurve must be assigned with at least one key (or set Flight Arc Height to 0 to disable the arc).");
     }
 
-    private void ApplySpriteAlphaPulse(float powerBlend)
+    private void ApplyImageAlphaPulse(float powerBlend)
     {
-        if (pulseSpriteRenderer == null)
+        if (pulseImageRenderer == null)
             return;
 
-        float spritePulseSpeed = Mathf.Lerp(spritePulseSpeedMin, spritePulseSpeedMax, powerBlend);
-        float spritePulseStrength = Mathf.Lerp(spritePulseStrengthMin, spritePulseStrengthMax, powerBlend);
-        float alphaT = Mathf.PingPong(Time.time * spritePulseSpeed, 1f);
-        float alpha = Mathf.Lerp(0f, spritePulseStrength, alphaT);
+        float pulseSpeed = Mathf.Lerp(imagePulseSpeedMin, imagePulseSpeedMax, powerBlend);
+        float pulseStrength = Mathf.Lerp(imagePulseStrengthMin, imagePulseStrengthMax, powerBlend);
+        float alphaT = Mathf.PingPong(Time.time * pulseSpeed, 1f);
+        float alpha = Mathf.Lerp(0f, pulseStrength, alphaT);
 
-        Color c = _baseSpriteColor;
+        Color c = _baseImageColor;
         c.a = alpha;
-        pulseSpriteRenderer.color = c;
+        pulseImageRenderer.color = c;
     }
 
     private void ApplyWaveRate(float powerBlend)

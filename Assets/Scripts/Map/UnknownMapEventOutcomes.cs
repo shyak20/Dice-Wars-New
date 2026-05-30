@@ -194,19 +194,13 @@ public sealed class UnknownMapEventOutcomeStartCombat : UnknownMapEventOutcomeBa
             return;
         }
 
-        var enemy = ctx.SourceEvent.ResolveEnemyForCombat(rm);
-        if (enemy == null)
-        {
-            Debug.LogError("UnknownMapEventOutcomeStartCombat: no enemy resolved.", ctx.SourceEvent);
-            return;
-        }
-
-        rm.PersistAndLoadFightSceneWithEnemy(
-            ctx.CombatGrid,
-            ctx.PlayerCell,
-            ctx.MovesTaken,
-            enemy,
-            ctx.SourceEvent.countsAsBossTileForRunProgression);
+        if (!rm.TryBeginUnknownMapEventCombat(
+                ctx.SourceEvent,
+                ctx.CombatGrid,
+                ctx.PlayerCell,
+                ctx.MovesTaken,
+                registerCompletedOnEnter: false))
+            Debug.LogError("UnknownMapEventOutcomeStartCombat: could not start combat.", ctx.SourceEvent);
     }
 }
 

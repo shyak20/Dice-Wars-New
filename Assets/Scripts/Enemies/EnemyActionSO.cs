@@ -35,8 +35,9 @@ public class EnemyActionSO : ScriptableObject
     public int armor;
 
     [Header("Combat animator")]
-    [Tooltip("State name on this enemy type's RuntimeAnimatorController (e.g. Attack or Base Layer.Swing). Empty keeps current pose (usually idle) for this intent.")]
-    public string actionAnimatorStateName;
+    [Tooltip("Trigger parameter name on this enemy type's RuntimeAnimatorController (e.g. AttackTrigger). Empty keeps current pose (usually idle) for this intent.")]
+    [FormerlySerializedAs("actionAnimatorStateName")]
+    public string actionAnimatorTriggerName;
 
     [Tooltip("After starting the action state, wait this long before applying damage, armor, and game actions.")]
     [Min(0f)] public float actionAnimationLeadInSeconds = 0.2f;

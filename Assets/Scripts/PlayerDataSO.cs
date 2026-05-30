@@ -13,6 +13,10 @@ public class PlayerDataSO : ScriptableObject
     [SerializeField] private Sprite smallPortrait;
     [Tooltip("Shown on the lose screen UI for this character (e.g. LoseScreen component).")]
     [SerializeField] private Sprite loseScreenImage;
+    [Tooltip("Left hand art in the fight scene (e.g. FightCharacterHandImages).")]
+    [SerializeField] private Sprite leftHandImage;
+    [Tooltip("Right hand art in the fight scene (e.g. FightCharacterHandImages).")]
+    [SerializeField] private Sprite rightHandImage;
     [TextArea(2, 6)]
     [Tooltip("Flavor or mechanical summary shown when this character is selected on the dice-select screen.")]
     [SerializeField] private string description;
@@ -23,6 +27,8 @@ public class PlayerDataSO : ScriptableObject
     public Sprite Portrait => portrait;
     public Sprite SmallPortrait => smallPortrait != null ? smallPortrait : portrait;
     public Sprite LoseScreenImage => loseScreenImage;
+    public Sprite LeftHandImage => leftHandImage;
+    public Sprite RightHandImage => rightHandImage;
     public string Description => description ?? string.Empty;
     public string MetaSaveId => string.IsNullOrWhiteSpace(metaSaveId) ? name : metaSaveId.Trim();
 
