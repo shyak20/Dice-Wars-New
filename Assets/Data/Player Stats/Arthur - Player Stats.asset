@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: Arthur - Player Stats
   m_EditorClassIdentifier: 
   characterDisplayName: Arthur
-  portrait: {fileID: 21300000, guid: 0195ac8b56c6e564a8ee86dbd1375d59, type: 3}
-  smallPortrait: {fileID: 21300000, guid: b8f41f31bcf9fc944a95c5d1c8f56c5f, type: 3}
   loseScreenImage: {fileID: 21300000, guid: 073f18ec1ccf52c44a1ca486d63e12f4, type: 3}
   leftHandImage: {fileID: 21300000, guid: 95c2c86566519cd4e9957ee32f9439d2, type: 3}
   rightHandImage: {fileID: 21300000, guid: f083b2e7145fe61438a017c100bb55c1, type: 3}

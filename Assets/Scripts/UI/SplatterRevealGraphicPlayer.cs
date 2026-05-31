@@ -8,8 +8,9 @@ using UnityEngine.UI;
 /// (<c>DiceGame/UI Splatter Reveal (URP)</c>). Reveal and mask UV motion each have their own duration and easing curve.
 /// </summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(CanvasRenderer))]
-public sealed class SplatterRevealGraphicPlayer : MonoBehaviour
+[RequireComponent(typeof(Graphic))]
+[ExecuteAlways]
+public sealed class SplatterRevealGraphicPlayer : MonoBehaviour, IMaterialModifier
 {
     private static class ShaderPropertyIds
     {
@@ -28,6 +29,11 @@ public sealed class SplatterRevealGraphicPlayer : MonoBehaviour
     [SerializeField] private AnimationCurve maskOffsetEasing = AnimationCurve.Linear(0f, 0f, 1f, 1f);
     [SerializeField] private float maskOffsetDurationSeconds = 1.25f;
 
+    [Header("Manual reveal")]
+    [Tooltip("When enabled, ignores reveal/mask animation settings and drives _RevealAmount from Manual Reveal only.")]
+    [SerializeField] private bool manualSliderSet;
+    [SerializeField, Range(0f, 1f)] private float manualReveal;
+
     [Header("Reveal playback")]
     [Tooltip("Reveal runs while this behaviour is enabled and the GameObject is active.")]
     [SerializeField] private bool playOnEnable = true;
@@ -36,80 +42,106 @@ public sealed class SplatterRevealGraphicPlayer : MonoBehaviour
     [SerializeField] private float revealDurationSeconds = 1.25f;
     [SerializeField] private bool useUnscaledTime = true;
 
-    private Material _material;
-    private Coroutine _routine;
+    Material _material;
+    Coroutine _routine;
 
-    private void Awake()
+    void Awake()
     {
-        if (graphic == null)
-            graphic = GetComponent<Graphic>();
-
-        if (graphic == null)
-            throw new UnityException($"{nameof(SplatterRevealGraphicPlayer)} on '{name}' requires a Graphic (e.g. Image).");
-
-        _material = graphic.material;
-        if (_material == null)
-            throw new UnityException($"{nameof(SplatterRevealGraphicPlayer)} on '{name}' expects an explicit Material on '{graphic.GetType().Name}' (assign a Material using shader 'DiceGame/UI Splatter Reveal (URP)').");
-
-        if (!_material.HasProperty(ShaderPropertyIds.RevealAmount))
-            throw new UnityException($"{nameof(SplatterRevealGraphicPlayer)} on '{name}': Material '{_material.name}' shader '{_material.shader.name}' is missing property '_RevealAmount'. Expected shader 'DiceGame/UI Splatter Reveal (URP)'.");
-
-        if (!_material.HasProperty(ShaderPropertyIds.SplatterMaskOffset))
-            throw new UnityException($"{nameof(SplatterRevealGraphicPlayer)} on '{name}': Material '{_material.name}' shader '{_material.shader.name}' is missing property '_SplatterMaskOffset'. Reimport/use shader 'DiceGame/UI Splatter Reveal (URP)'.");
+        ResolveGraphic();
+        ValidateMaterial();
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         StopRevealRoutine();
-        SetRevealImmediate(0f);
-        ApplyMaskUvOffset(maskUvOffsetRevealStart);
+        if (!manualSliderSet)
+        {
+            PushRevealAmount(0f);
+            ApplyMaskUvOffset(maskUvOffsetRevealStart);
+        }
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
+        ResolveGraphic();
+
+        if (manualSliderSet)
+        {
+            PushRevealAmount(manualReveal);
+            return;
+        }
+
         if (!playOnEnable)
             return;
 
         PlayReveal();
     }
 
+    void LateUpdate()
+    {
+        if (!manualSliderSet || !isActiveAndEnabled)
+            return;
+
+        PushRevealAmount(manualReveal);
+    }
+
+    void OnValidate()
+    {
+        if (!manualSliderSet)
+            return;
+
+        ResolveGraphic();
+        if (_material != null || TryCacheMaterial())
+            PushRevealAmount(manualReveal);
+    }
+
     /// <summary>Starts (or restarts) reveal and mask-offset animations (each on its own duration/easing).</summary>
     public void PlayReveal()
     {
+        if (manualSliderSet)
+        {
+            PushRevealAmount(manualReveal);
+            return;
+        }
+
         StopRevealRoutine();
         ApplyMaskUvOffset(maskUvOffsetRevealStart);
-        SetReveal(0f);
+        PushRevealAmount(EvaluateRevealEasing(0f));
         _routine = StartCoroutine(CoReveal());
     }
 
     /// <summary>Sets reveal instantly without starting the coroutine. Does not change mask UV offset.</summary>
-    public void SetRevealImmediate(float reveal01)
-    {
-        SetReveal(Mathf.Clamp01(reveal01));
-    }
+    public void SetRevealImmediate(float reveal01) => PushRevealAmount(reveal01);
 
     /// <summary>Sets <c>_SplatterMaskOffset</c> XY immediately (does not animate).</summary>
-    public void SetMaskUvOffsetImmediate(Vector2 xy)
+    public void SetMaskUvOffsetImmediate(Vector2 xy) => ApplyMaskUvOffset(xy);
+
+    /// <inheritdoc />
+    public Material GetModifiedMaterial(Material baseMaterial)
     {
-        ApplyMaskUvOffset(xy);
+        if (!manualSliderSet || baseMaterial == null || !baseMaterial.HasProperty(ShaderPropertyIds.RevealAmount))
+            return baseMaterial;
+
+        baseMaterial.SetFloat(ShaderPropertyIds.RevealAmount, Mathf.Clamp01(manualReveal));
+        return baseMaterial;
     }
 
-    private void StopRevealRoutine()
+    void StopRevealRoutine()
     {
-        if (_routine != null)
-        {
-            StopCoroutine(_routine);
-            _routine = null;
-        }
+        if (_routine == null)
+            return;
+
+        StopCoroutine(_routine);
+        _routine = null;
     }
 
-    private IEnumerator CoReveal()
+    IEnumerator CoReveal()
     {
         var revealDone = revealDurationSeconds <= 0f;
         var maskDone = maskOffsetDurationSeconds <= 0f;
 
         if (revealDone)
-            SetReveal(1f);
+            PushRevealAmount(EvaluateRevealEasing(1f));
         if (maskDone)
             ApplyMaskUvOffset(maskUvOffsetRevealTarget);
 
@@ -132,12 +164,12 @@ public sealed class SplatterRevealGraphicPlayer : MonoBehaviour
                 if (tReveal >= revealDurationSeconds)
                 {
                     revealDone = true;
-                    SetReveal(1f);
+                    PushRevealAmount(EvaluateRevealEasing(1f));
                 }
                 else
                 {
                     var n = Mathf.Clamp01(tReveal / revealDurationSeconds);
-                    SetReveal(Mathf.Clamp01(revealEasing.Evaluate(n)));
+                    PushRevealAmount(EvaluateRevealEasing(n));
                 }
             }
 
@@ -163,13 +195,79 @@ public sealed class SplatterRevealGraphicPlayer : MonoBehaviour
         _routine = null;
     }
 
-    private void SetReveal(float reveal01)
+    float EvaluateRevealEasing(float normalizedTime) =>
+        Mathf.Clamp01(revealEasing.Evaluate(Mathf.Clamp01(normalizedTime)));
+
+    void PushRevealAmount(float reveal01)
     {
-        _material.SetFloat(ShaderPropertyIds.RevealAmount, reveal01);
+        if (!TryCacheMaterial())
+            return;
+
+        var value = Mathf.Clamp01(reveal01);
+        _material.SetFloat(ShaderPropertyIds.RevealAmount, value);
+
+        if (graphic != null && graphic.IsActive() && graphic.canvas != null)
+        {
+            var renderingMaterial = graphic.materialForRendering;
+            if (renderingMaterial != null && !ReferenceEquals(renderingMaterial, _material))
+                renderingMaterial.SetFloat(ShaderPropertyIds.RevealAmount, value);
+
+            graphic.SetMaterialDirty();
+        }
     }
 
-    private void ApplyMaskUvOffset(Vector2 xy)
+    void ApplyMaskUvOffset(Vector2 xy)
     {
+        if (!TryCacheMaterial())
+            return;
+
         _material.SetVector(ShaderPropertyIds.SplatterMaskOffset, new Vector4(xy.x, xy.y, 0f, 0f));
+        graphic.SetMaterialDirty();
+    }
+
+    void ResolveGraphic()
+    {
+        var localGraphic = GetComponent<Graphic>();
+        if (localGraphic == null)
+            throw new UnityException($"{nameof(SplatterRevealGraphicPlayer)} on '{name}' requires a Graphic (e.g. Image).");
+
+        if (graphic != null && graphic != localGraphic)
+        {
+            Debug.LogWarning(
+                $"{nameof(SplatterRevealGraphicPlayer)} on '{name}': Graphic reference pointed at '{graphic.name}' on another object; using '{localGraphic.name}' on this object instead.",
+                this);
+        }
+
+        graphic = localGraphic;
+    }
+
+    void ValidateMaterial()
+    {
+        if (!TryCacheMaterial())
+            throw new UnityException(
+                $"{nameof(SplatterRevealGraphicPlayer)} on '{name}' expects an explicit Material on '{graphic.GetType().Name}' (assign a Material using shader 'DiceGame/UI Splatter Reveal (URP)').");
+
+        if (!_material.HasProperty(ShaderPropertyIds.RevealAmount))
+            throw new UnityException(
+                $"{nameof(SplatterRevealGraphicPlayer)} on '{name}': Material '{_material.name}' shader '{_material.shader.name}' is missing property '_RevealAmount'. Expected shader 'DiceGame/UI Splatter Reveal (URP)'.");
+
+        if (!_material.HasProperty(ShaderPropertyIds.SplatterMaskOffset))
+            throw new UnityException(
+                $"{nameof(SplatterRevealGraphicPlayer)} on '{name}': Material '{_material.name}' shader '{_material.shader.name}' is missing property '_SplatterMaskOffset'. Reimport/use shader 'DiceGame/UI Splatter Reveal (URP)'.");
+    }
+
+    bool TryCacheMaterial()
+    {
+        if (_material != null)
+            return true;
+
+        if (graphic == null)
+            ResolveGraphic();
+
+        if (graphic == null)
+            return false;
+
+        _material = graphic.material;
+        return _material != null;
     }
 }

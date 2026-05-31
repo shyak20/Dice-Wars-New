@@ -30,6 +30,7 @@ public sealed class DiceSelectCharacterButton : MonoBehaviour
     private Vector3 _defaultPortraitScale = Vector3.one;
     private RectTransform _portraitRect;
     private Coroutine _selectionTransitionRoutine;
+    private bool _portraitDefaultsCaptured;
 
     public void Bind(int characterIndex, PlayerDataSO character, Action<int> onSelected)
     {
@@ -39,15 +40,7 @@ public sealed class DiceSelectCharacterButton : MonoBehaviour
         _characterIndex = characterIndex;
         _onSelected = onSelected;
 
-        if (portraitImage == null)
-            Debug.LogError($"DiceSelectCharacterButton on '{name}': assign portraitImage.", this);
-        else
-        {
-            var sprite = character.SmallPortrait;
-            portraitImage.sprite = sprite;
-            portraitImage.enabled = sprite != null;
-            CapturePortraitDefaults();
-        }
+        RefreshPortrait(character);
 
         if (nameLabel != null)
             nameLabel.text = character.DisplayName;
@@ -63,6 +56,24 @@ public sealed class DiceSelectCharacterButton : MonoBehaviour
 
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(HandleClicked);
+
+        CapturePortraitDefaultsOnce();
+    }
+
+    public void RefreshPortrait(PlayerDataSO character)
+    {
+        if (character == null)
+            throw new ArgumentNullException(nameof(character));
+
+        if (portraitImage == null)
+        {
+            Debug.LogError($"DiceSelectCharacterButton on '{name}': assign portraitImage.", this);
+            return;
+        }
+
+        var sprite = ProgressionRankPortraitUtility.GetPortrait(character, useSmallPortrait: true);
+        portraitImage.sprite = sprite;
+        portraitImage.enabled = sprite != null;
     }
 
     public void SetSelected(bool selected)
@@ -88,17 +99,22 @@ public sealed class DiceSelectCharacterButton : MonoBehaviour
 
     void OnDisable() => StopPortraitTransition();
 
-    void CapturePortraitDefaults()
+    void CapturePortraitDefaultsOnce()
     {
-        _defaultPortraitColor = portraitImage.color;
+        if (_portraitDefaultsCaptured || portraitImage == null)
+            return;
+
         _portraitRect = portraitImage.rectTransform;
+        _defaultPortraitColor = portraitImage.color;
         _defaultPortraitScale = _portraitRect.localScale;
+        _portraitDefaultsCaptured = true;
     }
 
     Vector3 GetDeselectedPortraitScale() => _defaultPortraitScale * deselectedPortraitScale;
 
     void BeginPortraitTransition(Color targetColor, Vector3 targetScale)
     {
+        CapturePortraitDefaultsOnce();
         StopPortraitTransition();
 
         if (selectionTransitionDuration <= 0f)

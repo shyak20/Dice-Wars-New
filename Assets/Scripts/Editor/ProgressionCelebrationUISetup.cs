@@ -152,6 +152,9 @@ public static class ProgressionCelebrationUISetup
         SetAnchored(characterName.rectTransform, new Vector2(0f, 94f), new Vector2(520f, 34f));
         characterName.text = "";
 
+        var currentRankPortrait = CreatePortraitImage(panel.transform, "Current Rank Portrait", new Vector2(-120f, 20f));
+        var rankUpPortrait = CreatePortraitImage(panel.transform, "Rank Up Portrait", new Vector2(120f, 20f));
+
         var body = CreateTmp(panel.transform, "Body", 20, TextAlignmentOptions.Top);
         SetAnchored(body.rectTransform, new Vector2(0f, -28f), new Vector2(500f, 172f));
         body.text = "All trials complete.";
@@ -163,6 +166,8 @@ public static class ProgressionCelebrationUISetup
         so.FindProperty("panelRoot").objectReferenceValue = panel;
         so.FindProperty("titleText").objectReferenceValue = title;
         so.FindProperty("characterNameText").objectReferenceValue = characterName;
+        so.FindProperty("currentRankPortraitImage").objectReferenceValue = currentRankPortrait;
+        so.FindProperty("rankUpPortraitImage").objectReferenceValue = rankUpPortrait;
         so.FindProperty("bodyText").objectReferenceValue = body;
         so.FindProperty("completeButton").objectReferenceValue = completeBtn;
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -201,6 +206,17 @@ public static class ProgressionCelebrationUISetup
         var image = panel.AddComponent<Image>();
         image.color = new Color(0.08f, 0.1f, 0.16f, 0.96f);
         return panel;
+    }
+
+    static Image CreatePortraitImage(Transform parent, string name, Vector2 anchoredPosition)
+    {
+        var go = CreateUiObject(name, parent);
+        var rt = go.GetComponent<RectTransform>();
+        SetAnchored(rt, anchoredPosition, new Vector2(128f, 128f));
+        var image = go.AddComponent<Image>();
+        image.preserveAspect = true;
+        image.enabled = false;
+        return image;
     }
 
     static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)

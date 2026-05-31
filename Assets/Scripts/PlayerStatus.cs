@@ -15,7 +15,7 @@ public class PlayerStatus : MonoBehaviour
     public TMP_Text healthText;
     public TMP_Text armorText;
     public GameObject armorIcon; // Optional: A shield icon that shows when armor > 0
-    [Tooltip("Masked portrait inside the player HP bar (Player Mask → Player Image). Uses PlayerDataSO.SmallPortrait.")]
+    [Tooltip("Masked portrait inside the player HP bar (Player Mask → Player Image). Uses active rank SmallPortrait from progression.")]
     [SerializeField] private Image characterPortraitImage;
 
     [Header("Floating damage numbers")]
@@ -141,7 +141,7 @@ public class PlayerStatus : MonoBehaviour
         TryApplyPortraitFromContainer();
     }
 
-    /// <summary>Sets the HUD portrait from <see cref="PlayerDataSO.SmallPortrait"/>.</summary>
+    /// <summary>Sets the HUD portrait from the active <see cref="PlayerRankSO.SmallPortrait"/>.</summary>
     public void ApplyCharacterPortrait(PlayerDataSO data)
     {
         if (characterPortraitImage == null)
@@ -153,7 +153,24 @@ public class PlayerStatus : MonoBehaviour
             return;
         }
 
-        var sprite = data.SmallPortrait;
+        ApplyRankPortrait(ResolvePortraitCharacter(data));
+    }
+
+    static PlayerDataSO ResolvePortraitCharacter(PlayerDataSO data)
+    {
+        var container = PlayerDataContainer.Instance;
+        if (container?.ActiveCharacterTemplate == null)
+            return data;
+
+        if (data == container.ActiveCharacterTemplate || data == container.RuntimeData)
+            return container.ActiveCharacterTemplate;
+
+        return data;
+    }
+
+    void ApplyRankPortrait(PlayerDataSO data)
+    {
+        var sprite = ProgressionRankPortraitUtility.GetPortrait(data, useSmallPortrait: true);
         characterPortraitImage.sprite = sprite;
         characterPortraitImage.enabled = sprite != null;
     }
@@ -161,10 +178,14 @@ public class PlayerStatus : MonoBehaviour
     void TryApplyPortraitFromContainer()
     {
         var container = PlayerDataContainer.Instance;
-        if (container?.RuntimeData == null)
+        if (container == null)
             return;
 
-        ApplyCharacterPortrait(container.RuntimeData);
+        var template = container.ActiveCharacterTemplate;
+        if (template == null)
+            return;
+
+        ApplyCharacterPortrait(template);
     }
 
     /// <summary>

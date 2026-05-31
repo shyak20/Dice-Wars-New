@@ -11,6 +11,14 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
     [SerializeField] private TMP_Text titleText;
     [Tooltip("Subtitle: character display name from PlayerDataSO. Hidden when unset or cleared.")]
     [SerializeField] private TMP_Text characterNameText;
+    [Header("Rank portraits")]
+    [Tooltip("Portrait for the rank being completed (e.g. Rank 0 when advancing to Rank 1).")]
+    [SerializeField] private Image currentRankPortraitImage;
+    [Tooltip("Portrait for the rank after level-up (e.g. Rank 1 when advancing from Rank 0).")]
+    [SerializeField] private Image rankUpPortraitImage;
+    [Header("Shown with popup")]
+    [Tooltip("Turned on when this popup is shown; turned off when hidden or on startup.")]
+    [SerializeField] private List<GameObject> objectsEnabledOnShow = new List<GameObject>();
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private Button completeButton;
     [Tooltip("Optional headline override. {0} = completed rank display name.")]
@@ -126,10 +134,18 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
             characterNameText.gameObject.SetActive(!string.IsNullOrWhiteSpace(name));
         }
 
+        PlayerRankSO nextRank = null;
+        if (character != null)
+            ProgressionRankPortraitUtility.TryGetNextRank(character, completedRank, out nextRank);
+
+        ApplyRankPortraitImage(currentRankPortraitImage, completedRank.Portrait);
+        ApplyRankPortraitImage(rankUpPortraitImage, nextRank != null ? nextRank.Portrait : null);
+
         if (bodyText != null)
             BuildBody(completedRank);
 
         ShowPanel();
+        SetObjectsEnabledOnShow(true);
     }
 
     public void Hide()
@@ -140,10 +156,30 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
             characterNameText.text = string.Empty;
             characterNameText.gameObject.SetActive(false);
         }
+
+        ApplyRankPortraitImage(currentRankPortraitImage, null);
+        ApplyRankPortraitImage(rankUpPortraitImage, null);
         HideImmediate();
     }
 
-    void HideImmediate() => HidePanelImmediate();
+    void HideImmediate()
+    {
+        SetObjectsEnabledOnShow(false);
+        HidePanelImmediate();
+    }
+
+    void SetObjectsEnabledOnShow(bool active)
+    {
+        if (objectsEnabledOnShow == null)
+            return;
+
+        for (var i = 0; i < objectsEnabledOnShow.Count; i++)
+        {
+            var go = objectsEnabledOnShow[i];
+            if (go != null)
+                go.SetActive(active);
+        }
+    }
 
     void HandleCompleteClicked()
     {
@@ -545,4 +581,13 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
     }
 
     void OnDisable() => ClearSpawnedRows();
+
+    static void ApplyRankPortraitImage(Image image, Sprite sprite)
+    {
+        if (image == null)
+            return;
+
+        image.sprite = sprite;
+        image.enabled = sprite != null;
+    }
 }

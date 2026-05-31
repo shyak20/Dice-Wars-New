@@ -8,6 +8,15 @@ public class PlayerRankSO : ScriptableObject
     public string rankName;
     [TextArea(2, 4)] public string rankFlavorText;
 
+    [Header("Portrait")]
+    [Tooltip("Large portrait (dice-select preview, rank-up popup).")]
+    [SerializeField] private Sprite portrait;
+    [Tooltip("Compact portrait (character buttons, fight HUD). Falls back to Portrait when unset.")]
+    [SerializeField] private Sprite smallPortrait;
+
+    public Sprite Portrait => portrait;
+    public Sprite SmallPortrait => smallPortrait != null ? smallPortrait : portrait;
+
     public List<PlayerTrialSO> associatedTrials = new List<PlayerTrialSO>();
 
     [Header("Rank-up rewards")]

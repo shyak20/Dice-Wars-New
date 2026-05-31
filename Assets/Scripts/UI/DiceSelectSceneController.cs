@@ -35,9 +35,19 @@ public sealed class DiceSelectSceneController : MonoBehaviour
             continueButton.onClick.AddListener(OnContinueClicked);
     }
 
-    void OnEnable() => DiceSelectProgressionDisplayGate.DeferredRefreshRequested += OnDeferredProgressionRefreshRequested;
+    void OnEnable()
+    {
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested += OnDeferredProgressionRefreshRequested;
+        ProgressionManager.OnCharacterProgressionChanged += OnCharacterProgressionChanged;
+    }
 
-    void OnDisable() => DiceSelectProgressionDisplayGate.DeferredRefreshRequested -= OnDeferredProgressionRefreshRequested;
+    void OnDisable()
+    {
+        DiceSelectProgressionDisplayGate.DeferredRefreshRequested -= OnDeferredProgressionRefreshRequested;
+        ProgressionManager.OnCharacterProgressionChanged -= OnCharacterProgressionChanged;
+    }
+
+    void OnCharacterProgressionChanged(PlayerDataSO _) => RefreshAllCharacterButtonPortraits();
 
     void OnDeferredProgressionRefreshRequested() => RefreshCharacterDisplay(replayPortraitReveal: false);
 
@@ -151,6 +161,20 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         }
     }
 
+    void RefreshAllCharacterButtonPortraits()
+    {
+        for (var i = 0; i < _characterButtons.Count; i++)
+        {
+            if (i >= _selectableCharacters.Count)
+                break;
+
+            var button = _characterButtons[i];
+            var character = _selectableCharacters[i];
+            if (button != null && character != null)
+                button.RefreshPortrait(character);
+        }
+    }
+
     /// <summary>Re-runs preview bind (e.g. after rank-up celebration). Called by <see cref="DiceSelectProgressionCelebrationController"/>.</summary>
     public void RefreshCharacterDisplayPublic() => RefreshCharacterDisplay(replayPortraitReveal: false);
 
@@ -198,7 +222,7 @@ public sealed class DiceSelectSceneController : MonoBehaviour
 
         if (characterPortraitImage != null)
         {
-            var portrait = character.Portrait;
+            var portrait = ProgressionRankPortraitUtility.GetPortrait(character);
             characterPortraitImage.sprite = portrait;
 
             if (replayPortraitReveal && portrait != null)
@@ -220,6 +244,7 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         ProgressionManager.TryGetRuntime()?.RefreshCharacterProgression(character);
 
         RefreshCharacterPresentationOnly(character, replayPortraitReveal);
+        RefreshAllCharacterButtonPortraits();
 
         if (startingDiceLayout != null)
             startingDiceLayout.RefreshDeck(GetEffectiveStartingDeckPreview(character));

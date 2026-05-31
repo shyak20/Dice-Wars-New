@@ -1010,6 +1010,52 @@ public sealed class ProgressionManager : MonoBehaviour
         OnCharacterProgressionChanged?.Invoke(_activeTemplate);
     }
 
+    /// <summary>
+    /// Debug: completes every incomplete trial on the active rank (rewards, celebration queue, rank-up when applicable).
+    /// </summary>
+    public int CheatCompleteAllActiveRankTrials()
+    {
+        if (_save == null || _activeRank?.associatedTrials == null)
+        {
+            Debug.LogWarning(
+                $"{nameof(ProgressionManager)}.{nameof(CheatCompleteAllActiveRankTrials)}: progression not initialized.",
+                this);
+            return 0;
+        }
+
+        var completedCount = 0;
+        for (var i = 0; i < _activeRank.associatedTrials.Count; i++)
+        {
+            var trial = _activeRank.associatedTrials[i];
+            if (trial == null || ProgressionContentIds.IsNullOrEmpty(trial.TrialId))
+                continue;
+
+            if (IsTrialCompletedGlobally(trial.TrialId))
+                continue;
+
+            if (!_trialStateById.TryGetValue(trial.TrialId, out var state))
+            {
+                state = new TrialSaveData
+                {
+                    trialID = trial.TrialId,
+                    currentValue = 0,
+                    isCompleted = false
+                };
+            }
+
+            state.currentValue = Mathf.Max(state.currentValue, trial.targetValue);
+            TryCompleteTrial(trial, ref state);
+            completedCount++;
+        }
+
+        if (completedCount == 0)
+            Debug.Log(
+                $"{nameof(ProgressionManager)}.{nameof(CheatCompleteAllActiveRankTrials)}: all trials on rank '{_activeRank.rankName}' are already complete.",
+                this);
+
+        return completedCount;
+    }
+
     /// <summary>Deletes all saved rank/trial data and reloads a fresh profile for the active character (if any).</summary>
     public static void ClearAllSavedProgress()
     {

@@ -15,6 +15,8 @@ MonoBehaviour:
   rankIndex: 1
   rankName: The Ashbound Disciple
   rankFlavorText: 
+  portrait: {fileID: 21300000, guid: be2e232ba852f754f8dd84a6a37f86c0, type: 3}
+  smallPortrait: {fileID: 21300000, guid: 0a31fcf4bae5acf4181199fd4990fd4c, type: 3}
   associatedTrials: []
   rankUpRewards: []
   references:
