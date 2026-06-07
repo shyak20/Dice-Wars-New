@@ -2023,31 +2023,35 @@ public class CombatManager : MonoBehaviour
         }
         else if (currentPower > maxPower)
         {
-            // Cast Overload: discard any unassigned rolled outcomes (they are nullified by the bust).
-            targetAssignment?.CancelPendingAssignments();
-
             if (RelicActionRunner.TryConsumeFreeBust(this))
             {
+                targetAssignment?.CancelPendingAssignments();
                 SubmitTurn();
                 return;
             }
 
-            if (bustProtected) SubmitTurn();
-            else if (_turnRegistry.SupernovaBustOverrideActive)
+            if (bustProtected)
+            {
+                targetAssignment?.CancelPendingAssignments();
+                SubmitTurn();
+                return;
+            }
+
+            if (_turnRegistry.SupernovaBustOverrideActive)
             {
                 var supernovaTarget = ResolvePrimaryTargetEnemy();
                 if (supernovaTarget != null && _turnRegistry.SupernovaBustDamage > 0)
                     supernovaTarget.TakeDamage(_turnRegistry.SupernovaBustDamage);
                 _turnRegistry.SupernovaBustOverrideActive = false;
                 if (CheckVictory()) return;
+                targetAssignment?.CancelPendingAssignments();
                 SubmitTurn();
+                return;
             }
-            else
-            {
-                ProgressionEventBridge.NotifyCastOverload();
-                ChangeState(CombatState.BustCheck);
-                CombatEvents.OnBustOccurred?.Invoke(GetPendingAttack(), GetPendingDefense());
-            }
+
+            ProgressionEventBridge.NotifyCastOverload();
+            ChangeState(CombatState.BustCheck);
+            CombatEvents.OnBustOccurred?.Invoke(GetPendingAttack(), GetPendingDefense());
         }
         else
         {
@@ -2149,6 +2153,8 @@ public class CombatManager : MonoBehaviour
             if (_activeEnemies[i] != null && _activeEnemies[i].AssignedElementPool != null)
                 _activeEnemies[i].AssignedElementPool.ClearAllRows();
         }
+
+        targetAssignment?.CancelPendingAssignments();
 
         NotifyAllStoredActionsPoolUI();
         _skipPowerOrbFlightForNextSubmitTurn = true;
@@ -2357,6 +2363,9 @@ public class CombatManager : MonoBehaviour
             attackResolved = true;
             continueCombat = RunPlayerPhysicalResolution(pendingAttack);
         }
+
+        if (flyOrbToEnemy && IsMultiEnemy)
+            BeginDuplicateOrbFlightsToOtherTargets(orbTargetEnemy, forceStartingVisibleScale);
 
         IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
             orbAnchor, allowZeroCombatPower, forceStartingVisibleScale, OnOrbImpact);
@@ -2669,6 +2678,74 @@ public class CombatManager : MonoBehaviour
 
         NotifyStoredActionsPoolUpdated();
         CheckVictory();
+    }
+
+    private void BeginDuplicateOrbFlightsToOtherTargets(EnemyController primaryOrbTarget, bool forceStartingVisibleScale)
+    {
+        if (powerOrbVisual == null || primaryOrbTarget == null)
+            return;
+
+        var duplicateAnchors = new List<Transform>();
+        var duplicateEnemies = new List<EnemyController>();
+
+        foreach (var enemy in EnumerateAssignedDamageTargets())
+        {
+            if (enemy == null || !enemy.IsAlive || enemy == primaryOrbTarget)
+                continue;
+
+            var anchor = enemy.GetPowerOrbHitAnchor();
+            if (anchor == null)
+            {
+                Debug.LogError(
+                    $"CombatManager: enemy '{enemy.name}' has no power-orb hit anchor — skipping duplicate hit FX flight.",
+                    enemy);
+                continue;
+            }
+
+            duplicateEnemies.Add(enemy);
+            duplicateAnchors.Add(anchor);
+        }
+
+        if (duplicateAnchors.Count == 0)
+            return;
+
+        powerOrbVisual.BeginDuplicateFlights(duplicateAnchors, forceStartingVisibleScale, anchor =>
+        {
+            for (var i = 0; i < duplicateAnchors.Count; i++)
+            {
+                if (duplicateAnchors[i] != anchor)
+                    continue;
+
+                var enemy = duplicateEnemies[i];
+                CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
+                    PowerOrbImpactTarget.Enemy,
+                    anchor.position,
+                    enemy));
+                break;
+            }
+        });
+    }
+
+    private IEnumerable<EnemyController> EnumerateAssignedDamageTargets()
+    {
+        var fallback = ResolvePrimaryTargetEnemy();
+        var seen = new HashSet<EnemyController>();
+
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face == null || face.Damage <= 0)
+                continue;
+
+            var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive
+                ? face.DamageTargetEnemy
+                : fallback;
+            if (target == null || !target.IsAlive || seen.Contains(target))
+                continue;
+
+            seen.Add(target);
+            yield return target;
+        }
     }
 
     /// <summary>The default enemy used for unassigned / fallback player damage: the Main Enemy when alive, otherwise the first living enemy.</summary>

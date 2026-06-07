@@ -89,7 +89,7 @@ public class JackpotPresentationController : MonoBehaviour
         if (delayBeforeFirstJackpotReveal > 0f)
             yield return new WaitForSecondsRealtime(delayBeforeFirstJackpotReveal);
 
-        var icons = storedActionsPoolDisplay.GetVisiblePoolIconsTopToBottom();
+        var icons = CollectActiveSceneIconsTopToBottom();
         for (var i = 0; i < icons.Count; i++)
         {
             if (i > 0 && staggerDelayBetweenRows > 0f)
@@ -97,11 +97,14 @@ public class JackpotPresentationController : MonoBehaviour
 
             var icon = icons[i];
             icon.ShowJackpotMultiplierBadge(multiplier);
-            if (poolsAfter != null && poolsAfter.TryGetValue(icon.RowKey, out var postMultiply))
+            if (icon.ShouldScheduleJackpotValueReveal &&
+                TryGetPostMultiplyValue(icon, poolsAfter, out var postMultiply))
+            {
                 icon.ScheduleJackpotPostMultiplyValueReveal(postMultiply, valueRevealDelayAfterRowJackpotStart, this);
+            }
         }
 
-        while (AnyScheduledJackpotValueTextStillPending(icons, poolsAfter))
+        while (AnyJackpotValueRevealStillPending(icons))
             yield return null;
 
         var pauseAfterValues = Mathf.Max(0f, secondsAfterAllPoolValuesUpdatedBeforeEndSequence);
@@ -148,6 +151,43 @@ public class JackpotPresentationController : MonoBehaviour
             jackpotPresentationRoot.SetActive(false);
     }
 
+    static List<StoredActionsPoolIcon> CollectActiveSceneIconsTopToBottom()
+    {
+        var all = StoredActionsPoolIcon.FindAllInLoadedScenes(true);
+        var active = new List<StoredActionsPoolIcon>(all.Count);
+        for (var i = 0; i < all.Count; i++)
+        {
+            var icon = all[i];
+            if (icon != null && icon.gameObject.activeInHierarchy)
+                active.Add(icon);
+        }
+
+        StoredActionsPoolIcon.SortTopToBottom(active);
+        return active;
+    }
+
+    static bool TryGetPostMultiplyValue(
+        StoredActionsPoolIcon icon,
+        Dictionary<PoolRowKey, int> poolsAfter,
+        out int value)
+    {
+        value = 0;
+        if (icon == null)
+            return false;
+
+        if (poolsAfter != null && poolsAfter.TryGetValue(icon.RowKey, out value))
+            return value > 0;
+
+        var display = icon.GetComponentInParent<StoredActionsPoolDisplay>();
+        if (display != null && display.IsStandalonePerEnemyPool)
+        {
+            value = display.GetDisplayedAmount(icon.RowKey);
+            return value > 0;
+        }
+
+        return false;
+    }
+
     static IEnumerable TweenContainerLocalUnscaled(
         RectTransform rect,
         Vector3 fromLocal,
@@ -176,14 +216,20 @@ public class JackpotPresentationController : MonoBehaviour
         rect.localPosition = toLocal;
     }
 
-    static bool AnyScheduledJackpotValueTextStillPending(IReadOnlyList<StoredActionsPoolIcon> icons, Dictionary<PoolRowKey, int> poolsAfter)
+    static bool AnyJackpotValueRevealStillPending(IReadOnlyList<StoredActionsPoolIcon> icons)
     {
-        if (poolsAfter == null || icons == null) return false;
+        if (icons == null)
+            return false;
+
         for (var i = 0; i < icons.Count; i++)
         {
             var icon = icons[i];
-            if (icon == null || !poolsAfter.TryGetValue(icon.RowKey, out _)) continue;
-            if (!icon.JackpotPostMultiplyValueTextApplied) return true;
+            if (icon == null)
+                continue;
+            if (icon.IsJackpotValueRevealInProgress)
+                return true;
+            if (!icon.JackpotPostMultiplyValueTextApplied && !icon.ShouldScheduleJackpotValueReveal)
+                return true;
         }
 
         return false;

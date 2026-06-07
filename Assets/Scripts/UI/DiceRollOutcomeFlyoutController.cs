@@ -29,8 +29,6 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [Tooltip("Optional. Spawns drag-to-assign tokens for enemy-targeted outcomes when more than one enemy is alive. Falls back to the CombatManager's controller when left unassigned.")]
     [SerializeField] private RollTargetAssignmentController targetAssignment;
 
-    private bool _loggedMissingTargetAssignment;
-
     /// <summary>The token controller to use, preferring the local reference and falling back to the CombatManager's.</summary>
     private RollTargetAssignmentController ResolveTargetAssignment()
     {
@@ -76,11 +74,21 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [SerializeField] private AnimationCurve flyEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField] private float arcHeightPixels = 96f;
 
+    [Header("Drag interaction priority")]
+    [Tooltip("Sorting order applied while drag tokens are on screen so this canvas wins raycasts over enemy UI.")]
+    [SerializeField] private int interactionSortingOrder = 32767;
+    [Tooltip("Switch to Screen Space Overlay while tokens are pending. Required when other Overlay canvases (e.g. enemy UI) would otherwise block pointer hits on Screen Space Camera canvases.")]
+    [SerializeField] private bool useOverlayDuringDragInteraction = true;
+
     private readonly Queue<DiceRollVisualPayload> regularPayloadQueue = new Queue<DiceRollVisualPayload>();
     private readonly Queue<DiceRollVisualPayload> deferredPayloadQueue = new Queue<DiceRollVisualPayload>();
     private Coroutine queueRoutine;
     private int _playerStatusFreezeCount;
     private int _enemyStatusFreezeCount;
+    private RenderMode _savedRenderMode;
+    private int _savedSortingOrder;
+    private float _savedPlaneDistance;
+    private bool _interactionPriorityActive;
 
     private void Awake()
     {
@@ -103,6 +111,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         var assignment = ResolveTargetAssignment();
         if (assignment != null && flyoutParent != null)
             assignment.SetTokenSpawnParent(flyoutParent);
+
+        EnsureFlyoutGraphicRaycaster();
     }
 
     void ResolvePlayerStatusBarFlyTarget()
@@ -125,12 +135,14 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     private void OnEnable()
     {
         CombatEvents.OnDiceRollVisualFeedback += HandleRollVisual;
+        CombatEvents.OnRollOutcomeTokensPendingChanged += HandleRollOutcomeTokensPendingChanged;
         ResolvePlayerStatusBarFlyTarget();
     }
 
     private void OnDisable()
     {
         CombatEvents.OnDiceRollVisualFeedback -= HandleRollVisual;
+        CombatEvents.OnRollOutcomeTokensPendingChanged -= HandleRollOutcomeTokensPendingChanged;
         if (queueRoutine != null)
         {
             StopCoroutine(queueRoutine);
@@ -139,6 +151,83 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         DrainQueueAndReportFinished(regularPayloadQueue);
         DrainQueueAndReportFinished(deferredPayloadQueue);
         ForceUnfreezeStatusBars();
+        ForceRestoreInteractionPriority();
+    }
+
+    private void HandleRollOutcomeTokensPendingChanged(bool pending)
+    {
+        SetFlyoutInteractionPriority(pending);
+    }
+
+    private void EnsureFlyoutGraphicRaycaster()
+    {
+        if (canvas == null)
+            return;
+        if (canvas.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
+            canvas.gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+    }
+
+    /// <summary>
+    /// Raises the flyout canvas above all combat UI for pointer hits while drag tokens are on screen.
+    /// Screen Space Overlay wins over Screen Space Camera regardless of sorting order.
+    /// </summary>
+    private void SetFlyoutInteractionPriority(bool active)
+    {
+        if (canvas == null)
+            return;
+
+        if (active)
+        {
+            if (_interactionPriorityActive)
+                return;
+
+            _savedRenderMode = canvas.renderMode;
+            _savedSortingOrder = canvas.sortingOrder;
+            _savedPlaneDistance = canvas.planeDistance;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = interactionSortingOrder;
+            if (useOverlayDuringDragInteraction)
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            EnsureFlyoutGraphicRaycaster();
+            _interactionPriorityActive = true;
+            return;
+        }
+
+        if (!_interactionPriorityActive)
+            return;
+
+        canvas.renderMode = _savedRenderMode;
+        canvas.sortingOrder = _savedSortingOrder;
+        canvas.planeDistance = _savedPlaneDistance;
+        _interactionPriorityActive = false;
+    }
+
+    private void ForceRestoreInteractionPriority()
+    {
+        if (!_interactionPriorityActive || canvas == null)
+        {
+            _interactionPriorityActive = false;
+            return;
+        }
+
+        canvas.renderMode = _savedRenderMode;
+        canvas.sortingOrder = _savedSortingOrder;
+        canvas.planeDistance = _savedPlaneDistance;
+        _interactionPriorityActive = false;
+    }
+
+    private bool PayloadHasTokenLines(DiceRollVisualPayload payload)
+    {
+        if (payload?.Lines == null)
+            return false;
+
+        for (var i = 0; i < payload.Lines.Count; i++)
+        {
+            if (ShouldDivertLineToToken(payload, payload.Lines[i]))
+                return true;
+        }
+
+        return false;
     }
 
     private void HandleRollVisual(DiceRollVisualPayload payload)
@@ -206,8 +295,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         {
             Vector3 dieWorld = payload.DieTransform != null ? payload.DieTransform.position : payload.WorldAnchor;
 
-            var flyLines = SplitEnemyTargetedLines(payload);
-            var enemyLines = GetEnemyTargetedLines(payload);
+            // Switch to overlay (if configured) before projecting positions so spawn coords match the active render mode.
+            if (PayloadHasTokenLines(payload))
+                SetFlyoutInteractionPriority(true);
 
             Vector3 stackAnchorWorld = dieWorld + Vector3.up * worldOffsetAboveDie;
             if (!WorldPointToParentLocal(stackAnchorWorld, flyoutParent, out Vector2 anchorFlyoutLocal))
@@ -220,46 +310,55 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             Vector2 stackOriginFlyoutLocal = anchorFlyoutLocal + Vector2.right * layoutOffsetX;
 
             var lineRects = new List<RectTransform>();
+            var flyLines = new List<RollOutcomeVisualLine>();
             var stackRestAnchored = new List<Vector2>();
             var spawnRootBaseScales = new List<Vector3>();
             var spawnRoutines = new List<Coroutine>();
+            var spawnedTokenCount = 0;
 
-            BeginEnemyTargetTokenPresentation(payload, enemyLines, stackAnchorWorld, spawnRoutines);
+            BeginEnemyTargetTokenPresentation(payload, stackAnchorWorld, spawnRoutines, ref spawnedTokenCount);
 
-            for (int i = 0; i < flyLines.Count; i++)
+            if (payload.Lines != null)
             {
-                var line = flyLines[i];
-                var icon = Instantiate(flyoutPoolIconPrefab, flyoutParent);
-                var rt = icon.transform as RectTransform;
-                if (rt == null)
+                for (var lineIndex = 0; lineIndex < payload.Lines.Count; lineIndex++)
                 {
-                    Debug.LogError("DiceRollOutcomeFlyoutController: flyoutPoolIconPrefab root must have a RectTransform.");
-                    Destroy(icon.gameObject);
-                    continue;
-                }
+                    var line = payload.Lines[lineIndex];
+                    if (ShouldDivertLineToToken(payload, line))
+                        continue;
 
-                var sprite = line.IconOverride != null ? line.IconOverride : storedActionsPoolDisplay.GetPoolRowSprite(line.RowKey);
-                icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount);
+                    var icon = Instantiate(flyoutPoolIconPrefab, flyoutParent);
+                    var rt = icon.transform as RectTransform;
+                    if (rt == null)
+                    {
+                        Debug.LogError("DiceRollOutcomeFlyoutController: flyoutPoolIconPrefab root must have a RectTransform.");
+                        Destroy(icon.gameObject);
+                        continue;
+                    }
 
-                Vector3 spawnBaseLocalScale = rt.localScale;
-                Vector2 basePos = stackOriginFlyoutLocal + Vector2.up * (i * lineSpacing);
-                Vector2 restAnchored = basePos + Vector2.up * spawnYOffsetOverTime.Evaluate(1f);
-                bool animateSpawn = spawnAlongYDurationSeconds > 1e-4f;
-                if (!animateSpawn)
-                {
-                    SetLocalXY(rt, restAnchored);
-                    rt.localScale = spawnBaseLocalScale * EvaluateSpawnScaleMultiplier(1f);
-                }
-                else
-                {
-                    SetLocalXY(rt, basePos + Vector2.up * spawnYOffsetOverTime.Evaluate(0f));
-                    rt.localScale = spawnBaseLocalScale * EvaluateSpawnScaleMultiplier(0f);
-                    spawnRoutines.Add(StartCoroutine(CoSpawnPresentationMotion(rt, basePos, spawnBaseLocalScale)));
-                }
+                    var sprite = line.IconOverride != null ? line.IconOverride : storedActionsPoolDisplay.GetPoolRowSprite(line.RowKey);
+                    icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount);
 
-                lineRects.Add(rt);
-                stackRestAnchored.Add(restAnchored);
-                spawnRootBaseScales.Add(spawnBaseLocalScale);
+                    Vector3 spawnBaseLocalScale = rt.localScale;
+                    Vector2 basePos = stackOriginFlyoutLocal + Vector2.up * (lineIndex * lineSpacing);
+                    Vector2 restAnchored = basePos + Vector2.up * spawnYOffsetOverTime.Evaluate(1f);
+                    bool animateSpawn = spawnAlongYDurationSeconds > 1e-4f;
+                    if (!animateSpawn)
+                    {
+                        SetLocalXY(rt, restAnchored);
+                        rt.localScale = spawnBaseLocalScale * EvaluateSpawnScaleMultiplier(1f);
+                    }
+                    else
+                    {
+                        SetLocalXY(rt, basePos + Vector2.up * spawnYOffsetOverTime.Evaluate(0f));
+                        rt.localScale = spawnBaseLocalScale * EvaluateSpawnScaleMultiplier(0f);
+                        spawnRoutines.Add(StartCoroutine(CoSpawnPresentationMotion(rt, basePos, spawnBaseLocalScale)));
+                    }
+
+                    lineRects.Add(rt);
+                    flyLines.Add(line);
+                    stackRestAnchored.Add(restAnchored);
+                    spawnRootBaseScales.Add(spawnBaseLocalScale);
+                }
             }
 
             foreach (var c in spawnRoutines)
@@ -268,7 +367,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                     yield return c;
             }
 
-            if (lineRects.Count == 0 && enemyLines.Count == 0)
+            if (lineRects.Count == 0 && spawnedTokenCount == 0)
                 yield break;
 
             if (payload.DieTransform != null)
@@ -391,10 +490,10 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             token.SetDragEnabled(true);
     }
 
-    private void BeginEnemyTargetTokenPresentation(DiceRollVisualPayload payload, List<RollOutcomeVisualLine> enemyLines,
-        Vector3 stackAnchorWorld, List<Coroutine> spawnRoutines)
+    private void BeginEnemyTargetTokenPresentation(DiceRollVisualPayload payload, Vector3 stackAnchorWorld,
+        List<Coroutine> spawnRoutines, ref int spawnedTokenCount)
     {
-        if (enemyLines == null || enemyLines.Count == 0 || payload?.SourceFace == null)
+        if (payload?.Lines == null || payload.Lines.Count == 0 || payload.SourceFace == null)
             return;
 
         var assignment = ResolveTargetAssignment();
@@ -405,22 +504,25 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (tokenParent == null)
             return;
 
-        // Anchor point: center of the die that created these pieces + World Offset Above Die (already folded into
-        // stackAnchorWorld by the caller). Each extra piece from the same face is stacked up by Line Spacing.
         if (!WorldPointToParentLocal(stackAnchorWorld, tokenParent, out var stackOriginLocal))
             return;
         stackOriginLocal += Vector2.right * layoutOffsetX;
 
         bool animateSpawn = spawnAlongYDurationSeconds > 1e-4f;
-        for (var i = 0; i < enemyLines.Count; i++)
+        for (var lineIndex = 0; lineIndex < payload.Lines.Count; lineIndex++)
         {
-            var line = enemyLines[i];
-            var token = assignment.SpawnToken(payload.SourceFace, line, line.SourceAction, i, enemyLines.Count, dragEnabled: false);
+            var line = payload.Lines[lineIndex];
+            if (!ShouldDivertLineToToken(payload, line))
+                continue;
+
+            var token = assignment.SpawnToken(payload.SourceFace, line, line.SourceAction, lineIndex, payload.Lines.Count,
+                dragEnabled: false);
             if (token == null)
                 continue;
 
+            spawnedTokenCount++;
             var rt = token.RectTransform;
-            var basePos = stackOriginLocal + Vector2.up * (i * lineSpacing);
+            var basePos = stackOriginLocal + Vector2.up * (lineIndex * lineSpacing);
             var restAnchored = basePos + Vector2.up * spawnYOffsetOverTime.Evaluate(1f);
             var spawnBaseLocalScale = rt.localScale;
 
@@ -437,6 +539,15 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 spawnRoutines.Add(StartCoroutine(CoSpawnTokenPresentationMotion(token, rt, basePos, spawnBaseLocalScale, restAnchored)));
             }
         }
+    }
+
+    private bool ShouldDivertLineToToken(DiceRollVisualPayload payload, RollOutcomeVisualLine line)
+    {
+        if (payload?.SourceFace == null || !line.EnemyTargeted)
+            return false;
+        if (combat == null || !combat.IsMultiEnemy)
+            return false;
+        return ResolveTargetAssignment() != null;
     }
 
     private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line, bool applyPoolDeltaOnLanding)
@@ -591,58 +702,6 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         var corners = new Vector3[4];
         target.GetWorldCorners(corners);
         return (corners[0] + corners[1] + corners[2] + corners[3]) * 0.25f;
-    }
-
-    /// <summary>
-    /// When more than one enemy is alive, pulls enemy-targeted lines out of the flyout set.
-    /// Returns the lines that should still fly to the shared player element container.
-    /// </summary>
-    private List<RollOutcomeVisualLine> SplitEnemyTargetedLines(DiceRollVisualPayload payload)
-    {
-        if (payload?.Lines == null)
-            return new List<RollOutcomeVisualLine>();
-
-        if (combat == null || !combat.IsMultiEnemy || payload.SourceFace == null)
-            return payload.Lines;
-
-        if (ResolveTargetAssignment() == null)
-        {
-            if (!_loggedMissingTargetAssignment)
-            {
-                Debug.LogError(
-                    $"{nameof(DiceRollOutcomeFlyoutController)}: multi-enemy fight but no {nameof(RollTargetAssignmentController)} is wired (assign it here or on the CombatManager) — enemy-targeted outcomes will fly to the player container instead of becoming drag tokens.",
-                    this);
-                _loggedMissingTargetAssignment = true;
-            }
-            return payload.Lines;
-        }
-
-        var playerLines = new List<RollOutcomeVisualLine>();
-        foreach (var line in payload.Lines)
-        {
-            if (!line.EnemyTargeted)
-                playerLines.Add(line);
-        }
-
-        return playerLines;
-    }
-
-    private List<RollOutcomeVisualLine> GetEnemyTargetedLines(DiceRollVisualPayload payload)
-    {
-        var enemyLines = new List<RollOutcomeVisualLine>();
-        if (payload?.Lines == null || payload.SourceFace == null)
-            return enemyLines;
-
-        if (combat == null || !combat.IsMultiEnemy || ResolveTargetAssignment() == null)
-            return enemyLines;
-
-        foreach (var line in payload.Lines)
-        {
-            if (line.EnemyTargeted)
-                enemyLines.Add(line);
-        }
-
-        return enemyLines;
     }
 
     private RectTransform ResolveFlyTargetRect(RollOutcomeVisualLine line)

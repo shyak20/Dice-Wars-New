@@ -50,6 +50,11 @@ public class StoredActionsPoolIcon : MonoBehaviour
     /// <summary>True once this row's post-multiply value has been written to the amount text during the jackpot sequence.</summary>
     public bool JackpotPostMultiplyValueTextApplied => _jackpotPostMultiplyValueTextApplied;
 
+    /// <summary>True when jackpot value reveal is already running or finished (e.g. drag tokens prepared before the jackpot sequence).</summary>
+    public bool ShouldScheduleJackpotValueReveal => !_jackpotPostMultiplyRevealInProgress && !_jackpotPostMultiplyValueTextApplied;
+
+    public bool IsJackpotValueRevealInProgress => _jackpotPostMultiplyRevealInProgress;
+
     public Sprite RowSprite => icon != null ? icon.sprite : null;
 
     public void SetPoolSprite(Sprite sprite)
@@ -193,7 +198,12 @@ public class StoredActionsPoolIcon : MonoBehaviour
             return;
 
         if (visible)
+        {
+            if (_defaultChildActiveStates.Count == 0)
+                CaptureDefaultChildActiveStates();
             DisableAllNonBustVisualChildren();
+        }
+
         bustDestroyRoot.SetActive(visible);
     }
 
@@ -320,5 +330,64 @@ public class StoredActionsPoolIcon : MonoBehaviour
             return "Heal from a rolled face — restores HP when you end the turn.";
 
         return "Deferred action from a die — runs when you end the turn; may become a status effect.";
+    }
+
+    /// <summary>Every <see cref="StoredActionsPoolIcon"/> in loaded scenes (player pool, enemy pools, drag tokens, flyout rows, …).</summary>
+    public static List<StoredActionsPoolIcon> FindAllInLoadedScenes(bool includeInactive = true)
+    {
+        var found = UnityEngine.Object.FindObjectsOfType<StoredActionsPoolIcon>(includeInactive);
+        var list = new List<StoredActionsPoolIcon>(found.Length);
+        for (var i = 0; i < found.Length; i++)
+        {
+            var icon = found[i];
+            if (icon == null || !icon.gameObject.scene.IsValid())
+                continue;
+            list.Add(icon);
+        }
+
+        return list;
+    }
+
+    /// <summary>Sorts icons top-to-bottom using world Y, then sibling index.</summary>
+    public static void SortTopToBottom(List<StoredActionsPoolIcon> icons)
+    {
+        if (icons == null)
+            return;
+
+        icons.Sort((a, b) =>
+        {
+            if (a == null && b == null) return 0;
+            if (a == null) return 1;
+            if (b == null) return -1;
+
+            var ay = a.transform.position.y;
+            var by = b.transform.position.y;
+            var yCmp = by.CompareTo(ay);
+            if (yCmp != 0)
+                return yCmp;
+
+            return a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex());
+        });
+    }
+
+    public static void HideAllJackpotPresentationsInScene()
+    {
+        var icons = FindAllInLoadedScenes(true);
+        for (var i = 0; i < icons.Count; i++)
+            icons[i]?.HideJackpotMultiplierBadge();
+    }
+
+    public static void HideAllBustDestroyVisualsInScene()
+    {
+        var icons = FindAllInLoadedScenes(true);
+        for (var i = 0; i < icons.Count; i++)
+            icons[i]?.ShowBustDestroyVisual(false);
+    }
+
+    public static void RestoreAllDefaultChildVisualStatesInScene()
+    {
+        var icons = FindAllInLoadedScenes(true);
+        for (var i = 0; i < icons.Count; i++)
+            icons[i]?.RestoreDefaultChildVisualStates();
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -196,9 +197,95 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             SetUniformWorldScale(effectTransform, Mathf.Max(minScale, 1f));
 
         Vector3 flightStartWorld = effectTransform.position;
+        yield return CoFlyTransformAlongCurve(effectTransform, flightStartWorld, anchor, onArrived);
+        _isFlyingToEnemy = false;
+        SetUniformWorldScale(effectTransform, 0f);
+        _postHitHiddenAtEnemy = true;
+        ClearIdlePowerVisualSuppressionAfterBustFlow();
+    }
+
+    /// <summary>
+    /// Spawns visual duplicates of the orb at the current position and flies each to an additional anchor (multi-enemy attacks).
+    /// Does not block the main orb flight; clones are destroyed on arrival.
+    /// </summary>
+    public void BeginDuplicateFlights(
+        IReadOnlyList<Transform> anchors,
+        bool forceStartingVisibleScale,
+        System.Action<Transform> onCloneArrived = null)
+    {
+        if (anchors == null || anchors.Count == 0)
+            return;
+
+        StartCoroutine(CoBeginDuplicateFlights(anchors, forceStartingVisibleScale, onCloneArrived));
+    }
+
+    private IEnumerator CoBeginDuplicateFlights(
+        IReadOnlyList<Transform> anchors,
+        bool forceStartingVisibleScale,
+        System.Action<Transform> onCloneArrived)
+    {
+        Vector3 flightStartWorld = effectTransform.position;
+        float startScale = ResolveFlightStartWorldScale(forceStartingVisibleScale);
+
+        for (var i = 0; i < anchors.Count; i++)
+        {
+            var anchor = anchors[i];
+            if (anchor == null)
+                continue;
+
+            var cloneTransform = CreateFlightVisualClone(flightStartWorld, startScale);
+            if (cloneTransform == null)
+                continue;
+
+            StartCoroutine(CoFlyCloneAndDestroy(cloneTransform, flightStartWorld, anchor, onCloneArrived));
+        }
+
+        yield break;
+    }
+
+    private IEnumerator CoFlyCloneAndDestroy(
+        Transform cloneTransform,
+        Vector3 flightStartWorld,
+        Transform anchor,
+        System.Action<Transform> onCloneArrived)
+    {
+        yield return CoFlyTransformAlongCurve(cloneTransform, flightStartWorld, anchor, () => onCloneArrived?.Invoke(anchor));
+        if (cloneTransform != null)
+            Destroy(cloneTransform.gameObject);
+    }
+
+    private Transform CreateFlightVisualClone(Vector3 worldPosition, float worldScale)
+    {
+        var cloneGo = Instantiate(effectTransform.gameObject, effectTransform.parent);
+        cloneGo.name = effectTransform.gameObject.name + " (Flight Duplicate)";
+
+        foreach (var controller in cloneGo.GetComponents<PowerReactiveEffectController>())
+            Destroy(controller);
+
+        var cloneTransform = cloneGo.transform;
+        cloneTransform.SetPositionAndRotation(worldPosition, effectTransform.rotation);
+        SetUniformWorldScale(cloneTransform, worldScale);
+        return cloneTransform;
+    }
+
+    private float ResolveFlightStartWorldScale(bool forceStartingVisibleScale)
+    {
+        if (forceStartingVisibleScale)
+            return Mathf.Max(minScale, 1f);
+        if (_currentCombatPower <= 0)
+            return 0f;
+
+        return Mathf.Lerp(minScale, maxScale, _displayedNormalizedPower);
+    }
+
+    private IEnumerator CoFlyTransformAlongCurve(
+        Transform flyingTransform,
+        Vector3 flightStartWorld,
+        Transform anchor,
+        System.Action onArrived)
+    {
         float duration = flyTime;
         float elapsed = 0f;
-
         float hitSqr = hitCloseDistanceWorld > 0f ? hitCloseDistanceWorld * hitCloseDistanceWorld : -1f;
 
         while (elapsed < duration)
@@ -215,7 +302,7 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
                 pos.x += arcMult * flightArcHeight;
             }
 
-            effectTransform.position = pos;
+            flyingTransform.position = pos;
 
             bool curveComplete = eased >= 1f;
             bool proximityHit = hitSqr > 0f
@@ -228,12 +315,8 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
             yield return null;
         }
 
-        effectTransform.position = anchor.position;
+        flyingTransform.position = anchor.position;
         onArrived?.Invoke();
-        _isFlyingToEnemy = false;
-        SetUniformWorldScale(effectTransform, 0f);
-        _postHitHiddenAtEnemy = true;
-        ClearIdlePowerVisualSuppressionAfterBustFlow();
     }
 
     /// <summary>Convenience: flies to <paramref name="enemy"/>'s power-orb anchor; requires combat power &gt; 0 unless you use <see cref="RunFlightToWorldAnchor"/>.</summary>

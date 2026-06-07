@@ -15,6 +15,8 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     [Tooltip("Per-enemy element layout: when on, this display ignores ALL global combat pool events and is driven only by drag-assignment deposits (ApplyPoolDelta / ClearAllRows / MultiplyAllDisplayed).")]
     [SerializeField] private bool standalonePerEnemyPool;
 
+    public bool IsStandalonePerEnemyPool => standalonePerEnemyPool;
+
     [Header("Layout")]
     [Tooltip("Parent for instantiated icons. Use a horizontal/vertical layout group here.")]
     [SerializeField] private RectTransform iconContainer;
@@ -281,26 +283,17 @@ public class StoredActionsPoolDisplay : MonoBehaviour
 
     public void HideAllBustDestroyVisuals()
     {
-        if (iconMap == null) return;
-        foreach (var kvp in iconMap)
-        {
-            if (kvp.Value == null) continue;
-            kvp.Value.ShowBustDestroyVisual(false);
-        }
+        StoredActionsPoolIcon.HideAllBustDestroyVisualsInScene();
     }
 
     public void RestoreAllIconDefaultChildStates()
     {
-        if (iconMap == null) return;
-        foreach (var kvp in iconMap)
-            kvp.Value?.RestoreDefaultChildVisualStates();
+        StoredActionsPoolIcon.RestoreAllDefaultChildVisualStatesInScene();
     }
 
     public void FinishJackpotPresentation(Dictionary<PoolRowKey, int> valuesAfter)
     {
-        if (iconMap == null) return;
-        foreach (var kvp in iconMap)
-            kvp.Value?.HideJackpotMultiplierBadge();
+        StoredActionsPoolIcon.HideAllJackpotPresentationsInScene();
 
         if (valuesAfter != null)
             ApplyFullPoolSync(valuesAfter);

@@ -81,13 +81,20 @@ public class RollTargetAssignmentController : MonoBehaviour
         var token = Instantiate(tokenPrefab, parent);
         // Positioning uses localPosition (anchor/pivot-independent), so the prefab's authored anchors are left intact.
         token.RectTransform.localPosition = Vector3.zero;
-        token.Configure(this, canvas, face, line, sourceAction);
+        var interactionCanvas = parent.GetComponentInParent<Canvas>();
+        token.Configure(this, interactionCanvas != null ? interactionCanvas : canvas, face, line, sourceAction);
         token.SetDragEnabled(dragEnabled);
         token.transform.SetAsLastSibling();
 
         _pendingTokens.Add(token);
         SetPrompt(true);
+        NotifyPendingTokensChanged();
         return token;
+    }
+
+    private void NotifyPendingTokensChanged()
+    {
+        CombatEvents.OnRollOutcomeTokensPendingChanged?.Invoke(_pendingTokens.Count > 0);
     }
 
     private void DisableTokenParentBackgroundRaycast()
@@ -147,6 +154,7 @@ public class RollTargetAssignmentController : MonoBehaviour
 
         _pendingTokens.Remove(token);
         Destroy(token.gameObject);
+        NotifyPendingTokensChanged();
 
         if (_pendingTokens.Count == 0)
             CompleteGateIfOpen();
@@ -169,13 +177,15 @@ public class RollTargetAssignmentController : MonoBehaviour
         }
     }
 
-    /// <summary>Cast Overload (bust): discard all unassigned tokens (with destroy visual) without applying them.</summary>
-    public void CancelPendingAssignments()
+    /// <summary>Cast Overload (bust): discard all unassigned tokens without applying them.</summary>
+    /// <param name="playBustDestroyVisual">When true, enables the bust destroy root before removal (full bust presentation already did this when false).</param>
+    public void CancelPendingAssignments(bool playBustDestroyVisual = false)
     {
         foreach (var token in _pendingTokens)
         {
             if (token == null) continue;
-            token.PlayBustDestroyVisual();
+            if (playBustDestroyVisual)
+                token.PlayBustDestroyVisual();
             Destroy(token.gameObject);
         }
 
@@ -183,6 +193,7 @@ public class RollTargetAssignmentController : MonoBehaviour
         _gateOpen = false;
         _onAllAssigned = null;
         SetPrompt(false);
+        NotifyPendingTokensChanged();
         CombatEvents.OnTargetAssignmentModeChanged?.Invoke(false);
     }
 

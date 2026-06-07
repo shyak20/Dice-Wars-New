@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -39,7 +40,7 @@ public sealed class BustPresentationController : MonoBehaviour
         StopActiveRoutine();
         if (bustPanel != null)
             bustPanel.SetActive(false);
-        storedActionsPoolDisplay?.HideAllBustDestroyVisuals();
+        StoredActionsPoolIcon.HideAllBustDestroyVisualsInScene();
     }
 
     private void OnBustOccurred(int _currentDmg, int _currentArm)
@@ -52,23 +53,20 @@ public sealed class BustPresentationController : MonoBehaviour
     {
         if (bustPanel != null)
             bustPanel.SetActive(true);
-        storedActionsPoolDisplay?.HideAllBustDestroyVisuals();
+        StoredActionsPoolIcon.HideAllBustDestroyVisualsInScene();
 
         if (waitBeforeExplosion > 0f)
             yield return new WaitForSecondsRealtime(waitBeforeExplosion);
 
-        if (storedActionsPoolDisplay != null)
+        var icons = CollectActiveSceneIconsTopToBottom();
+        for (var i = 0; i < icons.Count; i++)
         {
-            var icons = storedActionsPoolDisplay.GetVisiblePoolIconsInLayoutOrder();
-            for (var i = 0; i < icons.Count; i++)
-            {
-                var icon = icons[i];
-                if (icon != null)
-                    icon.ShowBustDestroyVisual(true);
+            var icon = icons[i];
+            if (icon != null)
+                icon.ShowBustDestroyVisual(true);
 
-                if (delayBetweenElementDestroy > 0f && i < icons.Count - 1)
-                    yield return new WaitForSecondsRealtime(delayBetweenElementDestroy);
-            }
+            if (delayBetweenElementDestroy > 0f && i < icons.Count - 1)
+                yield return new WaitForSecondsRealtime(delayBetweenElementDestroy);
         }
 
         if (delayPostAnimation > 0f)
@@ -76,11 +74,26 @@ public sealed class BustPresentationController : MonoBehaviour
 
         CombatEvents.OnBustResolved?.Invoke();
 
-        storedActionsPoolDisplay?.HideAllBustDestroyVisuals();
-        storedActionsPoolDisplay?.RestoreAllIconDefaultChildStates();
+        StoredActionsPoolIcon.HideAllBustDestroyVisualsInScene();
+        StoredActionsPoolIcon.RestoreAllDefaultChildVisualStatesInScene();
         if (bustPanel != null)
             bustPanel.SetActive(false);
         _routine = null;
+    }
+
+    static List<StoredActionsPoolIcon> CollectActiveSceneIconsTopToBottom()
+    {
+        var all = StoredActionsPoolIcon.FindAllInLoadedScenes(true);
+        var active = new List<StoredActionsPoolIcon>(all.Count);
+        for (var i = 0; i < all.Count; i++)
+        {
+            var icon = all[i];
+            if (icon != null && icon.gameObject.activeInHierarchy)
+                active.Add(icon);
+        }
+
+        StoredActionsPoolIcon.SortTopToBottom(active);
+        return active;
     }
 
     private void StopActiveRoutine()

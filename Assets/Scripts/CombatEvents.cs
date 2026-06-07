@@ -110,6 +110,8 @@ public static class CombatEvents
     // Target assignment (drag enemy-targeted outcomes onto an enemy)
     /// <summary>True while the player must assign rolled enemy-targeted outcomes to enemies (drag-and-drop). Roll / End Turn are blocked while true.</summary>
     public static Action<bool> OnTargetAssignmentModeChanged;
+    /// <summary>True while unassigned drag tokens exist on the flyout canvas (includes spawn animation before assignment gate opens).</summary>
+    public static Action<bool> OnRollOutcomeTokensPendingChanged;
 
     // Bust Logic
     public static Action<int, int> OnBustOccurred;
