@@ -415,10 +415,19 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             }
 
             var flyCoroutines = new List<Coroutine>();
-            var dieDissolveStarted = false;
             for (int i = 0; i < flyLines.Count && i < lineRects.Count; i++)
             {
                 var line = flyLines[i];
+                if (line.AttackAllEnemies && line.EnemyTargeted)
+                {
+                    flyCoroutines.Add(StartCoroutine(FlyAttackAllLineToEnemies(
+                        payload,
+                        line,
+                        lineRects[i],
+                        stackRestAnchored[i])));
+                    continue;
+                }
+
                 RectTransform target = ResolveFlyTargetRect(line);
                 if (target == null)
                 {
@@ -426,7 +435,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                     continue;
                 }
 
-                if (!WorldPointToParentLocal(GetWorldCornersCenter(target), flyoutParent, out Vector2 endLocal))
+                if (!UiRectCenterToParentLocal(target, flyoutParent, out Vector2 endLocal))
                 {
                     Destroy(lineRects[i].gameObject);
                     continue;
@@ -437,7 +446,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 var statusTarget = ResolveStatusTarget(line);
                 var applyPoolDelta = ShouldApplyPoolDelta(line, statusTarget);
                 if (applyPoolDelta)
-                    TryBeginDieDissolve(payload.DieTransform, ref dieDissolveStarted);
+                    TryBeginDieDissolve(payload.DieTransform);
                 flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line, applyPoolDelta)));
             }
 
@@ -579,6 +588,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private bool ShouldDivertLineToToken(DiceRollVisualPayload payload, RollOutcomeVisualLine line)
     {
+        if (line.AttackAllEnemies)
+            return false;
         if (payload?.SourceFace == null || !line.EnemyTargeted)
             return false;
         if (combat == null || !combat.IsMultiEnemy)
@@ -614,9 +625,184 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         Destroy(rt.gameObject);
     }
 
-    private void TryBeginDieDissolve(Transform dieTransform, ref bool started)
+    private IEnumerator FlyAttackAllLineToEnemies(
+        DiceRollVisualPayload payload,
+        RollOutcomeVisualLine line,
+        RectTransform templateRt,
+        Vector2 startAnchored)
     {
-        if (started || dieTransform == null)
+        if (templateRt == null)
+            yield break;
+
+        if (combat == null)
+        {
+            Debug.LogError("DiceRollOutcomeFlyoutController: 'combat' reference is not assigned, so Attack All Enemies faces cannot fly to enemies. Assign the CombatManager on the flyout controller.", this);
+            yield break;
+        }
+
+        var enemies = CollectAliveEnemies();
+        if (enemies.Count == 0)
+        {
+            Destroy(templateRt.gameObject);
+            yield break;
+        }
+
+        TryBeginDieDissolve(payload != null ? payload.DieTransform : null);
+
+        var assignRoutines = new List<Coroutine>();
+        for (var e = 0; e < enemies.Count; e++)
+        {
+            RectTransform rt;
+            if (e == 0)
+            {
+                rt = templateRt;
+            }
+            else
+            {
+                var icon = Instantiate(flyoutPoolIconPrefab, flyoutParent);
+                rt = icon.transform as RectTransform;
+                if (rt == null)
+                {
+                    Destroy(icon.gameObject);
+                    continue;
+                }
+
+                var sprite = line.IconOverride != null ? line.IconOverride : storedActionsPoolDisplay.GetPoolRowSprite(line.RowKey);
+                icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount);
+                SetLocalXY(rt, startAnchored);
+                rt.localScale = templateRt.localScale;
+            }
+
+            var enemy = enemies[e];
+            var targetRect = ResolveEnemyFlyTargetRect(enemy, line, out var isEnemyOwnPool);
+            if (targetRect == null)
+            {
+                Debug.LogError(
+                    $"DiceRollOutcomeFlyoutController: Attack All Enemies face has no fly target for enemy '{enemy.name}'. " +
+                    "Assign the enemy's AssignedElementPool / DropTarget, or a shared StoredActionsPoolDisplay on the flyout controller.",
+                    enemy);
+                if (e > 0 && rt != null)
+                    Destroy(rt.gameObject);
+                continue;
+            }
+
+            if (!UiRectCenterToParentLocal(targetRect, flyoutParent, out var endLocal))
+            {
+                if (e > 0 && rt != null)
+                    Destroy(rt.gameObject);
+                continue;
+            }
+
+            var mid = (startAnchored + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
+            assignRoutines.Add(StartCoroutine(FlyLineToEnemyAssignRoutine(
+                payload, rt, startAnchored, mid, endLocal, line, enemy, applyToSharedPool: !isEnemyOwnPool)));
+        }
+
+        foreach (var c in assignRoutines)
+        {
+            if (c != null)
+                yield return c;
+        }
+
+        if (line.ResolvesImmediatelyOnDrop && line.SourceAction != null && payload?.SourceFace != null)
+            combat.ConsumeImmediateActionAfterAttackAllAssign(payload.SourceFace, line.SourceAction);
+    }
+
+    private List<EnemyController> CollectAliveEnemies()
+    {
+        var list = new List<EnemyController>();
+        if (combat?.ActiveEnemies == null)
+            return list;
+
+        for (var i = 0; i < combat.ActiveEnemies.Count; i++)
+        {
+            var enemy = combat.ActiveEnemies[i];
+            if (enemy != null && enemy.IsAlive)
+                list.Add(enemy);
+        }
+
+        return list;
+    }
+
+    /// <summary>
+    /// Fly target for one attack-all copy. Prefers the enemy's own element pool / drop target (multi-enemy), and falls back to the
+    /// shared player Element Container when the enemy has no per-enemy targeting wired (single-enemy / Main Enemy).
+    /// </summary>
+    private RectTransform ResolveEnemyFlyTargetRect(EnemyController enemy, RollOutcomeVisualLine line, out bool isEnemyOwnPool)
+    {
+        isEnemyOwnPool = false;
+
+        if (enemy?.AssignedElementPool != null)
+        {
+            var poolTarget = enemy.AssignedElementPool.GetFlyTargetRect(line.RowKey);
+            if (poolTarget != null)
+            {
+                isEnemyOwnPool = true;
+                return poolTarget;
+            }
+        }
+
+        if (enemy?.DropTarget != null)
+        {
+            isEnemyOwnPool = true;
+            return enemy.DropTarget.Rect;
+        }
+
+        return storedActionsPoolDisplay != null ? storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey) : null;
+    }
+
+    private IEnumerator FlyLineToEnemyAssignRoutine(
+        DiceRollVisualPayload payload,
+        RectTransform rt,
+        Vector2 start,
+        Vector2 mid,
+        Vector2 end,
+        RollOutcomeVisualLine line,
+        EnemyController enemy,
+        bool applyToSharedPool)
+    {
+        if (rt == null)
+            yield break;
+
+        float dur = Mathf.Max(0.01f, flyDurationSeconds);
+        float t = 0f;
+        while (t < dur)
+        {
+            if (rt == null)
+                yield break;
+
+            t += Time.deltaTime;
+            float u = Mathf.Clamp01(t / dur);
+            float eased = flyEase != null ? flyEase.Evaluate(u) : u;
+            SetLocalXY(rt, QuadraticBezier(start, mid, end, eased));
+            yield return null;
+        }
+
+        if (rt == null)
+            yield break;
+
+        SetLocalXY(rt, end);
+
+        if (payload?.SourceFace != null && combat != null && enemy != null)
+        {
+            combat.AssignRolledOutcomePieceToEnemy(
+                payload.SourceFace,
+                line.SourceAction,
+                enemy,
+                line,
+                line.ResolvesImmediatelyOnDrop);
+        }
+
+        // Single-enemy / Main Enemy fallback: this copy landed on the shared player Element Container, so increment it directly.
+        if (applyToSharedPool && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
+            storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+
+        Destroy(rt.gameObject);
+    }
+
+    private void TryBeginDieDissolve(Transform dieTransform)
+    {
+        if (dieTransform == null)
             return;
 
         var spawner = combat != null ? combat.spawner : null;
@@ -624,7 +810,6 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             return;
 
         spawner.BeginDissolveAndDestroyDie(dieTransform.gameObject);
-        started = true;
     }
 
     private static Vector2 QuadraticBezier(Vector2 a, Vector2 b, Vector2 c, float t)
@@ -755,6 +940,33 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             : null;
 
         return RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen, uiCam, out localPoint);
+    }
+
+    /// <summary>
+    /// Projects the center of a UI target rect into <paramref name="parent"/>'s local space using each rect's own canvas camera.
+    /// Use this for UI→UI fly targets (pool rows, status bars). <see cref="WorldPointToParentLocal"/> is only valid for the 3D die's
+    /// world position — feeding a Screen-Space-Overlay rect's world corners (screen pixels) through the 3D camera fails projection.
+    /// </summary>
+    private bool UiRectCenterToParentLocal(RectTransform target, RectTransform parent, out Vector2 localPoint)
+    {
+        localPoint = default;
+        if (target == null || parent == null)
+            return false;
+
+        Vector3 worldCenter = GetWorldCornersCenter(target);
+
+        var targetCanvas = target.GetComponentInParent<Canvas>();
+        Camera targetCam = targetCanvas != null && targetCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? targetCanvas.worldCamera
+            : null;
+        Vector2 screen = RectTransformUtility.WorldToScreenPoint(targetCam, worldCenter);
+
+        var parentCanvas = parent.GetComponentInParent<Canvas>();
+        Camera parentCam = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? (parentCanvas.worldCamera != null ? parentCanvas.worldCamera : targetCam)
+            : null;
+
+        return RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen, parentCam, out localPoint);
     }
 
     private static Vector3 GetWorldCornersCenter(RectTransform target)

@@ -82,6 +82,9 @@ public class FaceResult
     /// <summary>Roll batch (player roll command) that produced this face; used to find the newly rolled outcomes awaiting assignment.</summary>
     public int BatchId { get; set; }
 
+    /// <summary>Copied from <see cref="DieFaceSO.AttackAllEnemies"/> — damage and enemy debuffs apply to every alive enemy.</summary>
+    public bool AttackAllEnemies => Face != null && Face.AttackAllEnemies;
+
     /// <summary>
     /// True when any part of this resolve targets an enemy (physical/element damage, or an enemy-target status like Burn) and therefore
     /// must be assigned to a specific enemy. Player-only buffs (armor, heal, max HP, cleanse, curse self-damage) return false.

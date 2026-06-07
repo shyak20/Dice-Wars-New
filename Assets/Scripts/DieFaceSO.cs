@@ -34,6 +34,13 @@ public class DieFaceSO : ScriptableObject
     public Sprite uiIcon;
     public Sprite uiTooltipBackground;
 
+    [Header("Targeting")]
+    [Tooltip("When enabled, every enemy-targeted effect on this face (damage and enemy debuffs) applies to all alive enemies.")]
+    [SerializeField] private bool attackAllEnemies;
+
+    /// <summary>When true, damage and enemy-targeted actions hit every alive enemy (see multi-enemy flyout auto-assign).</summary>
+    public bool AttackAllEnemies => attackAllEnemies;
+
     [Header("Game Actions")]
     [Tooltip("Executed in list order. Use + in the inspector to add multiple polymorphic actions. Timing is per action (Activate Immediately on each action).")]
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();

@@ -1442,7 +1442,7 @@ public class CombatManager : MonoBehaviour
                     continue;
                 }
 
-                a.Execute(context);
+                ExecuteActionForFaceTargets(result, a, context, ctx => a.Execute(ctx));
                 var icon = GameActionIconUtility.GetDisplayIcon(a);
                 if (icon != null)
                 {
@@ -1746,7 +1746,15 @@ public class CombatManager : MonoBehaviour
         void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false)
         {
             if (amt <= 0) return;
-            lines.Add(new RollOutcomeVisualLine { RowKey = key, Amount = amt, IconOverride = icon, EnemyTargeted = enemyTargeted });
+            var attackAll = result.AttackAllEnemies && enemyTargeted;
+            lines.Add(new RollOutcomeVisualLine
+            {
+                RowKey = key,
+                Amount = amt,
+                IconOverride = icon,
+                EnemyTargeted = enemyTargeted,
+                AttackAllEnemies = attackAll
+            });
         }
 
         var damageIsEnemyTargeted = result.Type == DieType.Damage || result.Type == DieType.Fire ||
@@ -1764,6 +1772,7 @@ public class CombatManager : MonoBehaviour
                     ? extra.PoolRowBackground
                     : GameIconCatalog.TryGetPoolRowBackground(extra.PoolKey);
                 var enemyTargeted = IsEnemyTargetedPoolContribution(extra);
+                var attackAll = result.AttackAllEnemies && enemyTargeted;
                 lines.Add(new RollOutcomeVisualLine
                 {
                     RowKey = extra.PoolKey,
@@ -1773,7 +1782,7 @@ public class CombatManager : MonoBehaviour
                     IsVisualFlyoutOnly = extra.VisualFlyoutOnly,
                     FlyToPlayerStatusBar = extra.FlyToPlayerStatusBar,
                     EnemyTargeted = enemyTargeted,
-                    // Per-piece targeting: each enemy-targeted action becomes its own draggable token.
+                    AttackAllEnemies = attackAll,
                     SourceAction = enemyTargeted ? extra.PoolSourceAction : null,
                     ResolvesImmediatelyOnDrop = enemyTargeted &&
                                                 extra.PoolSourceAction != null &&
@@ -1834,6 +1843,30 @@ public class CombatManager : MonoBehaviour
             ChanneledFaces = channeledFaces,
             TriggeringFace = triggeringFace
         };
+    }
+
+    private static bool IsEnemyTargetedAction(IGameAction action) =>
+        action is ApplyStatusEffectAction apply &&
+        apply.StatusEffectDefinition != null &&
+        apply.StatusEffectDefinition.target == StatusEffectTarget.Enemy;
+
+    private void ExecuteActionForFaceTargets(FaceResult face, IGameAction action, GameActionContext faceCtx, Action<GameActionContext> execute)
+    {
+        if (face != null && face.AttackAllEnemies && IsEnemyTargetedAction(action))
+        {
+            for (var i = 0; i < _activeEnemies.Count; i++)
+            {
+                var enemy = _activeEnemies[i];
+                if (enemy == null || !enemy.IsAlive) continue;
+                faceCtx.Enemy = enemy;
+                execute(faceCtx);
+            }
+
+            return;
+        }
+
+        faceCtx.Enemy = ResolveActionTargetEnemy(face, action);
+        execute(faceCtx);
     }
 
     /// <summary>
@@ -2486,9 +2519,8 @@ public class CombatManager : MonoBehaviour
                 else if (!beforePlayerPhysicalDamage)
                     continue;
 
-                // Per-piece targeting: enemy statuses resolve against the enemy this action was assigned to.
-                faceCtx.Enemy = ResolveActionTargetEnemy(face, a);
-                a.Execute(faceCtx);
+                // Per-piece targeting: enemy statuses resolve against assigned enemy(ies).
+                ExecuteActionForFaceTargets(face, a, faceCtx, ctx => a.Execute(ctx));
             }
         }
     }
@@ -2506,8 +2538,7 @@ public class CombatManager : MonoBehaviour
             var p = _pendingAfterPhysicalApplyStatuses[i];
             var faceCtx = BuildContext(p.SourceFace);
             faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(p.SourceFace);
-            faceCtx.Enemy = ResolveActionTargetEnemy(p.SourceFace, p.Action);
-            p.Action.Execute(faceCtx);
+            ExecuteActionForFaceTargets(p.SourceFace, p.Action, faceCtx, ctx => p.Action.Execute(ctx));
         }
 
         _pendingAfterPhysicalApplyStatuses.Clear();
@@ -2585,26 +2616,21 @@ public class CombatManager : MonoBehaviour
             if (face == null || face.Damage <= 0)
                 continue;
 
-            var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive ? face.DamageTargetEnemy : fallback;
-            if (target == null) continue;
-            var t = TotalsFor(target);
-            switch (face.Type)
+            if (face.AttackAllEnemies)
             {
-                case DieType.Damage:
-                    t.Physical += face.TotalDamageContribution;
-                    break;
-                case DieType.Fire:
-                    t.Fire += face.Damage;
-                    break;
-                case DieType.Ice:
-                    t.Ice += face.Damage;
-                    break;
-                case DieType.Nature:
-                    t.Nature += face.Damage;
-                    break;
+                for (var e = 0; e < _activeEnemies.Count; e++)
+                {
+                    var multiTarget = _activeEnemies[e];
+                    if (multiTarget == null || !multiTarget.IsAlive) continue;
+                    AddFaceElementDamageToTotals(face, multiTarget, fallback, TotalsFor, Store);
+                }
+
+                continue;
             }
 
-            Store(target, t);
+            var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive ? face.DamageTargetEnemy : fallback;
+            if (target == null) continue;
+            AddFaceElementDamageToTotals(face, target, fallback, TotalsFor, Store);
         }
 
         var grandPhysical = 0;
@@ -2664,6 +2690,36 @@ public class CombatManager : MonoBehaviour
         public int Nature;
     }
 
+    private static void AddFaceElementDamageToTotals(
+        FaceResult face,
+        EnemyController target,
+        EnemyController fallback,
+        Func<EnemyController, ElementDamageTotals> totalsFor,
+        Action<EnemyController, ElementDamageTotals> store)
+    {
+        if (face == null || target == null)
+            return;
+
+        var t = totalsFor(target);
+        switch (face.Type)
+        {
+            case DieType.Damage:
+                t.Physical += face.TotalDamageContribution;
+                break;
+            case DieType.Fire:
+                t.Fire += face.Damage;
+                break;
+            case DieType.Ice:
+                t.Ice += face.Damage;
+                break;
+            case DieType.Nature:
+                t.Nature += face.Damage;
+                break;
+        }
+
+        store(target, t);
+    }
+
     /// <summary>
     /// Drag-to-assign: routes a single rolled outcome <b>piece</b> (the face's damage, or one enemy-targeted action) to the chosen
     /// enemy. The damage piece (sourceAction == null) sets <see cref="FaceResult.DamageTargetEnemy"/>; an action piece sets its
@@ -2675,6 +2731,14 @@ public class CombatManager : MonoBehaviour
         if (face == null || enemy == null)
             return;
 
+        if (sourceAction == null && face.AttackAllEnemies)
+        {
+            var allTargetPool = enemy.AssignedElementPool;
+            if (allTargetPool != null)
+                allTargetPool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+            return;
+        }
+
         if (sourceAction == null)
             face.DamageTargetEnemy = enemy;
         else
@@ -2683,7 +2747,7 @@ public class CombatManager : MonoBehaviour
         // Only action pieces can be Trigger-Immediately (the damage piece always accumulates to turn end).
         if (resolveImmediately && sourceAction != null)
         {
-            ResolveImmediateActionOnDrop(face, sourceAction, enemy);
+            ResolveImmediateActionOnDrop(face, sourceAction, enemy, consumeFromFace: !face.AttackAllEnemies);
             return;
         }
 
@@ -2700,6 +2764,8 @@ public class CombatManager : MonoBehaviour
         {
             var face = channeledFaces[i];
             if (face == null) continue;
+            if (face.AttackAllEnemies)
+                continue;
 
             if (face.HasEnemyDamagePiece && face.DamageTargetEnemy == null)
                 face.DamageTargetEnemy = enemy;
@@ -2716,18 +2782,36 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    /// <summary>Resolves a single enemy-targeted action (e.g. Burn) against an enemy the instant its token is dropped (Trigger Immediately).</summary>
-    private void ResolveImmediateActionOnDrop(FaceResult face, ApplyStatusEffectAction action, EnemyController enemy)
+    /// <summary>Removes a Trigger-Immediately action from the face after it has resolved on every attack-all target.</summary>
+    public void ConsumeImmediateActionAfterAttackAllAssign(FaceResult face, ApplyStatusEffectAction action)
     {
-        if (face == null || action == null || enemy == null || !enemy.IsAlive)
+        if (face == null || action == null || !face.AttackAllEnemies)
             return;
 
-        var actionCtx = BuildContext(face);
-        actionCtx.Enemy = enemy;
-        actionCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
-        action.Execute(actionCtx);
+        ResolveImmediateActionOnDrop(face, action, enemy: null, consumeFromFace: true);
+    }
 
-        // Consumed now — remove so it does not also run at turn end, and drop its pool row.
+    /// <summary>Resolves a single enemy-targeted action (e.g. Burn) against an enemy the instant its token is dropped (Trigger Immediately).</summary>
+    private void ResolveImmediateActionOnDrop(FaceResult face, ApplyStatusEffectAction action, EnemyController enemy, bool consumeFromFace)
+    {
+        if (face == null || action == null)
+            return;
+
+        if (enemy != null)
+        {
+            if (!enemy.IsAlive)
+                return;
+
+            var actionCtx = BuildContext(face);
+            actionCtx.Enemy = enemy;
+            actionCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
+            action.Execute(actionCtx);
+            CheckVictory();
+        }
+
+        if (!consumeFromFace)
+            return;
+
         face.Actions.Remove(action);
         for (var i = face.ActionPoolContributions.Count - 1; i >= 0; i--)
         {
@@ -2736,7 +2820,6 @@ public class CombatManager : MonoBehaviour
         }
 
         NotifyStoredActionsPoolUpdated();
-        CheckVictory();
     }
 
     private void BeginDuplicateOrbFlightsToOtherTargets(EnemyController primaryOrbTarget, bool forceStartingVisibleScale)
@@ -2785,6 +2868,10 @@ public class CombatManager : MonoBehaviour
         });
     }
 
+    /// <summary>
+    /// Enemies that should receive a power-orb hit (main or duplicate flight). Includes drag-assigned damage targets and any
+    /// multi-enemy layout with ≥1 displayed pool row (covers Attack All Enemies deposits that never set DamageTargetEnemy).
+    /// </summary>
     private IEnumerable<EnemyController> EnumerateAssignedDamageTargets()
     {
         var fallback = ResolvePrimaryTargetEnemy();
@@ -2793,17 +2880,27 @@ public class CombatManager : MonoBehaviour
         for (var i = 0; i < channeledFaces.Count; i++)
         {
             var face = channeledFaces[i];
-            if (face == null || face.Damage <= 0)
+            if (face == null || face.Damage <= 0 || face.AttackAllEnemies)
                 continue;
 
             var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive
                 ? face.DamageTargetEnemy
                 : fallback;
-            if (target == null || !target.IsAlive || seen.Contains(target))
+            if (target == null || !target.IsAlive || !seen.Add(target))
                 continue;
 
-            seen.Add(target);
             yield return target;
+        }
+
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null || !enemy.IsAlive || !seen.Add(enemy))
+                continue;
+
+            var pool = enemy.AssignedElementPool;
+            if (pool != null && pool.HasAnyDisplayedElements())
+                yield return enemy;
         }
     }
 

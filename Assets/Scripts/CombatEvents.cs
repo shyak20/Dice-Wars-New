@@ -21,6 +21,8 @@ public struct RollOutcomeVisualLine
     public ApplyStatusEffectAction SourceAction;
     /// <summary>Multi-enemy: this piece resolves the instant it is dropped on an enemy (Trigger Immediately) instead of accumulating.</summary>
     public bool ResolvesImmediatelyOnDrop;
+    /// <summary>When true with <see cref="EnemyTargeted"/>, duplicates fly to every alive enemy automatically after spawn motion.</summary>
+    public bool AttackAllEnemies;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>

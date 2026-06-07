@@ -176,6 +176,21 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     public int GetDisplayedAmount(PoolRowKey key) =>
         displayedPools != null && displayedPools.TryGetValue(key, out var v) ? v : 0;
 
+    /// <summary>True when at least one pool row is visible (amount ≥ 1). Used to decide multi-enemy power-orb duplicate flights.</summary>
+    public bool HasAnyDisplayedElements()
+    {
+        if (displayedPools == null)
+            return false;
+
+        foreach (var kvp in displayedPools)
+        {
+            if (kvp.Value >= 1)
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>Perfect Cast: scale every displayed row by the multiplier (per-enemy pools mirror the multiplied board).</summary>
     public void MultiplyAllDisplayed(int multiplier)
     {
