@@ -9,7 +9,31 @@ public class CombatManager : MonoBehaviour
 {
     [Header("Participants")]
     public PlayerStatus player;
+    [Tooltip("The Main Enemy (roster slot 0). Always present; existing single-enemy logic treats this as the active enemy.")]
     public EnemyController activeEnemy;
+    [Tooltip("Pre-placed extra enemy slots (max 2). Activated when the Main Enemy spawns adds on load or a spawn action runs. Leave disabled in the scene; the roster enables them as needed.")]
+    [SerializeField] private List<EnemyController> additionalEnemySlots = new List<EnemyController>();
+
+    [Header("Multi-enemy targeting")]
+    [Tooltip("Optional. Drives drag-to-assign of enemy-targeted rolled outcomes onto a chosen enemy. Required for fights with more than one enemy.")]
+    [SerializeField] private RollTargetAssignmentController targetAssignment;
+
+    /// <summary>The drag-to-assign controller for multi-enemy fights (may be null in single-enemy setups).</summary>
+    public RollTargetAssignmentController TargetAssignment => targetAssignment;
+
+    /// <summary>Total enemies allowed on screen at once (Main + up to 2 adds).</summary>
+    public const int MaxEnemies = 3;
+
+    private readonly List<EnemyController> _activeEnemies = new List<EnemyController>();
+
+    /// <summary>Roster slot 0 — the Main Enemy. Rewards and shared hooks source from this enemy.</summary>
+    public EnemyController MainEnemy => activeEnemy;
+
+    /// <summary>All currently-alive enemies in slot order (Main first).</summary>
+    public IReadOnlyList<EnemyController> ActiveEnemies => _activeEnemies;
+
+    /// <summary>True when more than one enemy is alive — enemy-targeted outcomes must be dragged onto a specific enemy.</summary>
+    public bool IsMultiEnemy => _activeEnemies.Count > 1;
 
     [Header("Data & Physics")]
     public DiceSpawner spawner;
@@ -171,9 +195,14 @@ public class CombatManager : MonoBehaviour
             pools[key] = cur + v;
         }
 
+        // Multi-enemy: enemy-targeted rows (physical damage, enemy debuffs) live under each enemy's own element layout,
+        // so the shared player Element Container only shows player-targeted outcomes (armor, curse self-damage, heals, etc.).
+        var multiEnemy = IsMultiEnemy;
+
         foreach (var face in channeledFaces)
         {
-            Add(PoolRowKey.FromDieType(DieType.Damage), face.TotalDamageContribution);
+            if (!multiEnemy)
+                Add(PoolRowKey.FromDieType(DieType.Damage), face.TotalDamageContribution);
             Add(PoolRowKey.FromDieType(DieType.Armor), face.Armor);
             Add(PoolRowKey.FromDieType(DieType.Curse), face.TotalSelfDamageContribution);
 
@@ -181,11 +210,13 @@ public class CombatManager : MonoBehaviour
             foreach (var extra in face.ActionPoolContributions)
             {
                 if (extra.VisualFlyoutOnly) continue;
+                if (multiEnemy && IsEnemyTargetedPoolContribution(extra)) continue;
                 Add(extra.PoolKey, extra.Amount);
             }
         }
 
-        Add(PoolRowKey.FromDieType(DieType.Damage), bonusDamageFromActions);
+        if (!multiEnemy)
+            Add(PoolRowKey.FromDieType(DieType.Damage), bonusDamageFromActions);
         Add(PoolRowKey.FromDieType(DieType.Armor), kineticShieldBonus);
         Add(PoolRowKey.FromDieType(DieType.Armor), bonusArmorFromActions);
         return pools;
@@ -552,8 +583,7 @@ public class CombatManager : MonoBehaviour
     {
         if (RunEncounterBuffer.TryConsumePendingEnemy(out var mapEnemy))
         {
-            activeEnemy.Initialize(mapEnemy);
-            BindStatusBars();
+            SetupRoster(mapEnemy);
             return true;
         }
 
@@ -567,13 +597,157 @@ public class CombatManager : MonoBehaviour
         {
             var room = RunManager.Instance.CurrentRoom;
             if (room == null || room.roomType != RoomType.Combat) return false;
-            activeEnemy.Initialize(room.enemyType);
-            BindStatusBars();
+            SetupRoster(room.enemyType);
             return true;
         }
-        if (activeEnemy.enemyData != null) activeEnemy.Initialize(activeEnemy.enemyData);
-        BindStatusBars();
+        SetupRoster(activeEnemy.enemyData);
         return true;
+    }
+
+    /// <summary>Builds the active roster from the Main Enemy plus its <see cref="EnemyTypeSO.spawnOnLoadAdds"/>, then binds status bars.</summary>
+    /// <param name="mainType">The Main Enemy's type. The Main is activated <b>before</b> being initialized so its animator/sprite bind on an active GameObject.</param>
+    private void SetupRoster(EnemyTypeSO mainType)
+    {
+        _activeEnemies.Clear();
+
+        // Reset all extra slots to a clean, disabled state first.
+        if (additionalEnemySlots != null)
+        {
+            foreach (var slot in additionalEnemySlots)
+            {
+                if (slot == null || slot == activeEnemy) continue;
+                slot.DeactivateFromRoster();
+            }
+        }
+
+        activeEnemy.ActivateInRoster(this);
+        if (mainType != null)
+            activeEnemy.Initialize(mainType);
+        _activeEnemies.Add(activeEnemy);
+
+        var adds = activeEnemy.enemyData != null ? activeEnemy.enemyData.spawnOnLoadAdds : null;
+        if (adds != null)
+        {
+            foreach (var addType in adds)
+            {
+                if (addType == null) continue;
+                if (_activeEnemies.Count >= MaxEnemies) break;
+                var slot = GetFreeEnemySlot();
+                if (slot == null)
+                {
+                    Debug.LogWarning(
+                        $"CombatManager: '{activeEnemy.enemyData.enemyName}' wants to spawn add '{addType.enemyName}' on load but no free enemy slot is available (assign more to additionalEnemySlots).");
+                    break;
+                }
+
+                slot.ActivateInRoster(this);
+                slot.Initialize(addType);
+                _activeEnemies.Add(slot);
+            }
+        }
+
+        BindStatusBars();
+        ValidateMultiEnemyTargetingSetup();
+        CombatEvents.OnEnemyRosterChanged?.Invoke(_activeEnemies);
+    }
+
+    /// <summary>Warns (once per setup) when a multi-enemy fight is missing the targeting wiring needed for drag-to-assign.</summary>
+    private void ValidateMultiEnemyTargetingSetup()
+    {
+        if (!IsMultiEnemy)
+            return;
+
+        if (targetAssignment == null)
+            Debug.LogWarning(
+                "CombatManager: multi-enemy fight but no RollTargetAssignmentController assigned — enemy-targeted outcomes will auto-assign to the Main Enemy instead of being draggable.");
+
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null) continue;
+            if (enemy.AssignedElementPool == null)
+                Debug.LogWarning($"CombatManager: enemy '{enemy.name}' has no AssignedElementPool — assigned outcomes will not be shown under it.");
+            if (enemy.DropTarget == null)
+                Debug.LogWarning($"CombatManager: enemy '{enemy.name}' has no EnemyDropTarget — players cannot drop outcomes on it.");
+        }
+    }
+
+    /// <summary>First configured extra slot not already in the active roster, or null when full.</summary>
+    public EnemyController GetFreeEnemySlot()
+    {
+        if (additionalEnemySlots == null) return null;
+        foreach (var slot in additionalEnemySlots)
+        {
+            if (slot == null || slot == activeEnemy) continue;
+            if (_activeEnemies.Contains(slot)) continue;
+            return slot;
+        }
+
+        return null;
+    }
+
+    /// <summary>Mid-combat spawn (e.g. from an enemy intent action). Returns the spawned enemy, or null when the roster is full.</summary>
+    public EnemyController SpawnEnemy(EnemyTypeSO type)
+    {
+        if (type == null)
+        {
+            Debug.LogError("CombatManager.SpawnEnemy: type is null.");
+            return null;
+        }
+
+        if (_activeEnemies.Count >= MaxEnemies)
+            return null;
+
+        var slot = GetFreeEnemySlot();
+        if (slot == null)
+            return null;
+
+        slot.ActivateInRoster(this);
+        slot.Initialize(type);
+        _activeEnemies.Add(slot);
+        BindStatusBars();
+        ValidateMultiEnemyTargetingSetup();
+        CombatEvents.OnEnemySpawned?.Invoke(slot);
+        CombatEvents.OnEnemyRosterChanged?.Invoke(_activeEnemies);
+        return slot;
+    }
+
+    /// <summary>Removes any enemies that have reached 0 HP from the active roster, firing presentation events once each.</summary>
+    private void PruneDefeatedEnemies()
+    {
+        for (var i = _activeEnemies.Count - 1; i >= 0; i--)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null)
+            {
+                _activeEnemies.RemoveAt(i);
+                continue;
+            }
+
+            if (enemy.IsAlive) continue;
+
+            _activeEnemies.RemoveAt(i);
+            CombatEvents.OnEnemyDefeated?.Invoke(enemy);
+            // The Main Enemy slot stays in the scene (rewards reference its data); adds are cleaned up.
+            if (enemy != activeEnemy)
+                enemy.DeactivateFromRoster();
+            else
+                enemy.ClearAssignedPoolOnDefeat();
+        }
+
+        if (_activeEnemies.Count > 0)
+            CombatEvents.OnEnemyRosterChanged?.Invoke(_activeEnemies);
+    }
+
+    private bool AnyEnemyAlive()
+    {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            if (_activeEnemies[i] != null && _activeEnemies[i].IsAlive)
+                return true;
+        }
+
+        return false;
     }
 
     private void OnEnable()
@@ -722,16 +896,32 @@ public class CombatManager : MonoBehaviour
             playerStatusBar.BindPlayerCombatBarBuffs(_turnRegistry);
         }
 
-        if (enemyStatusBar != null && activeEnemy != null && activeEnemy.StatusEffects != null)
-        {
-            enemyStatusBar.Bind(activeEnemy.StatusEffects);
-            enemyStatusBar.BindEnemyStartingBuffs(activeEnemy);
-        }
-
         if (player != null && player.StatusEffects != null)
             player.StatusEffects.BindBattleContext(this, player);
-        if (activeEnemy != null && activeEnemy.StatusEffects != null)
-            activeEnemy.StatusEffects.BindBattleContext(this, player);
+
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null || enemy.StatusEffects == null) continue;
+
+            // Each enemy uses its own status bar when present; the Main Enemy falls back to the shared CombatManager bar.
+            var bar = enemy.OwnStatusBar != null
+                ? enemy.OwnStatusBar
+                : (enemy == activeEnemy ? enemyStatusBar : null);
+
+            if (bar != null)
+            {
+                bar.Bind(enemy.StatusEffects);
+                bar.BindEnemyStartingBuffs(enemy);
+            }
+            else if (enemy != activeEnemy)
+            {
+                Debug.LogWarning(
+                    $"CombatManager: enemy '{enemy.name}' has no status bar assigned (EnemyController.ownStatusBar); its debuffs will not be shown.");
+            }
+
+            enemy.StatusEffects.BindBattleContext(this, player);
+        }
     }
 
     private void ApplyTestStartingFaces()
@@ -1146,6 +1336,7 @@ public class CombatManager : MonoBehaviour
         }
 
         result.DieSource = dieWorldSource;
+        result.BatchId = _rollBatchId;
         result.PowerContributionThisResolve =
             (_echoSkipsPowerThisBatch || skipPowerContribution) ? 0 : modifiedValue;
         result.KineticShieldBonusContribution = kineticArmorThisRoll ? 1 : 0;
@@ -1271,6 +1462,7 @@ public class CombatManager : MonoBehaviour
                     WorldAnchor = dieWorldSource.position,
                     DieTransform = dieWorldSource,
                     Lines = lines,
+                    SourceFace = result,
                     ActivateAfterRegularDice = activateAfterRegularDice,
                     NeedsDelayedStoredPoolResync = lines.Any(l => l.IsVisualFlyoutOnly)
                 };
@@ -1521,13 +1713,15 @@ public class CombatManager : MonoBehaviour
     {
         var lines = new List<RollOutcomeVisualLine>();
 
-        void AddLine(PoolRowKey key, int amt, Sprite icon)
+        void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false)
         {
             if (amt <= 0) return;
-            lines.Add(new RollOutcomeVisualLine { RowKey = key, Amount = amt, IconOverride = icon });
+            lines.Add(new RollOutcomeVisualLine { RowKey = key, Amount = amt, IconOverride = icon, EnemyTargeted = enemyTargeted });
         }
 
-        AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage));
+        var damageIsEnemyTargeted = result.Type == DieType.Damage || result.Type == DieType.Fire ||
+                                    result.Type == DieType.Ice || result.Type == DieType.Nature;
+        AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted);
         AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
         AddLine(PoolRowKey.FromDieType(DieType.Curse), result.TotalSelfDamageContribution, GameIconCatalog.GetElementIcon(DieType.Curse));
 
@@ -1539,6 +1733,7 @@ public class CombatManager : MonoBehaviour
                 var rowBg = extra.PoolRowBackground != null
                     ? extra.PoolRowBackground
                     : GameIconCatalog.TryGetPoolRowBackground(extra.PoolKey);
+                var enemyTargeted = IsEnemyTargetedPoolContribution(extra);
                 lines.Add(new RollOutcomeVisualLine
                 {
                     RowKey = extra.PoolKey,
@@ -1546,7 +1741,13 @@ public class CombatManager : MonoBehaviour
                     IconOverride = extra.Icon,
                     BackgroundOverride = rowBg,
                     IsVisualFlyoutOnly = extra.VisualFlyoutOnly,
-                    FlyToPlayerStatusBar = extra.FlyToPlayerStatusBar
+                    FlyToPlayerStatusBar = extra.FlyToPlayerStatusBar,
+                    EnemyTargeted = enemyTargeted,
+                    // Per-piece targeting: each enemy-targeted action becomes its own draggable token.
+                    SourceAction = enemyTargeted ? extra.PoolSourceAction : null,
+                    ResolvesImmediatelyOnDrop = enemyTargeted &&
+                                                extra.PoolSourceAction != null &&
+                                                extra.PoolSourceAction.TriggerImmediatelyOnDrop
                 });
             }
         }
@@ -1555,6 +1756,14 @@ public class CombatManager : MonoBehaviour
             AddLine(PoolRowKey.FromDieType(DieType.Armor), 1, GameIconCatalog.GetElementIcon(DieType.Armor));
 
         return lines;
+    }
+
+    /// <summary>True when a deferred pool row applies an enemy-target status (e.g. enemy Burn) and so must be assigned to an enemy.</summary>
+    private static bool IsEnemyTargetedPoolContribution(FacePoolExtraContribution extra)
+    {
+        return extra.PoolSourceAction != null &&
+               extra.PoolSourceAction.StatusEffectDefinition != null &&
+               extra.PoolSourceAction.StatusEffectDefinition.target == StatusEffectTarget.Enemy;
     }
 
     /// <summary>Applies queued next-roll multiplier once when eligible damage/armor channels are present.</summary>
@@ -1597,13 +1806,35 @@ public class CombatManager : MonoBehaviour
         };
     }
 
-    public GameActionContext BuildEnemyActionContext(EnemyActionSO sourceIntent)
+    /// <summary>
+    /// Per-piece targeting: the enemy a specific deferred action resolves against. Enemy-targeted statuses use their drag-assigned
+    /// enemy (or the primary enemy when unassigned / dead); everything else defaults to the Main Enemy.
+    /// </summary>
+    private EnemyController ResolveActionTargetEnemy(FaceResult face, IGameAction action)
+    {
+        if (face != null && action is ApplyStatusEffectAction apply &&
+            apply.StatusEffectDefinition != null &&
+            apply.StatusEffectDefinition.target == StatusEffectTarget.Enemy)
+        {
+            var assigned = face.GetActionTarget(action);
+            if (assigned != null && assigned.IsAlive)
+                return assigned;
+            return ResolvePrimaryTargetEnemy();
+        }
+
+        return activeEnemy;
+    }
+
+    public GameActionContext BuildEnemyActionContext(EnemyActionSO sourceIntent) =>
+        BuildEnemyActionContext(sourceIntent, activeEnemy);
+
+    public GameActionContext BuildEnemyActionContext(EnemyActionSO sourceIntent, EnemyController actingEnemy)
     {
         return new GameActionContext
         {
             CombatManager = this,
             Player = player,
-            Enemy = activeEnemy,
+            Enemy = actingEnemy != null ? actingEnemy : activeEnemy,
             ChanneledFaces = channeledFaces,
             TriggeringFace = null,
             PlayerData = playerData,
@@ -1632,6 +1863,10 @@ public class CombatManager : MonoBehaviour
 
     private StatusEffectContext BuildStatusContext() => new StatusEffectContext { CombatManager = this, Player = player, Enemy = activeEnemy };
 
+    /// <summary>Status context targeting a specific enemy (multi-enemy turns / per-target resolution).</summary>
+    private StatusEffectContext BuildStatusContext(EnemyController enemy) =>
+        new StatusEffectContext { CombatManager = this, Player = player, Enemy = enemy != null ? enemy : activeEnemy };
+
     /// <summary>Per-hit physical damage for enemy intent UI; matches <see cref="EnemyTurnRoutine"/> (Strength bonus, then Chill/Shattered/etc.).</summary>
     public int PreviewEnemyPhysicalHitDamage(EnemyController enemy, int intentBaseDamagePerHit)
     {
@@ -1646,15 +1881,19 @@ public class CombatManager : MonoBehaviour
     public StatusEffectContext BuildStatusContextForEffects() => BuildStatusContext();
 
     /// <summary>One physical strike from the current enemy intent (buffs, immune cap, thorns).</summary>
-    public void ApplySingleEnemyPhysicalHitFromIntent(EnemyActionSO action)
+    public void ApplySingleEnemyPhysicalHitFromIntent(EnemyActionSO action) =>
+        ApplySingleEnemyPhysicalHitFromIntent(action, activeEnemy);
+
+    public void ApplySingleEnemyPhysicalHitFromIntent(EnemyActionSO action, EnemyController actingEnemy)
     {
-        if (action == null || action.damage <= 0 || activeEnemy == null || player == null)
+        var enemy = actingEnemy != null ? actingEnemy : activeEnemy;
+        if (action == null || action.damage <= 0 || enemy == null || player == null)
             return;
 
-        var statusCtx = BuildStatusContext();
-        var boosted = action.damage + activeEnemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
-        var damage = activeEnemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, boosted);
-        if (activeEnemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx)) activeEnemy.TakeDamage(damage);
+        var statusCtx = BuildStatusContext(enemy);
+        var boosted = action.damage + enemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
+        var damage = enemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, boosted);
+        if (enemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx)) enemy.TakeDamage(damage);
         else
         {
             var hadImmune = player.StatusEffects.GetStacks<ImmuneEffectSO>() > 0;
@@ -1665,17 +1904,24 @@ public class CombatManager : MonoBehaviour
                 player.StatusEffects.ConsumeImmuneStackAfterHit(statusCtx);
             var thornsRetaliate = player.StatusEffects.GetThornsRetaliateStacks();
             if (thornsRetaliate > 0)
-                activeEnemy.TakeDamage(thornsRetaliate);
+                enemy.TakeDamage(thornsRetaliate);
         }
     }
 
-    public void ApplyEnemyArmorFromIntent(EnemyActionSO action)
+    public void ApplyEnemyArmorFromIntent(EnemyActionSO action) =>
+        ApplyEnemyArmorFromIntent(action, activeEnemy);
+
+    public void ApplyEnemyArmorFromIntent(EnemyActionSO action, EnemyController actingEnemy)
     {
-        if (action != null && action.armor > 0 && activeEnemy != null)
-            activeEnemy.AddArmor(action.armor);
+        var enemy = actingEnemy != null ? actingEnemy : activeEnemy;
+        if (action != null && action.armor > 0 && enemy != null)
+            enemy.AddArmor(action.armor);
     }
 
-    public void ExecuteEnemyIntentGameActionAtIndex(EnemyActionSO action, int actionListIndex)
+    public void ExecuteEnemyIntentGameActionAtIndex(EnemyActionSO action, int actionListIndex) =>
+        ExecuteEnemyIntentGameActionAtIndex(action, actionListIndex, activeEnemy);
+
+    public void ExecuteEnemyIntentGameActionAtIndex(EnemyActionSO action, int actionListIndex, EnemyController actingEnemy)
     {
         if (action?.actions == null || actionListIndex < 0 || actionListIndex >= action.actions.Count || player == null)
             return;
@@ -1684,7 +1930,7 @@ public class CombatManager : MonoBehaviour
         if (gameAction == null || gameAction is FaceResolveModifierBase)
             return;
 
-        var actionCtx = BuildEnemyActionContext(action);
+        var actionCtx = BuildEnemyActionContext(action, actingEnemy);
         gameAction.Execute(actionCtx);
     }
 
@@ -1743,7 +1989,20 @@ public class CombatManager : MonoBehaviour
             kineticShieldBonus *= appliedMultiplier;
             bonusDamageFromActions *= appliedMultiplier;
             bonusArmorFromActions *= appliedMultiplier;
-            activeEnemy.StatusEffects.TickPerfectStrike(BuildStatusContext());
+
+            // Multi-enemy: scale every on-board enemy element layout + the still-unassigned drag tokens.
+            for (var i = 0; i < _activeEnemies.Count; i++)
+            {
+                var enemy = _activeEnemies[i];
+                if (enemy == null) continue;
+                enemy.StatusEffects.TickPerfectStrike(BuildStatusContext(enemy));
+                if (enemy.AssignedElementPool != null)
+                    enemy.AssignedElementPool.MultiplyAllDisplayed(appliedMultiplier);
+            }
+
+            if (targetAssignment != null)
+                targetAssignment.MultiplyPendingTokenAmounts(appliedMultiplier);
+
             RelicActionRunner.RunPhase(this, RelicPhases.OnPerfectStrike);
             var poolsAfter = SnapshotStoredActionsPool();
             if (CheckVictory())
@@ -1752,16 +2011,21 @@ public class CombatManager : MonoBehaviour
                 return;
             }
 
+            // Reorder: multiply + play the Perfect Cast sequence first, THEN wait for the player to attach the
+            // rolled outcomes to enemies, THEN continue to the hit-fx fly (SubmitTurn).
             if (jackpotPresentation != null)
                 StartCoroutine(CoFinishJackpotAfterPresentation(jackpotMultiplier, poolsBefore, poolsAfter));
             else
             {
                 NotifyAllStoredActionsPoolUI();
-                SubmitTurn();
+                RunTargetAssignmentGate(SubmitTurn);
             }
         }
         else if (currentPower > maxPower)
         {
+            // Cast Overload: discard any unassigned rolled outcomes (they are nullified by the bust).
+            targetAssignment?.CancelPendingAssignments();
+
             if (RelicActionRunner.TryConsumeFreeBust(this))
             {
                 SubmitTurn();
@@ -1771,8 +2035,9 @@ public class CombatManager : MonoBehaviour
             if (bustProtected) SubmitTurn();
             else if (_turnRegistry.SupernovaBustOverrideActive)
             {
-                if (activeEnemy != null && _turnRegistry.SupernovaBustDamage > 0)
-                    activeEnemy.TakeDamage(_turnRegistry.SupernovaBustDamage);
+                var supernovaTarget = ResolvePrimaryTargetEnemy();
+                if (supernovaTarget != null && _turnRegistry.SupernovaBustDamage > 0)
+                    supernovaTarget.TakeDamage(_turnRegistry.SupernovaBustDamage);
                 _turnRegistry.SupernovaBustOverrideActive = false;
                 if (CheckVictory()) return;
                 SubmitTurn();
@@ -1786,9 +2051,31 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            if (rollsRemaining <= 0) SubmitTurn();
-            else ChangeState(CombatState.WaitingForRoll);
+            RunTargetAssignmentGate(() =>
+            {
+                if (rollsRemaining <= 0) SubmitTurn();
+                else ChangeState(CombatState.WaitingForRoll);
+            });
         }
+    }
+
+    /// <summary>
+    /// Multi-enemy: blocks the turn until the player assigns every rolled enemy-targeted outcome to an enemy.
+    /// Single-enemy fights auto-assign to the lone enemy (no drag) so existing combat plays unchanged.
+    /// </summary>
+    private void RunTargetAssignmentGate(Action onComplete)
+    {
+        var primary = ResolvePrimaryTargetEnemy();
+        if (!IsMultiEnemy || targetAssignment == null || !targetAssignment.HasPendingAssignments)
+        {
+            AutoAssignUnassignedEnemyFacesTo(primary);
+            targetAssignment?.CancelPendingAssignments();
+            onComplete?.Invoke();
+            return;
+        }
+
+        ChangeState(CombatState.AwaitingTargetAssignment);
+        targetAssignment.BeginGate(onComplete);
     }
 
     /// <summary>
@@ -1855,6 +2142,13 @@ public class CombatManager : MonoBehaviour
         _turnRegistry.ResetVolatile();
         if (player?.StatusEffects != null)
             player.StatusEffects.RemoveStatus<NextTurnArmorEffectSO>(BuildStatusContext());
+
+        // Multi-enemy: clear every per-enemy element layout (their accumulated outcomes are nullified by the bust).
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            if (_activeEnemies[i] != null && _activeEnemies[i].AssignedElementPool != null)
+                _activeEnemies[i].AssignedElementPool.ClearAllRows();
+        }
 
         NotifyAllStoredActionsPoolUI();
         _skipPowerOrbFlightForNextSubmitTurn = true;
@@ -1957,10 +2251,12 @@ public class CombatManager : MonoBehaviour
 
         DrainQueuedTurnEndActions(ctx);
 
-        var statusCtx = BuildStatusContext();
+        var orbTargetEnemy = ResolvePrimaryTargetEnemy();
+        var statusCtx = BuildStatusContext(orbTargetEnemy);
         int pendingAttack = GetPendingAttack();
         pendingAttack += player.StatusEffects.GetTotalBonusAttack(statusCtx);
-        pendingAttack = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
+        if (orbTargetEnemy != null)
+            pendingAttack = orbTargetEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
 
         bool enemyDamageLine = HasAnyPendingEnemyDamage() || _turnRegistry.BurnAppliedThisTurn > 0;
@@ -1979,9 +2275,9 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            bool flyOrbToEnemy = enemyDamageLine;
+            bool flyOrbToEnemy = enemyDamageLine && orbTargetEnemy != null;
             Transform orbAnchor = flyOrbToEnemy
-                ? activeEnemy.GetPowerOrbHitAnchor()
+                ? orbTargetEnemy.GetPowerOrbHitAnchor()
                 : player.GetPowerOrbSupportAnchor();
             if (orbAnchor == null)
             {
@@ -1998,7 +2294,8 @@ public class CombatManager : MonoBehaviour
                     orbAnchor,
                     flyOrbToEnemy,
                     allowZeroCombatPower,
-                    forceStartingVisibleScale));
+                    forceStartingVisibleScale,
+                    orbTargetEnemy));
             }
         }
     }
@@ -2030,7 +2327,8 @@ public class CombatManager : MonoBehaviour
         Transform orbAnchor,
         bool flyOrbToEnemy,
         bool allowZeroCombatPower,
-        bool forceStartingVisibleScale)
+        bool forceStartingVisibleScale,
+        EnemyController orbTargetEnemy)
     {
         if (pendingDefense > 0 && player != null)
         {
@@ -2049,7 +2347,7 @@ public class CombatManager : MonoBehaviour
             CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
                 flyOrbToEnemy ? PowerOrbImpactTarget.Enemy : PowerOrbImpactTarget.PlayerSupport,
                 orbAnchor.position,
-                flyOrbToEnemy ? activeEnemy : null));
+                flyOrbToEnemy ? orbTargetEnemy : null));
         }
 
         void OnOrbImpact()
@@ -2078,7 +2376,18 @@ public class CombatManager : MonoBehaviour
         if (pendingAttack > 0 && !ApplyPendingPlayerAttackFromTurn(pendingAttack))
             return false;
         TryExecuteDeferredStatusAppliesAfterPlayerPhysical();
+        ClearAllEnemyPools();
         return true;
+    }
+
+    /// <summary>Empties every per-enemy element layout (the accumulated outcomes have just resolved / flown).</summary>
+    private void ClearAllEnemyPools()
+    {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            if (_activeEnemies[i] != null && _activeEnemies[i].AssignedElementPool != null)
+                _activeEnemies[i].AssignedElementPool.ClearAllRows();
+        }
     }
 
     private void ExecuteDeferredTurnEndActionsForSubmitTurn(bool beforePlayerPhysicalDamage)
@@ -2109,6 +2418,8 @@ public class CombatManager : MonoBehaviour
                 else if (!beforePlayerPhysicalDamage)
                     continue;
 
+                // Per-piece targeting: enemy statuses resolve against the enemy this action was assigned to.
+                faceCtx.Enemy = ResolveActionTargetEnemy(face, a);
                 a.Execute(faceCtx);
             }
         }
@@ -2127,6 +2438,7 @@ public class CombatManager : MonoBehaviour
             var p = _pendingAfterPhysicalApplyStatuses[i];
             var faceCtx = BuildContext(p.SourceFace);
             faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(p.SourceFace);
+            faceCtx.Enemy = ResolveActionTargetEnemy(p.SourceFace, p.Action);
             p.Action.Execute(faceCtx);
         }
 
@@ -2169,10 +2481,35 @@ public class CombatManager : MonoBehaviour
 
         var statusCtx = BuildStatusContext();
         var playerBonusAttack = player.StatusEffects.GetTotalBonusAttack(statusCtx);
-        var totalPhysical = Mathf.Max(0, bonusDamageFromActions + playerBonusAttack);
-        var totalFire = 0;
-        var totalIce = 0;
-        var totalNature = 0;
+        var globalPhysicalBonus = Mathf.Max(0, bonusDamageFromActions + playerBonusAttack);
+
+        // Group rolled element damage per assigned enemy. Faces left unassigned (or with a dead target) fall back to the primary enemy.
+        var fallback = ResolvePrimaryTargetEnemy();
+        var perEnemy = new Dictionary<EnemyController, ElementDamageTotals>();
+
+        ElementDamageTotals TotalsFor(EnemyController enemy)
+        {
+            if (enemy == null) enemy = fallback;
+            if (enemy == null) return default;
+            if (!perEnemy.TryGetValue(enemy, out var t))
+                t = new ElementDamageTotals();
+            return t;
+        }
+
+        void Store(EnemyController enemy, ElementDamageTotals t)
+        {
+            if (enemy == null) enemy = fallback;
+            if (enemy == null) return;
+            perEnemy[enemy] = t;
+        }
+
+        // Flat bonus damage (player strength / action bonuses) goes to the primary enemy.
+        if (globalPhysicalBonus > 0 && fallback != null)
+        {
+            var t = TotalsFor(fallback);
+            t.Physical += globalPhysicalBonus;
+            Store(fallback, t);
+        }
 
         for (var i = 0; i < channeledFaces.Count; i++)
         {
@@ -2180,55 +2517,172 @@ public class CombatManager : MonoBehaviour
             if (face == null || face.Damage <= 0)
                 continue;
 
+            var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive ? face.DamageTargetEnemy : fallback;
+            if (target == null) continue;
+            var t = TotalsFor(target);
             switch (face.Type)
             {
                 case DieType.Damage:
-                    totalPhysical += face.TotalDamageContribution;
+                    t.Physical += face.TotalDamageContribution;
                     break;
                 case DieType.Fire:
-                    totalFire += face.Damage;
+                    t.Fire += face.Damage;
                     break;
                 case DieType.Ice:
-                    totalIce += face.Damage;
+                    t.Ice += face.Damage;
                     break;
                 case DieType.Nature:
-                    totalNature += face.Damage;
+                    t.Nature += face.Damage;
                     break;
+            }
+
+            Store(target, t);
+        }
+
+        var grandPhysical = 0;
+        var grandFire = 0;
+        foreach (var kvp in perEnemy)
+        {
+            var enemy = kvp.Key;
+            if (enemy == null || !enemy.IsAlive) continue;
+            var enemyCtx = BuildStatusContext(enemy);
+            var totals = kvp.Value;
+
+            var physical = enemy.StatusEffects.ApplyDamageModifiers(enemyCtx, totals.Physical);
+            var fire = enemy.StatusEffects.ApplyDamageModifiers(enemyCtx, totals.Fire);
+            var ice = enemy.StatusEffects.ApplyDamageModifiers(enemyCtx, totals.Ice);
+            var nature = enemy.StatusEffects.ApplyDamageModifiers(enemyCtx, totals.Nature);
+
+            if (physical > 0)
+            {
+                enemy.TakeDamage(physical, DieType.Damage, EnemyDamagePresentationKind.Physical);
+                grandPhysical += physical;
+            }
+
+            if (fire > 0)
+            {
+                enemy.TakeDamage(fire, DieType.Fire, EnemyDamagePresentationKind.Physical);
+                grandFire += fire;
+            }
+
+            if (ice > 0)
+                enemy.TakeDamage(ice, DieType.Ice, EnemyDamagePresentationKind.Physical);
+            if (nature > 0)
+                enemy.TakeDamage(nature, DieType.Nature, EnemyDamagePresentationKind.Physical);
+
+            var retaliate = enemy.StatusEffects.GetThornsRetaliateStacks();
+            if (retaliate > 0 && player != null)
+            {
+                var thornsPopupAnchor = Vector3.Lerp(player.GetDamageNumberWorldPosition(), enemy.GetDamageNumberWorldPosition(), 0.25f);
+                player.TakeDamage(retaliate, PlayerDamageSource.ThornsRetaliation, thornsPopupAnchor);
+                if (CheckDefeat()) return false;
             }
         }
 
-        totalPhysical = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalPhysical);
-        totalFire = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalFire);
-        totalIce = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalIce);
-        totalNature = activeEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, totalNature);
-
-        if (totalPhysical > 0)
-        {
-            activeEnemy.TakeDamage(totalPhysical, DieType.Damage, EnemyDamagePresentationKind.Physical);
-            ProgressionEventBridge.NotifyPhysicalDamageDealt(totalPhysical);
-        }
-
-        if (totalFire > 0)
-        {
-            activeEnemy.TakeDamage(totalFire, DieType.Fire, EnemyDamagePresentationKind.Physical);
-            ProgressionEventBridge.NotifyFireDamageDealt(totalFire);
-        }
-        if (totalIce > 0)
-            activeEnemy.TakeDamage(totalIce, DieType.Ice, EnemyDamagePresentationKind.Physical);
-        if (totalNature > 0)
-            activeEnemy.TakeDamage(totalNature, DieType.Nature, EnemyDamagePresentationKind.Physical);
-
-        var retaliate = activeEnemy.StatusEffects.GetThornsRetaliateStacks();
-        if (retaliate > 0 && player != null)
-        {
-            // Floating numbers: bias toward player so it reads as player damage, with enemy anchor to help screen depth after orb FX.
-            var thornsPopupAnchor = Vector3.Lerp(player.GetDamageNumberWorldPosition(), activeEnemy.GetDamageNumberWorldPosition(), 0.25f);
-            player.TakeDamage(retaliate, PlayerDamageSource.ThornsRetaliation, thornsPopupAnchor);
-            if (CheckDefeat()) return false;
-        }
+        if (grandPhysical > 0)
+            ProgressionEventBridge.NotifyPhysicalDamageDealt(grandPhysical);
+        if (grandFire > 0)
+            ProgressionEventBridge.NotifyFireDamageDealt(grandFire);
 
         if (CheckVictory()) return false;
         return true;
+    }
+
+    private struct ElementDamageTotals
+    {
+        public int Physical;
+        public int Fire;
+        public int Ice;
+        public int Nature;
+    }
+
+    /// <summary>
+    /// Drag-to-assign: routes a single rolled outcome <b>piece</b> (the face's damage, or one enemy-targeted action) to the chosen
+    /// enemy. The damage piece (sourceAction == null) sets <see cref="FaceResult.DamageTargetEnemy"/>; an action piece sets its
+    /// per-action target. Accumulates under that enemy's element layout, or resolves instantly when the piece is Trigger-Immediately.
+    /// </summary>
+    public void AssignRolledOutcomePieceToEnemy(FaceResult face, ApplyStatusEffectAction sourceAction, EnemyController enemy,
+        RollOutcomeVisualLine line, bool resolveImmediately)
+    {
+        if (face == null || enemy == null)
+            return;
+
+        if (sourceAction == null)
+            face.DamageTargetEnemy = enemy;
+        else
+            face.SetActionTarget(sourceAction, enemy);
+
+        // Only action pieces can be Trigger-Immediately (the damage piece always accumulates to turn end).
+        if (resolveImmediately && sourceAction != null)
+        {
+            ResolveImmediateActionOnDrop(face, sourceAction, enemy);
+            return;
+        }
+
+        var pool = enemy.AssignedElementPool;
+        if (pool != null)
+            pool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+    }
+
+    /// <summary>Single-enemy fights (no drag): point every still-unassigned enemy-targeted piece at the lone living enemy.</summary>
+    private void AutoAssignUnassignedEnemyFacesTo(EnemyController enemy)
+    {
+        if (enemy == null) return;
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face == null) continue;
+
+            if (face.HasEnemyDamagePiece && face.DamageTargetEnemy == null)
+                face.DamageTargetEnemy = enemy;
+
+            if (face.Actions == null) continue;
+            foreach (var a in face.Actions)
+            {
+                if (a is ApplyStatusEffectAction apply &&
+                    apply.StatusEffectDefinition != null &&
+                    apply.StatusEffectDefinition.target == StatusEffectTarget.Enemy &&
+                    face.GetActionTarget(a) == null)
+                    face.SetActionTarget(a, enemy);
+            }
+        }
+    }
+
+    /// <summary>Resolves a single enemy-targeted action (e.g. Burn) against an enemy the instant its token is dropped (Trigger Immediately).</summary>
+    private void ResolveImmediateActionOnDrop(FaceResult face, ApplyStatusEffectAction action, EnemyController enemy)
+    {
+        if (face == null || action == null || enemy == null || !enemy.IsAlive)
+            return;
+
+        var actionCtx = BuildContext(face);
+        actionCtx.Enemy = enemy;
+        actionCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
+        action.Execute(actionCtx);
+
+        // Consumed now — remove so it does not also run at turn end, and drop its pool row.
+        face.Actions.Remove(action);
+        for (var i = face.ActionPoolContributions.Count - 1; i >= 0; i--)
+        {
+            if (face.ActionPoolContributions[i].PoolSourceAction == action)
+                face.ActionPoolContributions.RemoveAt(i);
+        }
+
+        NotifyStoredActionsPoolUpdated();
+        CheckVictory();
+    }
+
+    /// <summary>The default enemy used for unassigned / fallback player damage: the Main Enemy when alive, otherwise the first living enemy.</summary>
+    public EnemyController ResolvePrimaryTargetEnemy()
+    {
+        if (activeEnemy != null && activeEnemy.IsAlive)
+            return activeEnemy;
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            if (_activeEnemies[i] != null && _activeEnemies[i].IsAlive)
+                return _activeEnemies[i];
+        }
+
+        return activeEnemy;
     }
 
     /// <summary>
@@ -2237,15 +2691,26 @@ public class CombatManager : MonoBehaviour
     /// </summary>
     private IEnumerator CoResolveEnemyOpeningAndStartEnemyTurn()
     {
-        if (activeEnemy != null && player != null)
+        if (player != null && _activeEnemies.Count > 0)
         {
-            var openingCtx = BuildStatusContext();
-            yield return StartCoroutine(activeEnemy.StatusEffects.TickTurnStartStepped(
-                openingCtx,
-                delaySecondsBetweenPhysicalAndEachEnemyStatusTick,
-                delaySecondsBetweenPhysicalAndEachEnemyStatusTick));
+            var opening = new List<EnemyController>(_activeEnemies);
+            foreach (var enemy in opening)
+            {
+                if (enemy == null || !enemy.IsAlive) continue;
+                var openingCtx = BuildStatusContext(enemy);
+                yield return StartCoroutine(enemy.StatusEffects.TickTurnStartStepped(
+                    openingCtx,
+                    delaySecondsBetweenPhysicalAndEachEnemyStatusTick,
+                    delaySecondsBetweenPhysicalAndEachEnemyStatusTick));
+            }
+
             if (CheckVictory()) yield break;
-            activeEnemy.ResetArmor();
+
+            foreach (var enemy in _activeEnemies)
+            {
+                if (enemy != null && enemy.IsAlive)
+                    enemy.ResetArmor();
+            }
         }
 
         StartCoroutine(EnemyTurnRoutine());
@@ -2274,7 +2739,8 @@ public class CombatManager : MonoBehaviour
         // Unity does not reliably run a nested IEnumerator with "yield return routine()"; must use StartCoroutine.
         yield return StartCoroutine(jackpotPresentation.Run(multiplier, poolsBefore, poolsAfter));
         NotifyAllStoredActionsPoolUI();
-        SubmitTurn();
+        // Perfect Cast reorder: only after the sequence does the player attach outcomes to enemies, then the hit-fx flies.
+        RunTargetAssignmentGate(SubmitTurn);
     }
 
     private IEnumerator CoExecuteEnemyTurnIntentLegacy(EnemyActionSO action)
@@ -2324,45 +2790,63 @@ public class CombatManager : MonoBehaviour
 
         ChangeState(CombatState.EnemyTurn);
         yield return new WaitForSeconds(1.0f);
-        if (activeEnemy != null && player != null)
+        if (player != null && _activeEnemies.Count > 0)
         {
-            var statusCtx = BuildStatusContext();
-            activeEnemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
-            if (CheckVictory())
+            // Snapshot so spawned/defeated enemies during the turn don't corrupt iteration.
+            var actingEnemies = new List<EnemyController>(_activeEnemies);
+            for (var e = 0; e < actingEnemies.Count; e++)
             {
-                yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
-                yield break;
-            }
+                var enemy = actingEnemies[e];
+                if (enemy == null || !enemy.IsAlive || !enemy.IsActiveInRoster) continue;
 
-            EnemyActionSO action = activeEnemy.GetCurrentAction();
-            yield return activeEnemy.CoPresentEnemyTurnActionIntro(action);
-
-            if (enemyTurnIntentSequence != null)
-                yield return enemyTurnIntentSequence.CoExecuteIntent(activeEnemy, action, this);
-            else
-            {
-                if (!_warnedMissingEnemyIntentSequence)
+                var statusCtx = BuildStatusContext(enemy);
+                enemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
+                if (CheckVictory())
                 {
-                    _warnedMissingEnemyIntentSequence = true;
-                    Debug.LogWarning(
-                        $"{nameof(CombatManager)} on '{name}': assign {nameof(enemyTurnIntentSequence)} for stepped enemy intent + UI pulse; using legacy enemy turn execution.",
-                        this);
+                    yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+                    yield break;
                 }
 
-                yield return CoExecuteEnemyTurnIntentLegacy(action);
+                if (!enemy.IsAlive) continue;
+
+                EnemyActionSO action = enemy.GetCurrentAction();
+                yield return enemy.CoPresentEnemyTurnActionIntro(action);
+
+                if (enemyTurnIntentSequence != null)
+                    yield return enemyTurnIntentSequence.CoExecuteIntent(enemy, action, this);
+                else
+                {
+                    if (!_warnedMissingEnemyIntentSequence)
+                    {
+                        _warnedMissingEnemyIntentSequence = true;
+                        Debug.LogWarning(
+                            $"{nameof(CombatManager)} on '{name}': assign {nameof(enemyTurnIntentSequence)} for stepped enemy intent + UI pulse; using legacy enemy turn execution.",
+                            this);
+                    }
+
+                    yield return CoExecuteEnemyTurnIntentLegacy(action);
+                }
+
+                yield return enemy.CoPresentEnemyTurnActionOutro();
+
+                if (enemy.IsAlive)
+                    enemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
+                if (CheckDefeat())
+                {
+                    yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+                    yield break;
+                }
+
+                if (enemy.IsAlive)
+                    enemy.PrepareNextAction();
             }
 
-            yield return activeEnemy.CoPresentEnemyTurnActionOutro();
-
-            activeEnemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
-            player.StatusEffects.TickAfterEnemyTurn(statusCtx);
+            player.StatusEffects.TickAfterEnemyTurn(BuildStatusContext());
             if (CheckVictory() || CheckDefeat())
             {
                 yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
                 yield break;
             }
-
-            activeEnemy.PrepareNextAction();
         }
 
         yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
@@ -2445,7 +2929,9 @@ public class CombatManager : MonoBehaviour
 
     private bool CheckVictory()
     {
-        if (activeEnemy.GetCurrentHealth() > 0) return false;
+        // Remove any enemies that just died (multi-enemy); victory only once they are ALL down.
+        PruneDefeatedEnemies();
+        if (AnyEnemyAlive()) return false;
         // Enemy still at 0 HP on later ticks (turn start, thorns, etc.) must not re-fire victory UI.
         if (currentState == CombatState.Victory)
             return true;
@@ -2470,15 +2956,16 @@ public class CombatManager : MonoBehaviour
 
     private void CheatWinCombat()
     {
-        if (activeEnemy == null) return;
-        var hp = activeEnemy.GetCurrentHealth();
-        if (hp <= 0)
+        if (_activeEnemies.Count == 0) return;
+        var snapshot = new List<EnemyController>(_activeEnemies);
+        foreach (var enemy in snapshot)
         {
-            CheckVictory();
-            return;
+            if (enemy == null) continue;
+            var hp = enemy.GetCurrentHealth();
+            if (hp > 0)
+                enemy.TakeTrueDamage(hp);
         }
 
-        activeEnemy.TakeTrueDamage(hp);
         CheckVictory();
     }
     private bool CheckDefeat()
@@ -2520,6 +3007,7 @@ public class CombatManager : MonoBehaviour
         EndRollPlatformGlow(forceImmediateReset: true);
         _sameTurnValueWatchers.Clear();
         _turnRegistry.ResetVolatile();
+        ClearAllEnemyPools();
         channeledFaces.Clear();
         _pendingAfterPhysicalApplyStatuses.Clear();
         _afterPhysicalDeferredStatusPhaseCompleted = false;

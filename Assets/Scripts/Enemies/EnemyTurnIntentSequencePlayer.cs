@@ -46,7 +46,7 @@ namespace Enemies
             for (var s = 0; s < steps.Count; s++)
             {
                 var step = steps[s];
-                yield return RunStepWithOptionalPulse(step, action, combat);
+                yield return RunStepWithOptionalPulse(step, action, combat, enemy);
 
                 if (combat.EvaluateEnemyTurnCombatEnded())
                     yield break;
@@ -56,20 +56,20 @@ namespace Enemies
             }
         }
 
-        private IEnumerator RunStepWithOptionalPulse(Step step, EnemyActionSO action, CombatManager combat)
+        private IEnumerator RunStepWithOptionalPulse(Step step, EnemyActionSO action, CombatManager combat, EnemyController enemy)
         {
             void ApplyStep()
             {
                 switch (step.Kind)
                 {
                     case StepKind.PhysicalHit:
-                        combat.ApplySingleEnemyPhysicalHitFromIntent(action);
+                        combat.ApplySingleEnemyPhysicalHitFromIntent(action, enemy);
                         break;
                     case StepKind.Armor:
-                        combat.ApplyEnemyArmorFromIntent(action);
+                        combat.ApplyEnemyArmorFromIntent(action, enemy);
                         break;
                     case StepKind.GameAction:
-                        combat.ExecuteEnemyIntentGameActionAtIndex(action, step.GameActionListIndex);
+                        combat.ExecuteEnemyIntentGameActionAtIndex(action, step.GameActionListIndex, enemy);
                         break;
                 }
             }

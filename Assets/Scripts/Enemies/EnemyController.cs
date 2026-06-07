@@ -23,7 +23,29 @@ public class EnemyController : MonoBehaviour
     [Tooltip("World position for damage popups; defaults to enemy sprite or this transform.")]
     [SerializeField] private Transform damageNumberWorldAnchor;
 
+    [Header("Multi-enemy targeting")]
+    [Tooltip("Optional. This enemy's own status-effect bar. When assigned, CombatManager binds debuffs to it (required for adds beyond the first enemy).")]
+    [SerializeField] private StatusEffectBarUI ownStatusBar;
+    [Tooltip("Optional. Per-enemy element layout where assigned damage/debuff outcomes accumulate under this enemy. Required for multi-enemy targeting.")]
+    [SerializeField] private StoredActionsPoolDisplay assignedElementPool;
+    [Tooltip("Optional. Drop target component used so rolled outcomes can be dragged onto this enemy. Required for multi-enemy targeting.")]
+    [SerializeField] private EnemyDropTarget dropTarget;
+
     private EnemyCombatPresentationController _presentation;
+
+    /// <summary>True while this enemy is part of the active combat roster (a configured, living participant).</summary>
+    public bool IsActiveInRoster { get; private set; }
+
+    /// <summary>This enemy's own status bar (may be null for the first enemy, which uses the shared CombatManager bar).</summary>
+    public StatusEffectBarUI OwnStatusBar => ownStatusBar;
+
+    /// <summary>Per-enemy element layout for assigned outcomes (may be null when targeting UI is not wired).</summary>
+    public StoredActionsPoolDisplay AssignedElementPool => assignedElementPool;
+
+    /// <summary>Drop target used for drag-to-assign (may be null when targeting UI is not wired).</summary>
+    public EnemyDropTarget DropTarget => dropTarget;
+
+    public bool IsAlive => currentHealth > 0;
 
     private int currentHealth;
     private int currentArmor;
@@ -94,6 +116,40 @@ public class EnemyController : MonoBehaviour
 
         UpdateUI();
         PrepareNextAction();
+    }
+
+    /// <summary>Marks this enemy as a live roster participant, enables its GameObject + targeting UI, and wires the drop target.</summary>
+    public void ActivateInRoster(CombatManager combat)
+    {
+        IsActiveInRoster = true;
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
+        if (dropTarget != null)
+            dropTarget.Bind(this, combat);
+
+        if (_presentation != null)
+            _presentation.EnsurePresentationVisible();
+
+        if (assignedElementPool != null)
+            assignedElementPool.gameObject.SetActive(true);
+    }
+
+    /// <summary>Removes this enemy from the active roster after defeat: clears its pending element pool and disables its GameObject.</summary>
+    public void DeactivateFromRoster()
+    {
+        IsActiveInRoster = false;
+        if (assignedElementPool != null)
+            assignedElementPool.ClearAllRows();
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>Main Enemy defeat: clears the assigned element pool but keeps the GameObject (rewards reference its data).</summary>
+    public void ClearAssignedPoolOnDefeat()
+    {
+        IsActiveInRoster = false;
+        if (assignedElementPool != null)
+            assignedElementPool.ClearAllRows();
     }
 
     public int ApplyElementResistance(int amount, DieType damageType)

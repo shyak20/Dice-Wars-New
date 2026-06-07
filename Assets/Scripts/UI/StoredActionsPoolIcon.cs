@@ -73,6 +73,14 @@ public class StoredActionsPoolIcon : MonoBehaviour
         valueText.text = value.ToString();
     }
 
+    /// <summary>When used as a draggable assignment token, turn off child raycasts so the token's drag surface receives pointer hits.</summary>
+    public void SetPointerRaycastsEnabled(bool enabled)
+    {
+        if (rowBackgroundImage != null) rowBackgroundImage.raycastTarget = enabled;
+        if (icon != null) icon.raycastTarget = enabled;
+        if (valueText != null) valueText.raycastTarget = enabled;
+    }
+
     public void Configure(PoolRowKey key)
     {
         configuredKey = key;

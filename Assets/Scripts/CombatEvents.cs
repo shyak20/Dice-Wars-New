@@ -15,6 +15,12 @@ public struct RollOutcomeVisualLine
     public bool IsVisualFlyoutOnly;
     /// <summary>When true with <see cref="IsVisualFlyoutOnly"/>, fly to the player status bar instead of the element pool.</summary>
     public bool FlyToPlayerStatusBar;
+    /// <summary>Multi-enemy: this row targets an enemy (physical/element damage or an enemy debuff) and must be dragged onto one when 2+ enemies are alive.</summary>
+    public bool EnemyTargeted;
+    /// <summary>Multi-enemy: the enemy-targeted action this row came from (Burn, Vulnerable, ...). Null means the row is the face's direct damage piece.</summary>
+    public ApplyStatusEffectAction SourceAction;
+    /// <summary>Multi-enemy: this piece resolves the instant it is dropped on an enemy (Trigger Immediately) instead of accumulating.</summary>
+    public bool ResolvesImmediatelyOnDrop;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>
@@ -23,6 +29,8 @@ public class DiceRollVisualPayload
     public Vector3 WorldAnchor;
     public Transform DieTransform;
     public List<RollOutcomeVisualLine> Lines;
+    /// <summary>Multi-enemy: the rolled face this payload came from, so enemy-targeted lines can be turned into a drag-to-assign token.</summary>
+    public FaceResult SourceFace;
     /// <summary>When true, visual controller defers this die until regular queued dice have completed.</summary>
     public bool ActivateAfterRegularDice;
     /// <summary>Hint from producer that this payload includes visual-only rows; final full pool resync runs when all queued die visuals finish.</summary>
@@ -90,6 +98,18 @@ public static class CombatEvents
     public static Action<int, Vector3, EnemyController, EnemyDamagePresentationKind> OnEnemyDamagePresentation;
     /// <summary>Power orb reached enemy hit point or player support (HP) anchor; fires before turn physical damage from <see cref="CombatManager"/> applies.</summary>
     public static Action<PowerOrbImpactPayload> OnPowerOrbImpact;
+
+    // Multi-enemy roster
+    /// <summary>Fired when the active enemy roster changes (combat start, spawn-on-load, mid-combat spawn, or an enemy dies). Carries all currently-alive enemies.</summary>
+    public static Action<System.Collections.Generic.IReadOnlyList<EnemyController>> OnEnemyRosterChanged;
+    /// <summary>Fired when a new enemy becomes active in the roster (spawn-on-load or via a spawn action).</summary>
+    public static Action<EnemyController> OnEnemySpawned;
+    /// <summary>Fired once when an enemy reaches 0 HP and is removed from the active roster.</summary>
+    public static Action<EnemyController> OnEnemyDefeated;
+
+    // Target assignment (drag enemy-targeted outcomes onto an enemy)
+    /// <summary>True while the player must assign rolled enemy-targeted outcomes to enemies (drag-and-drop). Roll / End Turn are blocked while true.</summary>
+    public static Action<bool> OnTargetAssignmentModeChanged;
 
     // Bust Logic
     public static Action<int, int> OnBustOccurred;

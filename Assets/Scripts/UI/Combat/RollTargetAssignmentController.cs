@@ -1,0 +1,207 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// Multi-enemy targeting: spawns one draggable <see cref="RolledOutcomeToken"/> per enemy-targeted rolled outcome piece (each
+/// die's damage and each of its enemy debuffs are separate tokens, so they can go to different enemies), gates the combat flow
+/// until every chip is assigned, and deposits assigned pieces into the chosen enemy's element layout (or resolves them instantly
+/// when flagged Trigger-Immediately).
+/// </summary>
+public class RollTargetAssignmentController : MonoBehaviour
+{
+    [SerializeField] private CombatManager combat;
+    [Tooltip("World-space combat canvas the tokens live under.")]
+    [SerializeField] private Canvas canvas;
+    [Tooltip("Camera used to project the 3D die position to a screen point for token spawn placement.")]
+    [SerializeField] private Camera worldCamera;
+    [Tooltip("Parent RectTransform for spawned tokens (typically a full-screen panel above the dice).")]
+    [SerializeField] private RectTransform tokenParent;
+    [SerializeField] private RolledOutcomeToken tokenPrefab;
+    [Tooltip("Optional. Prompt shown while the player still has outcomes to assign.")]
+    [SerializeField] private GameObject assignPrompt;
+
+    [Header("Perfect Cast")]
+    [Tooltip("Delay (unscaled seconds) before a token's multiplied value bumps in, matching the jackpot board reveal.")]
+    [SerializeField, Min(0f)] private float jackpotValueRevealDelay = 0.4f;
+
+    private readonly List<RolledOutcomeToken> _pendingTokens = new List<RolledOutcomeToken>();
+    private Action _onAllAssigned;
+    private bool _gateOpen;
+    private RectTransform _spawnParentOverride;
+
+    public bool HasPendingAssignments => _pendingTokens.Count > 0;
+
+    /// <summary>Parent the spawned tokens live under. Defaults to <see cref="tokenParent"/>; the flyout can override it to its own canvas.</summary>
+    public RectTransform TokenSpawnParent => _spawnParentOverride != null ? _spawnParentOverride : tokenParent;
+
+    /// <summary>
+    /// Lets <see cref="DiceRollOutcomeFlyoutController"/> spawn tokens directly under its own canvas, so tokens are created
+    /// exactly where that controller renders its flyout elements.
+    /// </summary>
+    public void SetTokenSpawnParent(RectTransform parent)
+    {
+        _spawnParentOverride = parent;
+    }
+
+    private void Awake()
+    {
+        if (worldCamera == null)
+            worldCamera = Camera.main;
+        if (combat == null)
+            Debug.LogError("RollTargetAssignmentController: assign the CombatManager reference.");
+        if (tokenPrefab == null || tokenParent == null)
+            Debug.LogError("RollTargetAssignmentController: assign tokenPrefab and tokenParent for drag-to-assign tokens.");
+
+        DisableTokenParentBackgroundRaycast();
+        SetPrompt(false);
+    }
+
+    /// <summary>
+    /// Creates a draggable token for a single enemy-targeted outcome piece. Position and spawn motion are driven by
+    /// <see cref="DiceRollOutcomeFlyoutController"/>; drag stays disabled until spawn motion completes.
+    /// </summary>
+    public RolledOutcomeToken SpawnToken(FaceResult face, RollOutcomeVisualLine line, ApplyStatusEffectAction sourceAction,
+        int pieceIndex, int pieceCount, bool dragEnabled = false)
+    {
+        var parent = TokenSpawnParent;
+        if (tokenPrefab == null || parent == null)
+        {
+            Debug.LogError("RollTargetAssignmentController: assign tokenPrefab and tokenParent for multi-enemy targeting.");
+            return null;
+        }
+
+        if (face == null)
+            return null;
+
+        parent.SetAsLastSibling();
+        EnsureRaycasterOnRenderingCanvas(parent);
+
+        var token = Instantiate(tokenPrefab, parent);
+        // Positioning uses localPosition (anchor/pivot-independent), so the prefab's authored anchors are left intact.
+        token.RectTransform.localPosition = Vector3.zero;
+        token.Configure(this, canvas, face, line, sourceAction);
+        token.SetDragEnabled(dragEnabled);
+        token.transform.SetAsLastSibling();
+
+        _pendingTokens.Add(token);
+        SetPrompt(true);
+        return token;
+    }
+
+    private void DisableTokenParentBackgroundRaycast()
+    {
+        if (tokenParent == null)
+            return;
+
+        var bg = tokenParent.GetComponent<Image>();
+        if (bg != null)
+            bg.raycastTarget = false;
+    }
+
+    /// <summary>
+    /// A nested <see cref="Canvas"/> with Override Sorting renders its children on top but needs its own
+    /// <see cref="GraphicRaycaster"/> for them to receive pointer events. The flyout parent lives under such a
+    /// canvas, so without a raycaster tokens would show but never be draggable.
+    /// </summary>
+    private static void EnsureRaycasterOnRenderingCanvas(RectTransform parent)
+    {
+        var renderingCanvas = parent != null ? parent.GetComponentInParent<Canvas>() : null;
+        if (renderingCanvas == null)
+            return;
+
+        if (renderingCanvas.GetComponent<GraphicRaycaster>() == null)
+            renderingCanvas.gameObject.AddComponent<GraphicRaycaster>();
+    }
+
+    /// <summary>
+    /// Called by <see cref="CombatManager"/> at a roll boundary. Invokes <paramref name="onComplete"/> immediately when
+    /// nothing needs assigning, otherwise stores it and fires once all tokens are placed.
+    /// </summary>
+    public void BeginGate(Action onComplete)
+    {
+        if (_pendingTokens.Count == 0)
+        {
+            _gateOpen = false;
+            SetPrompt(false);
+            CombatEvents.OnTargetAssignmentModeChanged?.Invoke(false);
+            onComplete?.Invoke();
+            return;
+        }
+
+        _gateOpen = true;
+        _onAllAssigned = onComplete;
+        SetPrompt(true);
+        CombatEvents.OnTargetAssignmentModeChanged?.Invoke(true);
+    }
+
+    public void AssignTokenToEnemy(RolledOutcomeToken token, EnemyController enemy)
+    {
+        if (token == null || enemy == null || !enemy.IsAlive)
+            return;
+        if (!_pendingTokens.Contains(token))
+            return;
+
+        combat.AssignRolledOutcomePieceToEnemy(token.Face, token.SourceAction, enemy, token.Line, token.ResolvesImmediatelyOnDrop);
+
+        _pendingTokens.Remove(token);
+        Destroy(token.gameObject);
+
+        if (_pendingTokens.Count == 0)
+            CompleteGateIfOpen();
+    }
+
+    /// <summary>Token drag ended without a valid drop — it stays pending where it was released.</summary>
+    public void NotifyTokenDragEnded(RolledOutcomeToken token)
+    {
+        // Token remains pending; nothing else to do (it keeps its dragged position).
+    }
+
+    /// <summary>Perfect Cast: scale every still-unassigned token's amount and play its ×N reveal.</summary>
+    public void MultiplyPendingTokenAmounts(int multiplier)
+    {
+        if (multiplier <= 1) return;
+        foreach (var token in _pendingTokens)
+        {
+            if (token == null) continue;
+            token.ApplyPerfectStrikeMultiply(multiplier, jackpotValueRevealDelay);
+        }
+    }
+
+    /// <summary>Cast Overload (bust): discard all unassigned tokens (with destroy visual) without applying them.</summary>
+    public void CancelPendingAssignments()
+    {
+        foreach (var token in _pendingTokens)
+        {
+            if (token == null) continue;
+            token.PlayBustDestroyVisual();
+            Destroy(token.gameObject);
+        }
+
+        _pendingTokens.Clear();
+        _gateOpen = false;
+        _onAllAssigned = null;
+        SetPrompt(false);
+        CombatEvents.OnTargetAssignmentModeChanged?.Invoke(false);
+    }
+
+    private void CompleteGateIfOpen()
+    {
+        SetPrompt(false);
+        if (!_gateOpen)
+            return;
+
+        _gateOpen = false;
+        CombatEvents.OnTargetAssignmentModeChanged?.Invoke(false);
+        var cb = _onAllAssigned;
+        _onAllAssigned = null;
+        cb?.Invoke();
+    }
+
+    private void SetPrompt(bool on)
+    {
+        if (assignPrompt != null)
+            assignPrompt.SetActive(on);
+    }
+}

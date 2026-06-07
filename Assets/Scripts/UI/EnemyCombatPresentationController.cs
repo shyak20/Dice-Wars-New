@@ -104,8 +104,27 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
     /// <summary>Called from <see cref="EnemyController.Initialize"/> to apply art from <see cref="EnemyTypeSO"/>.</summary>
     public void ApplyDisplaySprite(Sprite sprite)
     {
-        if (enemySprite != null && sprite != null)
-            enemySprite.sprite = sprite;
+        if (enemySprite == null || sprite == null)
+            return;
+
+        enemySprite.sprite = sprite;
+        enemySprite.enabled = true;
+        enemySprite.gameObject.SetActive(true);
+    }
+
+    /// <summary>Keeps the configured enemy sprite visible after roster activation (e.g. drop-target highlight wiring).</summary>
+    public void EnsurePresentationVisible()
+    {
+        if (enemySprite == null)
+            return;
+
+        enemySprite.enabled = true;
+        enemySprite.gameObject.SetActive(true);
+
+        // Root SpriteRenderer on the animator object is unused when child enemySprite is wired.
+        var rootSprite = GetComponent<SpriteRenderer>();
+        if (rootSprite != null && rootSprite != enemySprite)
+            rootSprite.enabled = false;
     }
 
     /// <summary>Assigns <see cref="EnemyTypeSO.combatAnimatorController"/> and rebinds the animator.</summary>
@@ -124,14 +143,21 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         if (combatAnimator == null)
             return;
 
+        if (!combatAnimator.gameObject.activeInHierarchy)
+        {
+            Debug.LogError(
+                $"{nameof(EnemyCombatPresentationController)} on '{name}': cannot bind animator for '{data.name}' while inactive — activate the enemy before Initialize.",
+                this);
+            return;
+        }
+
         combatAnimator.runtimeAnimatorController = data.combatAnimatorController;
         if (data.combatAnimatorController == null)
             return;
 
         combatAnimator.Rebind();
         combatAnimator.Update(0f);
-
-        combatAnimator.Play(0, 0, 0f);
+        EnsurePresentationVisible();
     }
 
     /// <summary>Sets the intent's action trigger (if any) then waits <see cref="EnemyActionSO.actionAnimationLeadInSeconds"/>.</summary>

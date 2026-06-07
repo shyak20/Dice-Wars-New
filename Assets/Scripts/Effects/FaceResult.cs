@@ -55,6 +55,64 @@ public class FaceResult
     /// <summary>Copied from the rolled face; <see cref="IGameAction.ActivateImmediately"/> controls gather vs turn-end <see cref="IGameAction.Execute"/>, and early vs late <see cref="FaceResolveModifierBase.Modify"/>.</summary>
     public List<IGameAction> Actions { get; set; } = new List<IGameAction>();
 
+    /// <summary>
+    /// Multi-enemy: the enemy the <b>damage piece</b> of this face was assigned to (drag-and-drop, or auto-assigned when only one
+    /// enemy is alive). Null until assigned; resolution falls back to the primary enemy. Each enemy-targeted action is targeted
+    /// independently via <see cref="SetActionTarget"/> so one face can hit different enemies (e.g. damage on A, Burn on B).
+    /// </summary>
+    public EnemyController DamageTargetEnemy { get; set; }
+
+    private Dictionary<IGameAction, EnemyController> _actionTargets;
+
+    /// <summary>Multi-enemy: assign which enemy a specific enemy-targeted action (e.g. Burn) on this face resolves against.</summary>
+    public void SetActionTarget(IGameAction action, EnemyController enemy)
+    {
+        if (action == null) return;
+        _actionTargets ??= new Dictionary<IGameAction, EnemyController>();
+        _actionTargets[action] = enemy;
+    }
+
+    /// <summary>Enemy assigned to a specific action via <see cref="SetActionTarget"/>, or null when unassigned.</summary>
+    public EnemyController GetActionTarget(IGameAction action)
+    {
+        if (action == null || _actionTargets == null) return null;
+        return _actionTargets.TryGetValue(action, out var e) ? e : null;
+    }
+
+    /// <summary>Roll batch (player roll command) that produced this face; used to find the newly rolled outcomes awaiting assignment.</summary>
+    public int BatchId { get; set; }
+
+    /// <summary>
+    /// True when any part of this resolve targets an enemy (physical/element damage, or an enemy-target status like Burn) and therefore
+    /// must be assigned to a specific enemy. Player-only buffs (armor, heal, max HP, cleanse, curse self-damage) return false.
+    /// </summary>
+    public bool IsEnemyTargeted
+    {
+        get
+        {
+            if ((Type == DieType.Damage || Type == DieType.Fire || Type == DieType.Ice || Type == DieType.Nature) && Damage > 0)
+                return true;
+
+            if (Actions != null)
+            {
+                foreach (var a in Actions)
+                {
+                    if (a is FaceResolveModifierBase) continue;
+                    if (a is ApplyStatusEffectAction apply &&
+                        apply.StatusEffectDefinition != null &&
+                        apply.StatusEffectDefinition.target == StatusEffectTarget.Enemy)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>True when this face's direct damage is an enemy-targeted element (physical/fire/ice/nature with damage).</summary>
+    public bool HasEnemyDamagePiece =>
+        (Type == DieType.Damage || Type == DieType.Fire || Type == DieType.Ice || Type == DieType.Nature) && Damage > 0;
+
     /// <summary>Deferred-action rows for <see cref="StoredActionsPoolDisplay"/> (ApplyStatusEffect, Thorns, Max HP, etc.); filled before this face is added to channeled faces.</summary>
     public List<FacePoolExtraContribution> ActionPoolContributions { get; } = new List<FacePoolExtraContribution>();
 }

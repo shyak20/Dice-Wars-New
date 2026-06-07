@@ -12,6 +12,9 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     [Tooltip("When enabled, row icons only change on flyout landing + full resync. Assign DiceRollOutcomeFlyoutController for per-die flyouts.")]
     [SerializeField] private bool incrementPoolIconsWithFlyouts;
 
+    [Tooltip("Per-enemy element layout: when on, this display ignores ALL global combat pool events and is driven only by drag-assignment deposits (ApplyPoolDelta / ClearAllRows / MultiplyAllDisplayed).")]
+    [SerializeField] private bool standalonePerEnemyPool;
+
     [Header("Layout")]
     [Tooltip("Parent for instantiated icons. Use a horizontal/vertical layout group here.")]
     [SerializeField] private RectTransform iconContainer;
@@ -38,6 +41,10 @@ public class StoredActionsPoolDisplay : MonoBehaviour
 
     private void OnEnable()
     {
+        // Per-enemy pools are driven only by drag-assignment deposits; they must not react to global combat pool events.
+        if (standalonePerEnemyPool)
+            return;
+
         CombatEvents.OnStoredActionsPoolIconsFullResync += ApplyFullPoolSync;
         CombatEvents.OnStoredActionsPoolRuntimeIconsClear += ClearRuntimeRowIcons;
         CombatEvents.OnRuntimePoolIconForRow += OnRuntimePoolIconForRow;
@@ -48,6 +55,9 @@ public class StoredActionsPoolDisplay : MonoBehaviour
 
     private void OnDisable()
     {
+        if (standalonePerEnemyPool)
+            return;
+
         CombatEvents.OnStoredActionsPoolIconsFullResync -= ApplyFullPoolSync;
         CombatEvents.OnStoredActionsPoolRuntimeIconsClear -= ClearRuntimeRowIcons;
         CombatEvents.OnRuntimePoolIconForRow -= OnRuntimePoolIconForRow;
@@ -141,6 +151,36 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         runtimeRowBackgrounds.Clear();
         foreach (var k in iconMap.Keys.ToList())
             RefreshIcon(k);
+    }
+
+    /// <summary>Removes all displayed rows (used when a per-enemy pool's owner leaves the roster).</summary>
+    public void ClearAllRows()
+    {
+        if (displayedPools == null) return;
+        displayedPools.Clear();
+        runtimeRowIcons.Clear();
+        runtimeRowBackgrounds.Clear();
+        if (iconMap != null)
+        {
+            foreach (var kvp in iconMap)
+            {
+                if (kvp.Value != null)
+                    kvp.Value.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    /// <summary>Current displayed amount for a row (per-enemy pools read this to know what to resolve).</summary>
+    public int GetDisplayedAmount(PoolRowKey key) =>
+        displayedPools != null && displayedPools.TryGetValue(key, out var v) ? v : 0;
+
+    /// <summary>Perfect Cast: scale every displayed row by the multiplier (per-enemy pools mirror the multiplied board).</summary>
+    public void MultiplyAllDisplayed(int multiplier)
+    {
+        if (multiplier <= 1 || displayedPools == null) return;
+        foreach (var key in displayedPools.Keys.ToList())
+            RefreshRow(key, displayedPools[key] * multiplier);
+        ReorderPoolIcons();
     }
 
     private void ApplyFullPoolSync(Dictionary<PoolRowKey, int> pools)

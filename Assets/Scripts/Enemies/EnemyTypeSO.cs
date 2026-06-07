@@ -87,6 +87,10 @@ public class EnemyTypeSO : ScriptableObject
     [Header("Classification")]
     public EnemyRank enemyRank = EnemyRank.Normal;
 
+    [Header("Multi-enemy")]
+    [Tooltip("Optional. Additional enemies spawned alongside this one when it loads as the Main Enemy (max 2; extras beyond free slots are ignored). These adds do NOT spawn their own adds.")]
+    public List<EnemyTypeSO> spawnOnLoadAdds = new List<EnemyTypeSO>();
+
     [Header("Map draw")]
     [Tooltip("When true, this enemy cannot be randomly drawn for the first combat encounter of each act they appear in.")]
     public bool excludeFromFirstFight = true;
