@@ -136,6 +136,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     {
         CombatEvents.OnDiceRollVisualFeedback += HandleRollVisual;
         CombatEvents.OnRollOutcomeTokensPendingChanged += HandleRollOutcomeTokensPendingChanged;
+        CombatEvents.OnBustResolved += HandleBustResolved;
         ResolvePlayerStatusBarFlyTarget();
     }
 
@@ -143,6 +144,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     {
         CombatEvents.OnDiceRollVisualFeedback -= HandleRollVisual;
         CombatEvents.OnRollOutcomeTokensPendingChanged -= HandleRollOutcomeTokensPendingChanged;
+        CombatEvents.OnBustResolved -= HandleBustResolved;
         if (queueRoutine != null)
         {
             StopCoroutine(queueRoutine);
@@ -230,6 +232,21 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         return false;
     }
 
+    private void HandleBustResolved() => DestroyTransientFlyoutChildren();
+
+    private void DestroyTransientFlyoutChildren()
+    {
+        if (flyoutParent == null)
+            return;
+
+        for (var i = flyoutParent.childCount - 1; i >= 0; i--)
+        {
+            var child = flyoutParent.GetChild(i);
+            if (child != null)
+                Destroy(child.gameObject);
+        }
+    }
+
     private void HandleRollVisual(DiceRollVisualPayload payload)
     {
         if (payload == null)
@@ -240,12 +257,14 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
         if (payload.Lines == null || payload.Lines.Count == 0)
         {
+            payload.ReportRaiseFinished();
             payload.ReportVisualFinished();
             return;
         }
 
         if (canvas == null || flyoutParent == null || storedActionsPoolDisplay == null || flyoutPoolIconPrefab == null)
         {
+            payload.ReportRaiseFinished();
             payload.ReportVisualFinished();
             return;
         }
@@ -284,6 +303,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private static void SetLocalXY(RectTransform rt, Vector2 xy)
     {
+        if (rt == null)
+            return;
         rt.localPosition = new Vector3(xy.x, xy.y, 0f);
     }
 
@@ -291,11 +312,11 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     {
         var frozePlayerForFlyout = false;
         var frozeEnemyForFlyout = false;
+        var lineRects = new List<RectTransform>();
         try
         {
             Vector3 dieWorld = payload.DieTransform != null ? payload.DieTransform.position : payload.WorldAnchor;
 
-            // Switch to overlay (if configured) before projecting positions so spawn coords match the active render mode.
             if (PayloadHasTokenLines(payload))
                 SetFlyoutInteractionPriority(true);
 
@@ -303,13 +324,10 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             if (!WorldPointToParentLocal(stackAnchorWorld, flyoutParent, out Vector2 anchorFlyoutLocal))
                 yield break;
 
-            // Status is applied (and OnEffectsChanged queued a refresh) before this event fires.
-            // Freeze here synchronously — before any yield — so LateUpdate cannot refresh stacks until the fly lands.
             TryBeginStatusBarFlyoutFreeze(payload, ref frozePlayerForFlyout, ref frozeEnemyForFlyout);
 
             Vector2 stackOriginFlyoutLocal = anchorFlyoutLocal + Vector2.right * layoutOffsetX;
 
-            var lineRects = new List<RectTransform>();
             var flyLines = new List<RollOutcomeVisualLine>();
             var stackRestAnchored = new List<Vector2>();
             var spawnRootBaseScales = new List<Vector3>();
@@ -373,6 +391,14 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             if (payload.DieTransform != null)
                 yield return PlayDieActivationFeedback(payload.DieTransform);
 
+            payload.ReportRaiseFinished();
+
+            if (combat != null)
+                yield return new WaitUntil(() => combat.IsFlyoutFlyPhaseAllowed);
+
+            if (combat != null && combat.SkipFlyoutFlyPhaseThisBatch)
+                yield break;
+
             if (lineRects.Count == 0)
                 yield break;
 
@@ -383,6 +409,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             for (int s = 0; s < lineRects.Count; s++)
             {
                 var rt = lineRects[s];
+                if (rt == null) continue;
                 SetLocalXY(rt, stackRestAnchored[s]);
                 rt.localScale = spawnRootBaseScales[s] * spawnScaleEnd;
             }
@@ -426,6 +453,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 EndFreezeStatusBar(StatusEffectTarget.Player);
             if (frozeEnemyForFlyout)
                 EndFreezeStatusBar(StatusEffectTarget.Enemy);
+            payload.ReportRaiseFinished();
             payload.ReportVisualFinished();
         }
     }
@@ -479,6 +507,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             yield return null;
         }
 
+        if (rt == null)
+            yield break;
+
         SetLocalXY(rt, baseAnchored + Vector2.up * spawnYOffsetOverTime.Evaluate(1f));
         rt.localScale = prefabRootBaseScale * EvaluateSpawnScaleMultiplier(1f);
     }
@@ -487,10 +518,12 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         Vector3 prefabRootBaseScale, Vector2 restAnchored)
     {
         yield return CoSpawnPresentationMotion(rt, baseAnchored, prefabRootBaseScale);
+        if (token == null || rt == null)
+            yield break;
+
         SetLocalXY(rt, restAnchored);
         rt.localScale = prefabRootBaseScale * EvaluateSpawnScaleMultiplier(1f);
-        if (token != null)
-            token.SetDragEnabled(true);
+        token.SetDragEnabled(true);
     }
 
     private void BeginEnemyTargetTokenPresentation(DiceRollVisualPayload payload, Vector3 stackAnchorWorld,
@@ -555,16 +588,25 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private IEnumerator FlyLineRoutine(RectTransform rt, Vector2 start, Vector2 mid, Vector2 end, RollOutcomeVisualLine line, bool applyPoolDeltaOnLanding)
     {
+        if (rt == null)
+            yield break;
+
         float dur = Mathf.Max(0.01f, flyDurationSeconds);
         float t = 0f;
         while (t < dur)
         {
+            if (rt == null)
+                yield break;
+
             t += Time.deltaTime;
             float u = Mathf.Clamp01(t / dur);
             float e = flyEase != null ? flyEase.Evaluate(u) : u;
             SetLocalXY(rt, QuadraticBezier(start, mid, end, e));
             yield return null;
         }
+
+        if (rt == null)
+            yield break;
 
         SetLocalXY(rt, end);
         if (applyPoolDeltaOnLanding && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
@@ -638,7 +680,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             elapsed += Time.deltaTime;
 
             var pulseT = Mathf.Clamp01(elapsed / pulseDuration);
-            var pulse = 1f - Mathf.Abs(2f * pulseT - 1f); // 0->1->0
+            var pulse = 1f - Mathf.Abs(2f * pulseT - 1f);
             for (var i = 0; i < renderers.Length; i++)
             {
                 if (!hasSelfLitByRenderer[i]) continue;
@@ -655,8 +697,10 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             yield return null;
         }
 
-        if (dieTransform != null)
-            dieTransform.localPosition = localOrigin;
+        if (dieTransform == null)
+            yield break;
+
+        dieTransform.localPosition = localOrigin;
 
         for (var i = 0; i < renderers.Length; i++)
         {

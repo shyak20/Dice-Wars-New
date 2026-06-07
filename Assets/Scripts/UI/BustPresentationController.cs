@@ -71,6 +71,9 @@ public sealed class BustPresentationController : MonoBehaviour
                 yield return new WaitForSecondsRealtime(delayBetweenElementDestroy);
         }
 
+        if (combat != null)
+            combat.DissolveAllDiceAfterBustIconsPresented();
+
         if (delayPostAnimation > 0f)
             yield return new WaitForSecondsRealtime(delayPostAnimation);
 

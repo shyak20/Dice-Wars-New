@@ -39,10 +39,23 @@ public class DiceRollVisualPayload
     public Action RequestFullStoredPoolResync;
 
     Action _onVisualFinished;
+    Action _onRaiseFinished;
     bool _visualFinishedReported;
+    bool _raiseFinishedReported;
 
     /// <summary>CombatManager registers this so bust / precision / turn flow waits for flyout.</summary>
     public void BindVisualFinished(Action onFinished) => _onVisualFinished = onFinished;
+
+    /// <summary>CombatManager registers this — fired after spawn/raise above the die, before FlyAB to the pool.</summary>
+    public void BindRaiseFinished(Action onFinished) => _onRaiseFinished = onFinished;
+
+    /// <summary>Call exactly once when this die's raise/stack sequence completes (before FlyAB).</summary>
+    public void ReportRaiseFinished()
+    {
+        if (_raiseFinishedReported) return;
+        _raiseFinishedReported = true;
+        _onRaiseFinished?.Invoke();
+    }
 
     /// <summary>Call exactly once when this die's flyout sequence ends (or is skipped).</summary>
     public void ReportVisualFinished()

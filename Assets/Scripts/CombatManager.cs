@@ -122,6 +122,15 @@ public class CombatManager : MonoBehaviour
 
     private int expectedDiceCount = 0;
     private int pendingRollVisualSequences;
+    private int pendingRollVisualRaiseSequences;
+    private bool _postRaiseCombatGateOpen;
+    private bool _skipFlyoutFlyPhaseThisBatch;
+
+    /// <summary>True after bust/perfect/normal check completes for this batch; flyout FlyAB may proceed (unless bust skipped fly).</summary>
+    public bool IsFlyoutFlyPhaseAllowed => _postRaiseCombatGateOpen;
+
+    /// <summary>When true (Cast Overload), flyout raise stays visible but FlyAB to the Element Container is skipped.</summary>
+    public bool SkipFlyoutFlyPhaseThisBatch => _skipFlyoutFlyPhaseThisBatch;
 
     private int rollsRemaining;
     private int maxRolls;
@@ -992,6 +1001,9 @@ public class CombatManager : MonoBehaviour
         _pendingTopFaceByDieIndex = new DieFaceSO[expectedDiceCount];
         _pendingDieSourceByIndex = new Transform[expectedDiceCount];
         pendingRollVisualSequences = 0;
+        pendingRollVisualRaiseSequences = 0;
+        _postRaiseCombatGateOpen = false;
+        _skipFlyoutFlyPhaseThisBatch = false;
         _rollBatchPipelineRunning = false;
         _pendingBatchDiceAssets = new List<DieAssetSO>(selectedDice);
         currentBatchIsFirstRollOfTurn = (rollsRemaining == maxRolls);
@@ -1141,8 +1153,14 @@ public class CombatManager : MonoBehaviour
         _pendingDieSourceByIndex = null;
         _pendingBatchDiceAssets = null;
 
-        yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
+        yield return new WaitUntil(() => pendingRollVisualRaiseSequences <= 0);
         ProcessPrecisionQueue();
+    }
+
+    private IEnumerator CoAfterRollVisualsThen(Action onComplete)
+    {
+        yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
+        onComplete?.Invoke();
     }
 
     private void QueueAddPowerChoicesAfterBatchGather(int startInclusive, int endExclusive)
@@ -1457,6 +1475,7 @@ public class CombatManager : MonoBehaviour
                         g?.effects != null &&
                         g.effects.Any(e => e != null && e.kind == GemEffectKind.RandomBatchRerollOtherDiceNoPower));
                 pendingRollVisualSequences++;
+                pendingRollVisualRaiseSequences++;
                 var payload = new DiceRollVisualPayload
                 {
                     WorldAnchor = dieWorldSource.position,
@@ -1467,8 +1486,19 @@ public class CombatManager : MonoBehaviour
                     NeedsDelayedStoredPoolResync = lines.Any(l => l.IsVisualFlyoutOnly)
                 };
                 payload.BindVisualFinished(OnRollVisualSequenceFinished);
+                payload.BindRaiseFinished(OnRollVisualRaiseFinished);
                 CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
             }
+        }
+    }
+
+    private void OnRollVisualRaiseFinished()
+    {
+        pendingRollVisualRaiseSequences--;
+        if (pendingRollVisualRaiseSequences < 0)
+        {
+            Debug.LogError("CombatManager: pendingRollVisualRaiseSequences underflow — check DiceRollVisualPayload.ReportRaiseFinished is called once per payload.");
+            pendingRollVisualRaiseSequences = 0;
         }
     }
 
@@ -1481,7 +1511,7 @@ public class CombatManager : MonoBehaviour
             pendingRollVisualSequences = 0;
         }
 
-        if (pendingRollVisualSequences == 0)
+        if (pendingRollVisualSequences == 0 && currentState != CombatState.BustCheck)
             CombatEvents.OnStoredActionsPoolIconsFullResync?.Invoke(BuildStoredActionsPool());
     }
 
@@ -1956,7 +1986,14 @@ public class CombatManager : MonoBehaviour
                 ProcessPrecisionQueue();
             });
         }
-        else CheckBustStatus();
+        else
+            CheckBustStatusAndOpenFlyoutGate();
+    }
+
+    private void CheckBustStatusAndOpenFlyoutGate()
+    {
+        CheckBustStatus();
+        _postRaiseCombatGateOpen = true;
     }
 
     private void CheckBustStatus()
@@ -2014,11 +2051,14 @@ public class CombatManager : MonoBehaviour
             // Reorder: multiply + play the Perfect Cast sequence first, THEN wait for the player to attach the
             // rolled outcomes to enemies, THEN continue to the hit-fx fly (SubmitTurn).
             if (jackpotPresentation != null)
-                StartCoroutine(CoFinishJackpotAfterPresentation(jackpotMultiplier, poolsBefore, poolsAfter));
+                StartCoroutine(CoJackpotAfterFlyoutsThenPresentation(jackpotMultiplier, poolsBefore, poolsAfter));
             else
             {
-                NotifyAllStoredActionsPoolUI();
-                RunTargetAssignmentGate(SubmitTurn);
+                StartCoroutine(CoAfterRollVisualsThen(() =>
+                {
+                    NotifyAllStoredActionsPoolUI();
+                    RunTargetAssignmentGate(SubmitTurn);
+                }));
             }
         }
         else if (currentPower > maxPower)
@@ -2050,16 +2090,21 @@ public class CombatManager : MonoBehaviour
             }
 
             ProgressionEventBridge.NotifyCastOverload();
+            _skipFlyoutFlyPhaseThisBatch = true;
             ChangeState(CombatState.BustCheck);
+            NotifyAllStoredActionsPoolUI();
             CombatEvents.OnBustOccurred?.Invoke(GetPendingAttack(), GetPendingDefense());
         }
         else
         {
-            RunTargetAssignmentGate(() =>
+            StartCoroutine(CoAfterRollVisualsThen(() =>
             {
-                if (rollsRemaining <= 0) SubmitTurn();
-                else ChangeState(CombatState.WaitingForRoll);
-            });
+                RunTargetAssignmentGate(() =>
+                {
+                    if (rollsRemaining <= 0) SubmitTurn();
+                    else ChangeState(CombatState.WaitingForRoll);
+                });
+            }));
         }
     }
 
@@ -2097,7 +2142,7 @@ public class CombatManager : MonoBehaviour
                                   RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this);
         if (perfectAtMax || perfectAtMaxMinusOne || perfectAtMaxPlusOne || currentPower > maxPower)
         {
-            CheckBustStatus();
+            CheckBustStatusAndOpenFlyoutGate();
             return;
         }
 
@@ -2114,7 +2159,7 @@ public class CombatManager : MonoBehaviour
 
         currentPower = maxPower;
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
-        CheckBustStatus();
+        CheckBustStatusAndOpenFlyoutGate();
     }
 
     private void ResolveBust()
@@ -2146,6 +2191,13 @@ public class CombatManager : MonoBehaviour
         _turnRegistry.ResetVolatile();
         if (player?.StatusEffects != null)
             player.StatusEffects.RemoveStatus<NextTurnArmorEffectSO>(BuildStatusContext());
+    }
+
+    /// <summary>Dissolve every 3D die still on the table after Cast Overload bust visuals have activated on pool icons.</summary>
+    public void DissolveAllDiceAfterBustIconsPresented()
+    {
+        if (spawner != null)
+            spawner.ClearOldDice();
     }
 
     /// <summary>Empties every stored-actions pool UI row after Cast Overload presentation (called by <see cref="BustPresentationController"/>).</summary>
@@ -2816,6 +2868,12 @@ public class CombatManager : MonoBehaviour
         if (!RunPlayerPhysicalResolution(pendingAttack)) yield break;
 
         yield return StartCoroutine(CoResolveEnemyOpeningAndStartEnemyTurn());
+    }
+
+    private IEnumerator CoJackpotAfterFlyoutsThenPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
+    {
+        yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
+        yield return StartCoroutine(CoFinishJackpotAfterPresentation(multiplier, poolsBefore, poolsAfter));
     }
 
     private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
