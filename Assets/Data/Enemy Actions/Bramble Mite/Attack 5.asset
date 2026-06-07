@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   actionName: Attack
   attackTooltipTitle: <style=Attack>Attack</style>
-  attackTooltipDescription: Deal <style=Attack>4</style>
+  attackTooltipDescription: Deal <style=Attack>5</style>
   armorTooltipTitle: 
   armorTooltipDescription: 
   legacyActionDescription: 

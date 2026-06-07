@@ -120,12 +120,18 @@ namespace Enemies
                     var ga = action.actions[i];
                     if (ga == null || ga is FaceResolveModifierBase)
                         continue;
-                    steps.Add(new Step
+
+                    var hits = ga is LeechPhysicalDamageAction leech ? Mathf.Max(1, leech.NumberOfAttacks) : 1;
+                    for (var h = 0; h < hits; h++)
                     {
-                        Kind = StepKind.GameAction,
-                        SegmentIndex = seg,
-                        GameActionListIndex = i
-                    });
+                        steps.Add(new Step
+                        {
+                            Kind = StepKind.GameAction,
+                            SegmentIndex = seg,
+                            GameActionListIndex = i
+                        });
+                    }
+
                     seg++;
                 }
             }

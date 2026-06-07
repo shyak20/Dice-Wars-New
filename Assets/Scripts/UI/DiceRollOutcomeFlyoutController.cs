@@ -428,6 +428,27 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                     continue;
                 }
 
+                // Single living enemy: enemy-targeted attacks/debuffs fly into that enemy's element container (and assign to it),
+                // rather than the shared player pool. Falls back to the player pool when the enemy has no element container wired.
+                if (line.EnemyTargeted && payload?.SourceFace != null && TryResolveSoloFlyEnemy(out var soloEnemy))
+                {
+                    var soloTarget = ResolveEnemyFlyTargetRect(soloEnemy, line, out var soloIsEnemyOwnPool);
+                    if (soloTarget == null ||
+                        !UiRectCenterToParentLocal(soloTarget, flyoutParent, out Vector2 soloEnd))
+                    {
+                        Destroy(lineRects[i].gameObject);
+                        continue;
+                    }
+
+                    Vector2 soloStart = stackRestAnchored[i];
+                    Vector2 soloMid = (soloStart + soloEnd) * 0.5f + Vector2.up * arcHeightPixels;
+                    TryBeginDieDissolve(payload.DieTransform);
+                    flyCoroutines.Add(StartCoroutine(FlyLineToEnemyAssignRoutine(
+                        payload, lineRects[i], soloStart, soloMid, soloEnd, line, soloEnemy,
+                        applyToSharedPool: !soloIsEnemyOwnPool)));
+                    continue;
+                }
+
                 RectTransform target = ResolveFlyTargetRect(line);
                 if (target == null)
                 {
@@ -722,6 +743,21 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
 
         return list;
+    }
+
+    /// <summary>
+    /// When exactly one enemy is alive (single-enemy fight or the last survivor), returns it so enemy-targeted outcomes fly into
+    /// that enemy's element container instead of the shared player pool.
+    /// </summary>
+    private bool TryResolveSoloFlyEnemy(out EnemyController soloEnemy)
+    {
+        soloEnemy = null;
+        var alive = CollectAliveEnemies();
+        if (alive.Count != 1)
+            return false;
+
+        soloEnemy = alive[0];
+        return soloEnemy != null;
     }
 
     /// <summary>

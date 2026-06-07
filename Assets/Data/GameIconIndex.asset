@@ -99,6 +99,12 @@ MonoBehaviour:
     title: Double Burn
     description: Your nexr <style=Burn>Burn</style> this turn will receive <style=Burn>Double
       Burn</style>
+  - id: 30
+    sprite: {fileID: 0}
+    background: {fileID: 0}
+    title: <style=Attack>Leech</style>
+    description: Deal <style=Attack>physical damage</style> to the player. Heals
+      this enemy for unblocked HP damage dealt (not damage absorbed by armor).
   enemyActionIcons:
   - actionTypeName: MultiplyPlayerBurnPoisonStacksAction
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
@@ -108,6 +114,9 @@ MonoBehaviour:
     background: {fileID: 0}
   - actionTypeName: SpawnEnemyAction
     icon: {fileID: 21300000, guid: 72605935fd527604a82f09a3a55d86b1, type: 3}
+    background: {fileID: 0}
+  - actionTypeName: LeechPhysicalDamageAction
+    icon: {fileID: 21300000, guid: 48184357ea34fd04a916dab2fb864916, type: 3}
     background: {fileID: 0}
   statusEffectIcons:
   - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}

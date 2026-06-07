@@ -45,7 +45,7 @@ public class EnemyActionSO : ScriptableObject
     [Header("Game actions (same system as dice faces)")]
     [Tooltip("Optional. Executed after this intent's attacks and armor gain (same order as on a die face). Face-only modifiers are skipped.")]
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();
-    [Tooltip("Per-action tooltip text by action index. Entry 0 maps to actions[0], etc.")]
+    [Tooltip("Per-action tooltip text by action index. Entry 0 maps to actions[0], etc. Use {0} for the live resolved amount (e.g. buffed physical damage).")]
     public List<ActionTooltipEntry> actionTooltips = new List<ActionTooltipEntry>();
 
     void OnValidate() => MigrateLegacyActionDescription();

@@ -55,4 +55,7 @@ public enum ActionVisualId
     DealPlayerDamageOnSubmit = 27,
     IncreaseCombatMaxPower = 28,
     ReducePowerUnlessPerfectCast = 29,
+
+    /// <summary><see cref="LeechPhysicalDamageAction"/> — physical hit that heals the enemy for unblocked player HP damage.</summary>
+    LeechPhysicalDamage = 30,
 }

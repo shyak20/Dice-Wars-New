@@ -2042,16 +2042,37 @@ public class CombatManager : MonoBehaviour
         if (action == null || action.damage <= 0 || enemy == null || player == null)
             return;
 
+        ApplyEnemyPhysicalHitToPlayer(action.damage, enemy, healActingEnemyForUnblockedPlayerDamage: false);
+    }
+
+    /// <summary>Physical hit from an enemy game action; heals the acting enemy for unblocked player HP damage.</summary>
+    public void ApplyEnemyPhysicalLeechHit(int baseDamage, EnemyController actingEnemy) =>
+        ApplyEnemyPhysicalHitToPlayer(baseDamage, actingEnemy, healActingEnemyForUnblockedPlayerDamage: true);
+
+    void ApplyEnemyPhysicalHitToPlayer(int baseDamage, EnemyController actingEnemy, bool healActingEnemyForUnblockedPlayerDamage)
+    {
+        var enemy = actingEnemy != null ? actingEnemy : activeEnemy;
+        if (baseDamage <= 0 || enemy == null || player == null)
+            return;
+
         var statusCtx = BuildStatusContext(enemy);
-        var boosted = action.damage + enemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
+        var boosted = baseDamage + enemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
         var damage = enemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, boosted);
-        if (enemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx)) enemy.TakeDamage(damage);
+        if (enemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx))
+            enemy.TakeDamage(damage);
         else
         {
             var hadImmune = player.StatusEffects.GetStacks<ImmuneEffectSO>() > 0;
             if (hadImmune)
                 damage = Mathf.Min(damage, 1);
+            var playerHpBefore = player.GetCurrentHealth();
             player.TakeDamage(damage, PlayerDamageSource.EnemyPhysicalAttack);
+            if (healActingEnemyForUnblockedPlayerDamage)
+            {
+                var healthLoss = playerHpBefore - player.GetCurrentHealth();
+                if (healthLoss > 0)
+                    enemy.Heal(healthLoss);
+            }
             if (hadImmune)
                 player.StatusEffects.ConsumeImmuneStackAfterHit(statusCtx);
             var thornsRetaliate = player.StatusEffects.GetThornsRetaliateStacks();
@@ -3093,6 +3114,22 @@ public class CombatManager : MonoBehaviour
             {
                 if (gameAction == null) continue;
                 if (gameAction is FaceResolveModifierBase) continue;
+
+                if (gameAction is LeechPhysicalDamageAction leech)
+                {
+                    var hits = Mathf.Max(1, leech.NumberOfAttacks);
+                    for (var h = 0; h < hits; h++)
+                    {
+                        gameAction.Execute(actionCtx);
+                        if (CheckDefeat())
+                            yield break;
+                        if (hits > 1 && h < hits - 1)
+                            yield return new WaitForSeconds(0.4f);
+                    }
+
+                    continue;
+                }
+
                 gameAction.Execute(actionCtx);
             }
 
