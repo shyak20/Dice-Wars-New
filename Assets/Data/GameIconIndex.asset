@@ -107,7 +107,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: f5c0b55348254fe4bbe8fe8159292a7d, type: 3}
     background: {fileID: 0}
   - actionTypeName: SpawnEnemyAction
-    icon: {fileID: 0}
+    icon: {fileID: 21300000, guid: 72605935fd527604a82f09a3a55d86b1, type: 3}
     background: {fileID: 0}
   statusEffectIcons:
   - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}

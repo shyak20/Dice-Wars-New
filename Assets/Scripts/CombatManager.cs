@@ -512,11 +512,16 @@ public class CombatManager : MonoBehaviour
     private PlayerDataSO playerData;
     private bool _mapCombatBootstrapped;
     private bool _mapPendingEnemyCoroutineRunning;
+    private Coroutine _deferredRosterSlotSyncRoutine;
 
     private void Awake()
     {
         if (spawner == null || player == null || activeEnemy == null)
             Debug.LogError("CombatManager: Missing references!");
+        if (additionalEnemySlots != null && additionalEnemySlots.Count > MaxEnemies - 1)
+            Debug.LogError(
+                $"CombatManager: additionalEnemySlots has {additionalEnemySlots.Count} entries but at most {MaxEnemies - 1} add slots are supported.",
+                this);
         if (gameIconIndex != null)
             GameIconCatalog.Register(gameIconIndex);
     }
@@ -617,47 +622,65 @@ public class CombatManager : MonoBehaviour
     /// <param name="mainType">The Main Enemy's type. The Main is activated <b>before</b> being initialized so its animator/sprite bind on an active GameObject.</param>
     private void SetupRoster(EnemyTypeSO mainType)
     {
-        _activeEnemies.Clear();
+        var resolvedMain = mainType ?? activeEnemy.enemyData;
+        var onLoadAdds = CollectValidSpawnOnLoadAdds(resolvedMain);
 
-        // Reset all extra slots to a clean, disabled state first.
-        if (additionalEnemySlots != null)
-        {
-            foreach (var slot in additionalEnemySlots)
-            {
-                if (slot == null || slot == activeEnemy) continue;
-                slot.DeactivateFromRoster();
-            }
-        }
+        _activeEnemies.Clear();
+        SyncAdditionalEnemySlotVisibility();
 
         activeEnemy.ActivateInRoster(this);
-        if (mainType != null)
-            activeEnemy.Initialize(mainType);
+        if (resolvedMain != null)
+            activeEnemy.Initialize(resolvedMain);
         _activeEnemies.Add(activeEnemy);
 
-        var adds = activeEnemy.enemyData != null ? activeEnemy.enemyData.spawnOnLoadAdds : null;
-        if (adds != null)
+        var pendingAddInits = new List<(EnemyController slot, EnemyTypeSO type)>();
+        for (var a = 0; a < onLoadAdds.Count; a++)
         {
-            foreach (var addType in adds)
-            {
-                if (addType == null) continue;
-                if (_activeEnemies.Count >= MaxEnemies) break;
-                var slot = GetFreeEnemySlot();
-                if (slot == null)
-                {
-                    Debug.LogWarning(
-                        $"CombatManager: '{activeEnemy.enemyData.enemyName}' wants to spawn add '{addType.enemyName}' on load but no free enemy slot is available (assign more to additionalEnemySlots).");
-                    break;
-                }
+            if (_activeEnemies.Count >= MaxEnemies)
+                break;
 
-                slot.ActivateInRoster(this);
-                slot.Initialize(addType);
-                _activeEnemies.Add(slot);
+            var addType = onLoadAdds[a];
+            var slot = GetFreeEnemySlot();
+            if (slot == null)
+            {
+                var mainName = resolvedMain != null ? resolvedMain.enemyName : activeEnemy.name;
+                Debug.LogWarning(
+                    $"CombatManager: '{mainName}' wants to spawn on-load add '{addType.enemyName}' but no free enemy slot is available (assign more to additionalEnemySlots).");
+                break;
             }
+
+            _activeEnemies.Add(slot);
+            pendingAddInits.Add((slot, addType));
         }
+
+        SyncAdditionalEnemySlotVisibility();
+        for (var i = 0; i < pendingAddInits.Count; i++)
+            pendingAddInits[i].slot.Initialize(pendingAddInits[i].type);
 
         BindStatusBars();
         ValidateMultiEnemyTargetingSetup();
         CombatEvents.OnEnemyRosterChanged?.Invoke(_activeEnemies);
+        ScheduleDeferredRosterSlotVisibilitySync();
+    }
+
+    /// <summary>Non-null entries from <see cref="EnemyTypeSO.spawnOnLoadAdds"/> on the main enemy type, capped by roster size.</summary>
+    private static List<EnemyTypeSO> CollectValidSpawnOnLoadAdds(EnemyTypeSO mainType)
+    {
+        var result = new List<EnemyTypeSO>();
+        if (mainType?.spawnOnLoadAdds == null)
+            return result;
+
+        for (var i = 0; i < mainType.spawnOnLoadAdds.Count; i++)
+        {
+            if (result.Count >= MaxEnemies - 1)
+                break;
+
+            var addType = mainType.spawnOnLoadAdds[i];
+            if (addType != null)
+                result.Add(addType);
+        }
+
+        return result;
     }
 
     /// <summary>Warns (once per setup) when a multi-enemy fight is missing the targeting wiring needed for drag-to-assign.</summary>
@@ -711,14 +734,75 @@ public class CombatManager : MonoBehaviour
         if (slot == null)
             return null;
 
-        slot.ActivateInRoster(this);
-        slot.Initialize(type);
         _activeEnemies.Add(slot);
+        SyncAdditionalEnemySlotVisibility();
+        slot.Initialize(type);
         BindStatusBars();
         ValidateMultiEnemyTargetingSetup();
         CombatEvents.OnEnemySpawned?.Invoke(slot);
         CombatEvents.OnEnemyRosterChanged?.Invoke(_activeEnemies);
         return slot;
+    }
+
+    /// <summary>
+    /// Turns on each configured <see cref="additionalEnemySlots"/> entry that is in <see cref="_activeEnemies"/> and turns off the rest.
+    /// On-load adds from <see cref="EnemyTypeSO.spawnOnLoadAdds"/> are added to the roster in <see cref="SetupRoster"/> before this runs.
+    /// </summary>
+    private void SyncAdditionalEnemySlotVisibility()
+    {
+        if (additionalEnemySlots == null)
+            return;
+
+        for (var i = 0; i < additionalEnemySlots.Count; i++)
+        {
+            var slot = additionalEnemySlots[i];
+            if (slot == null)
+            {
+                Debug.LogError($"CombatManager: additionalEnemySlots[{i}] is null — assign the pre-placed add enemy in FightScene.", this);
+                continue;
+            }
+
+            if (slot == activeEnemy)
+            {
+                Debug.LogError("CombatManager: additionalEnemySlots must not include the Main Enemy (activeEnemy).", slot);
+                continue;
+            }
+
+            var shouldShow = _activeEnemies.Contains(slot);
+            if (shouldShow)
+            {
+                // Re-activate when the flag is unset OR the GameObject was turned off externally (e.g. RunManager
+                // restoring fight-scene roots to their saved inactive state after SetupRoster ran).
+                if (!slot.IsActiveInRoster || !slot.gameObject.activeSelf)
+                    slot.ActivateInRoster(this);
+            }
+            else if (slot.IsActiveInRoster || slot.gameObject.activeSelf)
+            {
+                slot.DeactivateFromRoster();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Re-applies slot visibility on the next frame. Required for map-run additive preload: <see cref="RunManager"/> restores
+    /// each fight-scene root to its captured default active state after <see cref="SetupRoster"/> runs inside CombatManager
+    /// OnEnable, which turns pre-placed add-enemy roots back off when they were saved inactive in the scene.
+    /// </summary>
+    private void ScheduleDeferredRosterSlotVisibilitySync()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        if (_deferredRosterSlotSyncRoutine != null)
+            StopCoroutine(_deferredRosterSlotSyncRoutine);
+        _deferredRosterSlotSyncRoutine = StartCoroutine(CoDeferredRosterSlotVisibilitySync());
+    }
+
+    private IEnumerator CoDeferredRosterSlotVisibilitySync()
+    {
+        yield return null;
+        _deferredRosterSlotSyncRoutine = null;
+        SyncAdditionalEnemySlotVisibility();
     }
 
     /// <summary>Removes any enemies that have reached 0 HP from the active roster, firing presentation events once each.</summary>
@@ -737,12 +821,11 @@ public class CombatManager : MonoBehaviour
 
             _activeEnemies.RemoveAt(i);
             CombatEvents.OnEnemyDefeated?.Invoke(enemy);
-            // The Main Enemy slot stays in the scene (rewards reference its data); adds are cleaned up.
-            if (enemy != activeEnemy)
-                enemy.DeactivateFromRoster();
-            else
+            if (enemy == activeEnemy)
                 enemy.ClearAssignedPoolOnDefeat();
         }
+
+        SyncAdditionalEnemySlotVisibility();
 
         if (_activeEnemies.Count > 0)
             CombatEvents.OnEnemyRosterChanged?.Invoke(_activeEnemies);
@@ -784,6 +867,11 @@ public class CombatManager : MonoBehaviour
         // Fight scene stays loaded with roots toggled off between map visits; must re-bootstrap on next activation.
         _mapCombatBootstrapped = false;
         _mapPendingEnemyCoroutineRunning = false;
+        if (_deferredRosterSlotSyncRoutine != null)
+        {
+            StopCoroutine(_deferredRosterSlotSyncRoutine);
+            _deferredRosterSlotSyncRoutine = null;
+        }
         CombatEvents.OnDieToggled -= HandleDieToggle;
         CombatEvents.OnRollCommand -= ExecuteBatchRoll;
         CombatEvents.OnBustResolved -= ResolveBust;
@@ -817,6 +905,7 @@ public class CombatManager : MonoBehaviour
             RunManager.Instance.TryApplyPermanentStrengthStacksAtCombatStart(this, player, activeEnemy);
         ChangeState(CombatState.WaitingForRoll);
         CombatEvents.OnCombatSessionInitialized?.Invoke();
+        ScheduleDeferredRosterSlotVisibilitySync();
     }
 
     public GameActionContext BuildRelicContext(FaceResult face)
