@@ -151,9 +151,26 @@ public class RollTargetAssignmentController : MonoBehaviour
         _pendingTokens.Remove(token);
         Destroy(token.gameObject);
         NotifyPendingTokensChanged();
+        TryDestroyDieWhenFaceFullyAssigned(token.Face);
 
         if (_pendingTokens.Count == 0)
             CompleteGateIfOpen();
+    }
+
+    /// <summary>When every drag token from this face is assigned, dissolve the 3D die that rolled it.</summary>
+    private void TryDestroyDieWhenFaceFullyAssigned(FaceResult face)
+    {
+        if (face?.DieSource == null)
+            return;
+
+        for (var i = 0; i < _pendingTokens.Count; i++)
+        {
+            if (_pendingTokens[i] != null && _pendingTokens[i].Face == face)
+                return;
+        }
+
+        if (combat?.spawner != null)
+            combat.spawner.BeginDissolveAndDestroyDie(face.DieSource.gameObject);
     }
 
     /// <summary>Token drag ended without a valid drop — it stays pending where it was released.</summary>

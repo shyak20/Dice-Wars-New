@@ -388,6 +388,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             }
 
             var flyCoroutines = new List<Coroutine>();
+            var dieDissolveStarted = false;
             for (int i = 0; i < flyLines.Count && i < lineRects.Count; i++)
             {
                 var line = flyLines[i];
@@ -408,6 +409,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 Vector2 mid = (startLocal + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
                 var statusTarget = ResolveStatusTarget(line);
                 var applyPoolDelta = ShouldApplyPoolDelta(line, statusTarget);
+                if (applyPoolDelta)
+                    TryBeginDieDissolve(payload.DieTransform, ref dieDissolveStarted);
                 flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line, applyPoolDelta)));
             }
 
@@ -567,6 +570,19 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (applyPoolDeltaOnLanding && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
             storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
         Destroy(rt.gameObject);
+    }
+
+    private void TryBeginDieDissolve(Transform dieTransform, ref bool started)
+    {
+        if (started || dieTransform == null)
+            return;
+
+        var spawner = combat != null ? combat.spawner : null;
+        if (spawner == null)
+            return;
+
+        spawner.BeginDissolveAndDestroyDie(dieTransform.gameObject);
+        started = true;
     }
 
     private static Vector2 QuadraticBezier(Vector2 a, Vector2 b, Vector2 c, float t)

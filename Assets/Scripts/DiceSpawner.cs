@@ -1,6 +1,6 @@
 using System.Collections;
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class DiceSpawner : MonoBehaviour
 {
@@ -36,6 +36,7 @@ public class DiceSpawner : MonoBehaviour
     public float maxTorque = 30f;
 
     private readonly List<GameObject> activeDiceModels = new List<GameObject>();
+    private readonly HashSet<GameObject> dissolvingDice = new HashSet<GameObject>();
     private Coroutine _spawnRoutine;
 
     /// <summary>Copy of spawned dice for this batch (reroll UI / physics).</summary>
@@ -69,14 +70,28 @@ public class DiceSpawner : MonoBehaviour
         if (roller != null) roller.StartCheckingResult();
     }
 
+    /// <summary>
+    /// Dissolve + face destroy VFX for one die as soon as its outcome is committed (FlyAB to Element Container or all drag tokens assigned).
+    /// Safe to call multiple times — each die only dissolves once.
+    /// </summary>
+    public void BeginDissolveAndDestroyDie(GameObject die)
+    {
+        if (die == null || !dissolvingDice.Add(die))
+            return;
+
+        activeDiceModels.Remove(die);
+        StartCoroutine(CoDissolveAndDestroyDie(die));
+    }
+
     public void ClearOldDice()
     {
-        foreach (GameObject die in activeDiceModels)
-        {
-            if (die != null)
-                StartCoroutine(CoDissolveAndDestroyDie(die));
-        }
+        var snapshot = new List<GameObject>(activeDiceModels);
         activeDiceModels.Clear();
+        for (var i = 0; i < snapshot.Count; i++)
+        {
+            if (snapshot[i] != null)
+                BeginDissolveAndDestroyDie(snapshot[i]);
+        }
     }
 
     public void SpawnAndRollBatch(List<DieAssetSO> diceList)
@@ -127,45 +142,56 @@ public class DiceSpawner : MonoBehaviour
 
     private IEnumerator CoDissolveAndDestroyDie(GameObject die)
     {
-        var visualizer = die.GetComponent<DieVisualizer>();
-        var roller = die.GetComponent<DiceRoller>();
-        if (roller != null)
-            roller.enabled = false;
-
-        var rb = die.GetComponent<Rigidbody>();
-        if (rb != null)
+        try
         {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;
+            if (die == null)
+                yield break;
+
+            var visualizer = die.GetComponent<DieVisualizer>();
+            var roller = die.GetComponent<DiceRoller>();
+            if (roller != null)
+                roller.enabled = false;
+
+            var rb = die.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+
+            var boxCollider = die.GetComponent<BoxCollider>();
+            if (boxCollider != null)
+                boxCollider.enabled = false;
+
+            var dissolveFade = die.GetComponent<DissolveFadeController>();
+            if (dissolveFade == null)
+            {
+                Debug.LogError(
+                    $"DiceSpawner: die prefab '{dicePrefab.name}' needs a disabled {nameof(DissolveFadeController)} on the root.",
+                    dicePrefab);
+                Destroy(die);
+                yield break;
+            }
+
+            dissolveFade.enabled = true;
+            dissolveFade.RefreshRenderers();
+            dissolveFade.ShowImmediate();
+            dissolveFade.FadeDurationSeconds = effectLifetime;
+            dissolveFade.FadeOut();
+
+            SpawnDestroyEffectsForAllFaces(die, visualizer);
+
+            yield return new WaitForSeconds(effectLifetime);
+
+            if (die != null)
+                Destroy(die);
         }
-
-        var boxCollider = die.GetComponent<BoxCollider>();
-        if (boxCollider != null)
-            boxCollider.enabled = false;
-
-        var dissolveFade = die.GetComponent<DissolveFadeController>();
-        if (dissolveFade == null)
+        finally
         {
-            Debug.LogError(
-                $"DiceSpawner: die prefab '{dicePrefab.name}' needs a disabled {nameof(DissolveFadeController)} on the root.",
-                dicePrefab);
-            Destroy(die);
-            yield break;
+            if (die != null)
+                dissolvingDice.Remove(die);
         }
-
-        dissolveFade.enabled = true;
-        dissolveFade.RefreshRenderers();
-        dissolveFade.ShowImmediate();
-        dissolveFade.FadeDurationSeconds = effectLifetime;
-        dissolveFade.FadeOut();
-
-        SpawnDestroyEffectsForAllFaces(die, visualizer);
-
-        yield return new WaitForSeconds(effectLifetime);
-
-        if (die != null)
-            Destroy(die);
     }
 
     void SpawnDestroyEffectsForAllFaces(GameObject die, DieVisualizer visualizer)
