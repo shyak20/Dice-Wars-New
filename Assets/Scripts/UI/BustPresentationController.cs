@@ -19,14 +19,14 @@ public sealed class BustPresentationController : MonoBehaviour
     [SerializeField] private GameObject bustPanel;
 
     [Header("Dependencies")]
-    [SerializeField] private StoredActionsPoolDisplay storedActionsPoolDisplay;
+    [SerializeField] private CombatManager combat;
 
     private Coroutine _routine;
 
     private void Awake()
     {
-        if (storedActionsPoolDisplay == null)
-            storedActionsPoolDisplay = FindObjectOfType<StoredActionsPoolDisplay>(true);
+        if (combat == null)
+            combat = FindObjectOfType<CombatManager>(true);
     }
 
     private void OnEnable()
@@ -55,10 +55,12 @@ public sealed class BustPresentationController : MonoBehaviour
             bustPanel.SetActive(true);
         StoredActionsPoolIcon.HideAllBustDestroyVisualsInScene();
 
+        // Snapshot every active icon up front — includes enemy pools, drag tokens, flyout rows, not just the player Element Container.
+        var icons = StoredActionsPoolIcon.FindAllActiveBustTargetsTopToBottom();
+
         if (waitBeforeExplosion > 0f)
             yield return new WaitForSecondsRealtime(waitBeforeExplosion);
 
-        var icons = CollectActiveSceneIconsTopToBottom();
         for (var i = 0; i < icons.Count; i++)
         {
             var icon = icons[i];
@@ -76,24 +78,16 @@ public sealed class BustPresentationController : MonoBehaviour
 
         StoredActionsPoolIcon.HideAllBustDestroyVisualsInScene();
         StoredActionsPoolIcon.RestoreAllDefaultChildVisualStatesInScene();
+
+        if (combat != null)
+        {
+            combat.ClearStoredActionPoolUiAfterBust();
+            combat.ContinueTurnAfterBustPresentation();
+        }
+
         if (bustPanel != null)
             bustPanel.SetActive(false);
         _routine = null;
-    }
-
-    static List<StoredActionsPoolIcon> CollectActiveSceneIconsTopToBottom()
-    {
-        var all = StoredActionsPoolIcon.FindAllInLoadedScenes(true);
-        var active = new List<StoredActionsPoolIcon>(all.Count);
-        for (var i = 0; i < all.Count; i++)
-        {
-            var icon = all[i];
-            if (icon != null && icon.gameObject.activeInHierarchy)
-                active.Add(icon);
-        }
-
-        StoredActionsPoolIcon.SortTopToBottom(active);
-        return active;
     }
 
     private void StopActiveRoutine()

@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>
-/// Perfect-strike: moves the pool container toward a target, then enables each row's jackpot UI
-/// (top-to-bottom) on a delay, waits until every row's value text shows the multiplied total, pauses X seconds,
-/// then fires <c>EndSequence</c>, waits for the exit clip, animates the pool container home, then applies totals.
+/// Perfect-strike: moves the player pool container toward a target, then after <see cref="containerMoveDuration"/> enables
+/// every scene <see cref="StoredActionsPoolIcon"/> jackpot UI (top-to-bottom) on a delay, waits until value texts update,
+/// then fires EndSequence, waits for the exit clip, animates the pool container home, then applies totals.
 /// </summary>
 public class JackpotPresentationController : MonoBehaviour
 {
@@ -34,7 +34,7 @@ public class JackpotPresentationController : MonoBehaviour
     [SerializeField] private bool restoreContainerLocalPositionAfter = true;
 
     [Header("Per-row jackpot reveal")]
-    [Tooltip("Realtime wait after the container move (and full-screen root, if any) before the first row's jackpot object is enabled.")]
+    [Tooltip("Extra realtime wait after Container Move Duration (and any pool container tween) before the first row's jackpot object is enabled.")]
     [SerializeField] private float delayBeforeFirstJackpotReveal;
 
     [Tooltip("Realtime delay between each following row, top to bottom.")]
@@ -74,6 +74,7 @@ public class JackpotPresentationController : MonoBehaviour
         var container = storedActionsPoolDisplay.GetIconContainerRect();
         var startLocal = container != null ? container.localPosition : Vector3.zero;
         var endLocal = startLocal;
+        var containerMoveElapsed = 0f;
 
         if (container != null && jackpotContainerMoveTarget != null && containerMoveDuration > 0f)
         {
@@ -84,7 +85,13 @@ public class JackpotPresentationController : MonoBehaviour
 
             foreach (var step in TweenContainerLocalUnscaled(container, startLocal, endLocal, containerMoveDuration, containerMoveCurve))
                 yield return step;
+
+            containerMoveElapsed = containerMoveDuration;
         }
+
+        var delayBeforeIconJackpot = Mathf.Max(0f, containerMoveDuration - containerMoveElapsed);
+        if (delayBeforeIconJackpot > 0f)
+            yield return new WaitForSecondsRealtime(delayBeforeIconJackpot);
 
         if (delayBeforeFirstJackpotReveal > 0f)
             yield return new WaitForSecondsRealtime(delayBeforeFirstJackpotReveal);
@@ -182,6 +189,13 @@ public class JackpotPresentationController : MonoBehaviour
         if (display != null && display.IsStandalonePerEnemyPool)
         {
             value = display.GetDisplayedAmount(icon.RowKey);
+            return value > 0;
+        }
+
+        var token = icon.GetComponentInParent<RolledOutcomeToken>();
+        if (token != null)
+        {
+            value = token.Line.Amount;
             return value > 0;
         }
 

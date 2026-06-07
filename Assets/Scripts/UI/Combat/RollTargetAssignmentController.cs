@@ -22,10 +22,6 @@ public class RollTargetAssignmentController : MonoBehaviour
     [Tooltip("Optional. Prompt shown while the player still has outcomes to assign.")]
     [SerializeField] private GameObject assignPrompt;
 
-    [Header("Perfect Cast")]
-    [Tooltip("Delay (unscaled seconds) before a token's multiplied value bumps in, matching the jackpot board reveal.")]
-    [SerializeField, Min(0f)] private float jackpotValueRevealDelay = 0.4f;
-
     private readonly List<RolledOutcomeToken> _pendingTokens = new List<RolledOutcomeToken>();
     private Action _onAllAssigned;
     private bool _gateOpen;
@@ -166,14 +162,14 @@ public class RollTargetAssignmentController : MonoBehaviour
         // Token remains pending; nothing else to do (it keeps its dragged position).
     }
 
-    /// <summary>Perfect Cast: scale every still-unassigned token's amount and play its ×N reveal.</summary>
+    /// <summary>Perfect Cast: scale every still-unassigned token's amount (jackpot visuals run during presentation).</summary>
     public void MultiplyPendingTokenAmounts(int multiplier)
     {
         if (multiplier <= 1) return;
         foreach (var token in _pendingTokens)
         {
             if (token == null) continue;
-            token.ApplyPerfectStrikeMultiply(multiplier, jackpotValueRevealDelay);
+            token.MultiplyAmountOnly(multiplier);
         }
     }
 

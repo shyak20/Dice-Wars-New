@@ -121,6 +121,13 @@ public class RolledOutcomeToken : MonoBehaviour
         return line.BackgroundOverride != null ? line.BackgroundOverride : GameIconCatalog.TryGetPoolRowBackground(line.RowKey);
     }
 
+    /// <summary>Perfect Cast: scale this piece's amount only — jackpot visuals run during <see cref="JackpotPresentationController"/>.</summary>
+    public void MultiplyAmountOnly(int multiplier)
+    {
+        if (multiplier <= 1) return;
+        _line.Amount *= multiplier;
+    }
+
     /// <summary>Perfect Cast: scale this piece's amount and play the ×N reveal on the icon.</summary>
     public void ApplyPerfectStrikeMultiply(int multiplier, float valueRevealDelay)
     {

@@ -43,6 +43,11 @@ public class StoredActionsPoolIcon : MonoBehaviour
     private bool _jackpotPostMultiplyValueTextApplied;
     private readonly Dictionary<Transform, bool> _defaultChildActiveStates = new Dictionary<Transform, bool>();
 
+    /// <summary>Every icon ever created and not yet destroyed (player pool, enemy pools, drag tokens, flyout rows). Maintained at Awake/OnDestroy so scene-wide presentations never search.</summary>
+    private static readonly List<StoredActionsPoolIcon> Instances = new List<StoredActionsPoolIcon>();
+
+    public bool HasBustDestroyRoot => bustDestroyRoot != null;
+
     public RectTransform FlyTargetRect => (RectTransform)transform;
 
     public PoolRowKey RowKey => configuredKey;
@@ -181,6 +186,8 @@ public class StoredActionsPoolIcon : MonoBehaviour
             Debug.LogError($"StoredActionsPoolIcon on '{gameObject.name}': icon Image is not assigned!");
         if (valueText == null)
             Debug.LogError($"StoredActionsPoolIcon on '{gameObject.name}': valueText is not assigned!");
+        if (bustDestroyRoot == null)
+            Debug.LogError($"StoredActionsPoolIcon on '{gameObject.name}': bustDestroyRoot is not assigned!", this);
         if (jackpotMultiplierRoot != null)
             jackpotMultiplierRoot.SetActive(false);
         if (valueAmountBackgroundRoot != null)
@@ -188,9 +195,20 @@ public class StoredActionsPoolIcon : MonoBehaviour
 
         var hoverTargetGo = icon != null ? icon.gameObject : gameObject;
         hoverTooltipTarget = hoverTargetGo.GetComponent<HoverTooltipTargetUI>() ?? hoverTargetGo.AddComponent<HoverTooltipTargetUI>();
+
+        if (!Instances.Contains(this))
+            Instances.Add(this);
+    }
+
+    private void OnDestroy()
+    {
+        Instances.Remove(this);
     }
 
     private void OnDisable() => CancelJackpotValueReveal();
+
+    /// <summary>True when this active icon has a bust root and should participate in scene-wide Cast Overload presentation.</summary>
+    public bool IsActiveBustTarget => HasBustDestroyRoot && gameObject.activeInHierarchy;
 
     public void ShowBustDestroyVisual(bool visible)
     {
@@ -202,9 +220,28 @@ public class StoredActionsPoolIcon : MonoBehaviour
             if (_defaultChildActiveStates.Count == 0)
                 CaptureDefaultChildActiveStates();
             DisableAllNonBustVisualChildren();
+            if (bustDestroyRoot.activeSelf)
+                bustDestroyRoot.SetActive(false);
+            bustDestroyRoot.SetActive(true);
+            RestartBustChildEffects();
         }
+        else
+        {
+            bustDestroyRoot.SetActive(false);
+        }
+    }
 
-        bustDestroyRoot.SetActive(visible);
+    private void RestartBustChildEffects()
+    {
+        var particleSystems = bustDestroyRoot.GetComponentsInChildren<ParticleSystem>(true);
+        for (var i = 0; i < particleSystems.Length; i++)
+        {
+            var ps = particleSystems[i];
+            if (ps == null)
+                continue;
+            ps.Clear(true);
+            ps.Play(true);
+        }
     }
 
     public void RestoreDefaultChildVisualStates()
@@ -332,20 +369,49 @@ public class StoredActionsPoolIcon : MonoBehaviour
         return "Deferred action from a die — runs when you end the turn; may become a status effect.";
     }
 
-    /// <summary>Every <see cref="StoredActionsPoolIcon"/> in loaded scenes (player pool, enemy pools, drag tokens, flyout rows, …).</summary>
+    /// <summary>
+    /// Every registered <see cref="StoredActionsPoolIcon"/> (player pool, enemy pools, drag tokens, flyout rows).
+    /// Reads the creation-time registry directly — no scene search.
+    /// </summary>
     public static List<StoredActionsPoolIcon> FindAllInLoadedScenes(bool includeInactive = true)
     {
-        var found = UnityEngine.Object.FindObjectsOfType<StoredActionsPoolIcon>(includeInactive);
-        var list = new List<StoredActionsPoolIcon>(found.Length);
-        for (var i = 0; i < found.Length; i++)
+        var list = new List<StoredActionsPoolIcon>(Instances.Count);
+        for (var i = Instances.Count - 1; i >= 0; i--)
         {
-            var icon = found[i];
-            if (icon == null || !icon.gameObject.scene.IsValid())
+            var icon = Instances[i];
+            if (icon == null)
+            {
+                Instances.RemoveAt(i);
+                continue;
+            }
+
+            if (!includeInactive && !icon.gameObject.activeInHierarchy)
                 continue;
             list.Add(icon);
         }
 
         return list;
+    }
+
+    /// <summary>Active icons with a bust root, sorted top-to-bottom — every icon participates in Cast Overload, not just the player Element Container.</summary>
+    public static List<StoredActionsPoolIcon> FindAllActiveBustTargetsTopToBottom()
+    {
+        var targets = new List<StoredActionsPoolIcon>(Instances.Count);
+        for (var i = Instances.Count - 1; i >= 0; i--)
+        {
+            var icon = Instances[i];
+            if (icon == null)
+            {
+                Instances.RemoveAt(i);
+                continue;
+            }
+
+            if (icon.IsActiveBustTarget)
+                targets.Add(icon);
+        }
+
+        SortTopToBottom(targets);
+        return targets;
     }
 
     /// <summary>Sorts icons top-to-bottom using world Y, then sibling index.</summary>

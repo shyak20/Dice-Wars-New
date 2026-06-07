@@ -2146,8 +2146,11 @@ public class CombatManager : MonoBehaviour
         _turnRegistry.ResetVolatile();
         if (player?.StatusEffects != null)
             player.StatusEffects.RemoveStatus<NextTurnArmorEffectSO>(BuildStatusContext());
+    }
 
-        // Multi-enemy: clear every per-enemy element layout (their accumulated outcomes are nullified by the bust).
+    /// <summary>Empties every stored-actions pool UI row after Cast Overload presentation (called by <see cref="BustPresentationController"/>).</summary>
+    public void ClearStoredActionPoolUiAfterBust()
+    {
         for (var i = 0; i < _activeEnemies.Count; i++)
         {
             if (_activeEnemies[i] != null && _activeEnemies[i].AssignedElementPool != null)
@@ -2155,8 +2158,12 @@ public class CombatManager : MonoBehaviour
         }
 
         targetAssignment?.CancelPendingAssignments();
-
         NotifyAllStoredActionsPoolUI();
+    }
+
+    /// <summary>Resumes the turn after bust pool UI has finished presenting.</summary>
+    public void ContinueTurnAfterBustPresentation()
+    {
         _skipPowerOrbFlightForNextSubmitTurn = true;
         SubmitTurn();
     }
