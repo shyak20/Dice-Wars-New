@@ -15,7 +15,6 @@ MonoBehaviour:
   enemyName: Elite Dice Head
   displaySprite: {fileID: 21300000, guid: bcba409166e1b5541942cb2a084b3faa, type: 3}
   combatAnimatorController: {fileID: 9100000, guid: 79c299600131ffe478e9c88abb6023f3, type: 2}
-  idleAnimatorStateName: DIce Head Idle
   enemyRank: 1
   excludeFromFirstFight: 1
   maxHealth: 50

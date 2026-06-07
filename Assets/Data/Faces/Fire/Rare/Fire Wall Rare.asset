@@ -15,7 +15,8 @@ MonoBehaviour:
   title: Basic Fire 3
   description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Gain <style=Shield>shield</style> equal to 100% of enemy <style=Burn>burn</style> stacks
+  - Gain <style=Shield>shield</style> equal to 100% of enemy <style=Burn>burn</style>
+    stacks
   value: 4
   type: 2
   faceMaterial: {fileID: 2100000, guid: e1be335986f1bca4f8e6be4b12db220e, type: 2}
@@ -25,7 +26,7 @@ MonoBehaviour:
   armor: 0
   selfDamage: 0
   uiIcon: {fileID: 21300000, guid: 7a5b73e4b11a85142be39c5163f40f8a, type: 3}
-  uiTooltipBackground: {fileID: 21300000, guid: 8406a89d5e5c90148996d2cab1332be2, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: 2163a60d8b5b18e4889e5b66c507eb20, type: 3}
   actions:
   - rid: 6494956586993451218
   references:

@@ -16,7 +16,8 @@ MonoBehaviour:
   description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>4</style>
-  - Deal <style=Attack>4</style> additional for every <style=Strength>Strength</style> you have
+  - Deal <style=Attack>4</style> additional for every <style=Strength>Strength</style>
+    you have
   value: 4
   type: 0
   faceMaterial: {fileID: 2100000, guid: e7f2e895d671c5343bdd66a43248d860, type: 2}
@@ -26,7 +27,7 @@ MonoBehaviour:
   armor: 0
   selfDamage: 0
   uiIcon: {fileID: 21300000, guid: fdf4d84fdc9b7424481735ecf9c89bd3, type: 3}
-  uiTooltipBackground: {fileID: 21300000, guid: 7cb1ca40abd697a4d907cdec17ec9928, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: ef2484216e99c0941b22ffaf9b054f28, type: 3}
   actions:
   - rid: 6494956392264499284
   references:

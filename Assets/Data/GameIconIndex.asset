@@ -53,8 +53,8 @@ MonoBehaviour:
   - id: 8
     sprite: {fileID: 0}
     background: {fileID: 0}
-    title: 
-    description: 
+    title: Broken
+    description: Completely remove enemy's <style=Shield></style> (Immidiate)
   - id: 9
     sprite: {fileID: 0}
     background: {fileID: 0}

@@ -16,5 +16,5 @@ MonoBehaviour:
   description: Increase <style=Burn></style> gained from rolls by <style=Burn>+1</style>
   type: 0
   target: 0
-  stackDecayPerTurn: 1
+  stackDecayPerTurn: 0
   activateBeforePlayerPhysicalDamage: 1

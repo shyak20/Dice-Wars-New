@@ -1047,7 +1047,7 @@ MonoBehaviour:
   dieLootTable: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
   relicLootTable: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
   gemLootTable: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
-  faceOfferCount: 3
+  faceOfferCount: 4
   gemOfferCount: 2
   relicOfferCount: 2
   dieOfferCount: 2
@@ -1120,6 +1120,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoverTooltipManager
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
+  trialRewardsPanelPrefab: {fileID: 0}
+  gameIconIndex: {fileID: 0}
   fallbackCanvas: {fileID: 394332461}
   hoverTooltipScreenOffset: {x: 50, y: -120}
   hoverAboveTooltipScreenOffset: {x: 0, y: 0}
@@ -3338,7 +3340,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -250, y: 186.72}
+  m_AnchoredPosition: {x: -250, y: 196.81998}
   m_SizeDelta: {x: 522.4, y: 306.66}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &991398688
@@ -3416,7 +3418,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 191, y: 186.72}
+  m_AnchoredPosition: {x: 191, y: 196.81998}
   m_SizeDelta: {x: 522.4, y: 306.66}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1032492670
@@ -6313,7 +6315,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -250, y: -91}
+  m_AnchoredPosition: {x: -250, y: -89}
   m_SizeDelta: {x: 522.4, y: 306.66}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &2028850147
@@ -6574,8 +6576,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2127162005}
-  - component: {fileID: 2127162006}
   - component: {fileID: 2127162007}
+  - component: {fileID: 2127162008}
   m_Layer: 0
   m_Name: Faces Container
   m_TagString: Untagged
@@ -6602,35 +6604,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -697.9, y: 48}
-  m_SizeDelta: {x: 537.1, y: 653.6}
+  m_AnchoredPosition: {x: -697.9, y: 25}
+  m_SizeDelta: {x: 537.1, y: 736.3}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2127162006
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2127162004}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 69
-    m_Bottom: 0
-  m_ChildAlignment: 1
-  m_Spacing: 15.18
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!225 &2127162007
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -6643,6 +6619,30 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &2127162008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2127162004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
+  m_Padding:
+    m_Left: 48
+    m_Right: 0
+    m_Top: 70
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 213.57, y: 290.7}
+  m_Spacing: {x: 20, y: 29}
+  m_Constraint: 1
+  m_ConstraintCount: 2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

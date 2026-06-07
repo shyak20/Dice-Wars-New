@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 54206f09e3fdc344fb4859b6091f99bf, type: 3}
-  m_Name: Base Fire
+  m_Name: 2.Base Fire Morgana
   m_EditorClassIdentifier: 
   dieName: Base Fire
   dieType: 2
