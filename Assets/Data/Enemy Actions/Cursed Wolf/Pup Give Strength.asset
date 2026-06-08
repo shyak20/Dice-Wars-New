@@ -39,5 +39,5 @@ MonoBehaviour:
         triggerImmediatelyOnDrop: 0
         armorAmount: 0
         healAmount: 0
-        statusEffect: {fileID: 11400000, guid: ebf544cc10a2325409bf6d6ef50a8f63, type: 2}
+        statusEffect: {fileID: 11400000, guid: 0ab2cbdfca9ccea469da4cc020ccd600, type: 2}
         statusStacks: 2

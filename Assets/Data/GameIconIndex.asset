@@ -119,7 +119,7 @@ MonoBehaviour:
     background: {fileID: 0}
   - actionTypeName: SpawnEnemyAction
     icon: {fileID: 21300000, guid: 72605935fd527604a82f09a3a55d86b1, type: 3}
-    background: {fileID: 0}
+    background: {fileID: 21300000, guid: 2a4db0d8d44f96f4fa8acb444a8e3d49, type: 3}
   - actionTypeName: LeechPhysicalDamageAction
     icon: {fileID: 21300000, guid: 48184357ea34fd04a916dab2fb864916, type: 3}
     background: {fileID: 0}
@@ -163,6 +163,9 @@ MonoBehaviour:
   - effect: {fileID: 11400000, guid: dae17a03096114942839eb0d8a1cf77d, type: 2}
     icon: {fileID: 21300000, guid: ab9046a68c2bb3745bd0b340ad9c6f02, type: 3}
     poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
+  - effect: {fileID: 11400000, guid: 0ab2cbdfca9ccea469da4cc020ccd600, type: 2}
+    icon: {fileID: 21300000, guid: 35a0ea07af5521e4cbc8f135122e17f0, type: 3}
+    poolRowBackground: {fileID: 21300000, guid: 2a4db0d8d44f96f4fa8acb444a8e3d49, type: 3}
   enemyResistanceIcons:
   - resistanceElement: 1
     icon: {fileID: 21300000, guid: 5ba35a2c41528e14b84e1058087d01a2, type: 3}
