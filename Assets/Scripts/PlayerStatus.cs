@@ -139,6 +139,47 @@ public class PlayerStatus : MonoBehaviour
     private void OnEnable()
     {
         TryApplyPortraitFromContainer();
+        TrySubscribeRunVitality();
+        TrySyncRunVitalityFromManager();
+    }
+
+    private void OnDisable()
+    {
+        TryUnsubscribeRunVitality();
+    }
+
+    private void Start()
+    {
+        // Covers additive preload / scene-root toggles where RunManager was ready before this object enabled.
+        TrySyncRunVitalityFromManager();
+    }
+
+    void TrySubscribeRunVitality()
+    {
+        if (RunManager.Instance == null)
+            return;
+
+        RunManager.Instance.OnRunVitalityChanged -= OnRunVitalityChanged;
+        RunManager.Instance.OnRunVitalityChanged += OnRunVitalityChanged;
+    }
+
+    void TryUnsubscribeRunVitality()
+    {
+        if (RunManager.Instance == null)
+            return;
+
+        RunManager.Instance.OnRunVitalityChanged -= OnRunVitalityChanged;
+    }
+
+    void OnRunVitalityChanged() => TrySyncRunVitalityFromManager();
+
+    /// <summary>Map runs: mirror persisted run HP/max onto this HUD (shop, fight, etc.).</summary>
+    void TrySyncRunVitalityFromManager()
+    {
+        if (RunManager.Instance == null)
+            return;
+
+        RunManager.Instance.ApplyRunVitalityToPlayerIfAny(this);
     }
 
     /// <summary>Sets the HUD portrait from the active <see cref="PlayerRankSO.SmallPortrait"/>.</summary>

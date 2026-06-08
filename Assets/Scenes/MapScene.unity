@@ -1200,8 +1200,11 @@ MonoBehaviour:
   tooltipPointerTarget: {fileID: 607561254}
   hoverTooltipScreenOffset: {x: 0, y: 24}
   hoverTooltipTitle: Moves
-  hoverTooltipDescription: "When exceeding the moves, take <Style=Damage>{0}</style>
-    damage. \nIncrease that damage by <Style=Damage>{1}</style> every move."
+  hoverTooltipDescription: 'When exceeding the moves, take <Style=Damage>{0}</style>
+    damage. Increase that damage by <Style=Damage>{1}</style> every move.
+
+    Passageways
+    will begin to close with each step.'
 --- !u!225 &161461484
 CanvasGroup:
   m_ObjectHideFlags: 0
