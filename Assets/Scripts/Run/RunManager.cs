@@ -1147,6 +1147,32 @@ public class RunManager : MonoBehaviour
         NotifyRunVitalityChanged();
     }
 
+    /// <summary>Shrine max-HP bonus preview/apply: floor(current run max HP × percent ÷ 100), minimum 1.</summary>
+    public int ComputeMaxHpIncreaseFromPercentOfRunMaxHp(int percent)
+    {
+        if (percent <= 0)
+            return 0;
+
+        EnsureRunVitalityBaseline();
+        return Mathf.Max(1, _runMaxHp * percent / 100);
+    }
+
+    /// <summary>Map shrine: permanently raises run max HP by <paramref name="percent"/> of current max (also heals current HP by that amount).</summary>
+    public void ApplyShrineMaxHpIncreasePercent(int percent)
+    {
+        if (!_useMapBasedRun)
+        {
+            Debug.LogError("RunManager.ApplyShrineMaxHpIncreasePercent: not in map-based run.");
+            return;
+        }
+
+        var increase = ComputeMaxHpIncreaseFromPercentOfRunMaxHp(percent);
+        if (increase <= 0)
+            return;
+
+        ApplyRunMaxHpDelta(increase);
+    }
+
     /// <summary>Map runs: set current run HP to max.</summary>
     public void HealRunVitalityToFull()
     {

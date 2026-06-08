@@ -28,5 +28,5 @@ MonoBehaviour:
     - rid: 6434882374853722192
       type: {class: ProgressionMaxHpReward, ns: , asm: Assembly-CSharp}
       data:
-        rowFormat: <color=#FE4848>Max HP +5</color>
+        rowFormat: <color=#FE4848>Max HP +5 Permanently</color>
         amount: 5

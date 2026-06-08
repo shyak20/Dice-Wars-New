@@ -113,16 +113,16 @@ MonoBehaviour:
   enemyActionIcons:
   - actionTypeName: MultiplyPlayerBurnPoisonStacksAction
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
-    background: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
+    background: {fileID: 21300000, guid: 5724c41be65ea9f4d8bc452ff13751da, type: 3}
   - actionTypeName: ReducePlayerMaxPowerAction
     icon: {fileID: 21300000, guid: f5c0b55348254fe4bbe8fe8159292a7d, type: 3}
-    background: {fileID: 0}
+    background: {fileID: 21300000, guid: 266ea71b1d4289f4a991e7ca404f3429, type: 3}
   - actionTypeName: SpawnEnemyAction
     icon: {fileID: 21300000, guid: 72605935fd527604a82f09a3a55d86b1, type: 3}
-    background: {fileID: 21300000, guid: 2a4db0d8d44f96f4fa8acb444a8e3d49, type: 3}
+    background: {fileID: 21300000, guid: 266ea71b1d4289f4a991e7ca404f3429, type: 3}
   - actionTypeName: LeechPhysicalDamageAction
     icon: {fileID: 21300000, guid: 48184357ea34fd04a916dab2fb864916, type: 3}
-    background: {fileID: 0}
+    background: {fileID: 21300000, guid: 47a95a880bfcfda4d956b9163d79efb1, type: 3}
   statusEffectIcons:
   - effect: {fileID: 11400000, guid: dd843f9c49bdb0742a73e4111da3181b, type: 2}
     icon: {fileID: 21300000, guid: 616d73c1978aa7a488f8576c80116831, type: 3}

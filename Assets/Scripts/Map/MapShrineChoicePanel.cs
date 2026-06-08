@@ -1,14 +1,24 @@
+using System;
+using System.Globalization;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-/// <summary>Map-only shrine: permanent run max-power bonus or heal. Wire buttons in the Map scene.</summary>
+/// <summary>Map-only shrine: permanent run max-power bonus or max-HP increase (% of current run max HP). Wire buttons in the Map scene.</summary>
 public sealed class MapShrineChoicePanel : MonoBehaviour
 {
     [SerializeField] private GameObject root;
     [SerializeField, Min(1)] private int maxPowerBonus = 2;
-    [SerializeField, Min(1)] private int healAmount = 20;
+    [Tooltip("Max HP gained = floor(current run max HP × this percent ÷ 100), minimum 1. Also heals current HP by that amount.")]
+    [SerializeField, Range(1, 100)] private int maxHpIncreasePercent = 25;
+    [Header("Max HP choice label")]
+    [Tooltip("Button or header TMP label updated when the panel opens. Use {0} for the calculated max-HP increase.")]
+    [SerializeField] private TMP_Text maxHpChoiceLabel;
+    [SerializeField, TextArea(1, 3)] private string maxHpChoiceTextFormat = "+{0} Max HP";
     [SerializeField] private Button maxPowerButton;
-    [SerializeField] private Button healButton;
+    [FormerlySerializedAs("healButton")]
+    [SerializeField] private Button maxHpIncreaseButton;
     [SerializeField] private Button closeButton;
 
     private void Awake()
@@ -18,8 +28,8 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
         root.SetActive(false);
         if (maxPowerButton != null)
             maxPowerButton.onClick.AddListener(OnMaxPowerChosen);
-        if (healButton != null)
-            healButton.onClick.AddListener(OnHealChosen);
+        if (maxHpIncreaseButton != null)
+            maxHpIncreaseButton.onClick.AddListener(OnMaxHpIncreaseChosen);
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
     }
@@ -42,7 +52,7 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
         if (root == null)
             root = gameObject;
 
-        // Parents must be active before children; otherwise the panel stays invisible even if root is enabled.
+        RefreshMaxHpChoiceLabel();
         ActivateSelfAndAncestors(root.transform);
         root.SetActive(true);
         return true;
@@ -54,10 +64,40 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
         Close();
     }
 
-    private void OnHealChosen()
+    private void OnMaxHpIncreaseChosen()
     {
-        RunManager.Instance?.ApplyShrineHeal(healAmount);
+        if (maxHpIncreasePercent > 0)
+            RunManager.Instance?.ApplyShrineMaxHpIncreasePercent(maxHpIncreasePercent);
         Close();
+    }
+
+    void RefreshMaxHpChoiceLabel()
+    {
+        if (maxHpChoiceLabel == null)
+            return;
+
+        maxHpChoiceLabel.text = FormatMaxHpChoiceText(ComputeMaxHpIncrease());
+    }
+
+    int ComputeMaxHpIncrease()
+    {
+        if (RunManager.Instance == null || maxHpIncreasePercent <= 0)
+            return 0;
+
+        return RunManager.Instance.ComputeMaxHpIncreaseFromPercentOfRunMaxHp(maxHpIncreasePercent);
+    }
+
+    string FormatMaxHpChoiceText(int maxHpIncrease)
+    {
+        var format = maxHpChoiceTextFormat;
+        if (string.IsNullOrWhiteSpace(format))
+            return maxHpIncrease.ToString(CultureInfo.InvariantCulture);
+
+        format = format.Trim();
+        if (format.IndexOf("{0}", StringComparison.Ordinal) < 0)
+            return format;
+
+        return string.Format(CultureInfo.InvariantCulture, format, maxHpIncrease);
     }
 
     private void Close() => Hide();

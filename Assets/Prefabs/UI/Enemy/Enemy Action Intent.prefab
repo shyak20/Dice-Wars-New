@@ -54,7 +54,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52b17e3de21a2274bb1bcd965ba8d6bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyIntentSegmentView
-  backgroundImage: {fileID: 0}
+  backgroundImage: {fileID: 7099783387094917920}
   iconImage: {fileID: 2890752652811520331}
   valueText: {fileID: 7206115334883055204}
   tooltipScreenOffset: {x: 0, y: -80}
@@ -355,7 +355,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 7a869ff3c11587943a84801f2d72d2f0, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 266ea71b1d4289f4a991e7ca404f3429, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

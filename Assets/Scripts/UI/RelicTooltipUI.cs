@@ -179,7 +179,8 @@ public sealed class RelicTooltipUI : MonoBehaviour
 
     private void AlignToReference(RectTransform reference, bool showAboveReference, Vector2 screenOffset)
     {
-        if (reference == null || _panelRect == null) return;
+        if (reference == null || _panelRect == null)
+            return;
 
         var corners = new Vector3[4];
         reference.GetWorldCorners(corners);
@@ -188,18 +189,6 @@ public sealed class RelicTooltipUI : MonoBehaviour
         if (showAboveReference)
             targetWorld.y = corners[1].y;
 
-        var cameraForCanvas = _parentCanvas != null && _parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? _parentCanvas.worldCamera
-            : null;
-        var targetScreen = RectTransformUtility.WorldToScreenPoint(cameraForCanvas, targetWorld) + screenOffset;
-
-        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
-                _panelRect.parent as RectTransform,
-                targetScreen,
-                cameraForCanvas,
-                out var worldPos))
-        {
-            _panelRect.position = worldPos;
-        }
+        HoverTooltipLayoutUtility.AlignPanelPivotToWorldPointWithLocalOffset(_panelRect, targetWorld, screenOffset);
     }
 }

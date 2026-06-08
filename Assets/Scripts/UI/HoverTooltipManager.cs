@@ -50,10 +50,10 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [Tooltip("When the hovered UI has no Canvas in parents (rare), parent the tooltip here.")]
     [SerializeField] private Canvas fallbackCanvas;
 
-    [Tooltip("Added to every show call’s screen offset (global nudge for all hover tooltips).")]
+    [Tooltip("Added to every show call’s anchor-local offset (canvas units; scales with Canvas Scaler).")]
     [SerializeField] private Vector2 hoverTooltipScreenOffset;
 
-    [Tooltip("Screen offset from the anchor when the trigger passes isAbove=true (replaces the caller offset, not added to it). Still adds Hover Tooltip Screen Offset.")]
+    [Tooltip("Anchor-local offset when the trigger passes isAbove=true (replaces the caller offset, not added to it). Still adds Hover Tooltip Screen Offset.")]
     [SerializeField] private Vector2 hoverAboveTooltipScreenOffset;
 
     HoverTooltipPanelUI _panel;
@@ -191,6 +191,7 @@ public sealed class HoverTooltipManager : MonoBehaviour
     /// <summary>
     /// Shows the shared panel aligned to <paramref name="anchor"/>.
     /// When <paramref name="isAbove"/> is true, uses <see cref="hoverAboveTooltipScreenOffset"/> instead of <paramref name="screenPixelOffset"/>.
+    /// Offsets are in the tooltip parent canvas's local space (reference-resolution units), not raw screen pixels.
     /// </summary>
     public void Show(
         RectTransform anchor,

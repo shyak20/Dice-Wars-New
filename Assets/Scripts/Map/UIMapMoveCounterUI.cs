@@ -14,7 +14,7 @@ public class UIMapMoveCounterUI : MonoBehaviour
     [Header("Optional hover tooltip")]
     [Tooltip("Graphic that receives pointer hover (e.g. full-rect Image behind the moves text).")]
     [SerializeField] private Graphic tooltipPointerTarget;
-    [Tooltip("Screen-space offset for the hover panel relative to the tooltip target.")]
+    [Tooltip("Anchor-local offset for the hover panel (canvas units; scales with Canvas Scaler).")]
     [SerializeField] private Vector2 hoverTooltipScreenOffset = new Vector2(0f, 24f);
     [SerializeField] private string hoverTooltipTitle = "Moves";
     [SerializeField, TextArea] private string hoverTooltipDescription = "";

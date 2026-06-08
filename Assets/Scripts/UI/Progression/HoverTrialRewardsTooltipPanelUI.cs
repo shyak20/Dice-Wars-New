@@ -123,22 +123,7 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
         if (panelRect == null)
             return;
 
-        var parentRect = panelRect.parent as RectTransform;
-        if (parentRect == null)
-            return;
-
-        var corners = new Vector3[4];
-        reference.GetWorldCorners(corners);
-        var centerWorld = (corners[0] + corners[2]) * 0.5f;
-
-        var parentCanvas = GetComponentInParent<Canvas>();
-        var cameraForCanvas = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? parentCanvas.worldCamera
-            : null;
-        var screen = RectTransformUtility.WorldToScreenPoint(cameraForCanvas, centerWorld) + screenOffset;
-
-        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(parentRect, screen, cameraForCanvas, out var world))
-            panelRect.position = world;
+        HoverTooltipLayoutUtility.AlignPanelPivotToRectCenterWithLocalOffset(panelRect, reference, screenOffset);
     }
 
     public void Hide()

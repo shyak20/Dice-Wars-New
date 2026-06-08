@@ -50,29 +50,18 @@ public class HoverTooltipPanelUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Aligns tooltip to the reference rect center, then applies screen-space pixel offset.
+    /// Aligns tooltip pivot to the reference rect center, then applies offset in canvas parent local space.
     /// </summary>
     public void AlignToRectWithScreenOffset(RectTransform reference, Vector2 screenOffset)
     {
-        if (reference == null || panelRoot == null) return;
+        if (reference == null || panelRoot == null)
+            return;
+
         var panelRect = panelRoot.transform as RectTransform;
-        if (panelRect == null) return;
+        if (panelRect == null)
+            return;
 
-        var parentRect = panelRect.parent as RectTransform;
-        if (parentRect == null) return;
-
-        var corners = new Vector3[4];
-        reference.GetWorldCorners(corners);
-        var centerWorld = (corners[0] + corners[2]) * 0.5f;
-
-        var parentCanvas = GetComponentInParent<Canvas>();
-        var cameraForCanvas = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? parentCanvas.worldCamera
-            : null;
-        var screen = RectTransformUtility.WorldToScreenPoint(cameraForCanvas, centerWorld) + screenOffset;
-
-        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(parentRect, screen, cameraForCanvas, out var world))
-            panelRect.position = world;
+        HoverTooltipLayoutUtility.AlignPanelPivotToRectCenterWithLocalOffset(panelRect, reference, screenOffset);
     }
 
     public void Hide()

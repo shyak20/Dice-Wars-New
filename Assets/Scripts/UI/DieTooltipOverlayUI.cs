@@ -93,11 +93,15 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
             return;
 
-        if (CurrentDie == die && dieTooltipPanel.activeSelf)
+        // Hover preview (facesInteractable=false) may already be showing this die; clicking the die
+        // must rebuild with clickable face slots — only skip duplicate non-interactive refreshes.
+        if (CurrentDie == die && dieTooltipPanel.activeSelf && !facesInteractable)
             return;
 
         CurrentDie = die;
         dieTooltipPanel.SetActive(true);
+        if (facesInteractable)
+            SetDecorativeRaycastBlocking(false);
         DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
