@@ -146,6 +146,8 @@ public class RunManager : MonoBehaviour
     /// <summary>Relics collected this run (shop, treasure, etc.).</summary>
     public IReadOnlyList<RelicSO> RunRelics => _runRelics;
 
+    public bool HasRunRelic(RelicSO relic) => relic != null && _runRelics.Contains(relic);
+
     public event Action OnRunRelicsChanged;
 
     /// <summary>Fired first when fight + shop preload completes — enable map visuals (e.g. intro roots) so UI under them is active before bootstrap.</summary>
@@ -416,6 +418,12 @@ public class RunManager : MonoBehaviour
             var exclusiveName = relic.ExclusiveHero != null ? relic.ExclusiveHero.DisplayName : "(missing exclusive hero)";
             Debug.LogError(
                 $"RunManager.AddRunRelic: relic '{relic.name}' is exclusive to '{exclusiveName}' and cannot be granted during a run as '{heroName}'.");
+            return;
+        }
+
+        if (_runRelics.Contains(relic))
+        {
+            Debug.LogWarning($"RunManager.AddRunRelic: relic '{relic.name}' is already owned this run.");
             return;
         }
 

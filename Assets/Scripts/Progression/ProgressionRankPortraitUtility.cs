@@ -13,23 +13,17 @@ public static class ProgressionRankPortraitUtility
     }
 
     /// <summary>
-    /// Active rank for <paramref name="character"/> from progression runtime when bound,
-    /// otherwise from that character's saved <see cref="ProgressionProfileSaveData.currentRankIndex"/>.
+    /// Active rank for <paramref name="character"/> from that character's saved
+    /// <see cref="ProgressionProfileSaveData.currentRankIndex"/> (each roster entry has its own save).
     /// </summary>
     public static PlayerRankSO GetActiveRank(PlayerDataSO character)
     {
-        if (character == null || character.progressionCatalog == null)
+        if (character?.progressionCatalog == null)
             return null;
-
-        var catalog = character.progressionCatalog;
-        var progression = ProgressionManager.TryGetRuntime();
-
-        if (progression != null && progression.IsInitializedFor(character))
-            return progression.GetActiveRank();
 
         var save = ProgressionSaveService.Load(character.MetaSaveId);
         var rankIndex = save != null ? save.currentRankIndex : 0;
-        return catalog.GetRankOrNull(rankIndex);
+        return character.progressionCatalog.GetRankOrNull(rankIndex);
     }
 
     public static bool TryGetNextRank(PlayerDataSO character, PlayerRankSO currentRank, out PlayerRankSO nextRank)

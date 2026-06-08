@@ -10,7 +10,7 @@ public class RelicLootTableSO : ScriptableObject
 
     public List<RelicSO> GetRandomRelics(int count) => GetRandomRelicsFromPool(count, allPossibleRelics);
 
-    public List<RelicSO> GetRandomRelicsFromPool(int count, List<RelicSO> candidatePool)
+    public List<RelicSO> GetRandomRelicsFromPool(int count, List<RelicSO> candidatePool, bool uniqueInBatch = true)
     {
         var selected = new List<RelicSO>();
         if (candidatePool == null || candidatePool.Count == 0)
@@ -31,16 +31,23 @@ public class RelicLootTableSO : ScriptableObject
             var totalWeight = pool.Sum(r => rarityConfig.GetWeight(r.rarity));
             var roll = UnityEngine.Random.Range(0, totalWeight);
             var acc = 0;
+            RelicSO picked = null;
             foreach (var r in pool)
             {
                 acc += rarityConfig.GetWeight(r.rarity);
                 if (roll < acc)
                 {
-                    selected.Add(r);
-                    pool.Remove(r);
+                    picked = r;
                     break;
                 }
             }
+
+            if (picked == null)
+                continue;
+
+            selected.Add(picked);
+            if (uniqueInBatch)
+                pool.Remove(picked);
         }
 
         return selected;

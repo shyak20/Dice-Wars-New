@@ -73,7 +73,23 @@ public class UIShopWindow : MonoBehaviour
     void OnRunRelicsChangedForShop()
     {
         RefreshShopPricesFromRelics();
+        MarkOwnedRelicOffersSold();
         RebuildOfferUi();
+    }
+
+    void MarkOwnedRelicOffersSold()
+    {
+        var run = RunManager.Instance;
+        if (run == null)
+            return;
+
+        foreach (var o in _relic)
+        {
+            if (o?.Relic == null || o.Sold)
+                continue;
+            if (run.HasRunRelic(o.Relic))
+                o.Sold = true;
+        }
     }
 
     /// <summary>Recompute listed prices from current relic modifiers (e.g. shop discount relic) without re-rolling offers.</summary>

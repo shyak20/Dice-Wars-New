@@ -47,7 +47,13 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         ProgressionManager.OnCharacterProgressionChanged -= OnCharacterProgressionChanged;
     }
 
-    void OnCharacterProgressionChanged(PlayerDataSO _) => RefreshAllCharacterButtonPortraits();
+    void OnCharacterProgressionChanged(PlayerDataSO changed)
+    {
+        RefreshAllCharacterButtonPortraits();
+
+        if (TryGetSelectedCharacter(out var selected) && selected == changed)
+            RefreshCharacterPresentationOnly(selected, replayPortraitReveal: false);
+    }
 
     void OnDeferredProgressionRefreshRequested() => RefreshCharacterDisplay(replayPortraitReveal: false);
 

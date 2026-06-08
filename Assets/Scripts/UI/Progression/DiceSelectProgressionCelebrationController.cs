@@ -139,6 +139,7 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
                 }
 
                 progression.AcknowledgeRankUpCelebration();
+                diceSelectSceneController.RefreshCharacterDisplayPublic();
             }
         }
         finally

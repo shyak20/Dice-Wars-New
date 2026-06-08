@@ -29,7 +29,7 @@ public static class ProgressionLootRolls
         return table.GetRandomGemsFromPool(count, pool);
     }
 
-    public static List<RelicSO> RollRelics(RelicLootTableSO table, int count)
+    public static List<RelicSO> RollRelics(RelicLootTableSO table, int count, bool uniqueInBatch = false)
     {
         if (table == null)
             return new List<RelicSO>();
@@ -41,7 +41,9 @@ public static class ProgressionLootRolls
         else
             pool = ProgressionLootFilter.FilterRelicsHeroOnly(table.allPossibleRelics, mgr?.ActiveCharacterTemplate);
 
-        return table.GetRandomRelicsFromPool(count, pool);
+        // Only run-owned relics are removed — unowned relics stay in the pool for every future roll until acquired.
+        pool = RunRelicDraftFilter.ExcludeRunOwned(pool);
+        return table.GetRandomRelicsFromPool(count, pool, uniqueInBatch);
     }
 
     public static List<DieAssetSO> RollDice(

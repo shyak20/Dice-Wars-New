@@ -104,7 +104,7 @@ public sealed class DiceSelectCharacterStatsDisplay : MonoBehaviour
 
         if (rankNameText != null)
         {
-            var rank = progression != null ? progression.GetActiveRank() : null;
+            var rank = ProgressionRankPortraitUtility.GetActiveRank(character);
             rankNameText.text = FormatRankName(rank);
         }
 
