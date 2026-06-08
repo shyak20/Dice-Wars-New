@@ -158,6 +158,13 @@ public class CombatManager : MonoBehaviour
     /// <summary>Per die: how many times <see cref="TryScheduleGemBatchRandomRerollsSkipPower"/> succeeded this roll batch (cleared when a new batch starts).</summary>
     private readonly Dictionary<DieAssetSO, int> _gemBonusRollChainActivationsByDieThisBatch = new Dictionary<DieAssetSO, int>();
     private readonly HashSet<int> _gemScheduledBatchRerollIndices = new HashSet<int>();
+    private readonly HashSet<FaceResult> _facesAwaitingPostSubmitTriggeringReroll = new HashSet<FaceResult>();
+    private readonly HashSet<FaceResult> _faceOutcomesSubmitted = new HashSet<FaceResult>();
+    private readonly HashSet<int> _postSubmitRerollWaitingIndices = new HashSet<int>();
+    private readonly Dictionary<int, DieFaceSO> _postSubmitRerollSettledFaces = new Dictionary<int, DieFaceSO>();
+    private readonly Dictionary<int, DieAssetSO> _batchDieAssetByGatherIndex = new Dictionary<int, DieAssetSO>();
+    /// <summary>Faces with post-submit <see cref="RerollDieAction"/> still resolving; bust / perfect cast waits until zero.</summary>
+    private int _deferredTriggeringRerollFacesRemaining;
     private readonly HashSet<int> _noPowerOnNextGatherCommit = new HashSet<int>();
     private readonly HashSet<int> _gemBatchRerollIndicesInFlight = new HashSet<int>();
     private int _rollBatchId;
@@ -938,6 +945,7 @@ public class CombatManager : MonoBehaviour
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
         _pendingDieSourceByIndex = null;
+        ClearPostSubmitTriggeringRerollState();
         overchargeBonus = 0;
         appliedMultiplier = 1;
         bustProtected = false;
@@ -1084,6 +1092,7 @@ public class CombatManager : MonoBehaviour
         _noPowerOnNextGatherCommit.Clear();
         _gemBatchRerollIndicesInFlight.Clear();
         _pendingRerollGrants = 0;
+        ClearPostSubmitTriggeringRerollState();
         _echoSkipsPowerThisBatch = player != null &&
                                    player.StatusEffects.TryConsumeEchoPowerSkipForNextRollBatch(BuildStatusContext());
         expectedDiceCount = selectedDice.Count;
@@ -1110,6 +1119,14 @@ public class CombatManager : MonoBehaviour
     {
         if (face == null || expectedDiceCount <= 0) return;
         if (batchIndex < 0 || batchIndex >= expectedDiceCount) return;
+
+        if (_postSubmitRerollWaitingIndices.Contains(batchIndex))
+        {
+            _postSubmitRerollSettledFaces[batchIndex] = face;
+            _postSubmitRerollWaitingIndices.Remove(batchIndex);
+            return;
+        }
+
         if (_pendingTopFaceByDieIndex == null || _pendingTopFaceByDieIndex.Length != expectedDiceCount) return;
 
         _pendingTopFaceByDieIndex[batchIndex] = face;
@@ -1161,12 +1178,6 @@ public class CombatManager : MonoBehaviour
         var playerChoiceRerolls = CountRerollGrantsFromAllPendingFaces(RerollDieAction.RerollDieScope.PlayerChoosesAnyDie);
         if (rerollDieSelection == null && playerChoiceRerolls > 0)
             Debug.LogError("CombatManager: Reroll Die on a face but rerollDieSelection is not assigned.");
-
-        if (_pendingTopFaceByDieIndex != null)
-        {
-            for (var dieIdx = 0; dieIdx < _pendingTopFaceByDieIndex.Length; dieIdx++)
-                yield return CoProcessTriggeringRerollsAtDieIndex(dieIdx);
-        }
 
         _pendingRerollGrants = CountRerollGrantsFromAllPendingFaces(RerollDieAction.RerollDieScope.PlayerChoosesAnyDie);
         while (_pendingRerollGrants > 0 && rerollDieSelection != null)
@@ -1229,6 +1240,8 @@ public class CombatManager : MonoBehaviour
             var dieAsset = _pendingBatchDiceAssets != null && i < _pendingBatchDiceAssets.Count
                 ? _pendingBatchDiceAssets[i]
                 : null;
+            if (dieAsset != null)
+                _batchDieAssetByGatherIndex[i] = dieAsset;
             var skipPower = _noPowerOnNextGatherCommit.Remove(i);
             CommitResolvedRoll(f, t, dieAsset, i, skipPower);
             yield return CoDrainGemScheduledRerolls();
@@ -1241,9 +1254,13 @@ public class CombatManager : MonoBehaviour
         _pendingTopFaceByDieIndex = null;
         _pendingDieSourceByIndex = null;
         _pendingBatchDiceAssets = null;
+        _batchDieAssetByGatherIndex.Clear();
 
         yield return new WaitUntil(() => pendingRollVisualRaiseSequences <= 0);
-        ProcessPrecisionQueue();
+        if (_deferredTriggeringRerollFacesRemaining > 0)
+            _postRaiseCombatGateOpen = true;
+        else
+            ProcessPrecisionQueue();
     }
 
     private IEnumerator CoAfterRollVisualsThen(Action onComplete)
@@ -1411,7 +1428,151 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private void CommitResolvedRoll(DieFaceSO face, Transform dieWorldSource, DieAssetSO sourceDieAsset, int batchGatherIndex, bool skipPowerContribution)
+    public bool FaceHasPendingPostSubmitTriggeringReroll(FaceResult face) =>
+        face != null && _facesAwaitingPostSubmitTriggeringReroll.Contains(face);
+
+    /// <summary>
+    /// Called when every flyout line and drag token for <paramref name="face"/> has been applied.
+    /// Triggers a deferred <see cref="RerollDieAction"/> reroll or dissolves the die.
+    /// </summary>
+    public void NotifyFaceOutcomesSubmitted(FaceResult face)
+    {
+        if (face == null || !_faceOutcomesSubmitted.Add(face))
+            return;
+
+        if (_facesAwaitingPostSubmitTriggeringReroll.Remove(face))
+        {
+            StartCoroutine(CoExecutePostSubmitTriggeringReroll(face));
+            return;
+        }
+
+        TryDissolveDieForFace(face);
+    }
+
+    private void TryDissolveDieForFace(FaceResult face)
+    {
+        if (face?.DieSource == null || spawner == null)
+            return;
+
+        spawner.BeginDissolveAndDestroyDie(face.DieSource.gameObject);
+    }
+
+    private void ClearPostSubmitTriggeringRerollState()
+    {
+        _facesAwaitingPostSubmitTriggeringReroll.Clear();
+        _faceOutcomesSubmitted.Clear();
+        _postSubmitRerollWaitingIndices.Clear();
+        _postSubmitRerollSettledFaces.Clear();
+        _batchDieAssetByGatherIndex.Clear();
+        _deferredTriggeringRerollFacesRemaining = 0;
+    }
+
+    private void CompleteDeferredTriggeringRerollFace()
+    {
+        if (_deferredTriggeringRerollFacesRemaining <= 0)
+            return;
+
+        _deferredTriggeringRerollFacesRemaining--;
+        TryFinalizeBatchOutcomeAfterDeferredRerolls();
+    }
+
+    private void TryFinalizeBatchOutcomeAfterDeferredRerolls()
+    {
+        if (_deferredTriggeringRerollFacesRemaining > 0)
+            return;
+
+        ProcessPrecisionQueue();
+    }
+
+    private IEnumerator CoWaitUntilFaceOutcomesSubmitted(FaceResult face)
+    {
+        if (face == null || _faceOutcomesSubmitted.Contains(face))
+            yield break;
+
+        const float timeoutSeconds = 120f;
+        var elapsed = 0f;
+        while (!_faceOutcomesSubmitted.Contains(face) && elapsed < timeoutSeconds)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (!_faceOutcomesSubmitted.Contains(face))
+            Debug.LogError($"CombatManager: Timed out waiting for face '{face.Face?.name}' outcomes to submit before post-submit reroll dissolve.");
+    }
+
+    private IEnumerator CoExecutePostSubmitTriggeringReroll(FaceResult sourceFaceResult)
+    {
+        try
+        {
+            if (sourceFaceResult == null || spawner == null)
+                yield break;
+
+            var face = sourceFaceResult.Face;
+            var grantsRemaining = CountRerollGrantsOnFace(face, RerollDieAction.RerollDieScope.RerollTriggeringDieOnly);
+            var dieTransform = sourceFaceResult.DieSource;
+            var dieIdx = sourceFaceResult.BatchGatherIndex;
+
+            while (grantsRemaining > 0 && face != null)
+            {
+                grantsRemaining--;
+                if (!TryGetTriggeringRerollAction(face, out var rerollAction))
+                    break;
+
+                if (rerollAction.SkipRerollWhenPerfectCast && QualifiesForPerfectCast())
+                    break;
+
+                var dieGo = dieTransform != null ? dieTransform.gameObject : spawner.GetActiveDieGameObject(dieIdx);
+                if (dieGo == null)
+                {
+                    Debug.LogWarning($"CombatManager: Post-submit reroll — no die for batch index {dieIdx}.");
+                    yield break;
+                }
+
+                dieTransform = dieGo.transform;
+                var keepFace = rerollAction.KeepSameFaceOnReroll;
+
+                _postSubmitRerollSettledFaces.Remove(dieIdx);
+                _postSubmitRerollWaitingIndices.Add(dieIdx);
+                spawner.RerollDiePhysics(dieGo);
+                yield return new WaitUntil(() => !_postSubmitRerollWaitingIndices.Contains(dieIdx));
+
+                DieFaceSO newFace;
+                if (keepFace)
+                    newFace = face;
+                else if (!_postSubmitRerollSettledFaces.TryGetValue(dieIdx, out newFace) || newFace == null)
+                {
+                    Debug.LogError($"CombatManager: Post-submit reroll — no settled face for batch index {dieIdx}.");
+                    yield break;
+                }
+
+                _postSubmitRerollSettledFaces.Remove(dieIdx);
+
+                var dieAsset = sourceFaceResult.SourceDieAsset;
+                if (dieAsset == null && dieIdx >= 0)
+                    _batchDieAssetByGatherIndex.TryGetValue(dieIdx, out dieAsset);
+
+                CommitResolvedRoll(newFace, dieTransform, dieAsset, dieIdx, skipPowerContribution: false, allowPostSubmitTriggeringReroll: false);
+
+                face = newFace;
+                if (!keepFace && face != null)
+                    grantsRemaining += CountRerollGrantsOnFace(face, RerollDieAction.RerollDieScope.RerollTriggeringDieOnly);
+
+                if (channeledFaces.Count > 0)
+                {
+                    var latestResult = channeledFaces[channeledFaces.Count - 1];
+                    yield return CoWaitUntilFaceOutcomesSubmitted(latestResult);
+                }
+            }
+        }
+        finally
+        {
+            CompleteDeferredTriggeringRerollFace();
+            TryDissolveDieForFace(sourceFaceResult);
+        }
+    }
+
+    private void CommitResolvedRoll(DieFaceSO face, Transform dieWorldSource, DieAssetSO sourceDieAsset, int batchGatherIndex, bool skipPowerContribution, bool allowPostSubmitTriggeringReroll = true)
     {
         _gemBatchRerollIndicesInFlight.Remove(batchGatherIndex);
         _faceResolveSequence++;
@@ -1443,7 +1604,15 @@ public class CombatManager : MonoBehaviour
         }
 
         result.DieSource = dieWorldSource;
+        result.SourceDieAsset = sourceDieAsset;
+        result.BatchGatherIndex = batchGatherIndex;
         result.BatchId = _rollBatchId;
+        if (allowPostSubmitTriggeringReroll && TryGetTriggeringRerollAction(face, out _))
+        {
+            result.AwaitingPostSubmitTriggeringReroll = true;
+            _facesAwaitingPostSubmitTriggeringReroll.Add(result);
+            _deferredTriggeringRerollFacesRemaining++;
+        }
         result.PowerContributionThisResolve =
             (_echoSkipsPowerThisBatch || skipPowerContribution) ? 0 : modifiedValue;
         result.KineticShieldBonusContribution = kineticArmorThisRoll ? 1 : 0;
@@ -1578,7 +1747,20 @@ public class CombatManager : MonoBehaviour
                 payload.BindRaiseFinished(OnRollVisualRaiseFinished);
                 CombatEvents.OnDiceRollVisualFeedback.Invoke(payload);
             }
+            else if (result.AwaitingPostSubmitTriggeringReroll)
+                StartCoroutine(CoNotifyFaceSubmittedWhenNoVisuals(result));
         }
+    }
+
+    private IEnumerator CoNotifyFaceSubmittedWhenNoVisuals(FaceResult face)
+    {
+        yield return null;
+        if (face == null || !_facesAwaitingPostSubmitTriggeringReroll.Contains(face))
+            yield break;
+        if (targetAssignment != null && targetAssignment.HasPendingTokensForFace(face))
+            yield break;
+
+        NotifyFaceOutcomesSubmitted(face);
     }
 
     private void OnRollVisualRaiseFinished()
@@ -2159,14 +2341,22 @@ public class CombatManager : MonoBehaviour
         _postRaiseCombatGateOpen = true;
     }
 
+    private bool QualifiesForPerfectCast()
+    {
+        if (currentPower == maxPower)
+            return true;
+        if (maxPower > 1 && currentPower == maxPower - 1 &&
+            RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this))
+            return true;
+        if (currentPower == maxPower + 1 &&
+            RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this))
+            return true;
+        return false;
+    }
+
     private void CheckBustStatus()
     {
-        var perfectAtMax = currentPower == maxPower;
-        var perfectAtMaxMinusOne = maxPower > 1 && currentPower == maxPower - 1 &&
-                                   RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this);
-        var perfectAtMaxPlusOne = currentPower == maxPower + 1 &&
-                                  RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this);
-        if (perfectAtMax || perfectAtMaxMinusOne || perfectAtMaxPlusOne)
+        if (QualifiesForPerfectCast())
         {
             ProgressionEventBridge.NotifyPerfectCast();
             var poolsBefore = SnapshotStoredActionsPool();
@@ -2298,12 +2488,7 @@ public class CombatManager : MonoBehaviour
     {
         if (currentState != CombatState.WaitingForRoll) return;
 
-        var perfectAtMax = currentPower == maxPower;
-        var perfectAtMaxMinusOne = maxPower > 1 && currentPower == maxPower - 1 &&
-                                   RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxMinusOne, this);
-        var perfectAtMaxPlusOne = currentPower == maxPower + 1 &&
-                                  RelicActionRunner.QueryBoolOr(RelicPhases.QueryPerfectAtMaxPlusOne, this);
-        if (perfectAtMax || perfectAtMaxMinusOne || perfectAtMaxPlusOne || currentPower > maxPower)
+        if (QualifiesForPerfectCast() || currentPower > maxPower)
         {
             CheckBustStatusAndOpenFlyoutGate();
             return;
@@ -3400,6 +3585,7 @@ public class CombatManager : MonoBehaviour
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
         _pendingDieSourceByIndex = null;
+        ClearPostSubmitTriggeringRerollState();
         turnEndActions.Clear();
         overchargeBonus = 0;
         appliedMultiplier = 1;

@@ -12,6 +12,13 @@ public class RelicSO : ScriptableObject
     [Tooltip("When non-zero, the relic bar shows Text BG and this number (e.g. stack counter).")]
     public int barBenefitDisplayValue;
 
+    [Header("Hero availability")]
+    [Tooltip("When unset, any hero can draft this relic. When set, only this hero's runs can roll or receive it.")]
+    [SerializeField] private PlayerDataSO exclusiveHero;
+
+    public PlayerDataSO ExclusiveHero => exclusiveHero;
+    public bool IsGenericRelic => exclusiveHero == null;
+
     [Header("Passive actions")]
     [Tooltip("Run in relic phases (see RelicPhases). Use + to add types under RelicGameActionBase only.")]
     [SerializeReference] public List<RelicGameActionBase> actions = new List<RelicGameActionBase>();

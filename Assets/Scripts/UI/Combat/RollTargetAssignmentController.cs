@@ -29,6 +29,20 @@ public class RollTargetAssignmentController : MonoBehaviour
 
     public bool HasPendingAssignments => _pendingTokens.Count > 0;
 
+    public bool HasPendingTokensForFace(FaceResult face)
+    {
+        if (face == null)
+            return false;
+        for (var i = 0; i < _pendingTokens.Count; i++)
+        {
+            var token = _pendingTokens[i];
+            if (token != null && token.Face == face)
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>Parent the spawned tokens live under. Defaults to <see cref="tokenParent"/>; the flyout can override it to its own canvas.</summary>
     public RectTransform TokenSpawnParent => _spawnParentOverride != null ? _spawnParentOverride : tokenParent;
 
@@ -169,8 +183,8 @@ public class RollTargetAssignmentController : MonoBehaviour
                 return;
         }
 
-        if (combat?.spawner != null)
-            combat.spawner.BeginDissolveAndDestroyDie(face.DieSource.gameObject);
+        if (combat != null)
+            combat.NotifyFaceOutcomesSubmitted(face);
     }
 
     /// <summary>Token drag ended without a valid drop — it stays pending where it was released.</summary>

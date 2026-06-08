@@ -33374,6 +33374,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: Settings Screen
       objectReference: {fileID: 0}
+    - target: {fileID: 2601794854148431248, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2601794854148431248, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2601794854148431248, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4962636970513599560, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4962636970513599560, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6605648850771468305, guid: c6289f8af0e37324095df8ea32e69c1b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

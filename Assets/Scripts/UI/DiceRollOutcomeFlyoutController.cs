@@ -442,7 +442,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
                     Vector2 soloStart = stackRestAnchored[i];
                     Vector2 soloMid = (soloStart + soloEnd) * 0.5f + Vector2.up * arcHeightPixels;
-                    TryBeginDieDissolve(payload.DieTransform);
+                    TryBeginDieDissolveForPayload(payload);
                     flyCoroutines.Add(StartCoroutine(FlyLineToEnemyAssignRoutine(
                         payload, lineRects[i], soloStart, soloMid, soloEnd, line, soloEnemy,
                         applyToSharedPool: !soloIsEnemyOwnPool)));
@@ -467,7 +467,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 var statusTarget = ResolveStatusTarget(line);
                 var applyPoolDelta = ShouldApplyPoolDelta(line, statusTarget);
                 if (applyPoolDelta)
-                    TryBeginDieDissolve(payload.DieTransform);
+                    TryBeginDieDissolveForPayload(payload);
                 flyCoroutines.Add(StartCoroutine(FlyLineRoutine(lineRects[i], startLocal, mid, endLocal, line, applyPoolDelta)));
             }
 
@@ -483,6 +483,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 EndFreezeStatusBar(StatusEffectTarget.Player);
             if (frozeEnemyForFlyout)
                 EndFreezeStatusBar(StatusEffectTarget.Enemy);
+            TryNotifyFaceOutcomesSubmittedIfReady(payload);
             payload.ReportRaiseFinished();
             payload.ReportVisualFinished();
         }
@@ -668,7 +669,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             yield break;
         }
 
-        TryBeginDieDissolve(payload != null ? payload.DieTransform : null);
+        TryBeginDieDissolveForPayload(payload);
 
         var assignRoutines = new List<Coroutine>();
         for (var e = 0; e < enemies.Count; e++)
@@ -834,6 +835,30 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
 
         Destroy(rt.gameObject);
+    }
+
+    private void TryNotifyFaceOutcomesSubmittedIfReady(DiceRollVisualPayload payload)
+    {
+        if (payload?.SourceFace == null || combat == null)
+            return;
+        if (HasPendingTokensForFace(payload.SourceFace))
+            return;
+
+        combat.NotifyFaceOutcomesSubmitted(payload.SourceFace);
+    }
+
+    private bool HasPendingTokensForFace(FaceResult face)
+    {
+        var assignment = ResolveTargetAssignment();
+        return assignment != null && assignment.HasPendingTokensForFace(face);
+    }
+
+    private void TryBeginDieDissolveForPayload(DiceRollVisualPayload payload)
+    {
+        if (payload?.SourceFace != null && combat != null && combat.FaceHasPendingPostSubmitTriggeringReroll(payload.SourceFace))
+            return;
+
+        TryBeginDieDissolve(payload != null ? payload.DieTransform : null);
     }
 
     private void TryBeginDieDissolve(Transform dieTransform)

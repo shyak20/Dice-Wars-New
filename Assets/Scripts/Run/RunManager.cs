@@ -409,6 +409,16 @@ public class RunManager : MonoBehaviour
             return;
         }
 
+        var activeHero = ProgressionManager.TryGetRuntime()?.ActiveCharacterTemplate;
+        if (!RelicHeroEligibility.IsDraftableForHero(relic, activeHero))
+        {
+            var heroName = activeHero != null ? activeHero.DisplayName : "(no active hero)";
+            var exclusiveName = relic.ExclusiveHero != null ? relic.ExclusiveHero.DisplayName : "(missing exclusive hero)";
+            Debug.LogError(
+                $"RunManager.AddRunRelic: relic '{relic.name}' is exclusive to '{exclusiveName}' and cannot be granted during a run as '{heroName}'.");
+            return;
+        }
+
         _runRelics.Add(relic);
         OnRunRelicsChanged?.Invoke();
     }

@@ -35,9 +35,11 @@ public static class ProgressionLootRolls
             return new List<RelicSO>();
 
         var mgr = ProgressionManager.TryGetRuntime();
-        var pool = mgr != null && mgr.Catalog != null
-            ? ProgressionLootFilter.FilterRelics(table.allPossibleRelics, mgr.Catalog, mgr)
-            : table.allPossibleRelics;
+        List<RelicSO> pool;
+        if (mgr != null && mgr.Catalog != null)
+            pool = ProgressionLootFilter.FilterRelics(table.allPossibleRelics, mgr.Catalog, mgr);
+        else
+            pool = ProgressionLootFilter.FilterRelicsHeroOnly(table.allPossibleRelics, mgr?.ActiveCharacterTemplate);
 
         return table.GetRandomRelicsFromPool(count, pool);
     }

@@ -8865,7 +8865,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 19.68
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -10337,10 +10337,10 @@ MonoBehaviour:
   natureDestroyEffect: {fileID: 0}
   curseDestroyEffect: {fileID: 323892667531381255, guid: 9235f4497b1abe8408bed427b0b99303, type: 3}
   effectLifetime: 4
-  minForwardForce: 140
-  maxForwardForce: 220
-  minUpwardForce: 200
-  maxUpwardForce: 350
+  minForwardForce: 280
+  maxForwardForce: 440
+  minUpwardForce: 400
+  maxUpwardForce: 700
   minTorque: 10
   maxTorque: 80
 --- !u!4 &1048341407
@@ -33475,7 +33475,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 19.68
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x

@@ -10,6 +10,15 @@ public class FaceResult
     /// <summary>Optional: physical die instance that produced this result (used for reroll picking).</summary>
     public Transform DieSource { get; set; }
 
+    /// <summary>Die asset from the roll batch that produced this resolve (gems, socket effects).</summary>
+    public DieAssetSO SourceDieAsset { get; set; }
+
+    /// <summary>Index within the current roll batch spawn order.</summary>
+    public int BatchGatherIndex { get; set; } = -1;
+
+    /// <summary>When set, <see cref="RerollDieAction"/> with <c>RerollTriggeringDieOnly</c> runs after this face's outcomes are submitted.</summary>
+    public bool AwaitingPostSubmitTriggeringReroll { get; set; }
+
     /// <summary>Power actually added for this face (0 when Echo skips power for the batch).</summary>
     public int PowerContributionThisResolve { get; set; }
 

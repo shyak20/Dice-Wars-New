@@ -49,13 +49,10 @@ public static class ProgressionLootFilter
         return result;
     }
 
-    public static List<RelicSO> FilterRelics(IReadOnlyList<RelicSO> pool, ProgressionCatalogSO catalog, ProgressionManager manager)
+    public static List<RelicSO> FilterRelicsHeroOnly(IReadOnlyList<RelicSO> pool, PlayerDataSO activeHero)
     {
         if (pool == null || pool.Count == 0)
             return new List<RelicSO>();
-
-        if (catalog == null || manager == null)
-            return CopyNonNull(pool);
 
         var result = new List<RelicSO>();
         for (var i = 0; i < pool.Count; i++)
@@ -63,8 +60,33 @@ public static class ProgressionLootFilter
             var relic = pool[i];
             if (relic == null)
                 continue;
-            if (IsAllowed(ProgressionContentIds.ForRelic(relic), catalog, manager))
+            if (RelicHeroEligibility.IsDraftableForHero(relic, activeHero))
                 result.Add(relic);
+        }
+
+        return result;
+    }
+
+    public static List<RelicSO> FilterRelics(IReadOnlyList<RelicSO> pool, ProgressionCatalogSO catalog, ProgressionManager manager)
+    {
+        if (pool == null || pool.Count == 0)
+            return new List<RelicSO>();
+
+        if (catalog == null || manager == null)
+            return FilterRelicsHeroOnly(pool, activeHero: null);
+
+        var activeHero = manager.ActiveCharacterTemplate;
+        var result = new List<RelicSO>();
+        for (var i = 0; i < pool.Count; i++)
+        {
+            var relic = pool[i];
+            if (relic == null)
+                continue;
+            if (!IsAllowed(ProgressionContentIds.ForRelic(relic), catalog, manager))
+                continue;
+            if (!RelicHeroEligibility.IsDraftableForHero(relic, activeHero))
+                continue;
+            result.Add(relic);
         }
 
         return result;

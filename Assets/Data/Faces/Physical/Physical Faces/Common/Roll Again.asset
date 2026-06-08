@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Harness <style=Damage>2</style>
   descriptionLines:
   - Deal <style=Attack>2</style>
-  - Roll this die again
+  - If you didn't reach Perfect Cast, roll this die again
   value: 2
   type: 0
   faceMaterial: {fileID: 2100000, guid: 52b940e1549b9774ebc0a8ab346d6eab, type: 2}
@@ -38,3 +38,4 @@ MonoBehaviour:
         activateImmediately: 0
         scope: 1
         keepSameFaceOnReroll: 1
+        skipRerollWhenPerfectCast: 1
