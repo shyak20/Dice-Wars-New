@@ -185,6 +185,7 @@ public class RolledOutcomeToken : MonoBehaviour
     {
         _canvasGroup.blocksRaycasts = true;
         _canvasGroup.alpha = 1f;
+        EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
         // If not consumed by an EnemyDropTarget.OnDrop, the token stays pending where it was released.
         if (_owner != null)
             _owner.NotifyTokenDragEnded(this);

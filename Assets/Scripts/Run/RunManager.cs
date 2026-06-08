@@ -546,6 +546,14 @@ public class RunManager : MonoBehaviour
         PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed(combatSceneName);
     }
 
+    /// <summary>Uses <see cref="mapSceneName"/> when returning from fight/shop without a full scene reload.</summary>
+    void TryBeginMapSceneMusicCrossfade()
+    {
+        if (string.IsNullOrEmpty(mapSceneName))
+            return;
+        PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed(mapSceneName);
+    }
+
     /// <summary>Returns to main menu and clears run HP, gold, and map progress.</summary>
     public void LoadMainMenuScene()
     {
@@ -920,6 +928,7 @@ public class RunManager : MonoBehaviour
         {
             DeactivateCapturedRoots(_fightRootDefaultActives);
             DeactivateCapturedRoots(_shopRootDefaultActives);
+            TryBeginMapSceneMusicCrossfade();
 
             if (_useMapBasedRun && preloadFightAndShopWhileOnMap)
             {

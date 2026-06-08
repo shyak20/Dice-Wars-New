@@ -21,6 +21,9 @@ public class RollTargetAssignmentController : MonoBehaviour
     [SerializeField] private RolledOutcomeToken tokenPrefab;
     [Tooltip("Optional. Prompt shown while the player still has outcomes to assign.")]
     [SerializeField] private GameObject assignPrompt;
+    [Header("Drag hover feedback")]
+    [Tooltip("Outline material applied to enemy sprites while a token is dragged over them. Per-enemy overrides on EnemyCombatPresentationController take precedence.")]
+    [SerializeField] private Material dragHoverOutlineMaterial;
 
     private readonly List<RolledOutcomeToken> _pendingTokens = new List<RolledOutcomeToken>();
     private Action _onAllAssigned;
@@ -28,6 +31,8 @@ public class RollTargetAssignmentController : MonoBehaviour
     private RectTransform _spawnParentOverride;
 
     public bool HasPendingAssignments => _pendingTokens.Count > 0;
+
+    public static Material SharedDragHoverOutlineMaterial { get; private set; }
 
     public bool HasPendingTokensForFace(FaceResult face)
     {
@@ -66,6 +71,13 @@ public class RollTargetAssignmentController : MonoBehaviour
 
         DisableTokenParentBackgroundRaycast();
         SetPrompt(false);
+        SharedDragHoverOutlineMaterial = dragHoverOutlineMaterial;
+    }
+
+    private void OnDestroy()
+    {
+        if (ReferenceEquals(SharedDragHoverOutlineMaterial, dragHoverOutlineMaterial))
+            SharedDragHoverOutlineMaterial = null;
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -8,11 +9,17 @@ using UnityEngine;
 /// </summary>
 public sealed class EnemyCombatPresentationController : MonoBehaviour
 {
+    private static readonly List<EnemyCombatPresentationController> HoverOutlineRegistry = new List<EnemyCombatPresentationController>();
+
     private static readonly int FlashAmountID = Shader.PropertyToID("_FlashAmount");
     private static readonly int FlashColorID = Shader.PropertyToID("_FlashColor");
 
     [Header("Enemy sprite (shader flash)")]
     [SerializeField] private SpriteRenderer enemySprite;
+
+    [Header("Drag assign hover")]
+    [Tooltip("Applied to the enemy sprite while a rolled outcome token is dragged over this enemy. Falls back to RollTargetAssignmentController when unset.")]
+    [SerializeField] private Material dragHoverOutlineMaterial;
 
     [Header("Enemy animator (optional)")]
     [Tooltip("Animator on the enemy presentation hierarchy. Runtime controller and idle come from EnemyTypeSO.")]
@@ -36,7 +43,10 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
     [SerializeField, Min(0.02f)] private float physicalDamageIndicatorSeconds = 0.5f;
 
     private EnemyController _enemy;
+    private Material _defaultMaterial;
+    private Material _outlineMaterialRuntime;
     private Material _enemyMaterial;
+    private bool _dragHoverOutlineActive;
     private Coroutine _spriteFlashRoutine;
     private Coroutine _orbRoutine;
     private Coroutine _physicalRoutine;
@@ -53,7 +63,8 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
 
         if (enemySprite != null)
         {
-            _enemyMaterial = enemySprite.material;
+            _defaultMaterial = enemySprite.material;
+            _enemyMaterial = _defaultMaterial;
             _enemyMaterial.SetColor(FlashColorID, physicalSpriteFlashColor);
             _enemyMaterial.SetFloat(FlashAmountID, 0f);
         }
@@ -94,11 +105,63 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         if (burnDamageIndicator != null) burnDamageIndicator.SetActive(false);
         if (orbImpactIndicator != null) orbImpactIndicator.SetActive(false);
 
-        if (_enemyMaterial != null)
+        if (_enemyMaterial != null && !_dragHoverOutlineActive)
         {
             _enemyMaterial.SetFloat(FlashAmountID, 0f);
             _enemyMaterial.SetColor(FlashColorID, physicalSpriteFlashColor);
         }
+
+        SetDragAssignHoverOutline(false);
+    }
+
+    /// <summary>Clears drag-hover outline on every enemy presentation (e.g. when a token drag ends without a drop).</summary>
+    public static void ClearAllDragAssignHoverOutlines()
+    {
+        for (var i = HoverOutlineRegistry.Count - 1; i >= 0; i--)
+        {
+            var controller = HoverOutlineRegistry[i];
+            if (controller != null)
+                controller.SetDragAssignHoverOutline(false);
+        }
+    }
+
+    public bool HasDragHoverOutlineConfigured => ResolveDragHoverOutlineMaterial() != null;
+
+    public void SetDragAssignHoverOutline(bool active)
+    {
+        if (enemySprite == null || _defaultMaterial == null)
+            return;
+
+        if (active)
+        {
+            var outline = ResolveDragHoverOutlineMaterial();
+            if (outline == null)
+                return;
+
+            if (_outlineMaterialRuntime == null || _outlineMaterialRuntime.shader != outline.shader)
+                _outlineMaterialRuntime = new Material(outline);
+
+            if (_dragHoverOutlineActive && enemySprite.material == _outlineMaterialRuntime)
+                return;
+
+            _dragHoverOutlineActive = true;
+            enemySprite.material = _outlineMaterialRuntime;
+            return;
+        }
+
+        if (!_dragHoverOutlineActive)
+            return;
+
+        _dragHoverOutlineActive = false;
+        enemySprite.material = _defaultMaterial;
+        _enemyMaterial = _defaultMaterial;
+    }
+
+    Material ResolveDragHoverOutlineMaterial()
+    {
+        if (dragHoverOutlineMaterial != null)
+            return dragHoverOutlineMaterial;
+        return RollTargetAssignmentController.SharedDragHoverOutlineMaterial;
     }
 
     /// <summary>Called from <see cref="EnemyController.Initialize"/> to apply art from <see cref="EnemyTypeSO"/>.</summary>
@@ -183,12 +246,18 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!HoverOutlineRegistry.Contains(this))
+            HoverOutlineRegistry.Add(this);
+
         CombatEvents.OnPowerOrbImpact += OnOrbImpact;
         CombatEvents.OnEnemyDamagePresentation += OnEnemyDamage;
     }
 
     private void OnDisable()
     {
+        SetDragAssignHoverOutline(false);
+        HoverOutlineRegistry.Remove(this);
+
         CombatEvents.OnPowerOrbImpact -= OnOrbImpact;
         CombatEvents.OnEnemyDamagePresentation -= OnEnemyDamage;
     }
@@ -230,7 +299,8 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         if (withCameraShake)
             CameraShake.ShakeActive(damageShakeDuration, damageShakeMagnitude);
 
-        if (_enemyMaterial == null) return;
+        if (_dragHoverOutlineActive || _enemyMaterial == null)
+            return;
         if (_spriteFlashRoutine != null) StopCoroutine(_spriteFlashRoutine);
         _spriteFlashRoutine = StartCoroutine(SolidFlashSequence(tint));
     }

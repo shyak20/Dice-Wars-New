@@ -1257,10 +1257,29 @@ public class CombatManager : MonoBehaviour
         _batchDieAssetByGatherIndex.Clear();
 
         yield return new WaitUntil(() => pendingRollVisualRaiseSequences <= 0);
-        if (_deferredTriggeringRerollFacesRemaining > 0)
+        if (ShouldDeferBatchOutcomeForPostSubmitReroll())
             _postRaiseCombatGateOpen = true;
         else
             ProcessPrecisionQueue();
+    }
+
+    /// <summary>
+    /// Post-submit Roll Again defers perfect / bust / assignment until reroll outcomes are submitted — except when
+    /// power already qualifies for Perfect Cast or Cast Overload, which must resolve immediately.
+    /// </summary>
+    private bool ShouldDeferBatchOutcomeForPostSubmitReroll()
+    {
+        if (_deferredTriggeringRerollFacesRemaining <= 0)
+            return false;
+        if (QualifiesForPerfectCast())
+            return false;
+        return currentPower <= maxPower;
+    }
+
+    private void AbortDeferredPostSubmitRerolls()
+    {
+        _deferredTriggeringRerollFacesRemaining = 0;
+        _facesAwaitingPostSubmitTriggeringReroll.Clear();
     }
 
     private IEnumerator CoAfterRollVisualsThen(Action onComplete)
@@ -2443,6 +2462,8 @@ public class CombatManager : MonoBehaviour
             }
 
             ProgressionEventBridge.NotifyCastOverload();
+            AbortDeferredPostSubmitRerolls();
+            targetAssignment?.CancelPendingAssignments(playBustDestroyVisual: true);
             _skipFlyoutFlyPhaseThisBatch = true;
             ChangeState(CombatState.BustCheck);
             NotifyAllStoredActionsPoolUI();

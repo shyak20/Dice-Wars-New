@@ -45,6 +45,8 @@ public class EnemyController : MonoBehaviour
     /// <summary>Drop target used for drag-to-assign (may be null when targeting UI is not wired).</summary>
     public EnemyDropTarget DropTarget => dropTarget;
 
+    public EnemyCombatPresentationController CombatPresentation => _presentation;
+
     public bool IsAlive => currentHealth > 0;
 
     private int currentHealth;

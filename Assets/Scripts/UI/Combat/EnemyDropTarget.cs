@@ -9,12 +9,13 @@ using UnityEngine.EventSystems;
 [RequireComponent(typeof(RectTransform))]
 public class EnemyDropTarget : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler
 {
-    [Tooltip("Optional. Highlighted while a token is hovered over this enemy (drag feedback).")]
+    [Tooltip("Optional. Non-sprite UI overlay toggled while a token is hovered (e.g. a frame Image). Enemy sprite outline is handled by EnemyCombatPresentationController.")]
     [SerializeField] private GameObject hoverHighlight;
 
     public EnemyController Enemy { get; private set; }
     public CombatManager Combat { get; private set; }
 
+    private EnemyCombatPresentationController _presentation;
     private RectTransform _rect;
     public RectTransform Rect => _rect != null ? _rect : (_rect = (RectTransform)transform);
 
@@ -28,12 +29,15 @@ public class EnemyDropTarget : MonoBehaviour, IDropHandler, IPointerEnterHandler
     {
         Enemy = enemy;
         Combat = combat;
+        _presentation = enemy != null ? enemy.CombatPresentation : null;
+        SetDragHoverOutline(false);
         RestoreHoverHighlightDefault();
     }
 
     public void OnDrop(PointerEventData eventData)
     {
-        SetHighlight(false);
+        SetDragHoverOutline(false);
+        SetUiHoverHighlight(false);
         if (Enemy == null || !Enemy.IsAlive)
             return;
 
@@ -46,30 +50,44 @@ public class EnemyDropTarget : MonoBehaviour, IDropHandler, IPointerEnterHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (eventData.pointerDrag != null && eventData.pointerDrag.GetComponentInParent<RolledOutcomeToken>() != null && Enemy != null && Enemy.IsAlive)
-            SetHighlight(true);
+        if (!IsRolledOutcomeTokenDrag(eventData))
+            return;
+        if (Enemy == null || !Enemy.IsAlive)
+            return;
+
+        SetDragHoverOutline(true);
+        SetUiHoverHighlight(true);
     }
 
-    public void OnPointerExit(PointerEventData eventData) => SetHighlight(false);
+    public void OnPointerExit(PointerEventData eventData) => ClearHoverFeedback();
+
+    private static bool IsRolledOutcomeTokenDrag(PointerEventData eventData)
+    {
+        return eventData.pointerDrag != null &&
+               eventData.pointerDrag.GetComponentInParent<RolledOutcomeToken>() != null;
+    }
+
+    private void ClearHoverFeedback()
+    {
+        SetDragHoverOutline(false);
+        SetUiHoverHighlight(false);
+    }
+
+    private void SetDragHoverOutline(bool on)
+    {
+        _presentation?.SetDragAssignHoverOutline(on);
+    }
 
     private void RestoreHoverHighlightDefault()
     {
-        if (hoverHighlight == null)
-            return;
-
-        // World sprite presentation (e.g. Enemy Image) must stay visible — never hide it as "highlight off".
-        if (hoverHighlight.GetComponent<SpriteRenderer>() != null)
-            hoverHighlight.SetActive(true);
-        else
-            hoverHighlight.SetActive(false);
+        SetUiHoverHighlight(false);
     }
 
-    private void SetHighlight(bool on)
+    private void SetUiHoverHighlight(bool on)
     {
         if (hoverHighlight == null)
             return;
 
-        // Dedicated UI overlays toggle on drag-hover; enemy sprite art stays visible.
         if (hoverHighlight.GetComponent<SpriteRenderer>() != null)
             return;
 
