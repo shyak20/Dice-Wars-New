@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da12b934c0d2dc4a9c0c744a1a817d9, type: 3}
   m_Name: Wolf Cub
   m_EditorClassIdentifier: 
-  enemyName: Bramble Mite
-  displaySprite: {fileID: 21300000, guid: c0411742813c80946a9c882b65ea7df4, type: 3}
-  combatAnimatorController: {fileID: 9100000, guid: 7ea95e0b0bdb425449d786d1a63097cc, type: 2}
+  enemyName: Wolf Cub
+  displaySprite: {fileID: 539977429, guid: 3aa404b83d3a6324a9fc5ad4b9b379b8, type: 3}
+  combatAnimatorController: {fileID: 9100000, guid: a15d51b4deb35af4b895289d4ef0007e, type: 2}
   enemyRank: 0
   spawnOnLoadAdds: []
   excludeFromFirstFight: 0
