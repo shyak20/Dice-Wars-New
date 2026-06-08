@@ -6,9 +6,12 @@ public class DieFaceSO : ScriptableObject
 {
     [SerializeField] private string title;
     [SerializeField, HideInInspector] private string description; // Legacy single-line description (migration fallback).
+    [Tooltip("Tooltip / card copy. Use {0} for a live value supplied by a face action (e.g. AddDamageFromDeckPipsModifier).")]
     [SerializeField] private List<string> descriptionLines = new List<string>();
 
     public string Title => string.IsNullOrEmpty(title) ? name : title;
+
+    /// <summary>Description with <c>{0}</c> resolved from face actions when supported.</summary>
     public string Description => BuildDescription();
 
     public int value; // Keeping this for the Power Bar calculation
@@ -54,13 +57,14 @@ public class DieFaceSO : ScriptableObject
             {
                 var line = descriptionLines[i];
                 if (!string.IsNullOrWhiteSpace(line))
-                    nonEmptyLines.Add(line.Trim());
+                    nonEmptyLines.Add(DieFaceDescriptionUtility.FormatDescription(this, line.Trim()));
             }
 
             if (nonEmptyLines.Count > 0)
                 return string.Join("\n", nonEmptyLines);
         }
 
-        return string.IsNullOrEmpty(description) ? name : description;
+        return DieFaceDescriptionUtility.FormatDescription(this,
+            string.IsNullOrEmpty(description) ? name : description);
     }
 }

@@ -2,11 +2,12 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Deal X damage for every Y pip total across deck faces (value, damage, or armor), optionally filtered by element.
-/// White Heat: metric = FaceValue, element = Fire, pipsPerStep = 1, damagePerStep = 1.
+/// Deal damage from deck faces filtered by element and optional metric value.
+/// Match mode (metric value 1–6): each equipped face with that pip/damage/armor counts once × damage per match.
+/// Sum mode (metric value 0): add every filtered face's metric total × damage per match (White Heat).
 /// </summary>
 [Serializable]
-public class AddDamageFromDeckPipsModifier : FaceResolveModifierBase
+public class AddDamageFromDeckPipsModifier : FaceResolveModifierBase, IFaceDescriptionPreviewValue
 {
     [SerializeField] private DeckPipMetric pipMetric = DeckPipMetric.FaceValue;
 
@@ -15,21 +16,39 @@ public class AddDamageFromDeckPipsModifier : FaceResolveModifierBase
 
     [SerializeField] private ElementType elementFilter = ElementType.Physical;
 
-    [Tooltip("Deal this much damage per block of pips (e.g. 2 damage per 2 pips).")]
-    [SerializeField, Min(1)] private int damagePerStep = 2;
+    [Tooltip("Which pip to count on deck faces (uses Pip Metric). 0 = sum all filtered faces instead of matching one value.")]
+    [SerializeField, Range(0, 6)] private int matchMetricValue = 1;
 
-    [Tooltip("Pip block size (e.g. every 2 pips).")]
-    [SerializeField, Min(1)] private int pipsPerStep = 2;
+    [Tooltip("Damage dealt per matching face (match mode) or multiplied against the summed metric (sum mode).")]
+    [SerializeField, Min(1)] private int damagePerMatch = 1;
 
-    [Tooltip("When on, the face currently resolving is excluded from the deck sum.")]
+    [Tooltip("When on, the face currently resolving is excluded from the deck count.")]
     [SerializeField] private bool excludeTriggeringFace;
 
     public override void Modify(DieFaceSO face, FaceResult result, CombatManager combat, TurnRegistry registry)
     {
-        var exclude = excludeTriggeringFace ? face : null;
-        var totalPips = DeckFaceAggregation.SumDeckPips(pipMetric, elementFilter, matchAnyElement, exclude);
-        var bonus = DeckFaceAggregation.ComputeSteppedBonus(totalPips, pipsPerStep, damagePerStep);
+        var bonus = ComputeBonusDamage(face);
         if (bonus > 0)
             result.Damage += bonus;
+    }
+
+    public bool TryGetDescriptionPreviewValue(DieFaceSO face, out int value)
+    {
+        value = ComputeBonusDamage(face);
+        return true;
+    }
+
+    int ComputeBonusDamage(DieFaceSO face)
+    {
+        var exclude = excludeTriggeringFace ? face : null;
+        var countMatching = matchMetricValue >= 1;
+        var total = DeckFaceAggregation.SumDeckPips(
+            pipMetric,
+            elementFilter,
+            matchAnyElement,
+            exclude,
+            countMatching ? matchMetricValue : (int?)null,
+            countEachMatchingFaceAsOne: countMatching);
+        return total * damagePerMatch;
     }
 }

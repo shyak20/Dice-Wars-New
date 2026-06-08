@@ -16,7 +16,9 @@ public static class DeckFaceAggregation
         DeckPipMetric metric,
         ElementType elementFilter,
         bool matchAnyElement,
-        DieFaceSO excludeFace)
+        DieFaceSO excludeFace,
+        int? requiredMetricValue = null,
+        bool countEachMatchingFaceAsOne = false)
     {
         var container = PlayerDataContainer.Instance;
         if (container?.RuntimeData?.currentDeck == null)
@@ -39,22 +41,18 @@ public static class DeckFaceAggregation
                 if (!matchAnyElement && face.Element != elementFilter)
                     continue;
 
-                total += GetMetricValue(face, metric);
+                var metricValue = GetMetricValue(face, metric);
+                if (requiredMetricValue.HasValue && metricValue != requiredMetricValue.Value)
+                    continue;
+
+                total += countEachMatchingFaceAsOne ? 1 : metricValue;
             }
         }
 
         return Mathf.Max(0, total);
     }
 
-    public static int ComputeSteppedBonus(int totalPips, int pipsPerStep, int damagePerStep)
-    {
-        if (pipsPerStep <= 0 || damagePerStep <= 0 || totalPips <= 0)
-            return 0;
-
-        return totalPips / pipsPerStep * damagePerStep;
-    }
-
-    static int GetMetricValue(DieFaceSO face, DeckPipMetric metric)
+    public static int GetMetricValue(DieFaceSO face, DeckPipMetric metric)
     {
         switch (metric)
         {

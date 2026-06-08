@@ -39,6 +39,6 @@ MonoBehaviour:
         pipMetric: 0
         matchAnyElement: 0
         elementFilter: 2
-        damagePerStep: 1
-        pipsPerStep: 1
+        matchMetricValue: 0
+        damagePerMatch: 1
         excludeTriggeringFace: 0
