@@ -105,6 +105,11 @@ MonoBehaviour:
     title: <style=Attack>Leech</style>
     description: Deal <style=Attack>physical damage</style> to the player. Heals
       this enemy for unblocked HP damage dealt (not damage absorbed by armor).
+  - id: 31
+    sprite: {fileID: 0}
+    background: {fileID: 0}
+    title: Support Main
+    description: Apply configured armor, heal, and/or status to the Main Enemy.
   enemyActionIcons:
   - actionTypeName: MultiplyPlayerBurnPoisonStacksAction
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}

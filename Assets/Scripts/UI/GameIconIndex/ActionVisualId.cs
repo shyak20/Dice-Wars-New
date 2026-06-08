@@ -58,4 +58,7 @@ public enum ActionVisualId
 
     /// <summary><see cref="LeechPhysicalDamageAction"/> — physical hit that heals the enemy for unblocked player HP damage.</summary>
     LeechPhysicalDamage = 30,
+
+    /// <summary><see cref="ApplyBenefitToMainEnemyAction"/> — spawned add supports the Main Enemy (armor, heal, status).</summary>
+    ApplyBenefitToMainEnemy = 31,
 }

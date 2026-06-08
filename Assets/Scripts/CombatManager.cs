@@ -2049,6 +2049,26 @@ public class CombatManager : MonoBehaviour
     public void ApplyEnemyPhysicalLeechHit(int baseDamage, EnemyController actingEnemy) =>
         ApplyEnemyPhysicalHitToPlayer(baseDamage, actingEnemy, healActingEnemyForUnblockedPlayerDamage: true);
 
+    /// <summary>Spawned-add support: armor, heal, and/or status applied to <see cref="MainEnemy"/>.</summary>
+    public void ApplyBenefitToMainEnemy(int armor, int heal, StatusEffectSO statusEffect, int statusStacks)
+    {
+        var main = MainEnemy;
+        if (main == null || !main.IsAlive)
+            return;
+
+        if (armor > 0)
+            main.AddArmor(armor);
+
+        if (heal > 0)
+            main.Heal(heal);
+
+        if (statusEffect != null && statusStacks > 0)
+        {
+            var statusCtx = BuildStatusContext(main);
+            main.StatusEffects.ApplyStatus(statusEffect, statusStacks, statusCtx);
+        }
+    }
+
     void ApplyEnemyPhysicalHitToPlayer(int baseDamage, EnemyController actingEnemy, bool healActingEnemyForUnblockedPlayerDamage)
     {
         var enemy = actingEnemy != null ? actingEnemy : activeEnemy;

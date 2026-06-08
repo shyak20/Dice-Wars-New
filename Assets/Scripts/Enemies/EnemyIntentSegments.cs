@@ -98,6 +98,42 @@ public static class EnemyIntentSegments
                 continue;
             }
 
+            if (a is ApplyBenefitToMainEnemyAction benefitMain)
+            {
+                icon = benefitMain.ResolveIntentDisplayIcon() ?? icon;
+                if (benefitMain.HasConfiguredArmor && !benefitMain.HasConfiguredHeal && !benefitMain.HasConfiguredStatus)
+                    bg = GameIconCatalog.GetElementBackground(DieType.Armor);
+
+                if (benefitMain.IsStatusOnlyBenefit && benefitMain.StatusEffectDefinition != null)
+                {
+                    if (TryResolveActionTooltip(intent, i, a, enemy, combat, out var statusTitle, out var statusDescription))
+                    {
+                        into.Add(new Row(icon, DescribeActionAmount(a, enemy, combat, buffDamageColor), null, statusTitle, statusDescription, true, bg));
+                        continue;
+                    }
+
+                    into.Add(new Row(
+                        icon,
+                        DescribeActionAmount(a, enemy, combat, buffDamageColor),
+                        benefitMain.StatusEffectDefinition,
+                        null,
+                        null,
+                        true,
+                        bg));
+                    continue;
+                }
+
+                if (TryResolveActionTooltip(intent, i, a, enemy, combat, out var benefitTitle, out var benefitDescription))
+                {
+                    into.Add(new Row(icon, DescribeActionAmount(a, enemy, combat, buffDamageColor), null, benefitTitle, benefitDescription, true, bg));
+                    continue;
+                }
+
+                ResolveNonStatusActionTooltip(intent, i, a, enemy, combat, out benefitTitle, out benefitDescription);
+                into.Add(new Row(icon, DescribeActionAmount(a, enemy, combat, buffDamageColor), null, benefitTitle, benefitDescription, true, bg));
+                continue;
+            }
+
             if (TryResolveActionTooltip(intent, i, a, enemy, combat, out var tooltipTitle, out var tooltipDescription))
             {
                 into.Add(new Row(icon, DescribeActionAmount(a, enemy, combat, buffDamageColor), null, tooltipTitle, tooltipDescription, true, bg));
@@ -304,6 +340,26 @@ public static class EnemyIntentSegments
                 var burnStacks = SumBurnStacks(enemy);
                 amount = burnStacks / burnToHp.StacksPerMaxHp;
                 return true;
+            case ApplyBenefitToMainEnemyAction benefitMain:
+                if (benefitMain.HasConfiguredArmor)
+                {
+                    amount = benefitMain.ArmorAmount;
+                    return true;
+                }
+
+                if (benefitMain.HasConfiguredHeal)
+                {
+                    amount = benefitMain.HealAmount;
+                    return true;
+                }
+
+                if (benefitMain.HasConfiguredStatus)
+                {
+                    amount = benefitMain.StatusStacks;
+                    return true;
+                }
+
+                return false;
             default:
                 return false;
         }
@@ -397,6 +453,8 @@ public static class EnemyIntentSegments
                 }
 
                 return leechHits <= 1 ? leech.Damage.ToString() : $"{leech.Damage}x{leechHits}";
+            case ApplyBenefitToMainEnemyAction benefitMain:
+                return benefitMain.FormatIntentAmountLabel();
             default:
                 return "";
         }
