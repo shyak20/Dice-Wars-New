@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UI Splatter Reveal Main Character
+  m_Name: Enemy Dissolve
   m_Shader: {fileID: 4800000, guid: 3ff9270e8158f6942b50d27629a91877, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -29,7 +29,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SplatterNoiseMap:
-        m_Texture: {fileID: 2800000, guid: 21c3fcbee45487941850179b370b666d, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3f44a80504d8a2e45a8556bedc12d4c9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -42,7 +42,7 @@ Material:
     - _GlowIntensity: 0.94
     - _MaskOutlineWidth: 0.47
     - _Randomness: 0
-    - _RevealAmount: 1
+    - _RevealAmount: 0.992
     - _SplatterScale: 31.1
     - _Stencil: 0
     - _StencilComp: 8
@@ -54,7 +54,7 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _GlowColor: {r: 0.35, g: 0.85, b: 1.35, a: 1}
-    - _MaskOutlineColor: {r: 0.031372547, g: 0.37588403, b: 1, a: 1}
+    - _MaskOutlineColor: {r: 1, g: 0.031372547, b: 0.031372547, a: 1}
     - _SplatterMaskOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -1136,9 +1136,8 @@ public class RunManager : MonoBehaviour
             return;
         EnsureRunVitalityBaseline();
         ReconcileRunVitalityIfAwakeDefaultPoisoned();
-        if (_runCurrentHp < 1)
-            _runCurrentHp = _runMaxHp;
-        player.ApplyRunVitality(_runCurrentHp, _runMaxHp);
+        var hp = _runDefeated ? 0 : _runCurrentHp;
+        player.ApplyRunVitality(hp, _runMaxHp);
     }
 
     /// <summary>
@@ -1162,6 +1161,8 @@ public class RunManager : MonoBehaviour
         _runCurrentHp = player.GetCurrentHealth();
         _runMaxHp = player.maxHealth;
         _runVitalityInitialized = true;
+        if (_runCurrentHp <= 0)
+            MarkRunDefeated();
         NotifyRunVitalityChanged();
     }
 

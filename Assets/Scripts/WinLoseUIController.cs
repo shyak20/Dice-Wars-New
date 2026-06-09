@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -14,6 +15,9 @@ public class WinLoseUIController : MonoBehaviour
     [Header("Defeat UI")]
     public GameObject gameOverPanel;
     public Button mainMenuButton;
+    [SerializeField, Min(0f)] private float defeatScreenDelaySeconds = 1.25f;
+
+    Coroutine _defeatScreenRoutine;
 
     private void OnEnable()
     {
@@ -27,6 +31,7 @@ public class WinLoseUIController : MonoBehaviour
         CombatEvents.OnPlayerVictory -= OnPlayerVictory;
         CombatEvents.OnPlayerDefeat -= ShowGameOver;
         FaceRewardEvents.OnFaceRewardCompleted -= OnFaceRewardCompleted;
+        CancelPendingDefeatScreen();
     }
 
     private void Start()
@@ -79,15 +84,44 @@ public class WinLoseUIController : MonoBehaviour
         }
     }
 
-    private void ShowGameOver() => ShowDefeatScreen();
+      private void ShowGameOver() => ShowDefeatScreen();
 
-    /// <summary>Shows the combat defeat panel (e.g. abandon run from options while in <c>FightScene</c>).</summary>
+    /// <summary>Shows the combat defeat panel after <see cref="defeatScreenDelaySeconds"/> (e.g. abandon run from options while in <c>FightScene</c>).</summary>
     public void ShowDefeatScreen()
+    {
+        CancelPendingDefeatScreen();
+
+        if (defeatScreenDelaySeconds <= 0f)
+        {
+            ShowDefeatScreenImmediate();
+            return;
+        }
+
+        _defeatScreenRoutine = StartCoroutine(CoShowDefeatScreenAfterDelay());
+    }
+
+    IEnumerator CoShowDefeatScreenAfterDelay()
+    {
+        yield return new WaitForSeconds(defeatScreenDelaySeconds);
+        _defeatScreenRoutine = null;
+        ShowDefeatScreenImmediate();
+    }
+
+    void ShowDefeatScreenImmediate()
     {
         if (winStageFlow != null)
             winStageFlow.ApplyVictoryHideListImmediately();
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
+    }
+
+    void CancelPendingDefeatScreen()
+    {
+        if (_defeatScreenRoutine == null)
+            return;
+
+        StopCoroutine(_defeatScreenRoutine);
+        _defeatScreenRoutine = null;
     }
 
     public void GoToMainMenu()

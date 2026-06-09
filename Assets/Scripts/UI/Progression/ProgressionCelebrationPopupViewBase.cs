@@ -35,7 +35,12 @@ public abstract class ProgressionCelebrationPopupViewBase : MonoBehaviour
 
     protected void HidePanelImmediate()
     {
-        if (panelRoot != null && panelRoot != gameObject)
+        if (panelRoot == null)
+            return;
+
+        if (panelRoot == gameObject)
+            gameObject.SetActive(false);
+        else
             panelRoot.SetActive(false);
     }
 }

@@ -39,6 +39,7 @@ public class PlayerStatus : MonoBehaviour
     {
         if (currentHealth <= 0)
         {
+            CaptureRunVitalityIfMapRun();
             CombatEvents.OnPlayerHealthDepleted?.Invoke();
             return;
         }
@@ -46,6 +47,7 @@ public class PlayerStatus : MonoBehaviour
         currentHealth = 0;
         currentArmor = 0;
         UpdateUI();
+        CaptureRunVitalityIfMapRun();
         CombatEvents.OnPlayerHealthDepleted?.Invoke();
     }
 
@@ -94,6 +96,7 @@ public class PlayerStatus : MonoBehaviour
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
         Debug.Log($"<color=green>Player healed {amount} HP. Current: {currentHealth}</color>");
         UpdateUI();
+        CaptureRunVitalityIfMapRun();
     }
 
     /// <summary>
@@ -117,6 +120,7 @@ public class PlayerStatus : MonoBehaviour
         }
 
         UpdateUI();
+        CaptureRunVitalityIfMapRun();
     }
 
     /// <summary>Same as <see cref="AddMaxHealthAndHeal"/> (positive gain heals; negative reduces max and clamps current).</summary>
@@ -298,8 +302,19 @@ public class PlayerStatus : MonoBehaviour
             physicalHitFeedback.OnPlayerDamaged(damage, hpLost, maxHealth);
         }
 
+        if (hpBefore != currentHealth)
+            CaptureRunVitalityIfMapRun();
+
         if (currentHealth <= 0)
             CombatEvents.OnPlayerHealthDepleted?.Invoke();
+    }
+
+    void CaptureRunVitalityIfMapRun()
+    {
+        if (RunManager.Instance == null || !RunManager.Instance.UseMapBasedRun)
+            return;
+
+        RunManager.Instance.CaptureRunVitalityFromPlayer(this);
     }
 
     /// <summary>

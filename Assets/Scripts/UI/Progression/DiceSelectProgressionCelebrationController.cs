@@ -12,6 +12,7 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 {
     [SerializeField] private DiceSelectSceneController diceSelectSceneController;
     [SerializeField] private ProgressionTrialCompletedPopupView trialCompletedPopup;
+    [SerializeField] private ProgressionUnlockedContentPopupView unlockedContentPopup;
     [SerializeField] private ProgressionRankUpPopupView rankUpPopup;
     [Tooltip("Parent of celebration popups (and optional overlay art). Disabled whenever no popup is showing.")]
     [SerializeField] private GameObject progressionCelebrationRoot;
@@ -19,6 +20,7 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
     [SerializeField] private GameObject inputBlocker;
 
     readonly List<PlayerTrialSO> _pendingTrials = new List<PlayerTrialSO>();
+    readonly List<ProgressionUnlockedContentItem> _pendingUnlockedItems = new List<ProgressionUnlockedContentItem>();
     Coroutine _flowCoroutine;
     bool _flowRunning;
 
@@ -30,6 +32,10 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
             diceSelectSceneController = FindObjectOfType<DiceSelectSceneController>(true);
         if (trialCompletedPopup == null)
             Debug.LogError("DiceSelectProgressionCelebrationController: assign trialCompletedPopup.", this);
+        if (unlockedContentPopup == null && progressionCelebrationRoot != null)
+            unlockedContentPopup = progressionCelebrationRoot.GetComponentInChildren<ProgressionUnlockedContentPopupView>(true);
+        if (unlockedContentPopup == null)
+            Debug.LogError("DiceSelectProgressionCelebrationController: assign unlockedContentPopup.", this);
         if (rankUpPopup == null)
             Debug.LogError("DiceSelectProgressionCelebrationController: assign rankUpPopup.", this);
         if (progressionCelebrationRoot == null)
@@ -115,6 +121,31 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
 
                 trialCompletedPopup.Hide();
                 SetCelebrationRootActive(false);
+
+                _pendingUnlockedItems.Clear();
+                ProgressionUnlockCelebrationContent.CollectFromTrial(trial, _pendingUnlockedItems);
+
+                if (_pendingUnlockedItems.Count > 0)
+                {
+                    if (unlockedContentPopup == null)
+                    {
+                        Debug.LogError(
+                            $"DiceSelectProgressionCelebrationController: trial '{trial.TrialId}' unlocked content but unlockedContentPopup is not assigned.",
+                            this);
+                    }
+                    else
+                    {
+                        var unlockAcknowledged = false;
+                        SetCelebrationRootActive(true);
+                        unlockedContentPopup.Show(_pendingUnlockedItems, () => unlockAcknowledged = true);
+                        while (!unlockAcknowledged)
+                            yield return null;
+
+                        unlockedContentPopup.Hide();
+                        SetCelebrationRootActive(false);
+                    }
+                }
+
                 progression.AcknowledgeTrialCelebration(trial.TrialId);
 
                 if (!progression.IsInitializedFor(character))
@@ -167,6 +198,7 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
         _flowCoroutine = null;
         _pendingTrials.Clear();
         trialCompletedPopup?.Hide();
+        unlockedContentPopup?.Hide();
         rankUpPopup?.Hide();
         SetCelebrationRootActive(false);
 
