@@ -288,8 +288,16 @@ public class UIMapGridView : MonoBehaviour
                 var v = _tiles[x, y];
                 if (v == null)
                     continue;
+                var cell = new Vector2Int(x, y);
                 var standingEnd = toCell.x == x && toCell.y == y;
-                v.BeginStandingVisitedBackgroundTransition(standingEnd, durationSeconds);
+                MapTileUIViewState reachAtEnd;
+                if (standingEnd)
+                    reachAtEnd = MapTileUIViewState.Selected;
+                else if (_manager.IsValidOneStepMoveTargetFrom(toCell, cell))
+                    reachAtEnd = MapTileUIViewState.Available;
+                else
+                    reachAtEnd = MapTileUIViewState.Idle;
+                v.BeginStandingVisitedBackgroundTransition(standingEnd, reachAtEnd, durationSeconds);
             }
         }
     }

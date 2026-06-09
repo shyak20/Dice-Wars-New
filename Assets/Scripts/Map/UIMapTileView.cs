@@ -38,9 +38,11 @@ public class UIMapTileView : MonoBehaviour
     [Header("Arrow colors")]
     [SerializeField] private Color arrowColorCurrentTile = new Color(1f, 0.95f, 0.4f, 1f);
     [SerializeField] private Color arrowColorOtherTiles = new Color(0.55f, 0.55f, 0.6f, 0.9f);
-    [Header("Tile background (standing only)")]
-    [Tooltip("Background tint on the tile the pawn is standing on; other tiles use the default background color.")]
+    [Header("Tile background")]
+    [Tooltip("Background tint on the tile the pawn is standing on.")]
     [SerializeField] private Color playerCurrentTileBackgroundColor = new Color(0.85f, 0.85f, 0.4f, 1f);
+    [Tooltip("Background tint on reachable one-step move targets (not the standing tile).")]
+    [SerializeField] private Color availableTileBackgroundColor = new Color(0.5f, 0.85f, 0.55f, 1f);
     [Header("Event icon (reachability)")]
     [SerializeField] private Color iconColorAvailable = new Color(0.35f, 0.95f, 0.45f, 1f);
     [SerializeField] private Color iconColorNotAvailable = Color.white;
@@ -283,7 +285,10 @@ public class UIMapTileView : MonoBehaviour
     /// Linearly interpolates standing background tint and visited/standing background + hover scales toward the state
     /// as if the pawn were already on <paramref name="standingHereEnd"/>. Call when the marker move starts (with current visuals already applied for the move-start snapshot).
     /// </summary>
-    public void BeginStandingVisitedBackgroundTransition(bool standingHereEnd, float durationSeconds)
+    public void BeginStandingVisitedBackgroundTransition(
+        bool standingHereEnd,
+        MapTileUIViewState reachabilityAtEnd,
+        float durationSeconds)
     {
         if (backgroundImage == null || durationSeconds <= 0f)
             return;
@@ -292,7 +297,7 @@ public class UIMapTileView : MonoBehaviour
 
         _standingVisitedColorFrom = backgroundImage.color;
         _standingVisitedBgScaleFrom = backgroundImage.transform.localScale;
-        _standingVisitedColorTo = GetTargetStandingBackgroundColor(standingHereEnd);
+        _standingVisitedColorTo = GetTargetBackgroundColor(standingHereEnd, reachabilityAtEnd);
         _standingVisitedBgScaleTo = GetTargetBackgroundScaleForVisited(standingHereEnd);
 
         _standingVisitedTransIncludesHover = buttonHoverHighlightObject != null;
@@ -326,9 +331,13 @@ public class UIMapTileView : MonoBehaviour
             CancelStandingVisitedBackgroundTransition();
     }
 
-    private Color GetTargetStandingBackgroundColor(bool standingHere)
+    private Color GetTargetBackgroundColor(bool standingHere, MapTileUIViewState reachability)
     {
-        return standingHere ? playerCurrentTileBackgroundColor : _baseBackgroundColor;
+        if (standingHere)
+            return playerCurrentTileBackgroundColor;
+        if (reachability == MapTileUIViewState.Available)
+            return availableTileBackgroundColor;
+        return _baseBackgroundColor;
     }
 
     private Vector3 GetTargetBackgroundScaleForVisited(bool playerOnThisTileForScale)
@@ -374,7 +383,7 @@ public class UIMapTileView : MonoBehaviour
         CancelStandingVisitedBackgroundTransition();
         _playerOnThisTile = standingHere;
         _reachabilityState = reachabilityState;
-        ApplyBackgroundForStandingOnly();
+        ApplyBackgroundColor();
         ApplyBackgroundScaleForVisited();
         ApplyEventIconVisibilityForStanding();
         ApplyEventIconReachabilityTint();
@@ -450,7 +459,7 @@ public class UIMapTileView : MonoBehaviour
         else
             _reachabilityState = MapTileUIViewState.Idle;
 
-        ApplyBackgroundForStandingOnly();
+        ApplyBackgroundColor();
         ApplyBackgroundScaleForVisited();
         ApplyEventIconVisibilityForStanding();
         ApplyEventIconReachabilityTint();
@@ -471,7 +480,7 @@ public class UIMapTileView : MonoBehaviour
     {
         CancelStandingVisitedBackgroundTransition();
         _playerOnThisTile = standingHere;
-        ApplyBackgroundForStandingOnly();
+        ApplyBackgroundColor();
         ApplyBackgroundScaleForVisited();
         ApplyEventIconVisibilityForStanding();
         ApplyEventIconReachabilityTint();
@@ -479,11 +488,11 @@ public class UIMapTileView : MonoBehaviour
         SyncAvailablePulseObjectActive();
     }
 
-    private void ApplyBackgroundForStandingOnly()
+    private void ApplyBackgroundColor()
     {
         if (backgroundImage == null)
             return;
-        backgroundImage.color = _playerOnThisTile ? playerCurrentTileBackgroundColor : _baseBackgroundColor;
+        backgroundImage.color = GetTargetBackgroundColor(_playerOnThisTile, _reachabilityState);
     }
 
     private void ApplyEventIconVisibilityForStanding()

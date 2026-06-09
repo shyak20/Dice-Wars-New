@@ -2413,7 +2413,7 @@ public class CombatManager : MonoBehaviour
                 if (enemy == null) continue;
                 enemy.StatusEffects.TickPerfectStrike(BuildStatusContext(enemy));
                 if (enemy.AssignedElementPool != null)
-                    enemy.AssignedElementPool.MultiplyAllDisplayed(appliedMultiplier);
+                    enemy.AssignedElementPool.MultiplyAllDisplayed(appliedMultiplier, refreshIcons: false);
             }
 
             if (targetAssignment != null)

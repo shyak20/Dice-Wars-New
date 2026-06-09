@@ -521,18 +521,26 @@ public sealed class MapMovementManager : MonoBehaviour
     public bool IsStart(Vector2Int cell) => cell == StartPosition;
 
     /// <summary>
-    /// True when <paramref name="target"/> is orthogonally adjacent to <see cref="PlayerGridPosition"/> and the current tile has a directed exit toward it (same checks as <see cref="TryMoveTo"/> before the move is applied).
+    /// True when <paramref name="target"/> is orthogonally adjacent to <paramref name="from"/> and
+    /// <paramref name="from"/> has a directed exit toward it.
     /// </summary>
-    public bool IsValidOneStepMoveTarget(Vector2Int target)
+    public bool IsValidOneStepMoveTargetFrom(Vector2Int from, Vector2Int target)
     {
         if (_grid == null || !_grid.Contains(target))
             return false;
-        var from = PlayerGridPosition;
         if (from == target)
             return false;
         if (!IsOrthogonalAdjacent(from, target))
             return false;
         return _grid.HasExit(from.x, from.y, DirectionFromTo(from, target));
+    }
+
+    /// <summary>
+    /// True when <paramref name="target"/> is orthogonally adjacent to <see cref="PlayerGridPosition"/> and the current tile has a directed exit toward it (same checks as <see cref="TryMoveTo"/> before the move is applied).
+    /// </summary>
+    public bool IsValidOneStepMoveTarget(Vector2Int target)
+    {
+        return IsValidOneStepMoveTargetFrom(PlayerGridPosition, target);
     }
 
     /// <summary>

@@ -216,7 +216,8 @@ MonoBehaviour:
   incomingArrowLeft: {fileID: 2764736996560556069}
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
-  playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  playerCurrentTileBackgroundColor: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
+  availableTileBackgroundColor: {r: 0.67058825, g: 0.83137256, b: 0.64705884, a: 1}
   iconColorAvailable: {r: 1, g: 1, b: 1, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -249,7 +250,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   buttonHoverFadeOutDurationSeconds: 0.3
-  visitedBackgroundScale: 0.7
+  visitedBackgroundScale: 0.8
   bossTileEventIconScale: 1.4
   availablePulseTarget: {fileID: 4496219383281375189}
   availablePulseScaleCurve:

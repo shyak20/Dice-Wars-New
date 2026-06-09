@@ -192,12 +192,20 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     }
 
     /// <summary>Perfect Cast: scale every displayed row by the multiplier (per-enemy pools mirror the multiplied board).</summary>
-    public void MultiplyAllDisplayed(int multiplier)
+    /// <param name="refreshIcons">When false, only internal totals change; jackpot presentation updates amount text on a delay.</param>
+    public void MultiplyAllDisplayed(int multiplier, bool refreshIcons = true)
     {
         if (multiplier <= 1 || displayedPools == null) return;
         foreach (var key in displayedPools.Keys.ToList())
-            RefreshRow(key, displayedPools[key] * multiplier);
-        ReorderPoolIcons();
+        {
+            var scaled = displayedPools[key] * multiplier;
+            displayedPools[key] = scaled;
+            if (refreshIcons)
+                RefreshRow(key, scaled);
+        }
+
+        if (refreshIcons)
+            ReorderPoolIcons();
     }
 
     private void ApplyFullPoolSync(Dictionary<PoolRowKey, int> pools)

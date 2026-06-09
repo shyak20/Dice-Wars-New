@@ -5783,9 +5783,10 @@ MonoBehaviour:
   burnIndicatorSeconds: 0.5
   physicalDamageIndicatorSeconds: 0.5
   deathAnimatorTrigger: Death
-  dissolveAttachDelaySeconds: 1.5
+  dissolveAttachDelaySeconds: 1.4
   dissolveDurationSeconds: 3
   deathDissolveMaterial: {fileID: 2100000, guid: ac4c4c293421b93499967bd72342a371, type: 2}
+  defeatedHideDelaySeconds: 3
 --- !u!95 &8102270029977296699
 Animator:
   serializedVersion: 7
