@@ -110,7 +110,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3230250374996567813, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
       propertyPath: m_Name
-      value: DIce Reward
+      value: Face Unlock Reward
       objectReference: {fileID: 0}
     - target: {fileID: 4124439278689191469, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
       propertyPath: m_IsActive
@@ -124,6 +124,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 2d4829cbcac5a514c91a57bde9b53812, type: 3}
+    - target: {fileID: 8219493928793227972, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9060334886699345338, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

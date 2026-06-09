@@ -4813,6 +4813,7 @@ MonoBehaviour:
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -12687,6 +12688,7 @@ MonoBehaviour:
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   trialRewardsPanelPrefab: {fileID: -7010648954486959870, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
   gameIconIndex: {fileID: 11400000, guid: e7a9d94c00e44a54a8e1204408a75e96, type: 2}
+  progressionRewardVisualCatalog: {fileID: 11400000, guid: 40ed2a32a4e511a40a8b517aaf7e6c91, type: 2}
   fallbackCanvas: {fileID: 0}
   hoverTooltipScreenOffset: {x: 50, y: -120}
   hoverAboveTooltipScreenOffset: {x: 280, y: 40}
@@ -13431,6 +13433,7 @@ MonoBehaviour:
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -14163,6 +14166,7 @@ MonoBehaviour:
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -14478,6 +14482,7 @@ MonoBehaviour:
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -26123,6 +26128,7 @@ MonoBehaviour:
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -32256,6 +32262,7 @@ MonoBehaviour:
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -38150,6 +38157,7 @@ MonoBehaviour:
   arrowColorCurrentTile: {r: 0.6156863, g: 0.5686275, b: 0.47843137, a: 1}
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
+  availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80

@@ -107,6 +107,7 @@ public sealed class ProgressionUnlockedContentPopupView : ProgressionCelebration
         _onContinueClicked = null;
         ClearSpawnedItems();
         HideImmediate();
+        gameObject.SetActive(false);
     }
 
     void HideImmediate() => HidePanelImmediate();
@@ -142,6 +143,12 @@ public sealed class ProgressionUnlockedContentPopupView : ProgressionCelebration
         }
 
         _spawnedItems.Clear();
+
+        if (itemsLayout != null)
+        {
+            for (var i = itemsLayout.childCount - 1; i >= 0; i--)
+                Destroy(itemsLayout.GetChild(i).gameObject);
+        }
     }
 
     void OnDisable() => ClearSpawnedItems();

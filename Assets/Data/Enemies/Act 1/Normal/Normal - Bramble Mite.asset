@@ -29,7 +29,6 @@ MonoBehaviour:
   gemRewardPool: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
   isSequential: 1
   actionCycle:
-  - {fileID: 11400000, guid: 35ec3c772ce20a741a99dbf9a4d466a6, type: 2}
   - {fileID: 11400000, guid: 8d144569403ac17448f1c6fe9b2556e4, type: 2}
   - {fileID: 11400000, guid: b0db59302412e6c4a894f589f7afc276, type: 2}
   phases: []

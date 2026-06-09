@@ -47,6 +47,11 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [Tooltip("Icons for trial reward rows. Uses GameIconCatalog.Active when unset.")]
     [SerializeField] private GameIconIndexSO gameIconIndex;
 
+    [Tooltip("Shared progression reward visuals for trial tooltips and celebration popups.")]
+    [SerializeField] private ProgressionRewardVisualCatalogSO progressionRewardVisualCatalog;
+
+    public ProgressionRewardVisualCatalogSO ProgressionRewardVisualCatalog => progressionRewardVisualCatalog;
+
     [Tooltip("When the hovered UI has no Canvas in parents (rare), parent the tooltip here.")]
     [SerializeField] private Canvas fallbackCanvas;
 
@@ -69,6 +74,8 @@ public sealed class HoverTooltipManager : MonoBehaviour
     {
         if (panelPrefab == null)
             Debug.LogError($"HoverTooltipManager on '{name}': assign panelPrefab (HoverTooltipPanelUI prefab).", this);
+        if (progressionRewardVisualCatalog == null)
+            Debug.LogError($"HoverTooltipManager on '{name}': assign progressionRewardVisualCatalog.", this);
     }
 
     void OnEnable() => RegisterSelf();
@@ -235,7 +242,10 @@ public sealed class HoverTooltipManager : MonoBehaviour
         EnsureTrialRewardsPanelUnderCanvas(targetCanvas);
         _panel?.Hide();
 
-        _trialRewardsPanel.Show(trial, state, ResolveIconIndex());
+        if (progressionRewardVisualCatalog == null)
+            return;
+
+        _trialRewardsPanel.Show(trial, state, progressionRewardVisualCatalog);
         _trialRewardsPanel.AlignToRectWithScreenOffset(anchor, ResolveScreenOffset(screenPixelOffset, isAbove));
     }
 

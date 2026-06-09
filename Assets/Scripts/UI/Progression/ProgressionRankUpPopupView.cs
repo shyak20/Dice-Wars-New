@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,6 +27,9 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
     [Tooltip("Link the RectTransform under Body that has the VerticalLayoutGroup/ContentSizeFitter. Reward rows are instantiated as children. Optional.")]
     [SerializeField] private RectTransform rewardsContainer;
 
+    [Header("Reward display")]
+    [SerializeField] private ProgressionRewardVisualCatalogSO rewardVisualCatalog;
+
     [Header("Stat Row Prefab")]
     [Tooltip("Prefab used for stat reward rows. Must have CharacterInfoStat component.")]
     [SerializeField] private CharacterInfoStat statRowPrefab;
@@ -39,6 +41,8 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
     [SerializeField] private GameObject gemRewardDisplayPrefab;
     [Tooltip("If set, used to render Add Starting Die rewards as icon + die name. Should contain a RankTrialRewardDisplay.")]
     [SerializeField] private GameObject addStartingDieRewardDisplayPrefab;
+    [Tooltip("Compact icon + label row for grouped face unlocks (same prefab as trial hover tooltip).")]
+    [SerializeField] private TrialRewardRowElementUI compactRewardRowPrefab;
 
     Action _onCompleteClicked;
 
@@ -59,21 +63,13 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
         _spawnedRewardRows.Clear();
     }
 
-    GameIconIndexSO ResolveGameIconIndex()
+    ProgressionRewardVisualCatalogSO ResolveCatalog()
     {
-        if (GameIconCatalog.Active != null)
-            return GameIconCatalog.Active;
+        if (rewardVisualCatalog != null)
+            return rewardVisualCatalog;
 
-        // Dice Select scene doesn't register GameIconCatalog.Active; HoverTooltipManager has the serialized GameIconIndexSO reference.
         var hover = FindObjectOfType<HoverTooltipManager>(true);
-        if (hover == null)
-            return null;
-
-        var f = typeof(HoverTooltipManager).GetField(
-            "gameIconIndex",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        return f?.GetValue(hover) as GameIconIndexSO;
+        return hover != null ? hover.ProgressionRewardVisualCatalog : null;
     }
 
     void Awake()
@@ -196,10 +192,8 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
             ? "All trials complete. Rank increased!"
             : rank.rankFlavorText;
 
-        var iconIndex = ResolveGameIconIndex();
-
         SetupBodyLayout(desc);
-        BuildRewardRows(rank.rankUpRewards, iconIndex);
+        BuildRewardRows(rank.rankUpRewards);
     }
 
     void SetupBodyLayout(string description)
@@ -231,7 +225,6 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // Root TMP_Text is used only as a style/template for the new description label.
         var styleFont = bodyText.font;
         var styleFontSize = bodyText.fontSize;
         var styleColor = bodyText.color;
@@ -307,278 +300,46 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
         }
     }
 
-    void BuildRewardRows(IReadOnlyList<ProgressionRewardBase> rewards, GameIconIndexSO iconIndex)
+    void BuildRewardRows(IReadOnlyList<ProgressionRewardBase> rewards)
     {
-        if (rewards == null || rewards.Count == 0)
+        if (rewards == null || rewards.Count == 0 || bodyText == null)
             return;
 
-        var statTemplate = statRowPrefab != null
-            ? statRowPrefab
-            : FindObjectOfType<CharacterInfoStat>(true);
-
-        for (var i = 0; i < rewards.Count; i++)
+        var catalog = ResolveCatalog();
+        if (catalog == null)
         {
-            var reward = rewards[i];
-            if (reward == null)
-                continue;
-
-            switch (reward)
-            {
-                case ProgressionMaxHpReward hp:
-                    AddStatRow(statTemplate, "Max Health", MainAttributeIconId.Hp, hp.amount, iconIndex);
-                    break;
-                case ProgressionMaxPowerReward power:
-                    AddStatRow(statTemplate, "Base Max Power", MainAttributeIconId.Power, power.amount, iconIndex);
-                    break;
-                case ProgressionStartingGoldReward gold:
-                    AddStatRow(statTemplate, "Starting Gold", MainAttributeIconId.Coins, gold.amount, iconIndex);
-                    break;
-                case ProgressionMapMoveLimitReward moves:
-                    AddStatRow(statTemplate, "Map Moves", MainAttributeIconId.Movement, moves.amount, iconIndex);
-                    break;
-                case ProgressionMaxRollsReward maxRolls:
-                    AddStatRow(statTemplate, "Max Rolls", MainAttributeIconId.ExtraRoll, maxRolls.amount, iconIndex);
-                    break;
-                case ProgressionExtraRollReward extraRoll:
-                    AddStatRow(statTemplate, "Extra Rolls", MainAttributeIconId.ExtraRoll, extraRoll.amount, iconIndex);
-                    break;
-
-                case ProgressionUnlockRelicsReward unlockRelics:
-                    AddRelicUnlockRows(unlockRelics, unlockRelics.relics);
-                    break;
-                case ProgressionUnlockGemsReward unlockGems:
-                    AddGemUnlockRows(unlockGems, unlockGems.gems);
-                    break;
-                case ProgressionStartingRelicReward startingRelic:
-                    AddRelicRow(startingRelic, startingRelic.relic);
-                    break;
-                case ProgressionAddStartingDieReward addDie:
-                    AddDieRow(addDie, addDie.die);
-                    break;
-
-                default:
-                    AddTextRow(ProgressionRewardDescriptionUtility.Describe(reward));
-                    break;
-            }
-        }
-    }
-
-    void AddStatRow(CharacterInfoStat statTemplate, string label, MainAttributeIconId iconId, int amount, GameIconIndexSO iconIndex)
-    {
-        if (statTemplate == null || bodyText == null)
+            Debug.LogError(
+                $"ProgressionRankUpPopupView on '{name}': assign rewardVisualCatalog or wire HoverTooltipManager.progressionRewardVisualCatalog.",
+                this);
             return;
+        }
+
+        var entries = new List<ProgressionRewardDisplayEntry>();
+        ProgressionRewardDisplayResolver.ExpandRewards(
+            rewards,
+            catalog,
+            trialRowFormatOverride: null,
+            ProgressionRewardExpandMode.Celebration,
+            entries);
 
         var parent = (Transform)(_rewardsContainerRt != null ? _rewardsContainerRt : bodyText.rectTransform);
-        var go = Instantiate(statTemplate.gameObject, parent, false);
-        var stat = go.GetComponent<CharacterInfoStat>();
-        if (stat == null)
-        {
-            Destroy(go);
-            return;
-        }
-
-        stat.SetLabel(label);
-        stat.SetMainAttributeIconId(iconId);
-        stat.SetValue($"+{amount}", iconIndex);
-
-        _spawnedRewardRows.Add(go);
+        ProgressionCelebrationRewardRowsUI.Populate(
+            parent,
+            entries,
+            BuildRowPrefabs(),
+            catalog,
+            _spawnedRewardRows);
     }
 
-    void AddRelicUnlockRows(ProgressionRewardBase reward, List<RelicSO> relics)
+    ProgressionCelebrationRewardRowsUI.Prefabs BuildRowPrefabs() => new ProgressionCelebrationRewardRowsUI.Prefabs
     {
-        if (relics == null)
-            return;
-
-        for (var i = 0; i < relics.Count; i++)
-            AddRelicRow(reward, relics[i]);
-    }
-
-    void AddGemUnlockRows(ProgressionRewardBase reward, List<GemSO> gems)
-    {
-        if (gems == null)
-            return;
-
-        for (var i = 0; i < gems.Count; i++)
-            AddGemRow(reward, gems[i]);
-    }
-
-    void AddRelicRow(ProgressionRewardBase reward, RelicSO relic)
-    {
-        if (relic == null)
-            return;
-
-        var displayName = !string.IsNullOrWhiteSpace(relic.title) ? relic.title.Trim() : relic.name;
-        var rewardTitle = ProgressionTrialRewardRowPresenter.FormatRelicGemRowTitle(reward, displayName);
-
-        var go = InstantiateRelicGemRow(relicRewardDisplayPrefab, "Relic Reward", "Relic Unlock Row");
-        if (go == null)
-        {
-            AddTextRow(rewardTitle);
-            return;
-        }
-
-        var view = go.GetComponent<RankTrialRewardDisplay>();
-        if (view != null)
-            view.BindRelic(relic, rewardTitle);
-        else
-            TryBindLegacyRelicOrGemRow(go, relic.icon, rewardTitle, false);
-
-        _spawnedRewardRows.Add(go);
-    }
-
-    void AddGemRow(ProgressionRewardBase reward, GemSO gem)
-    {
-        if (gem == null)
-            return;
-
-        var rewardTitle = ProgressionTrialRewardRowPresenter.FormatRelicGemRowTitle(reward, gem.DisplayLabel);
-
-        var go = InstantiateRelicGemRow(gemRewardDisplayPrefab, "Gem Reward", "Gem Unlock Row");
-        if (go == null)
-        {
-            AddTextRow(rewardTitle);
-            return;
-        }
-
-        var view = go.GetComponent<RankTrialRewardDisplay>();
-        if (view != null)
-            view.BindGem(gem, rewardTitle);
-        else
-            TryBindLegacyRelicOrGemRow(go, gem.icon, rewardTitle, true);
-
-        _spawnedRewardRows.Add(go);
-    }
-
-    void AddDieRow(ProgressionRewardBase reward, DieAssetSO die)
-    {
-        if (die == null)
-            return;
-
-        var displayName = !string.IsNullOrWhiteSpace(die.dieName) ? die.dieName.Trim() : die.name;
-        var rewardTitle = ProgressionTrialRewardRowPresenter.FormatRelicGemRowTitle(reward, displayName);
-
-        var go = InstantiateRelicGemRow(addStartingDieRewardDisplayPrefab, null, "Add Starting Die Row");
-        if (go == null)
-        {
-            AddTextRow(rewardTitle);
-            return;
-        }
-
-        var view = go.GetComponent<RankTrialRewardDisplay>();
-        if (view != null)
-            view.BindDie(die, rewardTitle);
-        else
-            TryBindLegacyRelicOrGemRow(go, die.uiIcon, rewardTitle, false);
-
-        _spawnedRewardRows.Add(go);
-    }
-
-    GameObject InstantiateRelicGemRow(GameObject prefab, string sceneFallbackName, string newName)
-    {
-        var template = prefab;
-        if (template == null && !string.IsNullOrEmpty(sceneFallbackName))
-        {
-            // Best-effort fallback: clone an existing instance already present in the current scene.
-            template = GameObject.Find(sceneFallbackName);
-        }
-
-        if (template == null || bodyText == null)
-            return null;
-
-        var parent = (Transform)(_rewardsContainerRt != null ? _rewardsContainerRt : bodyText.rectTransform);
-        var go = Instantiate(template, parent, false);
-        go.name = newName;
-        go.SetActive(true);
-        return go;
-    }
-
-    void TryBindLegacyRelicOrGemRow(GameObject rowGo, Sprite iconSprite, string text, bool isGem)
-    {
-        if (rowGo == null)
-            return;
-
-        var tmpAll = rowGo.GetComponentsInChildren<TMP_Text>(true);
-        TMP_Text target = null;
-        var desired = isGem ? "Die Gem" : "Artifact";
-        if (tmpAll != null)
-        {
-            for (var i = 0; i < tmpAll.Length; i++)
-            {
-                var t = tmpAll[i];
-                if (t == null)
-                    continue;
-                if (!string.IsNullOrWhiteSpace(t.text) && t.text.IndexOf(desired, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    target = t;
-                    break;
-                }
-            }
-        }
-
-        if (target == null && tmpAll != null && tmpAll.Length > 0)
-            target = tmpAll[0];
-
-        if (target != null)
-            target.text = text ?? string.Empty;
-
-        var images = rowGo.GetComponentsInChildren<Image>(true);
-        if (images == null || images.Length == 0)
-            return;
-
-        Image icon = null;
-        for (var i = 0; i < images.Length; i++)
-        {
-            var img = images[i];
-            var n = img != null ? img.gameObject.name : string.Empty;
-            if (!string.IsNullOrWhiteSpace(n) &&
-                (n.IndexOf("Icon", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 n.IndexOf("Relic", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 n.IndexOf("Gem", StringComparison.OrdinalIgnoreCase) >= 0))
-            {
-                icon = img;
-                break;
-            }
-        }
-
-        if (icon == null && images.Length > 1)
-            icon = images[1];
-        if (icon == null)
-            icon = images[0];
-
-        if (icon != null)
-        {
-            icon.sprite = iconSprite;
-            icon.enabled = iconSprite != null;
-        }
-    }
-
-    void AddTextRow(string text)
-    {
-        if (bodyText == null)
-            return;
-
-        var go = new GameObject("Reward Text Row", typeof(RectTransform));
-        var parent = (Transform)(_rewardsContainerRt != null ? _rewardsContainerRt : bodyText.rectTransform);
-        go.transform.SetParent(parent, false);
-
-        var tmp = go.AddComponent<TextMeshProUGUI>();
-        tmp.raycastTarget = false;
-        tmp.font = bodyText.font;
-        tmp.fontSize = bodyText.fontSize;
-        tmp.color = bodyText.color;
-        tmp.alignment = bodyText.alignment;
-        tmp.enableWordWrapping = bodyText.enableWordWrapping;
-        tmp.text = text ?? string.Empty;
-
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0f, 0f);
-        rt.anchorMax = new Vector2(1f, 0f);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = Vector2.zero;
-        rt.sizeDelta = new Vector2(0f, 0f);
-
-        _spawnedRewardRows.Add(go);
-    }
+        statRowPrefab = statRowPrefab,
+        relicRewardDisplayPrefab = relicRewardDisplayPrefab,
+        gemRewardDisplayPrefab = gemRewardDisplayPrefab,
+        addStartingDieRewardDisplayPrefab = addStartingDieRewardDisplayPrefab,
+        compactRowPrefab = compactRewardRowPrefab,
+        textStyleTemplate = bodyText,
+    };
 
     void OnDisable() => ClearSpawnedRows();
 

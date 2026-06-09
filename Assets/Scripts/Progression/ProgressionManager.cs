@@ -254,6 +254,29 @@ public sealed class ProgressionManager : MonoBehaviour
         }
     }
 
+    /// <summary>First unacknowledged trial on the active rank, in catalog order.</summary>
+    public bool TryGetNextUnacknowledgedTrial(out PlayerTrialSO trial)
+    {
+        trial = null;
+        if (_save?.unacknowledgedTrialIds == null || _activeRank?.associatedTrials == null)
+            return false;
+
+        for (var i = 0; i < _activeRank.associatedTrials.Count; i++)
+        {
+            var candidate = _activeRank.associatedTrials[i];
+            if (candidate == null || ProgressionContentIds.IsNullOrEmpty(candidate.TrialId))
+                continue;
+
+            if (!IsTrialUnacknowledged(candidate.TrialId))
+                continue;
+
+            trial = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
     public void AcknowledgeTrialCelebration(string trialId)
     {
         if (_save?.unacknowledgedTrialIds == null || ProgressionContentIds.IsNullOrEmpty(trialId))

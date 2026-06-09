@@ -31,5 +31,5 @@ MonoBehaviour:
         rowFormat: New Faces Unlocked
         faces:
         - {fileID: 11400000, guid: 3d9b777c454a3974e98bf6d5b6018ec4, type: 2}
-        - {fileID: 11400000, guid: dac8496d0242b8e4cb4888f608e6aece, type: 2}
         - {fileID: 11400000, guid: 3375269ed057e9e4a81f42aab0024675, type: 2}
+        - {fileID: 11400000, guid: f83a2aa0d5c265648a068c7737f9a26b, type: 2}

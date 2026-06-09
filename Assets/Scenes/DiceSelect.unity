@@ -3916,6 +3916,7 @@ MonoBehaviour:
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   trialRewardsPanelPrefab: {fileID: -7010648954486959870, guid: c80b3024e8c84164aa297ec2d0a50f02, type: 3}
   gameIconIndex: {fileID: 11400000, guid: e7a9d94c00e44a54a8e1204408a75e96, type: 2}
+  progressionRewardVisualCatalog: {fileID: 11400000, guid: 40ed2a32a4e511a40a8b517aaf7e6c91, type: 2}
   fallbackCanvas: {fileID: 94979826}
   hoverTooltipScreenOffset: {x: 30, y: 60}
   hoverAboveTooltipScreenOffset: {x: 360, y: -140}
@@ -7925,10 +7926,12 @@ MonoBehaviour:
   trialIconImage: {fileID: 1552154430}
   completeButton: {fileID: 1976918743}
   rewardsContainer: {fileID: 2031937670}
+  rewardVisualCatalog: {fileID: 11400000, guid: 40ed2a32a4e511a40a8b517aaf7e6c91, type: 2}
   statRowPrefab: {fileID: 7124784394064848127, guid: 53a2afcc50a4ebb4083b806f8364944d, type: 3}
   relicRewardDisplayPrefab: {fileID: 3230250374996567813, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
   gemRewardDisplayPrefab: {fileID: 3230250374996567813, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
   addStartingDieRewardDisplayPrefab: {fileID: 1918368201166030823, guid: 8c91e45b569698f4796f14bec0c362c3, type: 3}
+  faceRewardDisplayPrefab: {fileID: 1918368201166030823, guid: 1a277c8ddd3737f45b2dc37581a18b24, type: 3}
 --- !u!1 &757334387
 GameObject:
   m_ObjectHideFlags: 0
@@ -17905,10 +17908,12 @@ MonoBehaviour:
   completeButton: {fileID: 1852886880}
   titleFormat: '{0}'
   rewardsContainer: {fileID: 1899345269}
+  rewardVisualCatalog: {fileID: 11400000, guid: 40ed2a32a4e511a40a8b517aaf7e6c91, type: 2}
   statRowPrefab: {fileID: 7124784394064848127, guid: 53a2afcc50a4ebb4083b806f8364944d, type: 3}
   relicRewardDisplayPrefab: {fileID: 3230250374996567813, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
   gemRewardDisplayPrefab: {fileID: 3230250374996567813, guid: b0cd36e7b35f94a4ebd0a9572cd2f8cc, type: 3}
   addStartingDieRewardDisplayPrefab: {fileID: 1918368201166030823, guid: 8c91e45b569698f4796f14bec0c362c3, type: 3}
+  compactRewardRowPrefab: {fileID: 405937273818154872, guid: f159a21927dfc2246baa23a7478a6972, type: 3}
 --- !u!95 &1305560261
 Animator:
   serializedVersion: 7

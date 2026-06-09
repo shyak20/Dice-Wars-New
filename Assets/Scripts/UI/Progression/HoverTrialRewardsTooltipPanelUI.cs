@@ -28,7 +28,7 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
     public void Show(
         PlayerTrialSO trial,
         TrialSaveData state,
-        GameIconIndexSO iconIndex,
+        ProgressionRewardVisualCatalogSO catalog,
         IReadOnlyList<ProgressionRewardBase> additionalRewards = null)
     {
         if (trial == null)
@@ -38,14 +38,12 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
         }
 
         if (titleText != null)
-        {
             titleText.text = trial.DisplayName;
-        }
 
         if (descriptionText != null)
             descriptionText.text = ProgressionManager.BuildTrialTooltipBody(trial, state);
 
-        RebuildRewardRows(trial, iconIndex, additionalRewards);
+        RebuildRewardRows(trial, catalog, additionalRewards);
 
         if (panelRoot != null)
             panelRoot.SetActive(true);
@@ -53,7 +51,7 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
 
     void RebuildRewardRows(
         PlayerTrialSO trial,
-        GameIconIndexSO iconIndex,
+        ProgressionRewardVisualCatalogSO catalog,
         IReadOnlyList<ProgressionRewardBase> additionalRewards)
     {
         ClearRewardRows();
@@ -82,17 +80,22 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
             }
         }
 
-        var rows = new List<ProgressionTrialRewardRowPresenter.RowViewModel>();
-        ProgressionTrialRewardRowPresenter.CollectRows(
-            iconIndex,
+        var entries = new List<ProgressionRewardDisplayEntry>();
+        ProgressionRewardDisplayResolver.ExpandRewards(
             rewards,
+            catalog,
             trial.completionRewardRowFormat,
-            rows);
+            ProgressionRewardExpandMode.PerReward,
+            entries);
 
-        for (var i = 0; i < rows.Count; i++)
+        for (var i = 0; i < entries.Count; i++)
         {
+            var entry = entries[i];
+            if (!entry.HasContent)
+                continue;
+
             var rowView = Instantiate(rewardRowPrefab, rewardLayoutRoot);
-            rowView.Bind(rows[i]);
+            rowView.Bind(entry);
             _spawnedRows.Add(rowView);
         }
     }

@@ -19,7 +19,6 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
     [Tooltip("Optional full-screen blocker under celebration root.")]
     [SerializeField] private GameObject inputBlocker;
 
-    readonly List<PlayerTrialSO> _pendingTrials = new List<PlayerTrialSO>();
     readonly List<ProgressionUnlockedContentItem> _pendingUnlockedItems = new List<ProgressionUnlockedContentItem>();
     Coroutine _flowCoroutine;
     bool _flowRunning;
@@ -103,70 +102,31 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
     IEnumerator RunCelebrationFlow(PlayerDataSO character, ProgressionManager progression)
     {
         _flowRunning = true;
+        SetCelebrationRootActive(true);
 
         try
         {
-            progression.CollectUnacknowledgedTrials(_pendingTrials);
-            for (var i = 0; i < _pendingTrials.Count; i++)
+            while (progression.TryGetNextUnacknowledgedTrial(out var trial))
             {
-                var trial = _pendingTrials[i];
-                if (trial == null)
-                    continue;
+                yield return RunTrialCelebrationStep(trial);
 
-                var acknowledged = false;
-                SetCelebrationRootActive(true);
-                trialCompletedPopup.Show(trial, () => acknowledged = true);
-                while (!acknowledged)
-                    yield return null;
-
-                trialCompletedPopup.Hide();
-                SetCelebrationRootActive(false);
-
-                _pendingUnlockedItems.Clear();
-                ProgressionUnlockCelebrationContent.CollectFromTrial(trial, _pendingUnlockedItems);
-
-                if (_pendingUnlockedItems.Count > 0)
-                {
-                    if (unlockedContentPopup == null)
-                    {
-                        Debug.LogError(
-                            $"DiceSelectProgressionCelebrationController: trial '{trial.TrialId}' unlocked content but unlockedContentPopup is not assigned.",
-                            this);
-                    }
-                    else
-                    {
-                        var unlockAcknowledged = false;
-                        SetCelebrationRootActive(true);
-                        unlockedContentPopup.Show(_pendingUnlockedItems, () => unlockAcknowledged = true);
-                        while (!unlockAcknowledged)
-                            yield return null;
-
-                        unlockedContentPopup.Hide();
-                        SetCelebrationRootActive(false);
-                    }
-                }
+                if (!progression.IsInitializedFor(character))
+                    break;
 
                 progression.AcknowledgeTrialCelebration(trial.TrialId);
 
                 if (!progression.IsInitializedFor(character))
                     break;
-            }
 
-            _pendingTrials.Clear();
+                yield return null;
+            }
 
             if (progression.HasPendingRankUpCelebration())
             {
                 var rankToCelebrate = progression.GetActiveRank();
                 if (rankToCelebrate != null)
                 {
-                    var rankAcknowledged = false;
-                    SetCelebrationRootActive(true);
-                    rankUpPopup.Show(rankToCelebrate, character, () => rankAcknowledged = true);
-                    while (!rankAcknowledged)
-                        yield return null;
-
-                    rankUpPopup.Hide();
-                    SetCelebrationRootActive(false);
+                    yield return RunRankUpCelebrationStep(rankToCelebrate, character);
                 }
 
                 progression.AcknowledgeRankUpCelebration();
@@ -179,6 +139,64 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
             DiceSelectProgressionDisplayGate.SetDeferred(false);
             EndCelebrationFlow();
         }
+    }
+
+    IEnumerator RunTrialCelebrationStep(PlayerTrialSO trial)
+    {
+        HideAllPopups();
+
+        var trialAcknowledged = false;
+        trialCompletedPopup.Show(trial, () => trialAcknowledged = true);
+        while (!trialAcknowledged)
+            yield return null;
+
+        trialCompletedPopup.Hide();
+        yield return null;
+
+        _pendingUnlockedItems.Clear();
+        ProgressionUnlockCelebrationContent.CollectFromTrial(trial, _pendingUnlockedItems);
+
+        if (_pendingUnlockedItems.Count > 0)
+        {
+            if (unlockedContentPopup == null)
+            {
+                Debug.LogError(
+                    $"DiceSelectProgressionCelebrationController: trial '{trial.TrialId}' unlocked content but unlockedContentPopup is not assigned.",
+                    this);
+            }
+            else
+            {
+                HideAllPopups();
+
+                var unlockAcknowledged = false;
+                unlockedContentPopup.Show(_pendingUnlockedItems, () => unlockAcknowledged = true);
+                while (!unlockAcknowledged)
+                    yield return null;
+
+                unlockedContentPopup.Hide();
+                yield return null;
+            }
+        }
+    }
+
+    IEnumerator RunRankUpCelebrationStep(PlayerRankSO rankToCelebrate, PlayerDataSO character)
+    {
+        HideAllPopups();
+
+        var rankAcknowledged = false;
+        rankUpPopup.Show(rankToCelebrate, character, () => rankAcknowledged = true);
+        while (!rankAcknowledged)
+            yield return null;
+
+        rankUpPopup.Hide();
+        yield return null;
+    }
+
+    void HideAllPopups()
+    {
+        trialCompletedPopup?.Hide();
+        unlockedContentPopup?.Hide();
+        rankUpPopup?.Hide();
     }
 
     void StopFlow()
@@ -196,10 +214,7 @@ public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
     {
         _flowRunning = false;
         _flowCoroutine = null;
-        _pendingTrials.Clear();
-        trialCompletedPopup?.Hide();
-        unlockedContentPopup?.Hide();
-        rankUpPopup?.Hide();
+        HideAllPopups();
         SetCelebrationRootActive(false);
 
         if (DiceSelectProgressionDisplayGate.IsDeferred)

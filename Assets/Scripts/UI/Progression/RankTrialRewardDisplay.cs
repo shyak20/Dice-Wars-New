@@ -6,10 +6,10 @@ using UnityEngine.UI;
 /// <summary>
 /// Generic reward row for rank-up and trial completion celebration popups
 /// (<see cref="ProgressionTrialCompletedPopupView"/>, <see cref="ProgressionRankUpPopupView"/>).
-/// Supports relic unlocks, gem unlocks, and add-starting-die rewards.
+/// Supports relic unlocks, gem unlocks, add-starting-die rewards, and grouped face unlocks.
 ///
 /// Attach to the reward row prefab; the popup calls <see cref="BindRelic"/>, <see cref="BindGem"/>,
-/// or <see cref="BindDie"/> after instantiating.
+/// <see cref="BindDie"/>, or <see cref="BindFaceUnlock"/> after instantiating.
 ///
 /// Fields:
 ///   - <see cref="iconImage"/> — relic / gem / die UI icon
@@ -84,6 +84,10 @@ public sealed class RankTrialRewardDisplay : MonoBehaviour, IPointerEnterHandler
         var displayName = !string.IsNullOrWhiteSpace(die.dieName) ? die.dieName.Trim() : die.name;
         Bind(die.uiIcon, displayName, rewardTitle, string.Empty);
     }
+
+    /// <summary>Populate for a grouped face-unlock row (element icon + label, no description).</summary>
+    public void BindFaceUnlock(Sprite icon, string elementDisplayName, string rewardTitle) =>
+        Bind(icon, elementDisplayName, rewardTitle, string.Empty);
 
     void Bind(Sprite icon, string displayName, string rewardTitle, string description)
     {
