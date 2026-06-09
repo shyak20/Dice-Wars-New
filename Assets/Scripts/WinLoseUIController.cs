@@ -58,6 +58,7 @@ public class WinLoseUIController : MonoBehaviour
             return;
         }
 
+        SimulationSpeedController.ApplyRealtimeGlobally();
         faceRewardManager.StartFaceReward();
     }
 

@@ -101,7 +101,9 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     private IEnumerator VictorySequence()
     {
         if (delayAfterVictorySeconds > 0f)
-            yield return new WaitForSeconds(delayAfterVictorySeconds);
+            yield return new WaitForSecondsRealtime(delayAfterVictorySeconds);
+
+        SimulationSpeedController.ApplyRealtimeGlobally();
 
         DisableObjectsForVictoryScreen();
 

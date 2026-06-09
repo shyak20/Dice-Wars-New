@@ -7880,6 +7880,7 @@ MonoBehaviour:
   faceRewardManager: {fileID: 576654137}
   gameOverPanel: {fileID: 1293339380}
   mainMenuButton: {fileID: 396311228}
+  defeatScreenDelaySeconds: 1.25
 --- !u!114 &430063147
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7892,7 +7893,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e95314daf3dfb82409a87af9bc14215c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  delayAfterVictorySeconds: 1
+  delayAfterVictorySeconds: 1.5
   winStagePanel: {fileID: 1222476796}
   rewardsLayout: {fileID: 1195403602}
   goldRewardRowPrefab: {fileID: 161149463819161139, guid: 95db9d0d92f04f34cac180c389cc4397, type: 3}
@@ -13556,6 +13557,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 419
       objectReference: {fileID: 0}
+    - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1160275555}
     - target: {fileID: 2967703833592184776, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -17054,6 +17059,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: -436.00003
       objectReference: {fileID: 0}
+    - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1192112495}
     - target: {fileID: 2967703833592184776, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -18490,6 +18499,90 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1155002436}
   m_CullTransparentMesh: 1
+--- !u!21 &1160275555
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Custom_SpriteFlash Overlay (Instance)
+  m_Shader: {fileID: 4800000, guid: d0e91d6f403d3754b8050376a88433cf, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ColorMask: 15
+    - _FlashAmount: 0
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _FlashColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!21 &1192112495
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Custom_SpriteFlash Overlay (Instance)
+  m_Shader: {fileID: 4800000, guid: d0e91d6f403d3754b8050376a88433cf, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ColorMask: 15
+    - _FlashAmount: 0
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _FlashColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &1195403601
 GameObject:
   m_ObjectHideFlags: 0
@@ -38194,10 +38287,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 274805708800022169, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 2.59
-      objectReference: {fileID: 0}
     - target: {fileID: 980851640993252517, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -115.33099
@@ -38218,14 +38307,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1939886097156947229, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 6005bf37047bc504bb9f3228f7115004, type: 2}
     - target: {fileID: 3440934713375229664, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

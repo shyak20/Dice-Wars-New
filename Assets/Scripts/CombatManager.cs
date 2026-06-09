@@ -783,7 +783,7 @@ public class CombatManager : MonoBehaviour
                 if (!slot.IsActiveInRoster || !slot.gameObject.activeSelf)
                     slot.ActivateInRoster(this);
             }
-            else if (slot.IsActiveInRoster || slot.gameObject.activeSelf)
+            else if (slot.IsActiveInRoster || (slot.gameObject.activeSelf && !slot.IsHideAfterDefeatPending))
             {
                 slot.DeactivateFromRoster();
             }
@@ -830,6 +830,13 @@ public class CombatManager : MonoBehaviour
             CombatEvents.OnEnemyDefeated?.Invoke(enemy);
             if (enemy == activeEnemy)
                 enemy.ClearAssignedPoolOnDefeat();
+            else
+            {
+                var hideDelay = enemy.CombatPresentation != null
+                    ? enemy.CombatPresentation.DefeatedHideDelaySeconds
+                    : 0f;
+                enemy.ScheduleDeactivateFromRoster(hideDelay);
+            }
         }
 
         SyncAdditionalEnemySlotVisibility();
@@ -3528,8 +3535,6 @@ public class CombatManager : MonoBehaviour
             return true;
 
         ChangeState(CombatState.Victory);
-
-        SimulationSpeedController.ApplyRealtimeGlobally();
 
         VictoryRewardBuffer.PendingGold = 0;
         if (activeEnemy != null && activeEnemy.enemyData != null)

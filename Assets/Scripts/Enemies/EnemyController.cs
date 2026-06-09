@@ -58,6 +58,11 @@ public class EnemyController : MonoBehaviour
     private readonly List<EnemyValueRolledListener> _valueRolledListeners = new List<EnemyValueRolledListener>();
     public ReactiveProperty<EnemyActionSO> CurrentIntent = new();
 
+    Coroutine _hideAfterDefeatRoutine;
+
+    /// <summary>True while waiting for <see cref="ScheduleDeactivateFromRoster"/> before <see cref="GameObject.SetActive"/> false.</summary>
+    public bool IsHideAfterDefeatPending { get; private set; }
+
     public StatusEffectManager StatusEffects { get; private set; }
     public IReadOnlyDictionary<EnemyResistanceElement, float> DamageResistances => _damageResistanceByElement;
     public IReadOnlyList<EnemyValueRolledListener> ValueRolledListeners => _valueRolledListeners;
@@ -85,6 +90,7 @@ public class EnemyController : MonoBehaviour
 
     public void Initialize(EnemyTypeSO data)
     {
+        CancelScheduledHideAfterDefeat();
         enemyData = data;
         currentHealth = data.maxHealth;
         currentArmor = data.startArmor;
@@ -123,6 +129,7 @@ public class EnemyController : MonoBehaviour
     /// <summary>Marks this enemy as a live roster participant, enables its GameObject + targeting UI, and wires the drop target.</summary>
     public void ActivateInRoster(CombatManager combat)
     {
+        CancelScheduledHideAfterDefeat();
         IsActiveInRoster = true;
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
@@ -140,18 +147,58 @@ public class EnemyController : MonoBehaviour
     /// <summary>Removes this enemy from the active roster after defeat: clears its pending element pool and disables its GameObject.</summary>
     public void DeactivateFromRoster()
     {
+        CancelScheduledHideAfterDefeat();
+        MarkDefeatedInRoster();
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>Marks defeated and hides the GameObject after <paramref name="delaySeconds"/> (0 = immediate).</summary>
+    public void ScheduleDeactivateFromRoster(float delaySeconds)
+    {
+        MarkDefeatedInRoster();
+
+        CancelScheduledHideAfterDefeat();
+        if (delaySeconds <= 0f)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        IsHideAfterDefeatPending = true;
+        _hideAfterDefeatRoutine = StartCoroutine(CoDeactivateAfterDefeat(delaySeconds));
+    }
+
+    void MarkDefeatedInRoster()
+    {
         IsActiveInRoster = false;
         if (assignedElementPool != null)
             assignedElementPool.ClearAllRows();
+    }
+
+    void CancelScheduledHideAfterDefeat()
+    {
+        IsHideAfterDefeatPending = false;
+        if (_hideAfterDefeatRoutine == null)
+            return;
+
+        StopCoroutine(_hideAfterDefeatRoutine);
+        _hideAfterDefeatRoutine = null;
+    }
+
+    IEnumerator CoDeactivateAfterDefeat(float delaySeconds)
+    {
+        if (delaySeconds > 0f)
+            yield return new WaitForSeconds(delaySeconds);
+
+        IsHideAfterDefeatPending = false;
+        _hideAfterDefeatRoutine = null;
         gameObject.SetActive(false);
     }
 
     /// <summary>Main Enemy defeat: clears the assigned element pool but keeps the GameObject (rewards reference its data).</summary>
     public void ClearAssignedPoolOnDefeat()
     {
-        IsActiveInRoster = false;
-        if (assignedElementPool != null)
-            assignedElementPool.ClearAllRows();
+        MarkDefeatedInRoster();
     }
 
     public int ApplyElementResistance(int amount, DieType damageType)
@@ -235,6 +282,7 @@ public class EnemyController : MonoBehaviour
         if (currentHealth <= 0)
         {
             Debug.Log($"{enemyData.enemyName} defeated!");
+            NotifyPresentationHealthDepleted();
         }
         else
             EvaluatePendingPhaseTransitionTrigger();
@@ -284,12 +332,19 @@ public class EnemyController : MonoBehaviour
         if (currentHealth <= 0)
         {
             Debug.Log($"{enemyData.enemyName} defeated!");
+            NotifyPresentationHealthDepleted();
         }
         else
             EvaluatePendingPhaseTransitionTrigger();
 
         if (amount > 0)
             CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
+    }
+
+    void NotifyPresentationHealthDepleted()
+    {
+        if (_presentation != null)
+            _presentation.NotifyHealthDepleted();
     }
 
     public void AddArmor(int amount)

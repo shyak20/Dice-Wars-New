@@ -30,19 +30,19 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _SplatterNoiseMap:
         m_Texture: {fileID: 2800000, guid: 3f44a80504d8a2e45a8556bedc12d4c9, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 2, y: 2}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _ColorMask: 15
-    - _EdgeSoftness: 0.105
+    - _EdgeSoftness: 0.069
     - _GlowAlpha: 0
     - _GlowEdgeSharp: 5.28
     - _GlowEdgeWidth: 1.22
     - _GlowIntensity: 0.94
-    - _MaskOutlineWidth: 0.47
+    - _MaskOutlineWidth: 6
     - _Randomness: 0
-    - _RevealAmount: 0.992
+    - _RevealAmount: 1
     - _SplatterScale: 31.1
     - _Stencil: 0
     - _StencilComp: 8
