@@ -219,6 +219,82 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         StartCoroutine(CoBeginDuplicateFlights(anchors, forceStartingVisibleScale, onCloneArrived));
     }
 
+    /// <summary>
+    /// Hides the main orb and flies duplicate visuals to every anchor, waiting until all flights finish.
+    /// Used when only non-main enemies received player damage or debuffs this turn.
+    /// </summary>
+    public IEnumerator CoDuplicateFlightsToAnchors(
+        IReadOnlyList<Transform> anchors,
+        bool forceStartingVisibleScale,
+        System.Action<Transform> onCloneArrived = null)
+    {
+        if (anchors == null || anchors.Count == 0)
+        {
+            PrepareDuplicateOnlyFlight();
+            _isFlyingToEnemy = false;
+            _postHitHiddenAtEnemy = true;
+            ClearIdlePowerVisualSuppressionAfterBustFlow();
+            yield break;
+        }
+
+        var pending = 0;
+        for (var i = 0; i < anchors.Count; i++)
+        {
+            if (anchors[i] != null)
+                pending++;
+        }
+
+        if (pending == 0)
+        {
+            PrepareDuplicateOnlyFlight();
+            _isFlyingToEnemy = false;
+            _postHitHiddenAtEnemy = true;
+            ClearIdlePowerVisualSuppressionAfterBustFlow();
+            yield break;
+        }
+
+        PrepareDuplicateOnlyFlight();
+
+        var completed = 0;
+        var flightStartWorld = effectTransform.position;
+        var startScale = ResolveFlightStartWorldScale(forceStartingVisibleScale);
+
+        for (var i = 0; i < anchors.Count; i++)
+        {
+            var anchor = anchors[i];
+            if (anchor == null)
+                continue;
+
+            var cloneTransform = CreateFlightVisualClone(flightStartWorld, startScale);
+            if (cloneTransform == null)
+            {
+                completed++;
+                continue;
+            }
+
+            StartCoroutine(CoFlyCloneAndDestroy(cloneTransform, flightStartWorld, anchor, arrivedAnchor =>
+            {
+                onCloneArrived?.Invoke(arrivedAnchor);
+                completed++;
+            }));
+        }
+
+        while (completed < pending)
+            yield return null;
+
+        _isFlyingToEnemy = false;
+        SetUniformWorldScale(effectTransform, 0f);
+        _postHitHiddenAtEnemy = true;
+        ClearIdlePowerVisualSuppressionAfterBustFlow();
+    }
+
+    /// <summary>Hides the main orb before duplicate-only flights to non-main enemies.</summary>
+    public void PrepareDuplicateOnlyFlight()
+    {
+        _isFlyingToEnemy = true;
+        SetUniformWorldScale(effectTransform, 0f);
+    }
+
     private IEnumerator CoBeginDuplicateFlights(
         IReadOnlyList<Transform> anchors,
         bool forceStartingVisibleScale,

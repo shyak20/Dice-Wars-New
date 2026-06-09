@@ -56,11 +56,10 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
 
     public float DefeatedHideDelaySeconds => defeatedHideDelaySeconds;
 
-    private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
-    private static readonly int ColorId = Shader.PropertyToID("_Color");
     private static readonly int RevealAmountId = Shader.PropertyToID("_RevealAmount");
 
     private EnemyController _enemy;
+    private Material _defaultSharedMaterialSource;
     private Material _defaultMaterial;
     private Material _outlineMaterialRuntime;
     private Material _enemyMaterial;
@@ -70,7 +69,6 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
     private Coroutine _physicalRoutine;
     private Coroutine _burnRoutine;
     private Coroutine _deathDissolveRoutine;
-    private Material _dissolveMaterialRuntime;
 
     /// <summary>Sprite used for hit flash and for fallbacks on <see cref="EnemyController"/> anchors.</summary>
     public SpriteRenderer EnemySprite => enemySprite;
@@ -83,10 +81,15 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
 
         if (enemySprite != null)
         {
-            _defaultMaterial = enemySprite.material;
-            _enemyMaterial = _defaultMaterial;
-            _enemyMaterial.SetColor(FlashColorID, physicalSpriteFlashColor);
-            _enemyMaterial.SetFloat(FlashAmountID, 0f);
+            _defaultSharedMaterialSource = enemySprite.sharedMaterial;
+            if (_defaultSharedMaterialSource == null)
+            {
+                Debug.LogError(
+                    $"{nameof(EnemyCombatPresentationController)} on '{name}': assign a default material on {nameof(enemySprite)}.",
+                    this);
+            }
+            else
+                ApplyDefaultSpriteMaterial();
         }
 
         if (physicalDamageIndicator != null) physicalDamageIndicator.SetActive(false);
@@ -94,8 +97,8 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         if (orbImpactIndicator != null) orbImpactIndicator.SetActive(false);
     }
 
-    /// <summary>Stops indicator/flash coroutines and hides transient UI (e.g. new fight after returning from map).</summary>
-    public void ResetTransientDamagePresentation()
+    /// <summary>Restores the combat flash material and clears death-dissolve state when this slot is reused for a new enemy.</summary>
+    public void ResetPresentationForSpawn()
     {
         if (_orbRoutine != null)
         {
@@ -121,18 +124,24 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
             _spriteFlashRoutine = null;
         }
 
+        if (_deathDissolveRoutine != null)
+        {
+            StopCoroutine(_deathDissolveRoutine);
+            _deathDissolveRoutine = null;
+        }
+
         if (physicalDamageIndicator != null) physicalDamageIndicator.SetActive(false);
         if (burnDamageIndicator != null) burnDamageIndicator.SetActive(false);
         if (orbImpactIndicator != null) orbImpactIndicator.SetActive(false);
 
-        if (_enemyMaterial != null && !_dragHoverOutlineActive)
-        {
-            _enemyMaterial.SetFloat(FlashAmountID, 0f);
-            _enemyMaterial.SetColor(FlashColorID, physicalSpriteFlashColor);
-        }
-
         SetDragAssignHoverOutline(false);
         StopDeathDissolve(clearComponent: true);
+    }
+
+    /// <summary>Stops indicator/flash coroutines and hides transient UI (e.g. new fight after returning from map).</summary>
+    public void ResetTransientDamagePresentation()
+    {
+        ResetPresentationForSpawn();
     }
 
     void StopDeathDissolve(bool clearComponent)
@@ -147,45 +156,52 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
             return;
 
         var dissolve = enemySprite.GetComponent<SplatterRevealSpritePlayer>();
-        if (dissolve == null)
+        if (dissolve != null)
+        {
+            dissolve.StopDissolve();
+            dissolve.DisposeOwnedMaterial();
+            if (clearComponent)
+                Destroy(dissolve);
+        }
+
+        ApplyDefaultSpriteMaterial();
+    }
+
+    void ApplyDefaultSpriteMaterial()
+    {
+        if (enemySprite == null || _defaultSharedMaterialSource == null)
             return;
 
-        dissolve.StopDissolve();
-        if (clearComponent)
-            Destroy(dissolve);
+        if (_defaultMaterial != null && _defaultMaterial != _defaultSharedMaterialSource)
+        {
+            if (Application.isPlaying)
+                Destroy(_defaultMaterial);
+            else
+                DestroyImmediate(_defaultMaterial);
+        }
 
-        RestoreSpriteMaterialAfterDissolve();
+        _defaultMaterial = new Material(_defaultSharedMaterialSource);
+        _defaultMaterial.shaderKeywords = _defaultSharedMaterialSource.shaderKeywords;
+        enemySprite.SetPropertyBlock(null);
+        enemySprite.sharedMaterial = _defaultMaterial;
+        _enemyMaterial = _defaultMaterial;
+        _enemyMaterial.SetColor(FlashColorID, physicalSpriteFlashColor);
+        _enemyMaterial.SetFloat(FlashAmountID, 0f);
     }
 
     void RestoreSpriteMaterialAfterDissolve()
     {
-        if (_dissolveMaterialRuntime != null)
-        {
-            if (Application.isPlaying)
-                Destroy(_dissolveMaterialRuntime);
-            else
-                DestroyImmediate(_dissolveMaterialRuntime);
-            _dissolveMaterialRuntime = null;
-        }
-
-        if (enemySprite == null || _defaultMaterial == null)
-            return;
-
-        enemySprite.material = _defaultMaterial;
-        _enemyMaterial = _defaultMaterial;
+        ApplyDefaultSpriteMaterial();
     }
 
-    Material ApplyDeathDissolveMaterialToSprite()
+    bool ValidateDeathDissolveMaterial()
     {
-        if (enemySprite == null)
-            return null;
-
         if (deathDissolveMaterial == null)
         {
             Debug.LogError(
                 $"{nameof(EnemyCombatPresentationController)} on '{name}': assign deathDissolveMaterial (UI Splatter Reveal URP).",
                 this);
-            return null;
+            return false;
         }
 
         if (!deathDissolveMaterial.HasProperty(RevealAmountId))
@@ -193,9 +209,14 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
             Debug.LogError(
                 $"{nameof(EnemyCombatPresentationController)} on '{name}': deathDissolveMaterial must use shader with _RevealAmount.",
                 this);
-            return null;
+            return false;
         }
 
+        return true;
+    }
+
+    void PrepareSpriteForDeathDissolve()
+    {
         if (_spriteFlashRoutine != null)
         {
             StopCoroutine(_spriteFlashRoutine);
@@ -203,23 +224,6 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         }
 
         SetDragAssignHoverOutline(false);
-
-        if (_dissolveMaterialRuntime != null)
-            Destroy(_dissolveMaterialRuntime);
-
-        _dissolveMaterialRuntime = new Material(deathDissolveMaterial);
-
-        var sprite = enemySprite.sprite;
-        if (sprite != null)
-            _dissolveMaterialRuntime.SetTexture(MainTexId, sprite.texture);
-
-        _dissolveMaterialRuntime.SetColor(ColorId, enemySprite.color);
-        _dissolveMaterialRuntime.SetFloat(RevealAmountId, 1f);
-
-        enemySprite.material = _dissolveMaterialRuntime;
-        _enemyMaterial = _dissolveMaterialRuntime;
-
-        return _dissolveMaterialRuntime;
     }
 
     /// <summary>Death trigger, then delayed runtime dissolve on the enemy sprite material.</summary>
@@ -245,16 +249,18 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
             yield break;
         }
 
-        var dissolveMaterialInstance = ApplyDeathDissolveMaterialToSprite();
-        if (dissolveMaterialInstance == null)
+        if (!ValidateDeathDissolveMaterial())
             yield break;
+
+        PrepareSpriteForDeathDissolve();
 
         var spriteObject = enemySprite.gameObject;
         var dissolve = spriteObject.GetComponent<SplatterRevealSpritePlayer>();
         if (dissolve == null)
             dissolve = spriteObject.AddComponent<SplatterRevealSpritePlayer>();
 
-        dissolve.PlayDissolveOut(enemySprite, dissolveDurationSeconds, dissolveMaterialInstance);
+        dissolve.PlayDissolveOut(enemySprite, dissolveDurationSeconds, deathDissolveMaterial);
+        _enemyMaterial = enemySprite.material;
     }
 
     public void TriggerDeathAnimator()

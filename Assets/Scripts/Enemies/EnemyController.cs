@@ -117,6 +117,7 @@ public class EnemyController : MonoBehaviour
         }
         else
         {
+            _presentation.ResetPresentationForSpawn();
             if (hasSprite)
                 _presentation.ApplyDisplaySprite(data.displaySprite);
             _presentation.SetupCombatAnimatorFromEnemyType(data);

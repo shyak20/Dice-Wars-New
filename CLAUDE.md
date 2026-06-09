@@ -88,6 +88,7 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 - Never fix real issues with patching or workarounds — find and fix the actual root cause
 - Avoid `GetComponent`/`GetComponentInChildren` — prefer explicit references
 - Avoid static variables — Unity's "Enter Play Mode Options" (no domain reload) means static state persists between play sessions, causing subtle bugs
+- **Runtime material assignment**: whenever code assigns `Renderer.material` (or equivalent) from a shared asset / inspector reference, instantiate first (`new Material(source)` or `Material.Instantiate(source)`) and assign the copy. Never mutate or assign the asset directly — other objects sharing that material would pick up the same property changes. When you already own a runtime instance, assign it with `sharedMaterial` (not `.material`) so Unity does not clone again and your property updates stay on the object being drawn.
 
 
 - When needed (you may ask), use Odin for better inspector in complicated serialized classes.

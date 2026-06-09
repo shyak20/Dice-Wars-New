@@ -2692,7 +2692,9 @@ public class CombatManager : MonoBehaviour
 
         DrainQueuedTurnEndActions(ctx);
 
-        var orbTargetEnemy = ResolvePrimaryTargetEnemy();
+        var impactedEnemies = CollectEnemiesWithPlayerTurnImpact();
+        var mainEnemy = ResolvePrimaryTargetEnemy();
+        var orbTargetEnemy = mainEnemy;
         var statusCtx = BuildStatusContext(orbTargetEnemy);
         int pendingAttack = GetPendingAttack();
         pendingAttack += player.StatusEffects.GetTotalBonusAttack(statusCtx);
@@ -2700,7 +2702,9 @@ public class CombatManager : MonoBehaviour
             pendingAttack = orbTargetEnemy.StatusEffects.ApplyDamageModifiers(statusCtx, pendingAttack);
         int pendingDefense = GetPendingDefense();
 
-        bool enemyDamageLine = HasAnyPendingEnemyDamage() || _turnRegistry.BurnAppliedThisTurn > 0;
+        bool mainHasPlayerImpact = mainEnemy != null && impactedEnemies.Contains(mainEnemy);
+        bool hasEnemyImpact = impactedEnemies.Count > 0;
+        bool enemyDamageLine = hasEnemyImpact || _turnRegistry.BurnAppliedThisTurn > 0;
         bool skipOrbFlightThisSubmit = _skipPowerOrbFlightForNextSubmitTurn;
         _skipPowerOrbFlightForNextSubmitTurn = false;
 
@@ -2716,10 +2720,14 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            bool flyOrbToEnemy = enemyDamageLine && orbTargetEnemy != null;
-            Transform orbAnchor = flyOrbToEnemy
-                ? orbTargetEnemy.GetPowerOrbHitAnchor()
-                : player.GetPowerOrbSupportAnchor();
+            bool flyOrbToEnemy = enemyDamageLine && hasEnemyImpact;
+            bool flyMainOrb = flyOrbToEnemy && mainHasPlayerImpact;
+            bool duplicateOnlyFlight = flyOrbToEnemy && !flyMainOrb;
+            Transform orbAnchor = flyMainOrb
+                ? mainEnemy.GetPowerOrbHitAnchor()
+                : flyOrbToEnemy
+                    ? impactedEnemies[0].GetPowerOrbHitAnchor()
+                    : player.GetPowerOrbSupportAnchor();
             if (orbAnchor == null)
             {
                 Debug.LogError("CombatManager.SubmitTurn: power orb anchor is null. Assign PlayerStatus powerOrbSupportWorldAnchor or enemy hit anchor.");
@@ -2733,43 +2741,26 @@ public class CombatManager : MonoBehaviour
                     pendingAttack,
                     pendingDefense,
                     orbAnchor,
-                    flyOrbToEnemy,
+                    flyMainOrb,
+                    duplicateOnlyFlight,
+                    impactedEnemies,
                     allowZeroCombatPower,
                     forceStartingVisibleScale,
-                    orbTargetEnemy));
+                    mainEnemy));
             }
         }
-    }
-
-    private bool HasAnyPendingEnemyDamage()
-    {
-        if (bonusDamageFromActions > 0)
-            return true;
-        if (player != null)
-        {
-            var bonus = player.StatusEffects.GetTotalBonusAttack(BuildStatusContext());
-            if (bonus > 0)
-                return true;
-        }
-
-        for (var i = 0; i < channeledFaces.Count; i++)
-        {
-            var face = channeledFaces[i];
-            if (face != null && face.Damage > 0)
-                return true;
-        }
-
-        return false;
     }
 
     private IEnumerator CoSubmitTurnAfterOrbFlight(
         int pendingAttack,
         int pendingDefense,
         Transform orbAnchor,
-        bool flyOrbToEnemy,
+        bool flyMainOrb,
+        bool duplicateOnlyFlight,
+        IReadOnlyList<EnemyController> impactedEnemies,
         bool allowZeroCombatPower,
         bool forceStartingVisibleScale,
-        EnemyController orbTargetEnemy)
+        EnemyController mainEnemy)
     {
         if (pendingDefense > 0 && player != null)
         {
@@ -2786,26 +2777,78 @@ public class CombatManager : MonoBehaviour
             if (impactAnnounced) return;
             impactAnnounced = true;
             CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
-                flyOrbToEnemy ? PowerOrbImpactTarget.Enemy : PowerOrbImpactTarget.PlayerSupport,
+                PowerOrbImpactTarget.Enemy,
                 orbAnchor.position,
-                flyOrbToEnemy ? orbTargetEnemy : null));
+                flyMainOrb ? mainEnemy : null));
+        }
+
+        void AnnounceDuplicateOrbImpact(Transform anchor, EnemyController enemy)
+        {
+            if (anchor == null || enemy == null) return;
+            CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
+                PowerOrbImpactTarget.Enemy,
+                anchor.position,
+                enemy));
         }
 
         void OnOrbImpact()
         {
-            AnnounceOrbImpact();
+            if (!duplicateOnlyFlight)
+                AnnounceOrbImpact();
             if (attackResolved) return;
             attackResolved = true;
             continueCombat = RunPlayerPhysicalResolution(pendingAttack);
         }
 
-        if (flyOrbToEnemy && IsMultiEnemy)
-            BeginDuplicateOrbFlightsToOtherTargets(orbTargetEnemy, forceStartingVisibleScale);
+        var duplicateTargets = BuildDuplicateOrbFlightTargets(flyMainOrb, duplicateOnlyFlight, impactedEnemies, mainEnemy);
 
-        IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
-            orbAnchor, allowZeroCombatPower, forceStartingVisibleScale, OnOrbImpact);
-        while (flight.MoveNext())
-            yield return flight.Current;
+        if (duplicateOnlyFlight && duplicateTargets.Count > 0)
+        {
+            var duplicateAnchors = new List<Transform>();
+            var duplicateEnemies = new List<EnemyController>();
+            if (TryBuildOrbFlightAnchors(duplicateTargets, duplicateAnchors, duplicateEnemies))
+            {
+                yield return powerOrbVisual.CoDuplicateFlightsToAnchors(
+                    duplicateAnchors,
+                    forceStartingVisibleScale,
+                    anchor => AnnounceDuplicateOrbImpact(anchor, ResolveEnemyForOrbAnchor(anchor, duplicateAnchors, duplicateEnemies)));
+            }
+        }
+        else if (flyMainOrb)
+        {
+            if (IsMultiEnemy && duplicateTargets.Count > 0)
+                BeginDuplicateOrbFlightsToTargets(duplicateTargets, forceStartingVisibleScale);
+
+            IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
+                orbAnchor, allowZeroCombatPower, forceStartingVisibleScale, OnOrbImpact);
+            while (flight.MoveNext())
+                yield return flight.Current;
+        }
+        else
+        {
+            void AnnounceSupportOrbImpact()
+            {
+                if (impactAnnounced) return;
+                impactAnnounced = true;
+                CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
+                    PowerOrbImpactTarget.PlayerSupport,
+                    orbAnchor.position,
+                    null));
+            }
+
+            void OnSupportOrbImpact()
+            {
+                AnnounceSupportOrbImpact();
+                if (attackResolved) return;
+                attackResolved = true;
+                continueCombat = RunPlayerPhysicalResolution(pendingAttack);
+            }
+
+            IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
+                orbAnchor, allowZeroCombatPower, forceStartingVisibleScale, OnSupportOrbImpact);
+            while (flight.MoveNext())
+                yield return flight.Current;
+        }
 
         if (!attackResolved)
             OnOrbImpact();
@@ -3167,15 +3210,81 @@ public class CombatManager : MonoBehaviour
 
     private void BeginDuplicateOrbFlightsToOtherTargets(EnemyController primaryOrbTarget, bool forceStartingVisibleScale)
     {
-        if (powerOrbVisual == null || primaryOrbTarget == null)
+        if (primaryOrbTarget == null)
+            return;
+
+        var targets = new List<EnemyController>();
+        foreach (var enemy in EnumerateAssignedDamageTargets())
+        {
+            if (enemy != null && enemy.IsAlive && enemy != primaryOrbTarget)
+                targets.Add(enemy);
+        }
+
+        BeginDuplicateOrbFlightsToTargets(targets, forceStartingVisibleScale);
+    }
+
+    private void BeginDuplicateOrbFlightsToTargets(
+        IReadOnlyList<EnemyController> targets,
+        bool forceStartingVisibleScale)
+    {
+        if (powerOrbVisual == null || targets == null || targets.Count == 0)
             return;
 
         var duplicateAnchors = new List<Transform>();
         var duplicateEnemies = new List<EnemyController>();
+        if (!TryBuildOrbFlightAnchors(targets, duplicateAnchors, duplicateEnemies))
+            return;
 
-        foreach (var enemy in EnumerateAssignedDamageTargets())
+        powerOrbVisual.BeginDuplicateFlights(duplicateAnchors, forceStartingVisibleScale, anchor =>
         {
-            if (enemy == null || !enemy.IsAlive || enemy == primaryOrbTarget)
+            AnnounceDuplicateOrbImpactForAnchor(anchor, duplicateAnchors, duplicateEnemies);
+        });
+    }
+
+    private static void AnnounceDuplicateOrbImpactForAnchor(
+        Transform anchor,
+        IReadOnlyList<Transform> anchors,
+        IReadOnlyList<EnemyController> enemies)
+    {
+        var enemy = ResolveEnemyForOrbAnchor(anchor, anchors, enemies);
+        if (enemy == null)
+            return;
+
+        CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
+            PowerOrbImpactTarget.Enemy,
+            anchor.position,
+            enemy));
+    }
+
+    private static EnemyController ResolveEnemyForOrbAnchor(
+        Transform anchor,
+        IReadOnlyList<Transform> anchors,
+        IReadOnlyList<EnemyController> enemies)
+    {
+        if (anchor == null || anchors == null || enemies == null)
+            return null;
+
+        for (var i = 0; i < anchors.Count; i++)
+        {
+            if (anchors[i] == anchor)
+                return enemies[i];
+        }
+
+        return null;
+    }
+
+    private bool TryBuildOrbFlightAnchors(
+        IReadOnlyList<EnemyController> enemies,
+        List<Transform> anchors,
+        List<EnemyController> orderedEnemies)
+    {
+        anchors.Clear();
+        orderedEnemies.Clear();
+
+        for (var i = 0; i < enemies.Count; i++)
+        {
+            var enemy = enemies[i];
+            if (enemy == null || !enemy.IsAlive)
                 continue;
 
             var anchor = enemy.GetPowerOrbHitAnchor();
@@ -3187,28 +3296,46 @@ public class CombatManager : MonoBehaviour
                 continue;
             }
 
-            duplicateEnemies.Add(enemy);
-            duplicateAnchors.Add(anchor);
+            orderedEnemies.Add(enemy);
+            anchors.Add(anchor);
         }
 
-        if (duplicateAnchors.Count == 0)
-            return;
+        return anchors.Count > 0;
+    }
 
-        powerOrbVisual.BeginDuplicateFlights(duplicateAnchors, forceStartingVisibleScale, anchor =>
+    private List<EnemyController> BuildDuplicateOrbFlightTargets(
+        bool flyMainOrb,
+        bool duplicateOnlyFlight,
+        IReadOnlyList<EnemyController> impactedEnemies,
+        EnemyController mainEnemy)
+    {
+        var targets = new List<EnemyController>();
+        if (impactedEnemies == null || impactedEnemies.Count == 0)
+            return targets;
+
+        if (duplicateOnlyFlight)
         {
-            for (var i = 0; i < duplicateAnchors.Count; i++)
+            for (var i = 0; i < impactedEnemies.Count; i++)
             {
-                if (duplicateAnchors[i] != anchor)
-                    continue;
-
-                var enemy = duplicateEnemies[i];
-                CombatEvents.OnPowerOrbImpact?.Invoke(new PowerOrbImpactPayload(
-                    PowerOrbImpactTarget.Enemy,
-                    anchor.position,
-                    enemy));
-                break;
+                var enemy = impactedEnemies[i];
+                if (enemy != null && enemy.IsAlive)
+                    targets.Add(enemy);
             }
-        });
+
+            return targets;
+        }
+
+        if (!flyMainOrb || mainEnemy == null)
+            return targets;
+
+        for (var i = 0; i < impactedEnemies.Count; i++)
+        {
+            var enemy = impactedEnemies[i];
+            if (enemy != null && enemy.IsAlive && enemy != mainEnemy)
+                targets.Add(enemy);
+        }
+
+        return targets;
     }
 
     /// <summary>
@@ -3217,34 +3344,117 @@ public class CombatManager : MonoBehaviour
     /// </summary>
     private IEnumerable<EnemyController> EnumerateAssignedDamageTargets()
     {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy != null && enemy.IsAlive && EnemyHasPlayerTurnImpact(enemy))
+                yield return enemy;
+        }
+    }
+
+    private List<EnemyController> CollectEnemiesWithPlayerTurnImpact()
+    {
+        var result = new List<EnemyController>();
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy != null && enemy.IsAlive && EnemyHasPlayerTurnImpact(enemy))
+                result.Add(enemy);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// True when the player assigned damage, debuffs, or other turn-end enemy effects to this enemy (not merely because they are the Main Enemy).
+    /// </summary>
+    private bool EnemyHasPlayerTurnImpact(EnemyController enemy)
+    {
+        if (enemy == null || !enemy.IsAlive)
+            return false;
+
+        var pool = enemy.AssignedElementPool;
+        if (pool != null && pool.HasAnyDisplayedElements())
+            return true;
+
         var fallback = ResolvePrimaryTargetEnemy();
-        var seen = new HashSet<EnemyController>();
+        if (enemy == fallback)
+        {
+            var statusCtx = BuildStatusContext(enemy);
+            var playerBonus = player != null ? player.StatusEffects.GetTotalBonusAttack(statusCtx) : 0;
+            var globalPhysicalBonus = Mathf.Max(0, bonusDamageFromActions + playerBonus);
+            if (globalPhysicalBonus > 0)
+                return true;
+        }
 
         for (var i = 0; i < channeledFaces.Count; i++)
         {
             var face = channeledFaces[i];
-            if (face == null || face.Damage <= 0 || face.AttackAllEnemies)
+            if (face == null)
                 continue;
 
-            var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive
-                ? face.DamageTargetEnemy
-                : fallback;
-            if (target == null || !target.IsAlive || !seen.Add(target))
+            if (face.AttackAllEnemies)
+            {
+                if (FaceHasPlayerImpactOnEnemies(face))
+                    return true;
+                continue;
+            }
+
+            if (face.Damage > 0)
+            {
+                var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive
+                    ? face.DamageTargetEnemy
+                    : fallback;
+                if (target == enemy)
+                    return true;
+            }
+
+            if (face.Actions == null)
                 continue;
 
-            yield return target;
+            foreach (var action in face.Actions)
+            {
+                if (!IsEnemyTargetedAction(action))
+                    continue;
+
+                var target = ResolveActionTargetEnemy(face, action);
+                if (target == enemy)
+                    return true;
+            }
         }
 
-        for (var i = 0; i < _activeEnemies.Count; i++)
+        for (var i = 0; i < _pendingAfterPhysicalApplyStatuses.Count; i++)
         {
-            var enemy = _activeEnemies[i];
-            if (enemy == null || !enemy.IsAlive || !seen.Add(enemy))
+            var pending = _pendingAfterPhysicalApplyStatuses[i];
+            if (pending.SourceFace == null || pending.Action == null)
                 continue;
 
-            var pool = enemy.AssignedElementPool;
-            if (pool != null && pool.HasAnyDisplayedElements())
-                yield return enemy;
+            if (pending.SourceFace.AttackAllEnemies)
+                return true;
+
+            var target = ResolveActionTargetEnemy(pending.SourceFace, pending.Action);
+            if (target == enemy)
+                return true;
         }
+
+        return false;
+    }
+
+    private static bool FaceHasPlayerImpactOnEnemies(FaceResult face)
+    {
+        if (face.HasEnemyDamagePiece)
+            return true;
+
+        if (face.Actions == null)
+            return false;
+
+        foreach (var action in face.Actions)
+        {
+            if (IsEnemyTargetedAction(action))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>The default enemy used for unassigned / fallback player damage: the Main Enemy when alive, otherwise the first living enemy.</summary>

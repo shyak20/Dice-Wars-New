@@ -7893,7 +7893,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e95314daf3dfb82409a87af9bc14215c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  delayAfterVictorySeconds: 1.5
+  delayAfterVictorySeconds: 2
   winStagePanel: {fileID: 1222476796}
   rewardsLayout: {fileID: 1195403602}
   goldRewardRowPrefab: {fileID: 161149463819161139, guid: 95db9d0d92f04f34cac180c389cc4397, type: 3}
