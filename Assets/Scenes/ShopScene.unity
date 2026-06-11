@@ -1123,6 +1123,7 @@ MonoBehaviour:
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   trialRewardsPanelPrefab: {fileID: 0}
   gameIconIndex: {fileID: 0}
+  progressionRewardVisualCatalog: {fileID: 0}
   fallbackCanvas: {fileID: 394332461}
   hoverTooltipScreenOffset: {x: 50, y: -140}
   hoverAboveTooltipScreenOffset: {x: 0, y: 0}
@@ -1691,12 +1692,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 37.83
+  m_fontSize: 35
   m_fontSizeBase: 37.83
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMax: 35
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
