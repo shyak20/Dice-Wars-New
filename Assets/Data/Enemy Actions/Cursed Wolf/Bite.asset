@@ -22,7 +22,7 @@ MonoBehaviour:
   damage: 0
   numberOfAttacks: 0
   armor: 0
-  actionAnimatorTriggerName: 
+  actionAnimatorTriggerName: Attack1
   actionAnimationLeadInSeconds: 0.2
   actions:
   - rid: 6557384174812266576
