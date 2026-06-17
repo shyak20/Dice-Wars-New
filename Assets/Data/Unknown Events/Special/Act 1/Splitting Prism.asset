@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b81b4720020024893a1c2c1f4b581a, type: 3}
+  m_Name: Splitting Prism
+  m_EditorClassIdentifier: Assembly-CSharp::UnknownMapEventSO
+  displayName: The Splitting Prism
+  description: "You find a floating, multi-faceted crystal that hums with a parasitic
+    frequency. It doesn't create\u2014it copies. By feeding it your life force, the
+    prism refracts the 'soul' of one of your dice, splitting it into two identical
+    twins."
+  eventArt: {fileID: 21300000, guid: 85b3cf963eedf3c43a01d7faa612ce13, type: 3}
+  visibilityConditions: []
+  excludeFromDrawIfCompletedThisRun: 0
+  choices:
+  - label: Select a die to duplicate it - Lose <style=heal>50% HP ({0})</style>.
+    enabledWhen:
+    - rid: 6434882266773586161
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586162
+  - label: Skip
+    enabledWhen:
+    - rid: 6434882266773586163
+    registerEventCompletedOnPick: 1
+    outcome:
+      rid: 6434882266773586164
+  triggersCombat: 0
+  combatRank: 0
+  specificEnemy: {fileID: 0}
+  countsAsBossTileForRunProgression: 0
+  registerCompletedOnLegacyCombatEnter: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882266773586161
+      type: {class: UnknownMapEventConditionRunCurrencyPercentCostMin, ns: , asm: Assembly-CSharp}
+      data:
+        currency: 1
+        percent: 50
+        minimumRoundedCost: 1
+    - rid: 6434882266773586162
+      type: {class: UnknownMapEventOutcomeAfterDieChoice, ns: , asm: Assembly-CSharp}
+      data:
+        dieFilter: 0
+        steps:
+        - rid: 6434882266773586165
+        - rid: 6434882266773586166
+    - rid: 6434882266773586163
+      type: {class: UnknownMapEventConditionAlwaysTrue, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586164
+      type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586165
+      type: {class: UnknownMapEventOutcomeDuplicateChosenDeckDie, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6434882266773586166
+      type: {class: UnknownMapEventOutcomeSpendRunCurrencyPercent, ns: , asm: Assembly-CSharp}
+      data:
+        currency: 1
+        percent: 50

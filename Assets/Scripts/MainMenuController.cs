@@ -1,12 +1,16 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MainMenuController : MonoBehaviour
 {
     public void StartNewGame()
     {
-        // Reset player data here if necessary (HP, Starter Dice)
-        SceneManager.LoadScene("FightScene");
+        if (RunManager.Instance == null)
+        {
+            Debug.LogError("MainMenuController: RunManager not found in scene!");
+            return;
+        }
+
+        RunManager.Instance.StartRun();
     }
 
     public void QuitGame()

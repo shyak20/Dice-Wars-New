@@ -1,0 +1,165 @@
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// Trial hover tooltip with title, description, and spawned <see cref="TrialRewardRowElementUI"/> rows.
+/// Instantiated by <see cref="HoverTooltipManager"/>.
+/// </summary>
+public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
+{
+    [SerializeField] private GameObject panelRoot;
+    [SerializeField] private TMP_Text titleText;
+    [SerializeField] private TMP_Text descriptionText;
+    [SerializeField] private Transform rewardLayoutRoot;
+    [SerializeField] private TrialRewardRowElementUI rewardRowPrefab;
+
+    readonly List<TrialRewardRowElementUI> _spawnedRows = new List<TrialRewardRowElementUI>();
+
+    void Awake()
+    {
+        if (panelRoot == null)
+            panelRoot = gameObject;
+        EnsurePanelDoesNotBlockRaycasts();
+        Hide();
+    }
+
+    public void Show(
+        PlayerTrialSO trial,
+        TrialSaveData state,
+        ProgressionRewardVisualCatalogSO catalog,
+        IReadOnlyList<ProgressionRewardBase> additionalRewards = null)
+    {
+        if (trial == null)
+        {
+            Hide();
+            return;
+        }
+
+        if (titleText != null)
+            titleText.text = trial.DisplayName;
+
+        if (descriptionText != null)
+            descriptionText.text = ProgressionManager.BuildTrialTooltipBody(trial, state);
+
+        RebuildRewardRows(trial, catalog, additionalRewards);
+
+        if (panelRoot != null)
+            panelRoot.SetActive(true);
+    }
+
+    void RebuildRewardRows(
+        PlayerTrialSO trial,
+        ProgressionRewardVisualCatalogSO catalog,
+        IReadOnlyList<ProgressionRewardBase> additionalRewards)
+    {
+        ClearRewardRows();
+
+        if (rewardLayoutRoot == null || rewardRowPrefab == null)
+            return;
+
+        var rewards = new List<ProgressionRewardBase>();
+        if (trial.completionRewards != null)
+        {
+            for (var i = 0; i < trial.completionRewards.Count; i++)
+            {
+                var reward = trial.completionRewards[i];
+                if (reward != null)
+                    rewards.Add(reward);
+            }
+        }
+
+        if (additionalRewards != null)
+        {
+            for (var i = 0; i < additionalRewards.Count; i++)
+            {
+                var reward = additionalRewards[i];
+                if (reward != null && !rewards.Contains(reward))
+                    rewards.Add(reward);
+            }
+        }
+
+        var entries = new List<ProgressionRewardDisplayEntry>();
+        ProgressionRewardDisplayResolver.ExpandRewards(
+            rewards,
+            catalog,
+            trial.completionRewardRowFormat,
+            ProgressionRewardExpandMode.PerReward,
+            entries);
+
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var entry = entries[i];
+            if (!entry.HasContent)
+                continue;
+
+            var rowView = Instantiate(rewardRowPrefab, rewardLayoutRoot);
+            rowView.Bind(entry);
+            _spawnedRows.Add(rowView);
+        }
+    }
+
+    public void AlignPivotWorldXToRect(RectTransform reference)
+    {
+        if (reference == null || panelRoot == null)
+            return;
+
+        var panelRect = panelRoot.transform as RectTransform;
+        if (panelRect == null)
+            return;
+
+        var corners = new Vector3[4];
+        reference.GetWorldCorners(corners);
+        var centerWorldX = (corners[0].x + corners[2].x) * 0.5f;
+        var pos = panelRect.position;
+        pos.x = centerWorldX;
+        panelRect.position = pos;
+    }
+
+    public void AlignToRectWithScreenOffset(RectTransform reference, Vector2 screenOffset)
+    {
+        if (reference == null || panelRoot == null)
+            return;
+
+        var panelRect = panelRoot.transform as RectTransform;
+        if (panelRect == null)
+            return;
+
+        HoverTooltipLayoutUtility.AlignPanelPivotToRectCenterWithLocalOffset(panelRect, reference, screenOffset);
+    }
+
+    public void Hide()
+    {
+        if (titleText != null)
+            titleText.text = string.Empty;
+        if (descriptionText != null)
+            descriptionText.text = string.Empty;
+
+        ClearRewardRows();
+
+        if (panelRoot != null)
+            panelRoot.SetActive(false);
+    }
+
+    void ClearRewardRows()
+    {
+        for (var i = 0; i < _spawnedRows.Count; i++)
+        {
+            if (_spawnedRows[i] != null)
+                Destroy(_spawnedRows[i].gameObject);
+        }
+
+        _spawnedRows.Clear();
+    }
+
+    void EnsurePanelDoesNotBlockRaycasts()
+    {
+        if (panelRoot == null)
+            return;
+
+        var graphics = panelRoot.GetComponentsInChildren<Graphic>(true);
+        for (var i = 0; i < graphics.Length; i++)
+            graphics[i].raycastTarget = false;
+    }
+}

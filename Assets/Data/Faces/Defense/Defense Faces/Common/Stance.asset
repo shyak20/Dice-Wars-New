@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
+  m_Name: Stance
+  m_EditorClassIdentifier: 
+  title: Stance
+  description: 
+  descriptionLines:
+  - Gain <style=Shield>5</style>
+  - If this is your first roll each turn gain extra <style=Shield>Shield 5</style>
+  value: 5
+  type: 1
+  faceMaterial: {fileID: 2100000, guid: 8df2c884e3d4c4f4c800319d8090fff0, type: 2}
+  rarity: 0
+  damage: 0
+  damageAttackTimes: 1
+  armor: 5
+  selfDamage: 0
+  uiIcon: {fileID: 21300000, guid: 65d8887db19ae6545b307f87fc0a4639, type: 3}
+  uiTooltipBackground: {fileID: 21300000, guid: 9b2cabe67c4e0c9458e67c4006850322, type: 3}
+  actions:
+  - rid: 6494956095240142855
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956095240142855
+      type: {class: FirstRollAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        bonusDamage: 0
+        bonusArmor: 5
+        actions: []

@@ -8,12 +8,48 @@ public class FaceLootTableSO : ScriptableObject
     public RarityConfigSO rarityConfig;
     public List<DieFaceSO> allPossibleFaces;
 
-    public List<DieFaceSO> GetRandomRewards(int count)
+    public List<DieFaceSO> GetRandomRewards(int count, HashSet<DieType> preferredTypes = null) =>
+        GetRandomRewardsFromPool(count, preferredTypes, allPossibleFaces);
+
+    /// <summary>Roll from a pre-filtered pool (e.g. progression-gated faces).</summary>
+    public List<DieFaceSO> GetRandomRewardsFromPool(int count, HashSet<DieType> preferredTypes, List<DieFaceSO> candidatePool)
     {
         List<DieFaceSO> selected = new List<DieFaceSO>();
-        if (allPossibleFaces == null || allPossibleFaces.Count == 0 || rarityConfig == null) return selected;
+        if (candidatePool == null || candidatePool.Count == 0)
+        {
+            Debug.LogError("FaceLootTableSO: candidate pool is empty — assign faces on the loot table asset.");
+            return selected;
+        }
 
-        List<DieFaceSO> pool = new List<DieFaceSO>(allPossibleFaces);
+        if (rarityConfig == null)
+        {
+            Debug.LogError("FaceLootTableSO: rarityConfig is not assigned — shop and rewards cannot roll faces without it.");
+            return selected;
+        }
+
+        var validFaces = candidatePool.FindAll(f => f != null);
+        if (validFaces.Count == 0)
+        {
+            Debug.LogError("FaceLootTableSO: allPossibleFaces contains only null entries — fix the loot table asset.");
+            return selected;
+        }
+
+        List<DieFaceSO> pool;
+        if (preferredTypes != null && preferredTypes.Count > 0)
+        {
+            pool = validFaces.Where(f => preferredTypes.Contains(f.type)).ToList();
+            if (pool.Count < count)
+                pool = new List<DieFaceSO>(validFaces);
+        }
+        else
+        {
+            if (preferredTypes != null)
+            {
+                Debug.LogError($"Unable to find enough faces ({count}) for {string.Join(", ", preferredTypes)}");
+            }
+
+            pool = new List<DieFaceSO>(validFaces);
+        }
 
         for (int i = 0; i < count; i++)
         {
@@ -36,5 +72,44 @@ public class FaceLootTableSO : ScriptableObject
             }
         }
         return selected;
+    }
+
+    /// <summary>Faces from <see cref="allPossibleFaces"/> with the given rarity that <see cref="DieFaceSO.MatchesDie"/> the die.</summary>
+    public List<DieFaceSO> GetCandidatesForDieAndRarity(DieAssetSO die, FaceRarity rarity)
+    {
+        var candidates = new List<DieFaceSO>();
+        var pool = GetProgressionEligibleFaces();
+        if (die == null || pool == null || pool.Count == 0)
+            return candidates;
+
+        for (var i = 0; i < pool.Count; i++)
+        {
+            var face = pool[i];
+            if (face != null && face.rarity == rarity && face.MatchesDie(die))
+                candidates.Add(face);
+        }
+
+        return candidates;
+    }
+
+    List<DieFaceSO> GetProgressionEligibleFaces()
+    {
+        if (allPossibleFaces == null || allPossibleFaces.Count == 0)
+            return allPossibleFaces;
+
+        var mgr = ProgressionManager.TryGetRuntime();
+        if (mgr != null && mgr.Catalog != null)
+            return ProgressionLootFilter.FilterFaces(allPossibleFaces, mgr.Catalog, mgr);
+
+        return allPossibleFaces;
+    }
+
+    /// <summary>Uniform random pick from <see cref="GetCandidatesForDieAndRarity"/>; null when none match.</summary>
+    public DieFaceSO PickRandomForDieAndRarity(DieAssetSO die, FaceRarity rarity)
+    {
+        var candidates = GetCandidatesForDieAndRarity(die, rarity);
+        if (candidates.Count == 0)
+            return null;
+        return candidates[UnityEngine.Random.Range(0, candidates.Count)];
     }
 }

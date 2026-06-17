@@ -12,23 +12,37 @@ public class DieVisualizer : MonoBehaviour
 
     public void Initialize(DieAssetSO data)
     {
-        if (data == null || data.faces == null || data.faces.Length != 6)
+        if (data == null || data.faces == null || data.faces.Length < 6)
         {
-            Debug.LogError("DieVisualizer: DieAssetSO must have exactly 6 faces assigned!");
+            Debug.LogError(
+                $"DieVisualizer: '{(data != null ? data.name : "null")}' needs at least 6 face slots (mesh has 6 sides).",
+                this);
             return;
         }
 
+        if (data.faces.Length > 6)
+            Debug.LogWarning(
+                $"DieVisualizer: '{data.name}' has {data.faces.Length} faces; only the first 6 are used for the 3D die mesh.",
+                this);
+
         dieData = data;
 
-        // Build the material array based on the Face SOs
-        Material[] materialsToApply = new Material[6];
+        if (meshRenderer == null)
+            meshRenderer = GetComponentInChildren<MeshRenderer>();
+        if (meshRenderer == null)
+        {
+            Debug.LogError($"DieVisualizer on '{name}': no MeshRenderer found.", this);
+            return;
+        }
+
+        // Runtime instances so dissolve cutout never mutates shared face material assets.
+        var materialsToApply = new Material[6];
 
         for (int i = 0; i < 6; i++)
         {
-            if (data.faces[i] != null)
-            {
-                materialsToApply[i] = data.faces[i].faceMaterial;
-            }
+            var face = data.faces[i];
+            if (face != null && face.faceMaterial != null)
+                materialsToApply[i] = new Material(face.faceMaterial);
         }
 
         meshRenderer.materials = materialsToApply;

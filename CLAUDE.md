@@ -19,12 +19,16 @@ Dice Wars is a turn-based deck-building combat game built in Unity 2022.3.5f1 LT
 
 The combat loop is driven by `CombatManager` cycling through `CombatState` enum states (`WaitingForRoll → Rolling → BustCheck → TurnEnd → EnemyTurn`). Cross-system communication happens through static events in `CombatEvents` — UI, enemies, and dice all subscribe to these events rather than holding direct references.
 
+### Meta Progression: Ranks & Trials
+
+Per-character rank/trial progression lives in `Assets/Scripts/Progression/`. Each `PlayerDataSO` references its ladder via `progressionCatalog` only (not the other way around); saves use `MetaSaveId` in obfuscated `PlayerPrefs` via `ProgressionSaveService` (legacy `persistentDataPath/Progression/*.json` is imported once then deleted). `ProgressionManager` subscribes to `ProgressionEvents` for active trial types only and applies stat bonuses at run start via `PlayerDataContainer`. Rewards are polymorphic `[SerializeReference]` types under `Assets/Scripts/Progression/Rewards/` (stat bonuses, `ProgressionUnlockFacesReward` with face lists, gems, relics, `ProgressionAddStartingDieReward` to grant +1 starting die (saved in progression PlayerPrefs as die asset id + `DieType`, merged at runtime with `PlayerDataSO.currentDeck` — like die-face `IGameAction`). Rank-up and trial completion use `+` in the inspector to pick reward types. **Unlock faces/gems/relics/dice** listed in trial completion or rank-up rewards are removed from all loot rolls (`ProgressionLootRolls`, shop, map events, treasure) until that trial/rank is completed and the reward is applied — see `ProgressionGatedContent`. Content in `baseAlwaysAvailableIds` on the catalog is never gated. Author via **Dice Wars → Progression → Create Starter Catalog** (select a `PlayerDataSO` first). Wire `ProgressionEventBridge` in the bootstrap scene next to `RunManager`.
+
 ### Data Layer: ScriptableObjects
 
 All game data (dice definitions, face values, enemy types, enemy actions) lives in ScriptableObjects under `Assets/Data/`. Runtime code reads from these — they are the single source of truth for game configuration.
 
 - `DieAssetSO` → 6 faces, attack/defense type
-- `DieFaceSO` → value, type, material, optional `IGameAction` (see [GameAction system design](Assets/Scripts/Effects/DESIGN.md))
+- `DieFaceSO` → value, type, material, optional `IGameAction` (see [GameAction system design](Assets/Scripts/Effects/DESIGN.md)). **Face Material** and **UI Icon** must match type + pip value via `DieFaceVisualCatalog` (see Conventions).
 - `EnemyTypeSO` → HP, action list, sequential/random cycle
 - `EnemyActionSO` → damage, armor, attack count
 - `PlayerDataSO` → player's dice deck
@@ -58,7 +62,9 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 
 - Before writing code, outline: what will change, why, risks/assumptions
 - Prefer small, reversible changes
+- **After changing C# scripts**, confirm the project compiles (Unity Console or `ReadLints` on touched files) and fix any errors before finishing — do not leave CS errors behind
 - **No direct scene interaction** — create scripts and provide instructions for engine setup
+- **No one-off editor tools** — Do not add `MenuItem` / editor scripts whose main job is a single-use setup (one data asset, one scene UI layout, one prefab wire-up you only run once). Author content as ScriptableObjects under `Assets/Data/` (Inspector or duplicate an existing `.asset`). Build scene UI manually in the Editor and document setup steps for the user. Editor automation is only for **repeatable** workflows (e.g. rebuilding all loot tables from the project, batch-importing CSVs, auditing reports). If unsure, default to runtime scripts + manual Unity instructions, not a generator.
 
 ## Conventions
 
@@ -68,6 +74,9 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 - Both 2D (sprites, UI) and 3D (dice physics) coexist — dice use Rigidbody3D
 - `SimulationSpeedController` controls `Time.timeScale` (0.2x–4x range)
 - Don't create `.meta` files — let Unity handle them
+- **Loot tables**: after adding faces (non-curse) under `Assets/Data/Faces/`, run **DiceGame → Loot Tables → Refresh All From Project** in Unity — do not hand-maintain `Faces Loot Table.asset` or add per-face setup menus
+- **Die face visuals**: `DieFaceSO.value` (pip 1–6, clamped) + `DieFaceSO.type` determine **Face Material** (3D die mesh) and **UI Icon** (picker/shop/tooltip). Mapping lives in `DieFaceVisualCatalog` — e.g. Damage value 3 → `Physical Die Side 3` + `Physical Dice 3`. After authoring or changing type/value, use the inspector **Apply expected Face Material and UI Icon** button on the face asset, or batch-fix via **DiceGame → Faces → Fix Face Materials And Icons**. Audit with **DiceGame → Faces → Audit Face Materials And Icons (Report)**. Do not use generic `Die Side N` materials or hand-pick the wrong element's art.
+- **Generic face actions**: prefer reusable modifiers in `Assets/Scripts/Effects/FaceModifiers/` (`AddDamageFromDeckPipsModifier`, `AddDamageFromEnemyStatusStacksModifier`, etc.) with inspector-configured element/status/step sizes — see [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md)
 - Split code into files, methods, and classes logically; use folders as the project grows
 - Encapsulate logic in the leaf class that owns it (e.g., call `PauseRunning()` instead of saving speed and setting it to zero from the caller)
 - Propose using libraries/Asset Store packages before reinventing the wheel
@@ -79,6 +88,7 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 - Never fix real issues with patching or workarounds — find and fix the actual root cause
 - Avoid `GetComponent`/`GetComponentInChildren` — prefer explicit references
 - Avoid static variables — Unity's "Enter Play Mode Options" (no domain reload) means static state persists between play sessions, causing subtle bugs
+- **Runtime material assignment**: whenever code assigns `Renderer.material` (or equivalent) from a shared asset / inspector reference, instantiate first (`new Material(source)` or `Material.Instantiate(source)`) and assign the copy. Never mutate or assign the asset directly — other objects sharing that material would pick up the same property changes. When you already own a runtime instance, assign it with `sharedMaterial` (not `.material`) so Unity does not clone again and your property updates stay on the object being drawn.
 
 
 - When needed (you may ask), use Odin for better inspector in complicated serialized classes.

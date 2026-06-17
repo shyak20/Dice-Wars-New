@@ -1,0 +1,253 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// On Dice Select, shows one popup per unacknowledged completed trial for the previewed character,
+/// then a level-up popup when all trials on the rank were finished.
+/// Enables <see cref="progressionCelebrationRoot"/> only while a popup is visible; disables it when done.
+/// </summary>
+[DefaultExecutionOrder(100)]
+public sealed class DiceSelectProgressionCelebrationController : MonoBehaviour
+{
+    [SerializeField] private DiceSelectSceneController diceSelectSceneController;
+    [SerializeField] private ProgressionTrialCompletedPopupView trialCompletedPopup;
+    [SerializeField] private ProgressionUnlockedContentPopupView unlockedContentPopup;
+    [SerializeField] private ProgressionRankUpPopupView rankUpPopup;
+    [Tooltip("Parent of celebration popups (and optional overlay art). Disabled whenever no popup is showing.")]
+    [SerializeField] private GameObject progressionCelebrationRoot;
+    [Tooltip("Optional full-screen blocker under celebration root.")]
+    [SerializeField] private GameObject inputBlocker;
+
+    readonly List<ProgressionUnlockedContentItem> _pendingUnlockedItems = new List<ProgressionUnlockedContentItem>();
+    Coroutine _flowCoroutine;
+    bool _flowRunning;
+
+    public bool IsFlowRunning => _flowRunning;
+
+    void Awake()
+    {
+        if (diceSelectSceneController == null)
+            diceSelectSceneController = FindObjectOfType<DiceSelectSceneController>(true);
+        if (trialCompletedPopup == null)
+            Debug.LogError("DiceSelectProgressionCelebrationController: assign trialCompletedPopup.", this);
+        if (unlockedContentPopup == null && progressionCelebrationRoot != null)
+            unlockedContentPopup = progressionCelebrationRoot.GetComponentInChildren<ProgressionUnlockedContentPopupView>(true);
+        if (unlockedContentPopup == null)
+            Debug.LogError("DiceSelectProgressionCelebrationController: assign unlockedContentPopup.", this);
+        if (rankUpPopup == null)
+            Debug.LogError("DiceSelectProgressionCelebrationController: assign rankUpPopup.", this);
+        if (progressionCelebrationRoot == null)
+            Debug.LogError("DiceSelectProgressionCelebrationController: assign progressionCelebrationRoot.", this);
+
+        if (inputBlocker == null && progressionCelebrationRoot != null)
+        {
+            var blocker = progressionCelebrationRoot.transform.Find("Input Blocker");
+            if (blocker != null)
+                inputBlocker = blocker.gameObject;
+        }
+
+        SetCelebrationRootActive(false);
+    }
+
+    void OnEnable()
+    {
+        if (diceSelectSceneController != null)
+            diceSelectSceneController.CharacterPreviewChanged += OnCharacterPreviewChanged;
+
+        ProgressionManager.OnCharacterProgressionChanged += OnProgressionDataChanged;
+    }
+
+    void Start() => TryStartCelebrationFlow();
+
+    void OnDisable()
+    {
+        if (diceSelectSceneController != null)
+            diceSelectSceneController.CharacterPreviewChanged -= OnCharacterPreviewChanged;
+
+        ProgressionManager.OnCharacterProgressionChanged -= OnProgressionDataChanged;
+        StopFlow();
+    }
+
+    void OnCharacterPreviewChanged(PlayerDataSO character) => TryStartCelebrationFlow();
+
+    void OnProgressionDataChanged(PlayerDataSO character)
+    {
+        if (diceSelectSceneController == null || !diceSelectSceneController.TryGetPreviewCharacter(out var selected))
+            return;
+
+        if (selected == character)
+            TryStartCelebrationFlow();
+    }
+
+    void TryStartCelebrationFlow()
+    {
+        if (_flowRunning)
+            return;
+
+        StopFlow();
+
+        if (!diceSelectSceneController.TryGetPreviewCharacter(out var character))
+            return;
+
+        var progression = ResolveProgression(character);
+        if (progression == null || !progression.HasPendingCelebrations())
+            return;
+
+        DiceSelectProgressionDisplayGate.SetDeferred(true);
+        diceSelectSceneController.SetInteractionBlocked(true);
+        _flowCoroutine = StartCoroutine(RunCelebrationFlow(character, progression));
+    }
+
+    IEnumerator RunCelebrationFlow(PlayerDataSO character, ProgressionManager progression)
+    {
+        _flowRunning = true;
+        SetCelebrationRootActive(true);
+
+        try
+        {
+            while (progression.TryGetNextUnacknowledgedTrial(out var trial))
+            {
+                yield return RunTrialCelebrationStep(trial);
+
+                if (!progression.IsInitializedFor(character))
+                    break;
+
+                progression.AcknowledgeTrialCelebration(trial.TrialId);
+
+                if (!progression.IsInitializedFor(character))
+                    break;
+
+                yield return null;
+            }
+
+            if (progression.HasPendingRankUpCelebration())
+            {
+                var rankToCelebrate = progression.GetActiveRank();
+                if (rankToCelebrate != null)
+                {
+                    yield return RunRankUpCelebrationStep(rankToCelebrate, character);
+                }
+
+                progression.AcknowledgeRankUpCelebration();
+                diceSelectSceneController.RefreshCharacterDisplayPublic();
+            }
+        }
+        finally
+        {
+            diceSelectSceneController.SetInteractionBlocked(false);
+            DiceSelectProgressionDisplayGate.SetDeferred(false);
+            EndCelebrationFlow();
+        }
+    }
+
+    IEnumerator RunTrialCelebrationStep(PlayerTrialSO trial)
+    {
+        HideAllPopups();
+
+        var trialAcknowledged = false;
+        trialCompletedPopup.Show(trial, () => trialAcknowledged = true);
+        while (!trialAcknowledged)
+            yield return null;
+
+        trialCompletedPopup.Hide();
+        yield return null;
+
+        _pendingUnlockedItems.Clear();
+        ProgressionUnlockCelebrationContent.CollectFromTrial(trial, _pendingUnlockedItems);
+
+        if (_pendingUnlockedItems.Count > 0)
+        {
+            if (unlockedContentPopup == null)
+            {
+                Debug.LogError(
+                    $"DiceSelectProgressionCelebrationController: trial '{trial.TrialId}' unlocked content but unlockedContentPopup is not assigned.",
+                    this);
+            }
+            else
+            {
+                HideAllPopups();
+
+                var unlockAcknowledged = false;
+                unlockedContentPopup.Show(_pendingUnlockedItems, () => unlockAcknowledged = true);
+                while (!unlockAcknowledged)
+                    yield return null;
+
+                unlockedContentPopup.Hide();
+                yield return null;
+            }
+        }
+    }
+
+    IEnumerator RunRankUpCelebrationStep(PlayerRankSO rankToCelebrate, PlayerDataSO character)
+    {
+        HideAllPopups();
+
+        var rankAcknowledged = false;
+        rankUpPopup.Show(rankToCelebrate, character, () => rankAcknowledged = true);
+        while (!rankAcknowledged)
+            yield return null;
+
+        rankUpPopup.Hide();
+        yield return null;
+    }
+
+    void HideAllPopups()
+    {
+        trialCompletedPopup?.Hide();
+        unlockedContentPopup?.Hide();
+        rankUpPopup?.Hide();
+    }
+
+    void StopFlow()
+    {
+        if (_flowCoroutine != null)
+        {
+            StopCoroutine(_flowCoroutine);
+            _flowCoroutine = null;
+        }
+
+        EndCelebrationFlow();
+    }
+
+    void EndCelebrationFlow()
+    {
+        _flowRunning = false;
+        _flowCoroutine = null;
+        HideAllPopups();
+        SetCelebrationRootActive(false);
+
+        if (DiceSelectProgressionDisplayGate.IsDeferred)
+        {
+            diceSelectSceneController.SetInteractionBlocked(false);
+            DiceSelectProgressionDisplayGate.SetDeferred(false);
+        }
+    }
+
+    void SetCelebrationRootActive(bool active)
+    {
+        if (progressionCelebrationRoot != null)
+            progressionCelebrationRoot.SetActive(active);
+
+        if (inputBlocker != null)
+            inputBlocker.SetActive(active);
+    }
+
+    static ProgressionManager ResolveProgression(PlayerDataSO character)
+    {
+        if (character == null)
+            return null;
+
+        var progression = ProgressionManager.TryGetRuntime();
+        if (progression == null && character.progressionCatalog != null)
+            progression = ProgressionManager.EnsureRuntime(character.progressionCatalog);
+
+        if (progression == null)
+            return null;
+
+        if (!progression.IsInitializedFor(character))
+            progression.InitializeForCharacter(character);
+
+        return progression;
+    }
+}

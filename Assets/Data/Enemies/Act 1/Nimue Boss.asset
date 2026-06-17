@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2da12b934c0d2dc4a9c0c744a1a817d9, type: 3}
+  m_Name: Nimue Boss
+  m_EditorClassIdentifier: 
+  enemyName: Nimue
+  displaySprite: {fileID: -1862756426, guid: 5c1a8d3f761329049bfbe1f54dc8e8cf, type: 3}
+  combatAnimatorController: {fileID: 9100000, guid: 0b94c6194a78f29418600ed8e986a8f8, type: 2}
+  enemyRank: 2
+  excludeFromFirstFight: 1
+  maxHealth: 250
+  startArmor: 40
+  minGoldReward: 300
+  maxGoldReward: 350
+  additionalRewardDrops: []
+  faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
+  dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
+  relicRewardPool: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
+  gemRewardPool: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
+  isSequential: 1
+  actionCycle: []
+  phases:
+  - phaseName: Phase 1
+    phaseTargetHealth: 250
+    actionCycle:
+    - {fileID: 11400000, guid: 20d24c44fa367c1478da04e721d66fe5, type: 2}
+    - {fileID: 11400000, guid: e3c927f51b732ca40b129927b1572f9d, type: 2}
+    - {fileID: 11400000, guid: e1b5871608980b3498e541af067bd613, type: 2}
+    - {fileID: 11400000, guid: 53fba1c6227ea1740ab5e2a75cb34384, type: 2}
+  - phaseName: Phase 2
+    phaseTargetHealth: 100
+    actionCycle:
+    - {fileID: 11400000, guid: 5788c906776a4184b92bb1e1cb832959, type: 2}
+    - {fileID: 11400000, guid: aad0a9a0f4f441144b0187220c39dfe2, type: 2}
+    - {fileID: 11400000, guid: e1b5871608980b3498e541af067bd613, type: 2}
+  startingResistances: []
+  valueRolledListeners: []
+  references:
+    version: 2
+    RefIds: []

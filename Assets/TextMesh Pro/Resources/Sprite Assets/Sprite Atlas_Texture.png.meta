@@ -1,0 +1,1123 @@
+fileFormatVersion: 2
+guid: fe246dfb68b06b54490c03d9fdc8a2ce
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1282992654924848832
+    second: Heal Icon
+  - first:
+      213: -5647151390834640249
+    second: Cleanse Icon
+  - first:
+      213: -4952386477903569170
+    second: Kinetic Shield Icon
+  - first:
+      213: -8130133584056446798
+    second: Strength Icon
+  - first:
+      213: 5248542921010066017
+    second: Thorns Icon
+  - first:
+      213: 7705429973175227790
+    second: Max HP Icon
+  - first:
+      213: 6494035533245625250
+    second: Water_Splash_16_07
+  - first:
+      213: 7052443852177249881
+    second: Vulnerable Icon
+  - first:
+      213: 200187152838841157
+    second: Attack Icon BG 2
+  - first:
+      213: 299225067176281671
+    second: Defence Icon BG 2
+  - first:
+      213: 1600010482700210598
+    second: Heal Icon BG
+  - first:
+      213: 1850640359596639596
+    second: Green Icon BG
+  - first:
+      213: -3967975971440997542
+    second: blood_02_0002
+  - first:
+      213: 6346943658632662112
+    second: Poison Icon
+  - first:
+      213: -951324242474890380
+    second: Die Icon Face 1
+  - first:
+      213: 5030406608479721366
+    second: Die Icon Face 2
+  - first:
+      213: -8306455795211793738
+    second: Die Icon Face 3
+  - first:
+      213: 9192458185809667784
+    second: Die Icon Face 4
+  - first:
+      213: 2753783077020577227
+    second: Die Icon Face 5
+  - first:
+      213: 5790224405844098233
+    second: Die Icon Face 6
+  - first:
+      213: 6193896771624642122
+    second: Arcane Sigil
+  - first:
+      213: 4443186488756482793
+    second: Burn Icon BG
+  - first:
+      213: 633350421133112441
+    second: Power Icon
+  - first:
+      213: 4992097004056903889
+    second: Bonfire_loop_04
+  - first:
+      213: 6158000368922251447
+    second: Burn Resistance Icon
+  - first:
+      213: 3945471451079132055
+    second: Coin Icon
+  - first:
+      213: -3499936154177569583
+    second: Self Damage Icon
+  - first:
+      213: 8449272954714134190
+    second: Curse BG
+  - first:
+      213: 2979638529940037016
+    second: Defense Dice 5
+  - first:
+      213: -6039530204223424628
+    second: Armor Die Tooltip BG - No Gems
+  - first:
+      213: -6456651685181505503
+    second: Pyromaniac Icon
+  - first:
+      213: -869103960030476151
+    second: Ablaze Icon
+  - first:
+      213: 3074123495765528857
+    second: Double Burn
+  - first:
+      213: 1996197610122327019
+    second: Gem Shard Icon
+  - first:
+      213: -6586867150429461379
+    second: Ruby Shard Icon
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 1
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Server
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Attack Icon
+      rect:
+        serializedVersion: 2
+        x: 995
+        y: 850
+        width: 255
+        height: 267
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9f2aad0b5481c600800000000000000
+      internalID: 486815761338871706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shield Icon
+      rect:
+        serializedVersion: 2
+        x: 1253
+        y: 1352
+        width: 189
+        height: 229
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 371db4fa3206c38b0800000000000000
+      internalID: -5171152565747068557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Self Damage Icon
+      rect:
+        serializedVersion: 2
+        x: 732
+        y: 1639
+        width: 255
+        height: 267
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dcf2b97c9abd6fc0800000000000000
+      internalID: -3499936154177569583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack Icon BG 2
+      rect:
+        serializedVersion: 2
+        x: 839
+        y: 0
+        width: 288
+        height: 283
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5435e85a72537c200800000000000000
+      internalID: 200187152838841157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defence Icon BG 2
+      rect:
+        serializedVersion: 2
+        x: 1129
+        y: 0
+        width: 288
+        height: 283
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7464fecfc9f072400800000000000000
+      internalID: 299225067176281671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Curse BG
+      rect:
+        serializedVersion: 2
+        x: 1419
+        y: 0
+        width: 288
+        height: 283
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea61d047cf8d14570800000000000000
+      internalID: 8449272954714134190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Icon
+      rect:
+        serializedVersion: 2
+        x: 1699
+        y: 1119
+        width: 210
+        height: 220
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ce1b36a50b1ec110800000000000000
+      internalID: 1282992654924848832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Heal Icon BG
+      rect:
+        serializedVersion: 2
+        x: 1709
+        y: 0
+        width: 288
+        height: 283
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a15f3a8e01643610800000000000000
+      internalID: 1600010482700210598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cleanse Icon
+      rect:
+        serializedVersion: 2
+        x: 1531
+        y: 424
+        width: 275
+        height: 254
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78ab27cdab941a1b0800000000000000
+      internalID: -5647151390834640249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Green Icon BG
+      rect:
+        serializedVersion: 2
+        x: 964
+        y: 424
+        width: 288
+        height: 283
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6542c81a9bcea910800000000000000
+      internalID: 1850640359596639596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Arcane Sigil
+      rect:
+        serializedVersion: 2
+        x: 839
+        y: 285
+        width: 123
+        height: 127
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4620201c4425f550800000000000000
+      internalID: 6193896771624642122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kinetic Shield Icon
+      rect:
+        serializedVersion: 2
+        x: 995
+        y: 1119
+        width: 256
+        height: 236
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eee1c1abcb6954bb0800000000000000
+      internalID: -4952386477903569170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Thorns Icon
+      rect:
+        serializedVersion: 2
+        x: 1808
+        y: 424
+        width: 227
+        height: 249
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 162323b8af196d840800000000000000
+      internalID: 5248542921010066017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Max HP Icon
+      rect:
+        serializedVersion: 2
+        x: 995
+        y: 1357
+        width: 249
+        height: 227
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e85d1c84cbf2fea60800000000000000
+      internalID: 7705429973175227790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defense Dice 5
+      rect:
+        serializedVersion: 2
+        x: 1531
+        y: 680
+        width: 144
+        height: 144
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89d9428c47dc95920800000000000000
+      internalID: 2979638529940037016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Armor Die Tooltip BG - No Gems
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 837
+        height: 422
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c87350f27474f2ca0800000000000000
+      internalID: -6039530204223424628
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Double Burn
+      rect:
+        serializedVersion: 2
+        x: 1776
+        y: 850
+        width: 248
+        height: 265
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91159c0380b79aa20800000000000000
+      internalID: 3074123495765528857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Burn Icon BG
+      rect:
+        serializedVersion: 2
+        x: 839
+        y: 414
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e2352d029e59ad30800000000000000
+      internalID: 4443186488756482793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Burn Icon
+      rect:
+        serializedVersion: 2
+        x: 1252
+        y: 850
+        width: 259
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1181b3f1f8b0bf90800000000000000
+      internalID: -6939843676462808804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Power Icon
+      rect:
+        serializedVersion: 2
+        x: 1254
+        y: 424
+        width: 275
+        height: 288
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 974bbf53adc1ac800800000000000000
+      internalID: 633350421133112441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Strength Icon
+      rect:
+        serializedVersion: 2
+        x: 1483
+        y: 1119
+        width: 214
+        height: 216
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b097d1a496fb2f80800000000000000
+      internalID: -8130133584056446798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Water_Splash_16_07
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 424
+        width: 495
+        height: 424
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a3bedd19e27f1a50800000000000000
+      internalID: 6494035533245625250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Freeze Icon
+      rect:
+        serializedVersion: 2
+        x: 1253
+        y: 1119
+        width: 228
+        height: 231
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51d250934295c13e0800000000000000
+      internalID: -2081690915641676523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vulnerable Icon
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 1396
+        width: 202
+        height: 258
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 956996f61505fd160800000000000000
+      internalID: 7052443852177249881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: blood_02_0002
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1396
+        width: 254
+        height: 519
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5b49f090eaeee8c0800000000000000
+      internalID: -3967975971440997542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Poison Icon
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 1656
+        width: 190
+        height: 271
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06cc73641afd41850800000000000000
+      internalID: 6346943658632662112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ablaze Icon
+      rect:
+        serializedVersion: 2
+        x: 1513
+        y: 850
+        width: 261
+        height: 258
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9888f759d8250f3f0800000000000000
+      internalID: -869103960030476151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pyromaniac Icon
+      rect:
+        serializedVersion: 2
+        x: 995
+        y: 1586
+        width: 215
+        height: 247
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 120445a408d5566a0800000000000000
+      internalID: -6456651685181505503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Burn Resistance Icon
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 850
+        width: 263
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b0d55485bc957550800000000000000
+      internalID: 6158000368922251447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Die Icon Face 1
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 1113
+        width: 261
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47b011d44a73cc2f0800000000000000
+      internalID: -951324242474890380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Die Icon Face 2
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 1376
+        width: 261
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 697163e78289fc540800000000000000
+      internalID: 5030406608479721366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Die Icon Face 3
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 1639
+        width: 261
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ba8ae7b67a89bc80800000000000000
+      internalID: -8306455795211793738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Die Icon Face 4
+      rect:
+        serializedVersion: 2
+        x: 732
+        y: 850
+        width: 261
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c621d9240c229f70800000000000000
+      internalID: 9192458185809667784
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Die Icon Face 5
+      rect:
+        serializedVersion: 2
+        x: 732
+        y: 1113
+        width: 261
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcd2b4e4e17673620800000000000000
+      internalID: 2753783077020577227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Die Icon Face 6
+      rect:
+        serializedVersion: 2
+        x: 732
+        y: 1376
+        width: 261
+        height: 261
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9bc72205b620b5050800000000000000
+      internalID: 5790224405844098233
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Coin Icon
+      rect:
+        serializedVersion: 2
+        x: 964
+        y: 285
+        width: 72
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7934409716121c630800000000000000
+      internalID: 3945471451079132055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Gem Shard Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 914
+        width: 465
+        height: 480
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be333dc662be3bb10800000000000000
+      internalID: 1996197610122327019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ruby Shard Icon
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 424
+        width: 465
+        height: 488
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7466f3b93fb694a0800000000000000
+      internalID: -6586867150429461379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 66f8608fb8b18a349b6bd0780b12514a
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Ablaze Icon: -869103960030476151
+      Arcane Sigil: 6193896771624642122
+      Armor Die Tooltip BG - No Gems: -6039530204223424628
+      Attack Icon: 486815761338871706
+      Attack Icon BG 2: 200187152838841157
+      Bonfire_loop_04: 4992097004056903889
+      Burn Icon: -6939843676462808804
+      Burn Icon BG: 4443186488756482793
+      Burn Resistance Icon: 6158000368922251447
+      Cleanse Icon: -5647151390834640249
+      Coin Icon: 3945471451079132055
+      Curse BG: 8449272954714134190
+      Defence Icon BG 2: 299225067176281671
+      Defense Dice 5: 2979638529940037016
+      Die Icon Face 1: -951324242474890380
+      Die Icon Face 2: 5030406608479721366
+      Die Icon Face 3: -8306455795211793738
+      Die Icon Face 4: 9192458185809667784
+      Die Icon Face 5: 2753783077020577227
+      Die Icon Face 6: 5790224405844098233
+      Double Burn: 3074123495765528857
+      Freeze Icon: -2081690915641676523
+      Gem Shard Icon: 1996197610122327019
+      Green Icon BG: 1850640359596639596
+      Heal Icon: 1282992654924848832
+      Heal Icon BG: 1600010482700210598
+      Kinetic Shield Icon: -4952386477903569170
+      Max HP Icon: 7705429973175227790
+      Poison Icon: 6346943658632662112
+      Power Icon: 633350421133112441
+      Pyromaniac Icon: -6456651685181505503
+      Ruby Shard Icon: -6586867150429461379
+      Self Damage Icon: -3499936154177569583
+      Shield Icon: -5171152565747068557
+      Strength Icon: -8130133584056446798
+      Thorns Icon: 5248542921010066017
+      Vulnerable Icon: 7052443852177249881
+      Water_Splash_16_07: 6494035533245625250
+      blood_02_0002: -3967975971440997542
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

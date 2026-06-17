@@ -2,9 +2,11 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class KineticShieldAction : IGameAction
+public class KineticShieldAction : GameActionWithIcon
 {
-    public void Execute(GameActionContext context)
+    protected override ActionVisualId VisualKey => ActionVisualId.KineticShield;
+
+    public override void Execute(GameActionContext context)
     {
         context.CombatManager.ActivateKineticShield();
 

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Shattered
   m_EditorClassIdentifier: 
   effectName: Shattered
-  icon: {fileID: 0}
-  description: Reduce the enemy's Attack Power by X%
+  description: Reduce the enemy's Attack Power by X% per stack (max 75%)
   type: 1
   target: 1
   stackDecayPerTurn: 1
-  damageReductionPercent: 40
+  activateBeforePlayerPhysicalDamage: 1
+  damageReductionPercent: 5

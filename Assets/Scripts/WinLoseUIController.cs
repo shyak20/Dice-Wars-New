@@ -1,28 +1,37 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class WinLoseUIController : MonoBehaviour
 {
-    [Header("Face Reward")]
+    [Header("Victory")]
+    [Tooltip("Post-combat win popup + rewards. If null, falls back to Face Reward only.")]
+    [SerializeField] private WinStageFlowController winStageFlow;
+
+    [Header("Face Reward (legacy if Win Stage not assigned)")]
     [SerializeField] private FaceRewardManager faceRewardManager;
 
     [Header("Defeat UI")]
     public GameObject gameOverPanel;
     public Button mainMenuButton;
+    [SerializeField, Min(0f)] private float defeatScreenDelaySeconds = 1.25f;
+
+    Coroutine _defeatScreenRoutine;
 
     private void OnEnable()
     {
-        CombatEvents.OnPlayerVictory += StartFaceReward;
+        CombatEvents.OnPlayerVictory += OnPlayerVictory;
         CombatEvents.OnPlayerDefeat += ShowGameOver;
         FaceRewardEvents.OnFaceRewardCompleted += OnFaceRewardCompleted;
     }
 
     private void OnDisable()
     {
-        CombatEvents.OnPlayerVictory -= StartFaceReward;
+        CombatEvents.OnPlayerVictory -= OnPlayerVictory;
         CombatEvents.OnPlayerDefeat -= ShowGameOver;
         FaceRewardEvents.OnFaceRewardCompleted -= OnFaceRewardCompleted;
+        CancelPendingDefeatScreen();
     }
 
     private void Start()
@@ -35,30 +44,96 @@ public class WinLoseUIController : MonoBehaviour
         }
     }
 
-    private void StartFaceReward()
+    private void OnPlayerVictory()
     {
-        if (faceRewardManager == null)
+        if (winStageFlow != null)
         {
-            Debug.LogError("WinLoseUIController: faceRewardManager is not assigned!");
+            winStageFlow.BeginVictoryFlow();
             return;
         }
 
+        if (faceRewardManager == null)
+        {
+            Debug.LogError("WinLoseUIController: Assign Win Stage Flow or Face Reward Manager for victory.");
+            return;
+        }
+
+        SimulationSpeedController.ApplyRealtimeGlobally();
         faceRewardManager.StartFaceReward();
     }
 
     private void OnFaceRewardCompleted(DieFaceSO face)
     {
-        Debug.Log($"Face reward completed: {face.name} ({face.rarity})");
-        GoToMainMenu();
+        Debug.Log(face != null
+            ? $"Face reward completed: {face.name} ({face.rarity})"
+            : "Face reward flow closed (no face applied).");
+
+        if (winStageFlow != null)
+            return;
+
+        if (RunManager.Instance != null)
+        {
+            if (RunManager.Instance.UseMapBasedRun)
+                RunManager.Instance.HandleVictoryContinueFromCombat();
+            else
+                RunManager.Instance.AdvanceToNextRoom();
+        }
+        else
+        {
+            Debug.LogError("WinLoseUIController: RunManager not found! Falling back to main menu.");
+            GoToMainMenu();
+        }
     }
 
-    private void ShowGameOver()
+      private void ShowGameOver() => ShowDefeatScreen();
+
+    /// <summary>Shows the combat defeat panel after <see cref="defeatScreenDelaySeconds"/> (e.g. abandon run from options while in <c>FightScene</c>).</summary>
+    public void ShowDefeatScreen()
     {
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        CancelPendingDefeatScreen();
+
+        if (defeatScreenDelaySeconds <= 0f)
+        {
+            ShowDefeatScreenImmediate();
+            return;
+        }
+
+        _defeatScreenRoutine = StartCoroutine(CoShowDefeatScreenAfterDelay());
+    }
+
+    IEnumerator CoShowDefeatScreenAfterDelay()
+    {
+        yield return new WaitForSeconds(defeatScreenDelaySeconds);
+        _defeatScreenRoutine = null;
+        ShowDefeatScreenImmediate();
+    }
+
+    void ShowDefeatScreenImmediate()
+    {
+        if (winStageFlow != null)
+            winStageFlow.ApplyVictoryHideListImmediately();
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(true);
+    }
+
+    void CancelPendingDefeatScreen()
+    {
+        if (_defeatScreenRoutine == null)
+            return;
+
+        StopCoroutine(_defeatScreenRoutine);
+        _defeatScreenRoutine = null;
     }
 
     public void GoToMainMenu()
     {
-        SceneManager.LoadScene("MainMenu");
+        RunEncounterBuffer.AbortPendingMapCombatState();
+        if (RunManager.Instance != null)
+            RunManager.Instance.LoadMainMenuScene();
+        else
+        {
+            PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed("MainMenu");
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 }

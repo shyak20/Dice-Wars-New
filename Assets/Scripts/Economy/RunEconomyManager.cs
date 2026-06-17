@@ -1,0 +1,97 @@
+using System;
+using UnityEngine;
+
+/// <summary>Run-scoped gold (singleton, DontDestroyOnLoad). Meta currency during a run.</summary>
+public class RunEconomyManager : MonoBehaviour
+{
+    public static RunEconomyManager Instance { get; private set; }
+
+    /// <summary>
+    /// Resolves the economy for UI/collect paths. Creates a DontDestroyOnLoad fallback if the scene has no manager
+    /// (e.g. FightScene played directly without MainMenu bootstrap).
+    /// </summary>
+    public static RunEconomyManager TryGetRuntime()
+    {
+        if (Instance != null)
+            return Instance;
+
+        var found = FindObjectOfType<RunEconomyManager>(true);
+        if (found != null)
+            return found;
+
+        return CreateRuntimeFallback();
+    }
+
+    private static RunEconomyManager CreateRuntimeFallback()
+    {
+        Debug.LogWarning(
+            "RunEconomyManager: No economy in scene — creating a runtime fallback (starting gold = 0). " +
+            "Add RunEconomyManager next to RunManager in your bootstrap scene for proper run setup.");
+
+        var go = new GameObject(nameof(RunEconomyManager));
+        return go.AddComponent<RunEconomyManager>();
+    }
+
+    [SerializeField] private int startingGold;
+
+    [Header("Gold pop-up (optional)")]
+    [SerializeField] private GoldPopupWorldSpawner goldPopupSpawner;
+
+    public int CurrentGold { get; private set; }
+
+    /// <summary>Invoked after any gold change (argument = new total).</summary>
+    public static event Action<int> OnGoldChanged;
+
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        CurrentGold = startingGold;
+        OnGoldChanged?.Invoke(CurrentGold);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
+    public void ResetEconomyForNewRun(int gold = -1)
+    {
+        CurrentGold = gold >= 0 ? gold : startingGold;
+        OnGoldChanged?.Invoke(CurrentGold);
+    }
+
+    public void ResetEconomyForNewRunWithProgressionBonus(int progressionGoldBonus)
+    {
+        CurrentGold = startingGold + Mathf.Max(0, progressionGoldBonus);
+        OnGoldChanged?.Invoke(CurrentGold);
+    }
+
+    public bool CanAfford(int amount) => amount >= 0 && CurrentGold >= amount;
+
+    public bool TrySpend(int amount)
+    {
+        if (amount < 0 || CurrentGold < amount) return false;
+        CurrentGold -= amount;
+        OnGoldChanged?.Invoke(CurrentGold);
+        return true;
+    }
+
+    /// <summary>Adds gold and optionally shows a floating pop-up at a world position (e.g. defeated enemy).</summary>
+    public void GrantGold(int amount, Vector3? worldPopupPosition = null)
+    {
+        if (amount <= 0) return;
+        CurrentGold += amount;
+        OnGoldChanged?.Invoke(CurrentGold);
+
+        if (worldPopupPosition.HasValue && goldPopupSpawner != null)
+            goldPopupSpawner.Spawn(amount, worldPopupPosition.Value);
+    }
+}

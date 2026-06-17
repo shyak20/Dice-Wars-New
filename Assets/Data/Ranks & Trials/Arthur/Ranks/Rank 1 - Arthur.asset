@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa6dd1933fda734988cc4ecf4f04540, type: 3}
+  m_Name: Rank 1 - Arthur
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerRankSO
+  rankIndex: 0
+  rankName: The Novice
+  rankFlavorText: 
+  portrait: {fileID: 21300000, guid: 542628cea7502574899c5371a5224315, type: 3}
+  smallPortrait: {fileID: 21300000, guid: b8f41f31bcf9fc944a95c5d1c8f56c5f, type: 3}
+  associatedTrials:
+  - {fileID: 11400000, guid: 80e7fe667746a394a986cb2e826a4fa4, type: 2}
+  - {fileID: 11400000, guid: f6b2014e6e6e7bd4285db240f2662061, type: 2}
+  rankUpRewards:
+  - rid: 6434882425854361676
+  - rid: 6434882480546251015
+  - rid: 6434882480546251016
+  - rid: 6434882480546251017
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882425854361676
+      type: {class: ProgressionStartingRelicReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Start with {0}
+        relic: {fileID: 11400000, guid: 86c3ebfb4d820444ea01a17cbf3f7e86, type: 2}
+    - rid: 6434882480546251015
+      type: {class: ProgressionMaxHpReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Max HP
+        amount: 10
+    - rid: 6434882480546251016
+      type: {class: ProgressionMaxPowerReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Max Cast Power
+        amount: 2
+    - rid: 6434882480546251017
+      type: {class: ProgressionAddStartingDieReward, ns: , asm: Assembly-CSharp}
+      data:
+        rowFormat: Start with extra Die
+        die: {fileID: 11400000, guid: af5ae1f182387454bb002a3799780387, type: 2}

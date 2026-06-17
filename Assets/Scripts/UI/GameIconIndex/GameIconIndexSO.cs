@@ -1,0 +1,546 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Serialization;
+
+/// <summary>
+/// Combat UI icons: base actions (attack/defence), face <see cref="ActionVisualId"/>, and status effect art.
+/// </summary>
+[CreateAssetMenu(fileName = "GameIconIndex", menuName = "DiceGame/UI/Game Icon Index")]
+public class GameIconIndexSO : ScriptableObject
+{
+    [Header("Base Actions")]
+    [Tooltip("Icon for stored physical attack / damage pool rows and face type chip.")]
+    [SerializeField] private Sprite attack;
+
+    [Tooltip("Icon for stored armour / defence pool rows and face type chip.")]
+    [FormerlySerializedAs("defense")]
+    [SerializeField] private Sprite defence;
+
+    [Tooltip("Panel behind attack/damage pool row icons (not die tooltips).")]
+    [SerializeField] private Sprite attackBackground;
+
+    [Tooltip("Panel behind armour pool row icons (not die tooltips).")]
+    [SerializeField] private Sprite defenceBackground;
+
+    [Tooltip("Icon for curse / self-damage pool rows and curse face type chip.")]
+    [SerializeField] private Sprite selfDamage;
+
+    [Tooltip("Panel behind curse / self-damage pool row icons (not die tooltips).")]
+    [SerializeField] private Sprite selfDamageBackground;
+
+    [Header("Actions (keys match ActionVisualId on each action class)")]
+    [SerializeField] private List<ActionIconEntry> actionIcons = new List<ActionIconEntry>();
+    [Header("Enemy Actions (keys match action class names, e.g. HealAction)")]
+    [SerializeField] private List<EnemyActionIconEntry> enemyActionIcons = new List<EnemyActionIconEntry>();
+
+    [Header("Status effects (buffs & debuffs)")]
+    [SerializeField] private List<StatusEffectIconEntry> statusEffectIcons = new List<StatusEffectIconEntry>();
+    [Header("Enemy Starting Buffs")]
+    [SerializeField] private List<EnemyResistanceIconEntry> enemyResistanceIcons = new List<EnemyResistanceIconEntry>();
+
+    [Header("Main Attribute Icons")]
+    [FormerlySerializedAs("hpIcon")]
+    [SerializeField] private MainAttributeIconVisual hp;
+    [FormerlySerializedAs("powerIcon")]
+    [SerializeField] private MainAttributeIconVisual power;
+    [FormerlySerializedAs("extraRollIcon")]
+    [SerializeField] private MainAttributeIconVisual extraRoll;
+    [FormerlySerializedAs("physicalDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual physicalDieUnlock;
+    [FormerlySerializedAs("defenseDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual defenseDieUnlock;
+    [FormerlySerializedAs("fireDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual fireDieUnlock;
+    [FormerlySerializedAs("natureDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual natureDieUnlock;
+    [FormerlySerializedAs("frostDieUnlockIcon")]
+    [SerializeField] private MainAttributeIconVisual frostDieUnlock;
+    [FormerlySerializedAs("coinsIcon")]
+    [SerializeField] private MainAttributeIconVisual coins;
+    [FormerlySerializedAs("movementIcon")]
+    [SerializeField] private MainAttributeIconVisual movement;
+
+    [Serializable]
+    public struct ActionIconEntry
+    {
+        public ActionVisualId id;
+        public Sprite sprite;
+        [Tooltip("Optional. Used by GetActionBackground and TryGetPoolRowBackground when PoolRowKey matches this entry's id (enum name, e.g. Heal) or known aliases (see GameIconIndexSO).")]
+        public Sprite background;
+        [Tooltip("Optional. When set, face picker / shop / die tooltips use this instead of generated text for this action.")]
+        public string title;
+        [TextArea(2, 5)]
+        [Tooltip("Optional. When set, used as the effect description for this action on face tooltips.")]
+        public string description;
+    }
+
+    [Serializable]
+    public struct EnemyActionIconEntry
+    {
+        [Tooltip("Selected from all IGameAction types in inspector (stored as type name).")]
+        public string actionTypeName;
+        public Sprite icon;
+        public Sprite background;
+    }
+
+    [Serializable]
+    public struct StatusEffectIconEntry
+    {
+        public StatusEffectSO effect;
+        public Sprite icon;
+
+        [Tooltip("Behind the icon in the stored-actions pool row (PoolRowKey stable id = effect asset name).")]
+        public Sprite poolRowBackground;
+    }
+
+    [Serializable]
+    public struct EnemyResistanceIconEntry
+    {
+        public EnemyResistanceElement resistanceElement;
+        public Sprite icon;
+        public Sprite background;
+        [Tooltip("Optional. Hover title for this resistance icon.")]
+        public string title;
+        [TextArea(2, 5)]
+        [Tooltip("Optional. Hover body text for this resistance icon.")]
+        public string description;
+    }
+
+    [Serializable]
+    public struct NamedIconEntry
+    {
+        public string key;
+        public Sprite sprite;
+    }
+
+    [Serializable]
+    public struct MainAttributeIconVisual
+    {
+        public Sprite icon;
+        [Tooltip("Tint for CharacterInfoStat value text and other UI that shows this attribute's number.")]
+        public Color valueTextColor;
+    }
+
+    readonly Dictionary<ActionVisualId, Sprite> _actionLookup = new Dictionary<ActionVisualId, Sprite>();
+    readonly Dictionary<ActionVisualId, string> _actionTooltipTitleLookup = new Dictionary<ActionVisualId, string>();
+    readonly Dictionary<ActionVisualId, string> _actionTooltipDescriptionLookup = new Dictionary<ActionVisualId, string>();
+    readonly Dictionary<StatusEffectSO, Sprite> _statusLookup = new Dictionary<StatusEffectSO, Sprite>();
+    readonly Dictionary<ActionVisualId, Sprite> _actionBackgroundLookup = new Dictionary<ActionVisualId, Sprite>();
+    readonly Dictionary<string, Sprite> _enemyActionIconLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
+    readonly Dictionary<string, Sprite> _enemyActionBackgroundLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
+    readonly Dictionary<string, Sprite> _poolRowBackgroundByStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
+    readonly Dictionary<string, StatusEffectTarget> _statusTargetByPoolRowStableId = new Dictionary<string, StatusEffectTarget>(StringComparer.Ordinal);
+    readonly Dictionary<EnemyResistanceElement, Sprite> _enemyResistanceIconLookup = new Dictionary<EnemyResistanceElement, Sprite>();
+    readonly Dictionary<EnemyResistanceElement, Sprite> _enemyResistanceBackgroundLookup = new Dictionary<EnemyResistanceElement, Sprite>();
+    readonly Dictionary<EnemyResistanceElement, string> _enemyResistanceTooltipTitleLookup = new Dictionary<EnemyResistanceElement, string>();
+    readonly Dictionary<EnemyResistanceElement, string> _enemyResistanceTooltipDescriptionLookup = new Dictionary<EnemyResistanceElement, string>();
+
+    private void OnEnable() => RebuildLookups();
+
+    private void OnValidate() => RebuildLookups();
+
+    public void RebuildLookups()
+    {
+        _actionLookup.Clear();
+        _actionTooltipTitleLookup.Clear();
+        _actionTooltipDescriptionLookup.Clear();
+        _actionBackgroundLookup.Clear();
+        _enemyActionIconLookup.Clear();
+        _enemyActionBackgroundLookup.Clear();
+        _poolRowBackgroundByStableId.Clear();
+        _statusTargetByPoolRowStableId.Clear();
+        _enemyResistanceIconLookup.Clear();
+        _enemyResistanceBackgroundLookup.Clear();
+        _enemyResistanceTooltipTitleLookup.Clear();
+        _enemyResistanceTooltipDescriptionLookup.Clear();
+        foreach (var e in actionIcons)
+        {
+            if (e.id != ActionVisualId.None && e.sprite != null)
+                _actionLookup[e.id] = e.sprite;
+            if (e.id != ActionVisualId.None && e.background != null)
+                _actionBackgroundLookup[e.id] = e.background;
+            if (e.id != ActionVisualId.None && !string.IsNullOrWhiteSpace(e.title))
+                _actionTooltipTitleLookup[e.id] = e.title.Trim();
+            if (e.id != ActionVisualId.None && !string.IsNullOrWhiteSpace(e.description))
+                _actionTooltipDescriptionLookup[e.id] = e.description.Trim();
+        }
+        foreach (var e in enemyActionIcons)
+        {
+            if (string.IsNullOrWhiteSpace(e.actionTypeName)) continue;
+            var key = e.actionTypeName.Trim();
+            if (e.icon != null)
+                _enemyActionIconLookup[key] = e.icon;
+            if (e.background != null)
+                _enemyActionBackgroundLookup[key] = e.background;
+
+            // Backward/forward compatibility: if key is a full type name, also map short type name.
+            var dot = key.LastIndexOf('.');
+            if (dot >= 0 && dot + 1 < key.Length)
+            {
+                var shortName = key.Substring(dot + 1);
+                if (e.icon != null && !_enemyActionIconLookup.ContainsKey(shortName))
+                    _enemyActionIconLookup[shortName] = e.icon;
+                if (e.background != null && !_enemyActionBackgroundLookup.ContainsKey(shortName))
+                    _enemyActionBackgroundLookup[shortName] = e.background;
+            }
+        }
+
+        _statusLookup.Clear();
+        foreach (var e in statusEffectIcons)
+        {
+            if (e.effect == null) continue;
+            if (e.icon != null)
+                _statusLookup[e.effect] = e.icon;
+            _statusTargetByPoolRowStableId[e.effect.name] = e.effect.target;
+            if (e.poolRowBackground != null)
+                _poolRowBackgroundByStableId[e.effect.name] = e.poolRowBackground;
+        }
+
+        foreach (var e in enemyResistanceIcons)
+        {
+            if (e.icon != null)
+                _enemyResistanceIconLookup[e.resistanceElement] = e.icon;
+            if (e.background != null)
+                _enemyResistanceBackgroundLookup[e.resistanceElement] = e.background;
+            if (!string.IsNullOrWhiteSpace(e.title))
+                _enemyResistanceTooltipTitleLookup[e.resistanceElement] = e.title.Trim();
+            if (!string.IsNullOrWhiteSpace(e.description))
+                _enemyResistanceTooltipDescriptionLookup[e.resistanceElement] = e.description.Trim();
+        }
+    }
+
+    /// <summary>Icons for <see cref="DieType.Damage"/> / <see cref="DieType.Armor"/> / <see cref="DieType.Curse"/> pool rows and face chips; other element types have no base icon here.</summary>
+    public Sprite GetElementIcon(DieType type)
+    {
+        switch (type)
+        {
+            case DieType.Damage: return attack;
+            case DieType.Armor: return defence;
+            case DieType.Curse: return selfDamage;
+            default: return null;
+        }
+    }
+
+    public Sprite GetActionIcon(ActionVisualId id)
+    {
+        if (id == ActionVisualId.None) return null;
+        if (_actionLookup.Count == 0 && actionIcons.Count > 0)
+            RebuildLookups();
+        return _actionLookup.TryGetValue(id, out var s) ? s : null;
+    }
+
+    public Sprite GetStatusIcon(StatusEffectSO effect)
+    {
+        if (effect == null) return null;
+        if (_statusLookup.Count == 0 && statusEffectIcons.Count > 0)
+            RebuildLookups();
+        return _statusLookup.TryGetValue(effect, out var s) ? s : null;
+    }
+
+    /// <summary>Background for stored-actions pool rows only (<see cref="TryGetPoolRowBackground"/>).</summary>
+    public Sprite GetElementBackground(DieType type)
+    {
+        switch (type)
+        {
+            case DieType.Damage: return attackBackground;
+            case DieType.Armor: return defenceBackground;
+            case DieType.Curse: return selfDamageBackground;
+            default: return null;
+        }
+    }
+
+    public Sprite GetActionBackground(ActionVisualId id)
+    {
+        if (id == ActionVisualId.None) return null;
+        if (_actionBackgroundLookup.Count == 0 && actionIcons.Count > 0)
+            RebuildLookups();
+        return _actionBackgroundLookup.TryGetValue(id, out var s) ? s : null;
+    }
+
+    /// <summary>True if either title or description is configured for this <see cref="ActionVisualId"/>.</summary>
+    public bool TryGetActionTooltip(ActionVisualId id, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        if (id == ActionVisualId.None) return false;
+        if (_actionTooltipTitleLookup.Count == 0 && _actionTooltipDescriptionLookup.Count == 0 && actionIcons.Count > 0)
+            RebuildLookups();
+        var hasT = _actionTooltipTitleLookup.TryGetValue(id, out title);
+        var hasD = _actionTooltipDescriptionLookup.TryGetValue(id, out description);
+        return hasT || hasD;
+    }
+
+    public Sprite GetEnemyActionIcon(string actionTypeName)
+    {
+        if (string.IsNullOrWhiteSpace(actionTypeName)) return null;
+        if (_enemyActionIconLookup.Count == 0 && enemyActionIcons.Count > 0)
+            RebuildLookups();
+        return _enemyActionIconLookup.TryGetValue(actionTypeName.Trim(), out var s) ? s : null;
+    }
+
+    public Sprite GetEnemyActionBackground(string actionTypeName)
+    {
+        if (string.IsNullOrWhiteSpace(actionTypeName)) return null;
+        if (_enemyActionBackgroundLookup.Count == 0 && enemyActionIcons.Count > 0)
+            RebuildLookups();
+        return _enemyActionBackgroundLookup.TryGetValue(actionTypeName.Trim(), out var s) ? s : null;
+    }
+
+    public Sprite GetEnemyResistanceIcon(EnemyResistanceElement resistanceElement)
+    {
+        if (_enemyResistanceIconLookup.Count == 0 && enemyResistanceIcons.Count > 0)
+            RebuildLookups();
+        return _enemyResistanceIconLookup.TryGetValue(resistanceElement, out var s) ? s : null;
+    }
+
+    public Sprite GetEnemyResistanceBackground(EnemyResistanceElement resistanceElement)
+    {
+        if (_enemyResistanceBackgroundLookup.Count == 0 && enemyResistanceIcons.Count > 0)
+            RebuildLookups();
+        return _enemyResistanceBackgroundLookup.TryGetValue(resistanceElement, out var s) ? s : null;
+    }
+
+    public Sprite GetMainAttributeIcon(MainAttributeIconId id) => GetMainAttributeVisual(id).icon;
+
+    public Color GetMainAttributeValueColor(MainAttributeIconId id)
+    {
+        var color = GetMainAttributeVisual(id).valueTextColor;
+        return color.a > 0f ? color : Color.white;
+    }
+
+    public MainAttributeIconVisual GetMainAttributeVisual(MainAttributeIconId id) => id switch
+    {
+        MainAttributeIconId.Hp => hp,
+        MainAttributeIconId.Power => power,
+        MainAttributeIconId.ExtraRoll => extraRoll,
+        MainAttributeIconId.PhysicalDieUnlock => physicalDieUnlock,
+        MainAttributeIconId.DefenseDieUnlock => defenseDieUnlock,
+        MainAttributeIconId.FireDieUnlock => fireDieUnlock,
+        MainAttributeIconId.NatureDieUnlock => natureDieUnlock,
+        MainAttributeIconId.FrostDieUnlock => frostDieUnlock,
+        MainAttributeIconId.Coins => coins,
+        MainAttributeIconId.Movement => movement,
+        _ => default
+    };
+
+    public Sprite GetDieUnlockMainAttributeIcon(DieType dieType) =>
+        TryMapDieTypeToMainAttributeIcon(dieType, out var id) ? GetMainAttributeIcon(id) : null;
+
+    public static bool TryMapDieTypeToMainAttributeIcon(DieType dieType, out MainAttributeIconId iconId)
+    {
+        switch (dieType)
+        {
+            case DieType.Damage:
+                iconId = MainAttributeIconId.PhysicalDieUnlock;
+                return true;
+            case DieType.Armor:
+                iconId = MainAttributeIconId.DefenseDieUnlock;
+                return true;
+            case DieType.Fire:
+                iconId = MainAttributeIconId.FireDieUnlock;
+                return true;
+            case DieType.Nature:
+                iconId = MainAttributeIconId.NatureDieUnlock;
+                return true;
+            case DieType.Ice:
+                iconId = MainAttributeIconId.FrostDieUnlock;
+                return true;
+            default:
+                iconId = default;
+                return false;
+        }
+    }
+
+    /// <summary>True if either title or description is configured for this enemy resistance icon.</summary>
+    public bool TryGetEnemyResistanceTooltip(EnemyResistanceElement resistanceElement, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        if (_enemyResistanceTooltipTitleLookup.Count == 0 && _enemyResistanceTooltipDescriptionLookup.Count == 0 && enemyResistanceIcons.Count > 0)
+            RebuildLookups();
+        var hasT = _enemyResistanceTooltipTitleLookup.TryGetValue(resistanceElement, out title);
+        var hasD = _enemyResistanceTooltipDescriptionLookup.TryGetValue(resistanceElement, out description);
+        return hasT || hasD;
+    }
+
+    /// <summary>
+    /// Resolves a frame behind <see cref="StoredActionsPoolIcon"/> for this pool row
+    /// (<see cref="DieType"/> rows, per-status <see cref="StatusEffectIconEntry.poolRowBackground"/> keyed by <c>effect.name</c>,
+    /// then <see cref="ActionVisualId"/> / deferred-gem row ids mapped to <see cref="ActionIconEntry.background"/>).
+    /// </summary>
+    public Sprite TryGetPoolRowBackground(PoolRowKey key)
+    {
+        if (PoolRowKey.TryGetDieType(key, out var dt))
+            return GetElementBackground(dt);
+        if (_poolRowBackgroundByStableId.Count == 0 && (actionIcons.Count > 0 || statusEffectIcons.Count > 0))
+            RebuildLookups();
+        if (_poolRowBackgroundByStableId.TryGetValue(key.StableId, out var statusBg) && statusBg != null)
+            return statusBg;
+
+        if (TryMapPoolRowStableIdToActionVisualId(key.StableId, out var actionVisualId))
+        {
+            var actionBg = GetActionBackground(actionVisualId);
+            if (actionBg != null)
+                return actionBg;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Maps custom <see cref="PoolRowKey.StableId"/> strings to <see cref="ActionVisualId"/> so pool rows use the same
+    /// action backgrounds as face tooltips (e.g. Heal, MaxHp default row id "Max HP", gem deferred rows).
+    /// </summary>
+    static bool TryMapPoolRowStableIdToActionVisualId(string stableId, out ActionVisualId id)
+    {
+        id = ActionVisualId.None;
+        if (string.IsNullOrWhiteSpace(stableId))
+            return false;
+
+        var s = stableId.Trim();
+        if (Enum.TryParse<ActionVisualId>(s, true, out var parsed) && parsed != ActionVisualId.None)
+        {
+            id = parsed;
+            return true;
+        }
+
+        if (s.Equals("Max HP", StringComparison.OrdinalIgnoreCase))
+        {
+            id = ActionVisualId.MaxHp;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Heal, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.Heal;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Cleanse, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.Cleanse;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.MaxHp, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.MaxHp;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Power, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.AddPower;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Gold, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.AddValueBasedOnRoll;
+            return true;
+        }
+
+        if (s.Equals(GemDeferredPoolRowIds.Burn, StringComparison.Ordinal))
+        {
+            id = ActionVisualId.InstantBurnProcFromStacks;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Resolves whether a pool row key belongs to a known status effect and returns its target side.</summary>
+    public bool TryGetStatusTargetForPoolRow(PoolRowKey key, out StatusEffectTarget target)
+    {
+        if (_statusTargetByPoolRowStableId.Count == 0 && statusEffectIcons.Count > 0)
+            RebuildLookups();
+        return _statusTargetByPoolRowStableId.TryGetValue(key.StableId, out target);
+    }
+
+    /// <summary>
+    /// Export helper for editor tooling (atlas generation, audits).
+    /// </summary>
+    public List<NamedIconEntry> GetAllIconEntries()
+    {
+        var entries = new List<NamedIconEntry>
+        {
+            new NamedIconEntry { key = "BaseAction.Attack", sprite = attack },
+            new NamedIconEntry { key = "BaseAction.Defence", sprite = defence },
+            new NamedIconEntry { key = "BaseAction.SelfDamage", sprite = selfDamage },
+        };
+
+        if (attackBackground != null)
+            entries.Add(new NamedIconEntry { key = "BaseAction.AttackBackground", sprite = attackBackground });
+        if (defenceBackground != null)
+            entries.Add(new NamedIconEntry { key = "BaseAction.DefenceBackground", sprite = defenceBackground });
+        if (selfDamageBackground != null)
+            entries.Add(new NamedIconEntry { key = "BaseAction.SelfDamageBackground", sprite = selfDamageBackground });
+
+        foreach (var action in actionIcons)
+        {
+            entries.Add(new NamedIconEntry
+            {
+                key = $"Action.{action.id}",
+                sprite = action.sprite
+            });
+            if (action.background != null)
+                entries.Add(new NamedIconEntry { key = $"Action.{action.id}.Background", sprite = action.background });
+        }
+        foreach (var enemyAction in enemyActionIcons)
+        {
+            if (string.IsNullOrWhiteSpace(enemyAction.actionTypeName))
+                continue;
+            entries.Add(new NamedIconEntry { key = $"EnemyAction.{enemyAction.actionTypeName}.Icon", sprite = enemyAction.icon });
+            if (enemyAction.background != null)
+                entries.Add(new NamedIconEntry { key = $"EnemyAction.{enemyAction.actionTypeName}.Background", sprite = enemyAction.background });
+        }
+
+        foreach (var status in statusEffectIcons)
+        {
+            entries.Add(new NamedIconEntry
+            {
+                key = status.effect != null ? $"Status.{status.effect.name}" : "Status.(null)",
+                sprite = status.icon
+            });
+            if (status.poolRowBackground != null && status.effect != null)
+                entries.Add(new NamedIconEntry { key = $"Status.{status.effect.name}.PoolRowBackground", sprite = status.poolRowBackground });
+        }
+
+        foreach (var resistance in enemyResistanceIcons)
+        {
+            entries.Add(new NamedIconEntry
+            {
+                key = $"EnemyResistance.{resistance.resistanceElement}.Icon",
+                sprite = resistance.icon
+            });
+            if (resistance.background != null)
+                entries.Add(new NamedIconEntry
+                {
+                    key = $"EnemyResistance.{resistance.resistanceElement}.Background",
+                    sprite = resistance.background
+                });
+        }
+
+        AddMainAttributeEntry(entries, MainAttributeIconId.Hp, hp.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Power, power.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.ExtraRoll, extraRoll.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.PhysicalDieUnlock, physicalDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.DefenseDieUnlock, defenseDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.FireDieUnlock, fireDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.NatureDieUnlock, natureDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.FrostDieUnlock, frostDieUnlock.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Coins, coins.icon);
+        AddMainAttributeEntry(entries, MainAttributeIconId.Movement, movement.icon);
+
+        return entries;
+    }
+
+    static void AddMainAttributeEntry(List<NamedIconEntry> entries, MainAttributeIconId id, Sprite sprite)
+    {
+        if (sprite == null)
+            return;
+
+        entries.Add(new NamedIconEntry { key = $"MainAttribute.{id}", sprite = sprite });
+    }
+}

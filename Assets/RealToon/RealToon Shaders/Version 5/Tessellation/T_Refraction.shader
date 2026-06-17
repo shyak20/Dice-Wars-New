@@ -183,7 +183,7 @@ Shader "RealToon/Version 5/Tessellation/Refraction" {
             "Queue"="Transparent"
             "RenderType"="Transparent"
         }
-        GrabPass{ }
+        // GrabPass removed — incompatible with URP/SRP (was: screen grab for refraction).
         Pass {
             Name "FORWARD"
             Tags {
@@ -243,7 +243,6 @@ Shader "RealToon/Version 5/Tessellation/Refraction" {
 			#pragma shader_feature N_F_LLI_ON
 			#pragma shader_feature N_F_SLMM_ON
 
-			uniform sampler2D _GrabTexture;
             uniform sampler2D _CameraDepthTexture;
 
 			uniform half _RefractionIntensity;
@@ -674,7 +673,7 @@ Shader "RealToon/Version 5/Tessellation/Refraction" {
 					_MainColor = float4(GammaToLinearSpace(_MainColor.rgb), _MainColor.a);
 				#endif
 
-                half3 node_7067 = (tex2D( _GrabTexture, lerp(sceneUVs.rg,reflect(float3(sceneUVs.rg,0.0),normalDirection).rg,lerp(0.0,(-0.2),_RefractionIntensity))).rgb*_MainColor.rgb);
+                half3 node_7067 = (tex2D( _MainTex, lerp(sceneUVs.rg,reflect(float3(sceneUVs.rg,0.0),normalDirection).rg,lerp(0.0,(-0.2),_RefractionIntensity))).rgb*_MainColor.rgb);
 				//
 
 
@@ -695,7 +694,7 @@ Shader "RealToon/Version 5/Tessellation/Refraction" {
                 float sceneZ = max(0,LinearEyeDepth (UNITY_SAMPLE_DEPTH(tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)))) - _ProjectionParams.g);
                 float partZ = max(0,i.projPos.z - _ProjectionParams.g);
 
-                float4 sceneColor = tex2D(_GrabTexture, sceneUVs);
+                float4 sceneColor = tex2D(_MainTex, sceneUVs);
                 float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
 
 				#ifdef N_F_LLI_ON
@@ -1227,7 +1226,6 @@ Shader "RealToon/Version 5/Tessellation/Refraction" {
 			#pragma shader_feature N_F_LLI_ON
 			#pragma shader_feature N_F_SLMM_ON
 
-            uniform sampler2D _GrabTexture;
             uniform sampler2D _CameraDepthTexture;
 
 			uniform half _RefractionIntensity;
@@ -1660,7 +1658,7 @@ Shader "RealToon/Version 5/Tessellation/Refraction" {
 					_MainColor = float4(GammaToLinearSpace(_MainColor.rgb), _MainColor.a);
 				#endif
 
-                half3 node_7067 = (tex2D( _GrabTexture, lerp(sceneUVs.rg,reflect(float3(sceneUVs.rg,0.0),normalDirection).rg,lerp(0.0,(-0.2),_RefractionIntensity))).rgb*_MainColor.rgb);
+                half3 node_7067 = (tex2D( _MainTex, lerp(sceneUVs.rg,reflect(float3(sceneUVs.rg,0.0),normalDirection).rg,lerp(0.0,(-0.2),_RefractionIntensity))).rgb*_MainColor.rgb);
 				//
 
 
@@ -1681,7 +1679,7 @@ Shader "RealToon/Version 5/Tessellation/Refraction" {
                 float sceneZ = max(0,LinearEyeDepth (UNITY_SAMPLE_DEPTH(tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)))) - _ProjectionParams.g);
                 float partZ = max(0,i.projPos.z - _ProjectionParams.g);
 
-                float4 sceneColor = tex2D(_GrabTexture, sceneUVs);
+                float4 sceneColor = tex2D(_MainTex, sceneUVs);
 
                 float3 lightDirection = normalize(lerp(_WorldSpaceLightPos0.xyz, _WorldSpaceLightPos0.xyz - i.posWorld.xyz,_WorldSpaceLightPos0.w));
 

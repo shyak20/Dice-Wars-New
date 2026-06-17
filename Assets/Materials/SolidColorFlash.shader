@@ -1,76 +1,113 @@
 Shader "Custom/SpriteFlash Overlay"
 {
-	Properties
-	{
-		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
-		_FlashColor("Flash Color", Color) = (1,1,1,1)
-		_FlashAmount("Flash Amount", Range(0, 1)) = 0
-		[HideInInspector] _Color("Tint", Color) = (1,1,1,1)
-	}
+    Properties
+    {
+        [PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
+        [HideInInspector] _Color("Tint", Color) = (1, 1, 1, 1)
+        _FlashColor("Flash Color", Color) = (1, 1, 1, 1)
+        _FlashAmount("Flash Amount", Range(0, 1)) = 0
 
-		SubShader
-		{
-			Tags
-			{
-				"Queue" = "Transparent"
-				"IgnoreProjector" = "True"
-				"RenderType" = "Transparent"
-				"PreviewType" = "Plane"
-				"CanUseSpriteAtlas" = "True"
-			}
+        [HideInInspector] _StencilComp("Stencil Comparison", Float) = 8
+        [HideInInspector] _Stencil("Stencil ID", Float) = 0
+        [HideInInspector] _StencilOp("Stencil Operation", Float) = 0
+        [HideInInspector] _StencilWriteMask("Stencil Write Mask", Float) = 255
+        [HideInInspector] _StencilReadMask("Stencil Read Mask", Float) = 255
+        [HideInInspector] _ColorMask("Color Mask", Float) = 15
 
-			Cull Off
-			Lighting Off
-			ZWrite Off
-			Blend SrcAlpha OneMinusSrcAlpha
+        [Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip("Use Alpha Clip", Float) = 0
+    }
 
-			Pass
-			{
-				CGPROGRAM
-				#pragma vertex vert
-				#pragma fragment frag
-				#include "UnityCG.cginc"
+    SubShader
+    {
+        Tags
+        {
+            "Queue" = "Transparent"
+            "IgnoreProjector" = "True"
+            "RenderType" = "Transparent"
+            "PreviewType" = "Plane"
+            "CanUseSpriteAtlas" = "True"
+            "RenderPipeline" = "UniversalPipeline"
+        }
 
-				struct appdata_t
-				{
-					float4 vertex   : POSITION;
-					float4 color    : COLOR;
-					float2 texcoord : TEXCOORD0;
-				};
+        Stencil
+        {
+            Ref [_Stencil]
+            Comp [_StencilComp]
+            Pass [_StencilOp]
+            ReadMask [_StencilReadMask]
+            WriteMask [_StencilWriteMask]
+        }
 
-				struct v2f
-				{
-					float4 vertex   : SV_POSITION;
-					fixed4 color : COLOR;
-					float2 texcoord : TEXCOORD0;
-				};
+        Blend SrcAlpha OneMinusSrcAlpha
+        ColorMask [_ColorMask]
+        Cull Off
+        ZWrite Off
 
-				sampler2D _MainTex;
-				fixed4 _FlashColor;
-				float _FlashAmount;
+        Pass
+        {
+            Name "SpriteFlashOverlay"
+            Tags { "LightMode" = "UniversalForward" }
 
-				v2f vert(appdata_t IN)
-				{
-					v2f OUT;
-					OUT.vertex = UnityObjectToClipPos(IN.vertex);
-					OUT.texcoord = IN.texcoord;
-					OUT.color = IN.color;
-					return OUT;
-				}
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
 
-				fixed4 frag(v2f IN) : SV_Target
-				{
-					fixed4 texColor = tex2D(_MainTex, IN.texcoord);
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-				// The Magic Logic:
-				// We interpolate (Lerp) between the original texture RGB 
-				// and the Flash Color RGB, based on the _FlashAmount.
-				fixed3 finalRGB = lerp(texColor.rgb, _FlashColor.rgb, _FlashAmount);
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float4 color : COLOR;
+                float2 uv : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
 
-				// We keep the original alpha so the sprite shape doesn't change
-				return fixed4(finalRGB, texColor.a);
-			}
-			ENDCG
-		}
-		}
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                half4 color : COLOR;
+                float2 uv : TEXCOORD0;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                half4 _Color;
+                half4 _FlashColor;
+                half _FlashAmount;
+            CBUFFER_END
+
+            Varyings vert(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                output.color = input.color * _Color;
+                return output;
+            }
+
+            half4 frag(Varyings input) : SV_Target
+            {
+                half4 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * input.color;
+                col.rgb = lerp(col.rgb, _FlashColor.rgb, saturate(_FlashAmount));
+
+                #ifdef UNITY_UI_ALPHACLIP
+                clip(col.a - 0.001);
+                #endif
+
+                return col;
+            }
+            ENDHLSL
+        }
+    }
+
+    Fallback Off
 }

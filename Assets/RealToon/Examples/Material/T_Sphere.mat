@@ -2,20 +2,37 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: T_Sphere
-  m_Shader: {fileID: 4800000, guid: c73d0a68c32425f44990e420368ddda6, type: 3}
-  m_ShaderKeywords: N_F_GLO_ON N_F_NM_ON N_F_O_ON N_F_RELGI_ON
-  m_LightmapFlags: 4
+  m_Shader: {fileID: 4800000, guid: 6459b2db96a08ca41b0f9b39dc7ad59e, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - N_F_COEDGL_ON
+  - N_F_CO_ON
+  - N_F_DDMD_ON
+  - N_F_EAL_ON
+  - N_F_GLO_ON
+  - N_F_NM_ON
+  - N_F_O_ON
+  - N_F_RDC_ON
+  - N_F_RELGI_ON
+  - N_F_TRANSAFFSHA_ON
+  - N_F_TRANS_ON
+  - _UVSET_UV0
+  m_InvalidKeywords: []
+  m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
+  m_CustomRenderQueue: 2450
+  stringTagMap:
+    RenderType: TransparentCutout
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -67,6 +84,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SecondaryCutout:
+        m_Texture: {fileID: 2800000, guid: 0b7ec90d8633b54428f3322ab8a587b8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _ShadowColorTexture:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -75,10 +96,21 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
+    - _AAS: 0.0001
+    - _AlpToCov: 0
+    - _AlphaBaseCutout: 0
+    - _BleModDest: 10
+    - _BleModSour: 5
+    - _ClipAdju: 0
     - _Compa: 8
+    - _ComputeMeshIndex: 0
+    - _Culling: 2
     - _CustomLightDirectionFollowObjectRotation: 0
     - _CustomLightDirectionIntensity: 0
+    - _Cutout: 0
+    - _DepthThreshold: 900
     - _DirectionalLightIntensity: 0
     - _DoubleSided: 0
     - _DoubleSidedOutline: 1
@@ -96,7 +128,11 @@ Material:
     - _GlossTextureRotate: 0
     - _GlossTextureSoftness: 0
     - _Glossiness: 0.478
+    - _Glow_Edge_Width: 1.05
     - _HighlightColorPower: 1
+    - _LLI_Max: 1
+    - _LLI_Min: 0
+    - _LigIgnoYNorDir: 0
     - _LightAffectOutlineColor: 0
     - _LightAffectRimLightColor: 0
     - _LightAffectShadow: 0
@@ -106,46 +142,85 @@ Material:
     - _MCIALO: 0
     - _MCapIntensity: 1
     - _MVCOL: 0
+    - _MaiColPo: 0.8
+    - _MaxFadDistance: 2
+    - _MinFadDistance: 0
     - _MixMainTexToOutline: 0
+    - _N_F_ANIS: 0
     - _N_F_CA: 0
     - _N_F_CLD: 0
+    - _N_F_CO: 1
+    - _N_F_COEDGL: 1
+    - _N_F_DCS: 0
+    - _N_F_DDMD: 1
+    - _N_F_EAL: 1
+    - _N_F_ESSAO: 0
     - _N_F_FR: 0
     - _N_F_GLO: 1
     - _N_F_GLOT: 0
     - _N_F_HCS: 0
+    - _N_F_HDLS: 0
+    - _N_F_HPSS: 0
+    - _N_F_LLI: 0
     - _N_F_MC: 0
+    - _N_F_MSSOLTFO: 0
+    - _N_F_NFD: 0
     - _N_F_NLASOBF: 0
     - _N_F_NM: 1
     - _N_F_O: 1
+    - _N_F_OFLMB: 0
+    - _N_F_PA: 0
     - _N_F_PT: 0
     - _N_F_R: 0
+    - _N_F_RDC: 1
     - _N_F_RL: 0
+    - _N_F_RLIS: 0
+    - _N_F_SCO: 0
     - _N_F_SCT: 0
+    - _N_F_SE: 0
     - _N_F_SL: 0
+    - _N_F_SLMM: 0
     - _N_F_SON: 0
     - _N_F_SS: 0
     - _N_F_ST: 0
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
+    - _N_F_STSDFM: 0
+    - _N_F_TP: 0
+    - _NoiTexAffStraWidt: 0
+    - _NoisTexInten: 1
+    - _NoiseSize: 100
     - _NoisyOutlineIntensity: 0
+    - _NorMapAsDis: 0
     - _NormalMapIntensity: 1.39
+    - _ObjePosiZCS: 0
     - _Opacity: 0
     - _Oper: 8
+    - _OutStenPass: 0
+    - _OutZTest: 4
+    - _OutZWrite: 1
     - _OutlineExtrudeMethod: 0
     - _OutlineWidth: 1.02
     - _OutlineWidthAffectedByViewDistance: 0
     - _OutlineZPostionInCamera: 0
     - _OverallShadowColorPower: 1
+    - _PADist: 0
+    - _PASize: 0.5
+    - _PASmooTrans: 1
     - _PSGLOTEX: 0
     - _PTexturePower: 1
     - _PointSpotlightIntensity: 0.3
+    - _PresAdju: 1
     - _RELG: 1
+    - _RQSO: 0
+    - _ReduSha: 0.5
     - _ReduceOutlineBackFace: 0.603
     - _ReduceTextureQuality: 0
     - _RefMetallic: 0
     - _RefVal: 0
     - _ReflectionIntensity: 0
     - _ReflectionRoughtness: 0
+    - _RimLigInt: 1
     - _RimLightColorPower: 10
     - _RimLightInLight: 1
     - _RimLightSoftness: 1
@@ -161,40 +236,73 @@ Material:
     - _SelfShadowColorPower: 1
     - _SelfShadowHardness: 1
     - _SelfShadowIntensity: 1
+    - _SelfShadowRealTimeShadowColorPower: 1
+    - _SelfShadowRealtimeShadowIntensity: 1
     - _SelfShadowShadowTAtViewDirection: 0
     - _SelfShadowThreshold: 0.926
     - _ShadowColorTexturePower: 0
+    - _ShadowHardness: 0
     - _ShadowTColorPower: 1
     - _ShadowTHardness: 1
     - _ShadowTIntensity: 1
     - _ShadowTLightThreshold: 0.5
     - _ShadowTShadowThreshold: 0
+    - _ShifAnis: 0
     - _ShowInAmbientLightIntensity: 1
     - _ShowInAmbientLightShadowIntensity: 1
     - _ShowInAmbientLightShadowThreshold: 0.4
     - _ShowNormal: 0
+    - _SimTrans: 0
+    - _SkinMatrixIndex: 0
     - _SmoothObjectNormal: 0
+    - _Smoothness: 0
+    - _StraWidt: 10
     - _TEXMCOLINT: 1
+    - _TRANSMODE: 1
+    - _TessellationFar: 1
+    - _TessellationNear: 1
+    - _TessellationSmoothness: 0.5
+    - _TessellationTransition: 0.8
     - _TexturePatternStyle: 0
+    - _TrailSize: 1.5
+    - _TransAffSha: 1
     - _TransparentThreshold: 0
+    - _TriPlaBlend: 4
+    - _TriPlaTile: 1
+    - _UVSet: 0
     - _UseFReflection: 0
+    - _UseSecondaryCutout: 1
+    - _UseTLB: 0
     - _VertexColorBlueAffectOutlineWitdh: 0
     - _VertexColorBlueControlSmoothObjectNormal: 0
     - _VertexColorGreenControlSelfShadowThreshold: 0
     - _VertexColorRedAffectOutlineWitdh: 0
     - _VertexColorRedControlSmoothObjectNormal: 0
     - _XYZHardness: 14
+    - _ZTest: 4
     - _ZWrite: 1
     m_Colors:
     - _CustomLightDirection: {r: 0, g: 0, b: 10, a: 0}
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Glow_Color: {r: 2, g: 0.17760755, b: 0, a: 1}
     - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
     - _MainColor: {r: 1, g: 1, b: 1, a: 1}
-    - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ObjPosi: {r: 0, g: 0, b: 0, a: 0}
+    - _ObjectForward: {r: 0, g: 0, b: 0, a: 0}
+    - _ObjectRight: {r: 0, g: 0, b: 0, a: 0}
+    - _OutResi: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
     - _OverallShadowColor: {r: 0.28676468, g: 0.008434263, b: 0.008434263, a: 1}
+    - _PTCol: {r: 0, g: 0, b: 0, a: 1}
+    - _PrevPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _RimLigPosi: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SSAOColor: {r: 0, g: 0, b: 0, a: 0}
     - _SelfLitColor: {r: 1, g: 1, b: 1, a: 1}
     - _SelfShadowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SelfShadowRealTimeShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowTColor: {r: 1, g: 1, b: 1, a: 1}
     - _XYZPosition: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

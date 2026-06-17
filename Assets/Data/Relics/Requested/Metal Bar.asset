@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe6c96d825a320046b4015c149b8a136, type: 3}
+  m_Name: Metal Bar
+  m_EditorClassIdentifier: Assembly-CSharp::RelicSO
+  title: Metal Bar
+  description: All <style=Shield>Armor</style> result give <style=Shield>+2</style> to their outcome for every <style=Shield>Armor</style> Dice you
+    have.
+  rarity: 1
+  icon: {fileID: 21300000, guid: 3b43907db56462e4599b283fcf3715d9, type: 3}
+  shopGoldPrice: 0
+  barBenefitDisplayValue: 0
+  actions:
+  - rid: 6494956586993451278
+  references:
+    version: 2
+    RefIds:
+    - rid: 6494956586993451278
+      type: {class: RelicArmorBonusPerArmorDieAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 1
+        bonusArmorPerArmorDie: 2

@@ -5,7 +5,8 @@ using TMPro;
 public class PlayerStatus : MonoBehaviour
 {
     [Header("Stats")]
-    public int maxHealth = 100;
+    [Tooltip("Set from PlayerDataSO.startingMaxHealth at combat init (or RunManager run vitality when active).")]
+    public int maxHealth { get; private set; }
     private int currentHealth;
     private int currentArmor = 0;
 
@@ -14,24 +15,116 @@ public class PlayerStatus : MonoBehaviour
     public TMP_Text healthText;
     public TMP_Text armorText;
     public GameObject armorIcon; // Optional: A shield icon that shows when armor > 0
+    [Tooltip("Masked portrait inside the player HP bar (Player Mask → Player Image). Uses active rank SmallPortrait from progression.")]
+    [SerializeField] private Image characterPortraitImage;
+
+    [Header("Floating damage numbers")]
+    [Tooltip("World position used for damage popups; defaults to this transform.")]
+    [SerializeField] private Transform damageNumberWorldAnchor;
+
+    [Header("Power orb (support flight)")]
+    [Tooltip("World-space target when the turn has no enemy damage (armor/support): orb flies here instead of to the enemy. Prefer an empty above the HP bar in world space.")]
+    [SerializeField] private Transform powerOrbSupportWorldAnchor;
+
+    [Header("Player damage juice")]
+    [Tooltip("Optional. Shakes camera, enables hit VFX for a duration, sprite flash whenever the player takes damage.")]
+    [SerializeField] private PlayerPhysicalHitFeedback physicalHitFeedback;
 
     public StatusEffectManager StatusEffects { get; private set; }
 
     public int GetCurrentHealth() => currentHealth;
+
+    /// <summary>Sets HP to 0 and raises <see cref="CombatEvents.OnPlayerHealthDepleted"/> (e.g. abandon run from options).</summary>
+    public void ForceDefeatAtZeroHealth()
+    {
+        if (currentHealth <= 0)
+        {
+            CaptureRunVitalityIfMapRun();
+            CombatEvents.OnPlayerHealthDepleted?.Invoke();
+            return;
+        }
+
+        currentHealth = 0;
+        currentArmor = 0;
+        UpdateUI();
+        CaptureRunVitalityIfMapRun();
+        CombatEvents.OnPlayerHealthDepleted?.Invoke();
+    }
+
+    public Vector3 GetDamageNumberWorldPosition()
+    {
+        if (damageNumberWorldAnchor != null)
+            return damageNumberWorldAnchor.position;
+        return transform.position;
+    }
+
+    /// <summary>Target for power orb when the player turn deals no immediate enemy damage (e.g. armor only).</summary>
+    public Transform GetPowerOrbSupportAnchor()
+    {
+        if (powerOrbSupportWorldAnchor != null)
+            return powerOrbSupportWorldAnchor;
+        if (healthSlider != null)
+            return healthSlider.transform;
+        return damageNumberWorldAnchor != null ? damageNumberWorldAnchor : transform;
+    }
+
+    /// <summary>Applies persisted run HP after loading the combat scene (see <see cref="RunManager"/>).</summary>
+    public void ApplyRunVitality(int hp, int maxHp)
+    {
+        maxHealth = Mathf.Max(1, maxHp);
+        currentHealth = Mathf.Clamp(hp, 0, maxHealth);
+        UpdateUI();
+    }
+
+    /// <summary>Sets max/current HP from <see cref="PlayerDataSO.startingMaxHealth"/> when not using persisted run vitality.</summary>
+    public void ApplyStartingHealthFromPlayerData(PlayerDataSO data)
+    {
+        if (data == null)
+        {
+            Debug.LogError("PlayerStatus.ApplyStartingHealthFromPlayerData: PlayerDataSO is null.");
+            return;
+        }
+
+        ApplyCharacterPortrait(data);
+        maxHealth = Mathf.Max(1, data.startingMaxHealth);
+        currentHealth = maxHealth;
+        UpdateUI();
+    }
 
     public void Heal(int amount)
     {
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
         Debug.Log($"<color=green>Player healed {amount} HP. Current: {currentHealth}</color>");
         UpdateUI();
+        CaptureRunVitalityIfMapRun();
     }
-    
-    public void AddMaxHP(int amount)
+
+    /// <summary>
+    /// Increases max HP and heals by the same amount for positive gains (e.g. 10/20 and +3 → 13/23).
+    /// Negative amounts reduce max HP and clamp current health (no heal).
+    /// </summary>
+    public void AddMaxHealthAndHeal(int amount)
     {
-        maxHealth += amount;
-        Debug.Log($"<color=green>Player ADD MAX HP {amount} . Current: {maxHealth}</color>");
+        if (amount == 0) return;
+        if (amount > 0)
+        {
+            maxHealth = Mathf.Max(1, maxHealth + amount);
+            currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+            Debug.Log($"<color=green>Player +{amount} max HP (max {maxHealth}) and healed; current {currentHealth}</color>");
+        }
+        else
+        {
+            maxHealth = Mathf.Max(1, maxHealth + amount);
+            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+            Debug.Log($"<color=green>Player max HP changed by {amount}. Current max: {maxHealth}, current HP: {currentHealth}</color>");
+        }
+
         UpdateUI();
+        CaptureRunVitalityIfMapRun();
     }
+
+    /// <summary>Same as <see cref="AddMaxHealthAndHeal"/> (positive gain heals; negative reduces max and clamps current).</summary>
+    public void AddMaxHP(int amount) => AddMaxHealthAndHeal(amount);
 
     private void Awake()
     {
@@ -39,8 +132,105 @@ public class PlayerStatus : MonoBehaviour
         if (StatusEffects == null)
             Debug.LogError("PlayerStatus: Missing StatusEffectManager component!");
 
-        currentHealth = maxHealth;
+        if (physicalHitFeedback == null)
+            physicalHitFeedback = GetComponentInChildren<PlayerPhysicalHitFeedback>(true);
+
+        maxHealth = 1;
+        currentHealth = 1;
         UpdateUI();
+    }
+
+    private void OnEnable()
+    {
+        TryApplyPortraitFromContainer();
+        TrySubscribeRunVitality();
+        TrySyncRunVitalityFromManager();
+    }
+
+    private void OnDisable()
+    {
+        TryUnsubscribeRunVitality();
+    }
+
+    private void Start()
+    {
+        // Covers additive preload / scene-root toggles where RunManager was ready before this object enabled.
+        TrySyncRunVitalityFromManager();
+    }
+
+    void TrySubscribeRunVitality()
+    {
+        if (RunManager.Instance == null)
+            return;
+
+        RunManager.Instance.OnRunVitalityChanged -= OnRunVitalityChanged;
+        RunManager.Instance.OnRunVitalityChanged += OnRunVitalityChanged;
+    }
+
+    void TryUnsubscribeRunVitality()
+    {
+        if (RunManager.Instance == null)
+            return;
+
+        RunManager.Instance.OnRunVitalityChanged -= OnRunVitalityChanged;
+    }
+
+    void OnRunVitalityChanged() => TrySyncRunVitalityFromManager();
+
+    /// <summary>Map runs: mirror persisted run HP/max onto this HUD (shop, fight, etc.).</summary>
+    void TrySyncRunVitalityFromManager()
+    {
+        if (RunManager.Instance == null)
+            return;
+
+        RunManager.Instance.ApplyRunVitalityToPlayerIfAny(this);
+    }
+
+    /// <summary>Sets the HUD portrait from the active <see cref="PlayerRankSO.SmallPortrait"/>.</summary>
+    public void ApplyCharacterPortrait(PlayerDataSO data)
+    {
+        if (characterPortraitImage == null)
+            return;
+
+        if (data == null)
+        {
+            Debug.LogError("PlayerStatus.ApplyCharacterPortrait: PlayerDataSO is null.");
+            return;
+        }
+
+        ApplyRankPortrait(ResolvePortraitCharacter(data));
+    }
+
+    static PlayerDataSO ResolvePortraitCharacter(PlayerDataSO data)
+    {
+        var container = PlayerDataContainer.Instance;
+        if (container?.ActiveCharacterTemplate == null)
+            return data;
+
+        if (data == container.ActiveCharacterTemplate || data == container.RuntimeData)
+            return container.ActiveCharacterTemplate;
+
+        return data;
+    }
+
+    void ApplyRankPortrait(PlayerDataSO data)
+    {
+        var sprite = ProgressionRankPortraitUtility.GetPortrait(data, useSmallPortrait: true);
+        characterPortraitImage.sprite = sprite;
+        characterPortraitImage.enabled = sprite != null;
+    }
+
+    void TryApplyPortraitFromContainer()
+    {
+        var container = PlayerDataContainer.Instance;
+        if (container == null)
+            return;
+
+        var template = container.ActiveCharacterTemplate;
+        if (template == null)
+            return;
+
+        ApplyCharacterPortrait(template);
     }
 
     /// <summary>
@@ -56,8 +246,12 @@ public class PlayerStatus : MonoBehaviour
     /// <summary>
     /// Deducts damage from armor first, then health.
     /// </summary>
-    public void TakeDamage(int damage)
+    /// <param name="floatingDamageNumberWorldOverride">When set, used as the world anchor for <see cref="CombatEvents.OnPlayerDamageNumber"/> (e.g. enemy position for thorns popups).</param>
+    public void TakeDamage(int damage, PlayerDamageSource source = PlayerDamageSource.Generic, Vector3? floatingDamageNumberWorldOverride = null)
     {
+        var hpBefore = currentHealth;
+        var armorBefore = currentArmor;
+
         // 1. Armor absorbs damage first
         int damageRemaining = damage;
 
@@ -76,21 +270,51 @@ public class PlayerStatus : MonoBehaviour
             }
         }
 
+        if (source == PlayerDamageSource.EnemyPhysicalAttack)
+        {
+            var armorLost = armorBefore - currentArmor;
+            if (armorLost > 0)
+                CombatEvents.OnPlayerArmorLostToEnemyPhysicalAttack?.Invoke(armorLost);
+        }
+
         // 2. Remaining damage hits Health
         if (damageRemaining > 0)
         {
             currentHealth -= damageRemaining;
             currentHealth = Mathf.Max(0, currentHealth);
             UnityEngine.Debug.Log($"<color=red>Player took {damageRemaining} Health damage!</color>");
+            var hpLost = hpBefore - currentHealth;
+            if (hpLost > 0)
+                ProgressionEventBridge.NotifyHpLost(hpLost);
         }
 
         UpdateUI();
 
-        if (currentHealth <= 0)
+        if (damage > 0)
         {
-            UnityEngine.Debug.LogError("Game Over: Player Health reached 0!");
-            // Trigger Game Over Logic
+            var w = floatingDamageNumberWorldOverride ?? GetDamageNumberWorldPosition();
+            CombatEvents.OnPlayerDamageNumber?.Invoke(damage, w);
         }
+
+        if (physicalHitFeedback != null && damage > 0)
+        {
+            var hpLost = hpBefore - currentHealth;
+            physicalHitFeedback.OnPlayerDamaged(damage, hpLost, maxHealth);
+        }
+
+        if (hpBefore != currentHealth)
+            CaptureRunVitalityIfMapRun();
+
+        if (currentHealth <= 0)
+            CombatEvents.OnPlayerHealthDepleted?.Invoke();
+    }
+
+    void CaptureRunVitalityIfMapRun()
+    {
+        if (RunManager.Instance == null || !RunManager.Instance.UseMapBasedRun)
+            return;
+
+        RunManager.Instance.CaptureRunVitalityFromPlayer(this);
     }
 
     /// <summary>
@@ -99,6 +323,13 @@ public class PlayerStatus : MonoBehaviour
     public void ResetArmor()
     {
         currentArmor = 0;
+        UpdateUI();
+    }
+
+    /// <summary>Sets armor to an exact value (e.g. next-turn carry from <see cref="StartNextTurnWithArmorAction"/>).</summary>
+    public void SetArmor(int amount)
+    {
+        currentArmor = Mathf.Max(0, amount);
         UpdateUI();
     }
 

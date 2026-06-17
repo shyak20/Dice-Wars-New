@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8795f3b5ba6c14f8be468dcba7eb44, type: 3}
+  m_Name: Arthur - Player Stats
+  m_EditorClassIdentifier: 
+  characterDisplayName: Arthur
+  loseScreenImage: {fileID: 21300000, guid: 073f18ec1ccf52c44a1ca486d63e12f4, type: 3}
+  leftHandImage: {fileID: 21300000, guid: 95c2c86566519cd4e9957ee32f9439d2, type: 3}
+  rightHandImage: {fileID: 21300000, guid: f083b2e7145fe61438a017c100bb55c1, type: 3}
+  description: "A relentless frontline commander who relies on heavy armor, flawless
+    martial instincts, and an unbreakable willpower. \nHis strength comes from heavy
+    sword techniques, tactical shield-work, and a kinetic fighting style that turns
+    an enemy's own momentum against them."
+  metaSaveId: 
+  currentDeck:
+  - {fileID: 11400000, guid: 6c7bee20a819954459132192b2dcf977, type: 2}
+  - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
+  startingMaxHealth: 40
+  maxRollsPerTurn: 3
+  baseMaxPower: 10
+  moveLimit: 10
+  perfectStrikeBaseMultiplier: 2
+  progressionCatalog: {fileID: 11400000, guid: b0fc6a71a2b399f49968d34ce045cfd6, type: 2}

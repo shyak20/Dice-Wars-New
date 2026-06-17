@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2da12b934c0d2dc4a9c0c744a1a817d9, type: 3}
+  m_Name: Elite Dice Head
+  m_EditorClassIdentifier: 
+  enemyName: Elite Dice Head
+  displaySprite: {fileID: 21300000, guid: bcba409166e1b5541942cb2a084b3faa, type: 3}
+  combatAnimatorController: {fileID: 9100000, guid: 79c299600131ffe478e9c88abb6023f3, type: 2}
+  enemyRank: 1
+  excludeFromFirstFight: 1
+  maxHealth: 50
+  startArmor: 10
+  minGoldReward: 110
+  maxGoldReward: 180
+  additionalRewardDrops:
+  - pool: 3
+    dropChance: 1
+    rolls: 1
+  - pool: 2
+    dropChance: 1
+    rolls: 1
+  - pool: 1
+    dropChance: 1
+    rolls: 1
+  faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
+  dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
+  relicRewardPool: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
+  gemRewardPool: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
+  isSequential: 1
+  actionCycle:
+  - {fileID: 11400000, guid: def30f33406523248ae61118ad5315e3, type: 2}
+  - {fileID: 11400000, guid: 75024acc8d694144182c9543cf9a59ee, type: 2}
+  phases: []
+  startingResistances:
+  - element: 1
+    lessDamagePercent: 50
+  valueRolledListeners:
+  - rolledValues: 02000000
+    icon: {fileID: 21300000, guid: e89ed38bd3ed26e4eb12dddaeb23e71c, type: 3}
+    title: <style=Die2></style> Strength
+    description: Whenever you roll a <style=Die2></style> Dice Head will gain <style=strength>+1</style>
+    actions:
+    - rid: 6434882073453658180
+  references:
+    version: 2
+    RefIds:
+    - rid: 6434882073453658180
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 1
+        statusEffect: {fileID: 11400000, guid: ebf544cc10a2325409bf6d6ef50a8f63, type: 2}
+        stacks: 1

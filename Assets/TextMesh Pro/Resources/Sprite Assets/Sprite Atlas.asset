@@ -1,0 +1,1373 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84a92b25f83d49b9bc132d206b370281, type: 3}
+  m_Name: Sprite Atlas
+  m_EditorClassIdentifier: 
+  m_Version: 1.1.0
+  m_FaceInfo:
+    m_FaceIndex: 0
+    m_FamilyName: 
+    m_StyleName: 
+    m_PointSize: 0
+    m_Scale: 0
+    m_UnitsPerEM: 0
+    m_LineHeight: 0
+    m_AscentLine: 0
+    m_CapLine: 0
+    m_MeanLine: 0
+    m_Baseline: 0
+    m_DescentLine: 0
+    m_SuperscriptOffset: 0
+    m_SuperscriptSize: 0
+    m_SubscriptOffset: 0
+    m_SubscriptSize: 0
+    m_UnderlineOffset: 0
+    m_UnderlineThickness: 0
+    m_StrikethroughOffset: 0
+    m_StrikethroughThickness: 0
+    m_TabWidth: 0
+  m_Material: {fileID: 2100000, guid: d54c208fa35797c4caa3993376e32723, type: 2}
+  spriteSheet: {fileID: 2800000, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  m_SpriteCharacterTable:
+  - m_ElementType: 2
+    m_Unicode: 57344
+    m_GlyphIndex: 0
+    m_Scale: 1
+    m_Name: Ablaze Icon
+  - m_ElementType: 2
+    m_Unicode: 57345
+    m_GlyphIndex: 1
+    m_Scale: 1
+    m_Name: Arcane Sigil
+  - m_ElementType: 2
+    m_Unicode: 57346
+    m_GlyphIndex: 2
+    m_Scale: 1
+    m_Name: Armor Die Tooltip BG - No Gems
+  - m_ElementType: 2
+    m_Unicode: 57347
+    m_GlyphIndex: 3
+    m_Scale: 1
+    m_Name: Attack Icon
+  - m_ElementType: 2
+    m_Unicode: 57348
+    m_GlyphIndex: 4
+    m_Scale: 1
+    m_Name: Attack Icon BG 2
+  - m_ElementType: 2
+    m_Unicode: 57349
+    m_GlyphIndex: 5
+    m_Scale: 1
+    m_Name: blood_02_0002
+  - m_ElementType: 2
+    m_Unicode: 57350
+    m_GlyphIndex: 6
+    m_Scale: 1
+    m_Name: Burn Icon
+  - m_ElementType: 2
+    m_Unicode: 57351
+    m_GlyphIndex: 7
+    m_Scale: 1
+    m_Name: Burn Icon BG
+  - m_ElementType: 2
+    m_Unicode: 57352
+    m_GlyphIndex: 8
+    m_Scale: 1
+    m_Name: Burn Resistance Icon
+  - m_ElementType: 2
+    m_Unicode: 57353
+    m_GlyphIndex: 9
+    m_Scale: 1
+    m_Name: Cleanse Icon
+  - m_ElementType: 2
+    m_Unicode: 57354
+    m_GlyphIndex: 10
+    m_Scale: 1
+    m_Name: Coin Icon
+  - m_ElementType: 2
+    m_Unicode: 57355
+    m_GlyphIndex: 11
+    m_Scale: 1
+    m_Name: Curse BG
+  - m_ElementType: 2
+    m_Unicode: 57356
+    m_GlyphIndex: 12
+    m_Scale: 1
+    m_Name: Defence Icon BG 2
+  - m_ElementType: 2
+    m_Unicode: 57357
+    m_GlyphIndex: 13
+    m_Scale: 1
+    m_Name: Defense Dice 5
+  - m_ElementType: 2
+    m_Unicode: 57358
+    m_GlyphIndex: 14
+    m_Scale: 1
+    m_Name: Die Icon Face 1
+  - m_ElementType: 2
+    m_Unicode: 57359
+    m_GlyphIndex: 15
+    m_Scale: 1
+    m_Name: Die Icon Face 2
+  - m_ElementType: 2
+    m_Unicode: 57360
+    m_GlyphIndex: 16
+    m_Scale: 1
+    m_Name: Die Icon Face 3
+  - m_ElementType: 2
+    m_Unicode: 57361
+    m_GlyphIndex: 17
+    m_Scale: 1
+    m_Name: Die Icon Face 4
+  - m_ElementType: 2
+    m_Unicode: 57362
+    m_GlyphIndex: 18
+    m_Scale: 1
+    m_Name: Die Icon Face 5
+  - m_ElementType: 2
+    m_Unicode: 57363
+    m_GlyphIndex: 19
+    m_Scale: 1
+    m_Name: Die Icon Face 6
+  - m_ElementType: 2
+    m_Unicode: 57364
+    m_GlyphIndex: 20
+    m_Scale: 1
+    m_Name: Double Burn
+  - m_ElementType: 2
+    m_Unicode: 57365
+    m_GlyphIndex: 21
+    m_Scale: 1
+    m_Name: Freeze Icon
+  - m_ElementType: 2
+    m_Unicode: 57366
+    m_GlyphIndex: 22
+    m_Scale: 1
+    m_Name: Gem Shard Icon
+  - m_ElementType: 2
+    m_Unicode: 57367
+    m_GlyphIndex: 23
+    m_Scale: 1
+    m_Name: Green Icon BG
+  - m_ElementType: 2
+    m_Unicode: 57368
+    m_GlyphIndex: 24
+    m_Scale: 1
+    m_Name: Heal Icon
+  - m_ElementType: 2
+    m_Unicode: 57369
+    m_GlyphIndex: 25
+    m_Scale: 1
+    m_Name: Heal Icon BG
+  - m_ElementType: 2
+    m_Unicode: 57370
+    m_GlyphIndex: 26
+    m_Scale: 1
+    m_Name: Kinetic Shield Icon
+  - m_ElementType: 2
+    m_Unicode: 57371
+    m_GlyphIndex: 27
+    m_Scale: 1
+    m_Name: Max HP Icon
+  - m_ElementType: 2
+    m_Unicode: 57372
+    m_GlyphIndex: 28
+    m_Scale: 1
+    m_Name: Poison Icon
+  - m_ElementType: 2
+    m_Unicode: 57373
+    m_GlyphIndex: 29
+    m_Scale: 1
+    m_Name: Power Icon
+  - m_ElementType: 2
+    m_Unicode: 57374
+    m_GlyphIndex: 30
+    m_Scale: 1
+    m_Name: Pyromaniac Icon
+  - m_ElementType: 2
+    m_Unicode: 57375
+    m_GlyphIndex: 31
+    m_Scale: 1
+    m_Name: Ruby Shard Icon
+  - m_ElementType: 2
+    m_Unicode: 57376
+    m_GlyphIndex: 32
+    m_Scale: 1
+    m_Name: Self Damage Icon
+  - m_ElementType: 2
+    m_Unicode: 57377
+    m_GlyphIndex: 33
+    m_Scale: 1
+    m_Name: Shield Icon
+  - m_ElementType: 2
+    m_Unicode: 57378
+    m_GlyphIndex: 34
+    m_Scale: 1
+    m_Name: Strength Icon
+  - m_ElementType: 2
+    m_Unicode: 57379
+    m_GlyphIndex: 35
+    m_Scale: 1
+    m_Name: Thorns Icon
+  - m_ElementType: 2
+    m_Unicode: 57380
+    m_GlyphIndex: 36
+    m_Scale: 1
+    m_Name: Vulnerable Icon
+  - m_ElementType: 2
+    m_Unicode: 57381
+    m_GlyphIndex: 37
+    m_Scale: 1
+    m_Name: Water_Splash_16_07
+  m_GlyphTable:
+  - m_Index: 0
+    m_Metrics:
+      m_Width: 261
+      m_Height: 258
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 228
+      m_HorizontalAdvance: 261
+    m_GlyphRect:
+      m_X: 1513
+      m_Y: 850
+      m_Width: 261
+      m_Height: 258
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -869103960030476151, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 1
+    m_Metrics:
+      m_Width: 123
+      m_Height: 127
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 97
+      m_HorizontalAdvance: 123
+    m_GlyphRect:
+      m_X: 839
+      m_Y: 285
+      m_Width: 123
+      m_Height: 127
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 6193896771624642122, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 2
+    m_Metrics:
+      m_Width: 837
+      m_Height: 422
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 392
+      m_HorizontalAdvance: 837
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 0
+      m_Width: 837
+      m_Height: 422
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -6039530204223424628, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 3
+    m_Metrics:
+      m_Width: 255
+      m_Height: 267
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 237
+      m_HorizontalAdvance: 255
+    m_GlyphRect:
+      m_X: 995
+      m_Y: 850
+      m_Width: 255
+      m_Height: 267
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 4
+    m_Metrics:
+      m_Width: 288
+      m_Height: 283
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 253
+      m_HorizontalAdvance: 288
+    m_GlyphRect:
+      m_X: 839
+      m_Y: 0
+      m_Width: 288
+      m_Height: 283
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 200187152838841157, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 5
+    m_Metrics:
+      m_Width: 254
+      m_Height: 519
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 489
+      m_HorizontalAdvance: 254
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 1396
+      m_Width: 254
+      m_Height: 519
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -3967975971440997542, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 6
+    m_Metrics:
+      m_Width: 259
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 259
+    m_GlyphRect:
+      m_X: 1252
+      m_Y: 850
+      m_Width: 259
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 7
+    m_Metrics:
+      m_Width: 8
+      m_Height: 8
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: -22
+      m_HorizontalAdvance: 8
+    m_GlyphRect:
+      m_X: 839
+      m_Y: 414
+      m_Width: 8
+      m_Height: 8
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 4443186488756482793, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 8
+    m_Metrics:
+      m_Width: 263
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 263
+    m_GlyphRect:
+      m_X: 467
+      m_Y: 850
+      m_Width: 263
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 6158000368922251447, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 9
+    m_Metrics:
+      m_Width: 275
+      m_Height: 254
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 224
+      m_HorizontalAdvance: 275
+    m_GlyphRect:
+      m_X: 1531
+      m_Y: 424
+      m_Width: 275
+      m_Height: 254
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -5647151390834640249, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 10
+    m_Metrics:
+      m_Width: 72
+      m_Height: 72
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 42
+      m_HorizontalAdvance: 72
+    m_GlyphRect:
+      m_X: 964
+      m_Y: 285
+      m_Width: 72
+      m_Height: 72
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 3945471451079132055, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 11
+    m_Metrics:
+      m_Width: 288
+      m_Height: 283
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 253
+      m_HorizontalAdvance: 288
+    m_GlyphRect:
+      m_X: 1419
+      m_Y: 0
+      m_Width: 288
+      m_Height: 283
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 8449272954714134190, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 12
+    m_Metrics:
+      m_Width: 288
+      m_Height: 283
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 253
+      m_HorizontalAdvance: 288
+    m_GlyphRect:
+      m_X: 1129
+      m_Y: 0
+      m_Width: 288
+      m_Height: 283
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 299225067176281671, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 13
+    m_Metrics:
+      m_Width: 144
+      m_Height: 144
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 114
+      m_HorizontalAdvance: 144
+    m_GlyphRect:
+      m_X: 1531
+      m_Y: 680
+      m_Width: 144
+      m_Height: 144
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 2979638529940037016, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 14
+    m_Metrics:
+      m_Width: 261
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 261
+    m_GlyphRect:
+      m_X: 467
+      m_Y: 1113
+      m_Width: 261
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -951324242474890380, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 15
+    m_Metrics:
+      m_Width: 261
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 261
+    m_GlyphRect:
+      m_X: 467
+      m_Y: 1376
+      m_Width: 261
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 5030406608479721366, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 16
+    m_Metrics:
+      m_Width: 261
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 261
+    m_GlyphRect:
+      m_X: 467
+      m_Y: 1639
+      m_Width: 261
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -8306455795211793738, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 17
+    m_Metrics:
+      m_Width: 261
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 261
+    m_GlyphRect:
+      m_X: 732
+      m_Y: 850
+      m_Width: 261
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 9192458185809667784, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 18
+    m_Metrics:
+      m_Width: 261
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 261
+    m_GlyphRect:
+      m_X: 732
+      m_Y: 1113
+      m_Width: 261
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 2753783077020577227, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 19
+    m_Metrics:
+      m_Width: 261
+      m_Height: 261
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 231
+      m_HorizontalAdvance: 261
+    m_GlyphRect:
+      m_X: 732
+      m_Y: 1376
+      m_Width: 261
+      m_Height: 261
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 5790224405844098233, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 20
+    m_Metrics:
+      m_Width: 248
+      m_Height: 265
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 235
+      m_HorizontalAdvance: 248
+    m_GlyphRect:
+      m_X: 1776
+      m_Y: 850
+      m_Width: 248
+      m_Height: 265
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 3074123495765528857, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 21
+    m_Metrics:
+      m_Width: 228
+      m_Height: 231
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 201
+      m_HorizontalAdvance: 228
+    m_GlyphRect:
+      m_X: 1253
+      m_Y: 1119
+      m_Width: 228
+      m_Height: 231
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 22
+    m_Metrics:
+      m_Width: 465
+      m_Height: 480
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 450
+      m_HorizontalAdvance: 465
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 914
+      m_Width: 465
+      m_Height: 480
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1996197610122327019, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 23
+    m_Metrics:
+      m_Width: 288
+      m_Height: 283
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 253
+      m_HorizontalAdvance: 288
+    m_GlyphRect:
+      m_X: 964
+      m_Y: 424
+      m_Width: 288
+      m_Height: 283
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1850640359596639596, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 24
+    m_Metrics:
+      m_Width: 210
+      m_Height: 220
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 190
+      m_HorizontalAdvance: 210
+    m_GlyphRect:
+      m_X: 1699
+      m_Y: 1119
+      m_Width: 210
+      m_Height: 220
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 25
+    m_Metrics:
+      m_Width: 288
+      m_Height: 283
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 253
+      m_HorizontalAdvance: 288
+    m_GlyphRect:
+      m_X: 1709
+      m_Y: 0
+      m_Width: 288
+      m_Height: 283
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1600010482700210598, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 26
+    m_Metrics:
+      m_Width: 256
+      m_Height: 236
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 206
+      m_HorizontalAdvance: 256
+    m_GlyphRect:
+      m_X: 995
+      m_Y: 1119
+      m_Width: 256
+      m_Height: 236
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 27
+    m_Metrics:
+      m_Width: 249
+      m_Height: 227
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 197
+      m_HorizontalAdvance: 249
+    m_GlyphRect:
+      m_X: 995
+      m_Y: 1357
+      m_Width: 249
+      m_Height: 227
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 28
+    m_Metrics:
+      m_Width: 190
+      m_Height: 271
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 241
+      m_HorizontalAdvance: 190
+    m_GlyphRect:
+      m_X: 256
+      m_Y: 1656
+      m_Width: 190
+      m_Height: 271
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 6346943658632662112, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 29
+    m_Metrics:
+      m_Width: 275
+      m_Height: 288
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 258
+      m_HorizontalAdvance: 275
+    m_GlyphRect:
+      m_X: 1254
+      m_Y: 424
+      m_Width: 275
+      m_Height: 288
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 633350421133112441, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 30
+    m_Metrics:
+      m_Width: 215
+      m_Height: 247
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 217
+      m_HorizontalAdvance: 215
+    m_GlyphRect:
+      m_X: 995
+      m_Y: 1586
+      m_Width: 215
+      m_Height: 247
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -6456651685181505503, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 31
+    m_Metrics:
+      m_Width: 465
+      m_Height: 488
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 458
+      m_HorizontalAdvance: 465
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 424
+      m_Width: 465
+      m_Height: 488
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -6586867150429461379, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 32
+    m_Metrics:
+      m_Width: 255
+      m_Height: 267
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 237
+      m_HorizontalAdvance: 255
+    m_GlyphRect:
+      m_X: 732
+      m_Y: 1639
+      m_Width: 255
+      m_Height: 267
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -3499936154177569583, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 33
+    m_Metrics:
+      m_Width: 189
+      m_Height: 229
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 199
+      m_HorizontalAdvance: 189
+    m_GlyphRect:
+      m_X: 1253
+      m_Y: 1352
+      m_Width: 189
+      m_Height: 229
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 34
+    m_Metrics:
+      m_Width: 214
+      m_Height: 216
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 186
+      m_HorizontalAdvance: 214
+    m_GlyphRect:
+      m_X: 1483
+      m_Y: 1119
+      m_Width: 214
+      m_Height: 216
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: -8130133584056446798, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 35
+    m_Metrics:
+      m_Width: 227
+      m_Height: 249
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 219
+      m_HorizontalAdvance: 227
+    m_GlyphRect:
+      m_X: 1808
+      m_Y: 424
+      m_Width: 227
+      m_Height: 249
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 5248542921010066017, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 36
+    m_Metrics:
+      m_Width: 202
+      m_Height: 258
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 228
+      m_HorizontalAdvance: 202
+    m_GlyphRect:
+      m_X: 256
+      m_Y: 1396
+      m_Width: 202
+      m_Height: 258
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 7052443852177249881, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - m_Index: 37
+    m_Metrics:
+      m_Width: 495
+      m_Height: 424
+      m_HorizontalBearingX: 20
+      m_HorizontalBearingY: 394
+      m_HorizontalAdvance: 495
+    m_GlyphRect:
+      m_X: 467
+      m_Y: 424
+      m_Width: 495
+      m_Height: 424
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 6494035533245625250, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  spriteInfoList:
+  - id: 0
+    x: 1513
+    y: 850
+    width: 261
+    height: 258
+    xOffset: 0
+    yOffset: 258
+    xAdvance: 261
+    scale: 1
+    name: Ablaze Icon
+    hashCode: 314290874
+    unicode: 57344
+    pivot: {x: 130.5, y: 129}
+    sprite: {fileID: -869103960030476151, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 1
+    x: 839
+    y: 285
+    width: 123
+    height: 127
+    xOffset: 0
+    yOffset: 127
+    xAdvance: 123
+    scale: 1
+    name: Arcane Sigil
+    hashCode: 2066770050
+    unicode: 57345
+    pivot: {x: 61.5, y: 63.5}
+    sprite: {fileID: 6193896771624642122, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 2
+    x: 0
+    y: 0
+    width: 837
+    height: 422
+    xOffset: 0
+    yOffset: 422
+    xAdvance: 837
+    scale: 1
+    name: Armor Die Tooltip BG - No Gems
+    hashCode: -1022108341
+    unicode: 57346
+    pivot: {x: 418.5, y: 211}
+    sprite: {fileID: -6039530204223424628, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 3
+    x: 995
+    y: 850
+    width: 255
+    height: 267
+    xOffset: 0
+    yOffset: 267
+    xAdvance: 255
+    scale: 1
+    name: Attack Icon
+    hashCode: 502227619
+    unicode: 57347
+    pivot: {x: 127.5, y: 133.5}
+    sprite: {fileID: 486815761338871706, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 4
+    x: 839
+    y: 0
+    width: 288
+    height: 283
+    xOffset: 0
+    yOffset: 283
+    xAdvance: 288
+    scale: 1
+    name: Attack Icon BG 2
+    hashCode: 1132040500
+    unicode: 57348
+    pivot: {x: 144, y: 141.5}
+    sprite: {fileID: 200187152838841157, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 5
+    x: 0
+    y: 1396
+    width: 254
+    height: 519
+    xOffset: 0
+    yOffset: 519
+    xAdvance: 254
+    scale: 1
+    name: blood_02_0002
+    hashCode: 713328874
+    unicode: 57349
+    pivot: {x: 127, y: 259.5}
+    sprite: {fileID: -3967975971440997542, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 6
+    x: 1252
+    y: 850
+    width: 259
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 259
+    scale: 1
+    name: Burn Icon
+    hashCode: -1089975744
+    unicode: 57350
+    pivot: {x: 129.5, y: 130.5}
+    sprite: {fileID: -6939843676462808804, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 7
+    x: 839
+    y: 414
+    width: 8
+    height: 8
+    xOffset: 0
+    yOffset: 8
+    xAdvance: 8
+    scale: 1
+    name: Burn Icon BG
+    hashCode: -356539867
+    unicode: 57351
+    pivot: {x: 4, y: 4}
+    sprite: {fileID: 4443186488756482793, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 8
+    x: 467
+    y: 850
+    width: 263
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 263
+    scale: 1
+    name: Burn Resistance Icon
+    hashCode: 2026164867
+    unicode: 57352
+    pivot: {x: 131.5, y: 130.5}
+    sprite: {fileID: 6158000368922251447, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 9
+    x: 1531
+    y: 424
+    width: 275
+    height: 254
+    xOffset: 0
+    yOffset: 254
+    xAdvance: 275
+    scale: 1
+    name: Cleanse Icon
+    hashCode: -831836616
+    unicode: 57353
+    pivot: {x: 137.5, y: 127}
+    sprite: {fileID: -5647151390834640249, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 10
+    x: 964
+    y: 285
+    width: 72
+    height: 72
+    xOffset: 0
+    yOffset: 72
+    xAdvance: 72
+    scale: 1
+    name: Coin Icon
+    hashCode: 1589257408
+    unicode: 57354
+    pivot: {x: 36, y: 36}
+    sprite: {fileID: 3945471451079132055, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 11
+    x: 1419
+    y: 0
+    width: 288
+    height: 283
+    xOffset: 0
+    yOffset: 283
+    xAdvance: 288
+    scale: 1
+    name: Curse BG
+    hashCode: -614530761
+    unicode: 57355
+    pivot: {x: 144, y: 141.5}
+    sprite: {fileID: 8449272954714134190, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 12
+    x: 1129
+    y: 0
+    width: 288
+    height: 283
+    xOffset: 0
+    yOffset: 283
+    xAdvance: 288
+    scale: 1
+    name: Defence Icon BG 2
+    hashCode: 2105157750
+    unicode: 57356
+    pivot: {x: 144, y: 141.5}
+    sprite: {fileID: 299225067176281671, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 13
+    x: 1531
+    y: 680
+    width: 144
+    height: 144
+    xOffset: 0
+    yOffset: 144
+    xAdvance: 144
+    scale: 1
+    name: Defense Dice 5
+    hashCode: -548327676
+    unicode: 57357
+    pivot: {x: 72, y: 72}
+    sprite: {fileID: 2979638529940037016, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 14
+    x: 467
+    y: 1113
+    width: 261
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 261
+    scale: 1
+    name: Die Icon Face 1
+    hashCode: -2007454413
+    unicode: 57358
+    pivot: {x: 130.5, y: 130.5}
+    sprite: {fileID: -951324242474890380, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 15
+    x: 467
+    y: 1376
+    width: 261
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 261
+    scale: 1
+    name: Die Icon Face 2
+    hashCode: -2007454416
+    unicode: 57359
+    pivot: {x: 130.5, y: 130.5}
+    sprite: {fileID: 5030406608479721366, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 16
+    x: 467
+    y: 1639
+    width: 261
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 261
+    scale: 1
+    name: Die Icon Face 3
+    hashCode: -2007454415
+    unicode: 57360
+    pivot: {x: 130.5, y: 130.5}
+    sprite: {fileID: -8306455795211793738, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 17
+    x: 732
+    y: 850
+    width: 261
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 261
+    scale: 1
+    name: Die Icon Face 4
+    hashCode: -2007454410
+    unicode: 57361
+    pivot: {x: 130.5, y: 130.5}
+    sprite: {fileID: 9192458185809667784, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 18
+    x: 732
+    y: 1113
+    width: 261
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 261
+    scale: 1
+    name: Die Icon Face 5
+    hashCode: -2007454409
+    unicode: 57362
+    pivot: {x: 130.5, y: 130.5}
+    sprite: {fileID: 2753783077020577227, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 19
+    x: 732
+    y: 1376
+    width: 261
+    height: 261
+    xOffset: 0
+    yOffset: 261
+    xAdvance: 261
+    scale: 1
+    name: Die Icon Face 6
+    hashCode: -2007454412
+    unicode: 57363
+    pivot: {x: 130.5, y: 130.5}
+    sprite: {fileID: 5790224405844098233, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 20
+    x: 1776
+    y: 850
+    width: 248
+    height: 265
+    xOffset: 0
+    yOffset: 265
+    xAdvance: 248
+    scale: 1
+    name: Double Burn
+    hashCode: 605966910
+    unicode: 57364
+    pivot: {x: 124, y: 132.5}
+    sprite: {fileID: 3074123495765528857, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 21
+    x: 1253
+    y: 1119
+    width: 228
+    height: 231
+    xOffset: 0
+    yOffset: 231
+    xAdvance: 228
+    scale: 1
+    name: Freeze Icon
+    hashCode: 512502304
+    unicode: 57365
+    pivot: {x: 114, y: 115.5}
+    sprite: {fileID: -2081690915641676523, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 22
+    x: 0
+    y: 914
+    width: 465
+    height: 480
+    xOffset: 0
+    yOffset: 480
+    xAdvance: 465
+    scale: 1
+    name: Gem Shard Icon
+    hashCode: -1982979352
+    unicode: 57366
+    pivot: {x: 232.5, y: 240}
+    sprite: {fileID: 1996197610122327019, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 23
+    x: 964
+    y: 424
+    width: 288
+    height: 283
+    xOffset: 0
+    yOffset: 283
+    xAdvance: 288
+    scale: 1
+    name: Green Icon BG
+    hashCode: 2039785973
+    unicode: 57367
+    pivot: {x: 144, y: 141.5}
+    sprite: {fileID: 1850640359596639596, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 24
+    x: 1699
+    y: 1119
+    width: 210
+    height: 220
+    xOffset: 0
+    yOffset: 220
+    xAdvance: 210
+    scale: 1
+    name: Heal Icon
+    hashCode: 479724235
+    unicode: 57368
+    pivot: {x: 105, y: 110}
+    sprite: {fileID: 1282992654924848832, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 25
+    x: 1709
+    y: 0
+    width: 288
+    height: 283
+    xOffset: 0
+    yOffset: 283
+    xAdvance: 288
+    scale: 1
+    name: Heal Icon BG
+    hashCode: -148930034
+    unicode: 57369
+    pivot: {x: 144, y: 141.5}
+    sprite: {fileID: 1600010482700210598, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 26
+    x: 995
+    y: 1119
+    width: 256
+    height: 236
+    xOffset: 0
+    yOffset: 236
+    xAdvance: 256
+    scale: 1
+    name: Kinetic Shield Icon
+    hashCode: -1426757565
+    unicode: 57370
+    pivot: {x: 128, y: 118}
+    sprite: {fileID: -4952386477903569170, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 27
+    x: 995
+    y: 1357
+    width: 249
+    height: 227
+    xOffset: 0
+    yOffset: 227
+    xAdvance: 249
+    scale: 1
+    name: Max HP Icon
+    hashCode: -91572025
+    unicode: 57371
+    pivot: {x: 124.5, y: 113.5}
+    sprite: {fileID: 7705429973175227790, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 28
+    x: 256
+    y: 1656
+    width: 190
+    height: 271
+    xOffset: 0
+    yOffset: 271
+    xAdvance: 190
+    scale: 1
+    name: Poison Icon
+    hashCode: 515284655
+    unicode: 57372
+    pivot: {x: 95, y: 135.5}
+    sprite: {fileID: 6346943658632662112, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 29
+    x: 1254
+    y: 424
+    width: 275
+    height: 288
+    xOffset: 0
+    yOffset: 288
+    xAdvance: 275
+    scale: 1
+    name: Power Icon
+    hashCode: -82758412
+    unicode: 57373
+    pivot: {x: 137.5, y: 144}
+    sprite: {fileID: 633350421133112441, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 30
+    x: 995
+    y: 1586
+    width: 215
+    height: 247
+    xOffset: 0
+    yOffset: 247
+    xAdvance: 215
+    scale: 1
+    name: Pyromaniac Icon
+    hashCode: -1980446570
+    unicode: 57374
+    pivot: {x: 107.5, y: 123.5}
+    sprite: {fileID: -6456651685181505503, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 31
+    x: 0
+    y: 424
+    width: 465
+    height: 488
+    xOffset: 0
+    yOffset: 488
+    xAdvance: 465
+    scale: 1
+    name: Ruby Shard Icon
+    hashCode: -1931652325
+    unicode: 57375
+    pivot: {x: 232.5, y: 244}
+    sprite: {fileID: -6586867150429461379, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 32
+    x: 732
+    y: 1639
+    width: 255
+    height: 267
+    xOffset: 0
+    yOffset: 267
+    xAdvance: 255
+    scale: 1
+    name: Self Damage Icon
+    hashCode: 159999356
+    unicode: 57376
+    pivot: {x: 127.5, y: 133.5}
+    sprite: {fileID: -3499936154177569583, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 33
+    x: 1253
+    y: 1352
+    width: 189
+    height: 229
+    xOffset: 0
+    yOffset: 229
+    xAdvance: 189
+    scale: 1
+    name: Shield Icon
+    hashCode: 198985492
+    unicode: 57377
+    pivot: {x: 94.5, y: 114.5}
+    sprite: {fileID: -5171152565747068557, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 34
+    x: 1483
+    y: 1119
+    width: 214
+    height: 216
+    xOffset: 0
+    yOffset: 216
+    xAdvance: 214
+    scale: 1
+    name: Strength Icon
+    hashCode: -1581046482
+    unicode: 57378
+    pivot: {x: 107, y: 108}
+    sprite: {fileID: -8130133584056446798, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 35
+    x: 1808
+    y: 424
+    width: 227
+    height: 249
+    xOffset: 0
+    yOffset: 249
+    xAdvance: 227
+    scale: 1
+    name: Thorns Icon
+    hashCode: 1557527063
+    unicode: 57379
+    pivot: {x: 113.5, y: 124.5}
+    sprite: {fileID: 5248542921010066017, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 36
+    x: 256
+    y: 1396
+    width: 202
+    height: 258
+    xOffset: 0
+    yOffset: 258
+    xAdvance: 202
+    scale: 1
+    name: Vulnerable Icon
+    hashCode: 433637111
+    unicode: 57380
+    pivot: {x: 101, y: 129}
+    sprite: {fileID: 7052443852177249881, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  - id: 37
+    x: 467
+    y: 424
+    width: 495
+    height: 424
+    xOffset: 0
+    yOffset: 424
+    xAdvance: 495
+    scale: 1
+    name: Water_Splash_16_07
+    hashCode: -1102918017
+    unicode: 57381
+    pivot: {x: 247.5, y: 212}
+    sprite: {fileID: 6494035533245625250, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+  fallbackSpriteAssets: []
