@@ -114,7 +114,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1761
+        y: 587
         width: 660
         height: 587
       alignment: 0
@@ -136,7 +136,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 660
-        y: 1761
+        y: 587
         width: 660
         height: 587
       alignment: 0
@@ -158,7 +158,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1320
-        y: 1761
+        y: 587
         width: 660
         height: 587
       alignment: 0
@@ -180,7 +180,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1980
-        y: 1761
+        y: 587
         width: 660
         height: 587
       alignment: 0
@@ -202,7 +202,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 2640
-        y: 1761
+        y: 587
         width: 660
         height: 587
       alignment: 0
@@ -224,7 +224,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 3300
-        y: 1761
+        y: 587
         width: 660
         height: 587
       alignment: 0
@@ -246,7 +246,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1174
+        y: 0
         width: 660
         height: 587
       alignment: 0
@@ -268,7 +268,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 660
-        y: 1174
+        y: 0
         width: 660
         height: 587
       alignment: 0
@@ -290,7 +290,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1320
-        y: 1174
+        y: 0
         width: 660
         height: 587
       alignment: 0
@@ -312,7 +312,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1980
-        y: 1174
+        y: 0
         width: 660
         height: 587
       alignment: 0
@@ -334,7 +334,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 2640
-        y: 1174
+        y: 0
         width: 660
         height: 587
       alignment: 0
@@ -347,226 +347,6 @@ TextureImporter:
       bones: []
       spriteID: 2fb0d3f97fb9bc54081283f5891bfe0c
       internalID: -1026616867
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_11
-      rect:
-        serializedVersion: 2
-        x: 3300
-        y: 1174
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 10a6bb126b2ad624a95d36cbd4d84485
-      internalID: 651800940
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_12
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 587
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e85ea3c0428afa843b491095e4f0bd3c
-      internalID: -1534743221
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_13
-      rect:
-        serializedVersion: 2
-        x: 660
-        y: 587
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: eeba1dfa56c52bc4a9154296cd847f20
-      internalID: -1239324619
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_14
-      rect:
-        serializedVersion: 2
-        x: 1320
-        y: 587
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8c181cf2f8aa13140a49692a04bbb4e9
-      internalID: 248401759
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_15
-      rect:
-        serializedVersion: 2
-        x: 1980
-        y: 587
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 0ba5d455c12d5ea4eb6f236745751fd6
-      internalID: 337936910
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_16
-      rect:
-        serializedVersion: 2
-        x: 2640
-        y: 587
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2b06e8066d74cfb46a99e1845249548d
-      internalID: -2098408665
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_17
-      rect:
-        serializedVersion: 2
-        x: 3300
-        y: 587
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8e514ad0d7e990d4e8abdd19915b689a
-      internalID: 1170446506
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_18
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: fe80b50d688cc5644902c860af75530f
-      internalID: 1433629963
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_19
-      rect:
-        serializedVersion: 2
-        x: 660
-        y: 0
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8572e890ef624134193e85ef9c4c9db8
-      internalID: -1823928678
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cursed Wolf Attack_20
-      rect:
-        serializedVersion: 2
-        x: 1320
-        y: 0
-        width: 660
-        height: 587
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8e244880cd5461443bdc8b110fe4720d
-      internalID: 1740631867
       vertices: []
       indices: 
       edges: []
@@ -585,22 +365,12 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":6.0,"y":4.0},"gridSpriteSize":{"x":660.0,"y":587.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":6.0,"y":2.0},"gridSpriteSize":{"x":660.0,"y":587.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Cursed Wolf Attack_0: 281313182
       Cursed Wolf Attack_1: -627901693
       Cursed Wolf Attack_10: -1026616867
-      Cursed Wolf Attack_11: 651800940
-      Cursed Wolf Attack_12: -1534743221
-      Cursed Wolf Attack_13: -1239324619
-      Cursed Wolf Attack_14: 248401759
-      Cursed Wolf Attack_15: 337936910
-      Cursed Wolf Attack_16: -2098408665
-      Cursed Wolf Attack_17: 1170446506
-      Cursed Wolf Attack_18: 1433629963
-      Cursed Wolf Attack_19: -1823928678
       Cursed Wolf Attack_2: -453080442
-      Cursed Wolf Attack_20: 1740631867
       Cursed Wolf Attack_3: 1352826887
       Cursed Wolf Attack_4: 697901482
       Cursed Wolf Attack_5: 266674041
