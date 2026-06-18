@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da12b934c0d2dc4a9c0c744a1a817d9, type: 3}
   m_Name: Normal - Crystal Rat
   m_EditorClassIdentifier: 
-  enemyName: Bramble Mite
+  enemyName: Crystal Rat
   displaySprite: {fileID: 21300000, guid: 1d3515ca0ca7efe488a6f9f15632ad84, type: 3}
   combatAnimatorController: {fileID: 9100000, guid: 05ea05f61a9528c47848e38c366f5c5e, type: 2}
   enemyRank: 0
+  spawnOnLoadAdds: []
   excludeFromFirstFight: 1
   maxHealth: 25
   startArmor: 0
