@@ -3614,6 +3614,7 @@ public class CombatManager : MonoBehaviour
         {
             if (player != null && _activeEnemies.Count > 0)
             {
+                RefreshAllEnemyTurnSpriteDefaultMaterials();
                 ApplyEnemyTurnSpriteSortingForIntentPhase(GetFirstActingEnemyForTurn());
                 enemyTurnSpriteSortingApplied = true;
             }
@@ -3631,6 +3632,7 @@ public class CombatManager : MonoBehaviour
         {
             if (!enemyTurnSpriteSortingApplied)
             {
+                RefreshAllEnemyTurnSpriteDefaultMaterials();
                 ApplyEnemyTurnSpriteSortingForIntentPhase(GetFirstActingEnemyForTurn());
                 enemyTurnSpriteSortingApplied = true;
             }
@@ -3759,6 +3761,18 @@ public class CombatManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    private void RefreshAllEnemyTurnSpriteDefaultMaterials()
+    {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null || !enemy.IsAlive || !enemy.IsActiveInRoster)
+                continue;
+
+            enemy.TurnSpriteSorting?.RefreshDefaultMaterials(enemy.CombatPresentation);
+        }
     }
 
     private void ApplyEnemyTurnSpriteSortingForIntentPhase(EnemyController firstActingEnemy)

@@ -167,6 +167,12 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
         ApplyDefaultSpriteMaterial();
     }
 
+    /// <summary>Restores the combat flash material on the enemy sprite (e.g. after active-turn material swap).</summary>
+    public void RestoreCombatSpriteMaterial()
+    {
+        ApplyDefaultSpriteMaterial();
+    }
+
     void ApplyDefaultSpriteMaterial()
     {
         if (enemySprite == null || _defaultSharedMaterialSource == null)

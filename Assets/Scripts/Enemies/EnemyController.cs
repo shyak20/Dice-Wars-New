@@ -127,6 +127,8 @@ public class EnemyController : MonoBehaviour
             _presentation.SetupCombatAnimatorFromEnemyType(data);
         }
 
+        turnSpriteSorting?.RefreshDefaultMaterials(_presentation);
+
         UpdateUI();
         PrepareNextAction();
     }
