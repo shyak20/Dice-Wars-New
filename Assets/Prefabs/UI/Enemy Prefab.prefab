@@ -5550,6 +5550,7 @@ GameObject:
   - component: {fileID: 1059803166843315092}
   - component: {fileID: 8102270029977296699}
   - component: {fileID: 4071716085052196916}
+  - component: {fileID: 6072775844815676263}
   m_Layer: 0
   m_Name: Enemy Prefab
   m_TagString: Untagged
@@ -5596,6 +5597,7 @@ MonoBehaviour:
   armorText: {fileID: 1894310180379465275}
   armorIcon: {fileID: 6922034677896443123}
   damageNumberWorldAnchor: {fileID: 0}
+  turnSpriteSorting: {fileID: 6072775844815676263}
   ownStatusBar: {fileID: 5184293754737530010}
   assignedElementPool: {fileID: 8026767222153988255}
   dropTarget: {fileID: 3578816410681523404}
@@ -5868,6 +5870,22 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
+--- !u!114 &6072775844815676263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4101363524488668439}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2445b87652f58d6489235499685048af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyTurnSpriteSortingController
+  spriteRenderers:
+  - {fileID: 2400280902204306392}
+  notTurnOrderLayer: 3
+  activeTurnOrderLayer: 16
 --- !u!1 &4356782077018349337
 GameObject:
   m_ObjectHideFlags: 0

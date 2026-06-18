@@ -3609,8 +3609,15 @@ public class CombatManager : MonoBehaviour
             yield return new WaitForSeconds(enemyTurnIntroDelayAfterPlayerDamageSeconds);
 
         var enemyTurnIntroIsUp = false;
+        var enemyTurnSpriteSortingApplied = false;
         if (enemyTurnIntroRoot != null)
         {
+            if (player != null && _activeEnemies.Count > 0)
+            {
+                ApplyEnemyTurnSpriteSortingForIntentPhase(GetFirstActingEnemyForTurn());
+                enemyTurnSpriteSortingApplied = true;
+            }
+
             ChangeState(CombatState.EnemyTurnIntro);
             yield return CoEnemyTurnIntroShow();
             enemyTurnIntroIsUp = true;
@@ -3622,6 +3629,12 @@ public class CombatManager : MonoBehaviour
         ChangeState(CombatState.EnemyTurn);
         if (player != null && _activeEnemies.Count > 0)
         {
+            if (!enemyTurnSpriteSortingApplied)
+            {
+                ApplyEnemyTurnSpriteSortingForIntentPhase(GetFirstActingEnemyForTurn());
+                enemyTurnSpriteSortingApplied = true;
+            }
+
             // Snapshot so spawned/defeated enemies during the turn don't corrupt iteration.
             var actingEnemies = new List<EnemyController>(_activeEnemies);
             for (var e = 0; e < actingEnemies.Count; e++)
@@ -3629,11 +3642,13 @@ public class CombatManager : MonoBehaviour
                 var enemy = actingEnemies[e];
                 if (enemy == null || !enemy.IsAlive || !enemy.IsActiveInRoster) continue;
 
+                ApplyActiveEnemyTurnSpriteSorting(enemy);
+
                 var statusCtx = BuildStatusContext(enemy);
                 enemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
                 if (CheckVictory())
                 {
-                    yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+                    yield return CoEndEnemyTurnIndicatorAndRestoreSpriteSorting(enemyTurnIntroIsUp, enemyTurnSpriteSortingApplied);
                     yield break;
                 }
 
@@ -3663,7 +3678,7 @@ public class CombatManager : MonoBehaviour
                     enemy.StatusEffects.TickAfterEnemyTurn(statusCtx);
                 if (CheckDefeat())
                 {
-                    yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+                    yield return CoEndEnemyTurnIndicatorAndRestoreSpriteSorting(enemyTurnIntroIsUp, enemyTurnSpriteSortingApplied);
                     yield break;
                 }
 
@@ -3677,12 +3692,12 @@ public class CombatManager : MonoBehaviour
             player.StatusEffects.TickAfterEnemyTurn(BuildStatusContext());
             if (CheckVictory() || CheckDefeat())
             {
-                yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+                yield return CoEndEnemyTurnIndicatorAndRestoreSpriteSorting(enemyTurnIntroIsUp, enemyTurnSpriteSortingApplied);
                 yield break;
             }
         }
 
-        yield return CoTeardownEnemyTurnIntroIfShown(enemyTurnIntroIsUp);
+        yield return CoEndEnemyTurnIndicatorAndRestoreSpriteSorting(enemyTurnIntroIsUp, enemyTurnSpriteSortingApplied);
 
         if (currentState == CombatState.Victory || currentState == CombatState.Defeat)
             yield break;
@@ -3725,6 +3740,69 @@ public class CombatManager : MonoBehaviour
         }
 
         enemyTurnIntroCanvasGroup.alpha = 1f;
+    }
+
+    private IEnumerator CoEndEnemyTurnIndicatorAndRestoreSpriteSorting(bool introWasRaised, bool restoreSpriteSorting)
+    {
+        yield return CoTeardownEnemyTurnIntroIfShown(introWasRaised);
+        if (restoreSpriteSorting)
+            RestoreAllEnemyTurnSpriteSortingOrders();
+    }
+
+    private EnemyController GetFirstActingEnemyForTurn()
+    {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy != null && enemy.IsAlive && enemy.IsActiveInRoster)
+                return enemy;
+        }
+
+        return null;
+    }
+
+    private void ApplyEnemyTurnSpriteSortingForIntentPhase(EnemyController firstActingEnemy)
+    {
+        if (firstActingEnemy != null)
+            ApplyActiveEnemyTurnSpriteSorting(firstActingEnemy);
+        else
+            ApplyInactiveEnemyTurnSpriteSortingForAll();
+    }
+
+    private void ApplyInactiveEnemyTurnSpriteSortingForAll()
+    {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null || !enemy.IsAlive || !enemy.IsActiveInRoster)
+                continue;
+
+            enemy.TurnSpriteSorting?.SetInactiveTurnSorting();
+        }
+    }
+
+    private void ApplyActiveEnemyTurnSpriteSorting(EnemyController actingEnemy)
+    {
+        if (actingEnemy == null)
+            return;
+
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null || !enemy.IsAlive || !enemy.IsActiveInRoster)
+                continue;
+
+            if (enemy == actingEnemy)
+                enemy.TurnSpriteSorting?.SetActiveTurnSorting();
+            else
+                enemy.TurnSpriteSorting?.SetInactiveTurnSorting();
+        }
+    }
+
+    private void RestoreAllEnemyTurnSpriteSortingOrders()
+    {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+            _activeEnemies[i]?.TurnSpriteSorting?.RestoreDefaultSorting();
     }
 
     private IEnumerator CoTeardownEnemyTurnIntroIfShown(bool introWasRaised)

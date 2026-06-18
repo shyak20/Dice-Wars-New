@@ -24,6 +24,8 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private Transform damageNumberWorldAnchor;
 
     [Header("Multi-enemy targeting")]
+    [Tooltip("Optional. Repoints sprite sorting order while this enemy is / is not the acting enemy during the enemy turn.")]
+    [SerializeField] private Enemies.EnemyTurnSpriteSortingController turnSpriteSorting;
     [Tooltip("Optional. This enemy's own status-effect bar. When assigned, CombatManager binds debuffs to it (required for adds beyond the first enemy).")]
     [SerializeField] private StatusEffectBarUI ownStatusBar;
     [Tooltip("Optional. Per-enemy element layout where assigned damage/debuff outcomes accumulate under this enemy. Required for multi-enemy targeting.")]
@@ -46,6 +48,8 @@ public class EnemyController : MonoBehaviour
     public EnemyDropTarget DropTarget => dropTarget;
 
     public EnemyCombatPresentationController CombatPresentation => _presentation;
+
+    public Enemies.EnemyTurnSpriteSortingController TurnSpriteSorting => turnSpriteSorting;
 
     public bool IsAlive => currentHealth > 0;
 
