@@ -7792,10 +7792,10 @@ MonoBehaviour:
   precisionPanel: {fileID: 872838670}
   jackpotPresentation: {fileID: 434058154}
   powerOrbVisual: {fileID: 1550666482}
-  enemyTurnIntroDelayAfterPlayerDamageSeconds: 2
+  enemyTurnIntroDelayAfterPlayerDamageSeconds: 1
   enemyTurnIntroRoot: {fileID: 1956466323}
   enemyTurnIntroCanvasGroup: {fileID: 1956466328}
-  enemyTurnIntroFadeInSeconds: 1
+  enemyTurnIntroFadeInSeconds: 0
   enemyTurnIntroFadeOutSeconds: 1
   enemyTurnIntentSequence: {fileID: 1956466326}
   delaySecondsBetweenPhysicalAndEachEnemyStatusTick: 1
@@ -31078,6 +31078,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyTurnIntentSequencePlayer
   actionUI: {fileID: 1956466327}
   delayBetweenIntentSteps: 0.8
+  delayBetweenEnemies: 2
+  turnIndicatorAnimator: {fileID: 1956466325}
+  turnIndicatorAppearStateName: Enemy Turn Appear
+  turnIndicatorAppearEndSeconds: 0.7
+  turnIndicatorCloseTriggerName: Close
+  turnIndicatorCloseWaitSeconds: 1
+  delayBeforeFirstActionSeconds: 0.5
+  delayBeforeCloseTriggerSeconds: 1
   performStepPulseScale: 1.4
   pulseRiseSeconds: 0.3
   pulsePeakHoldSeconds: 0.3
@@ -38414,7 +38422,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 19.68
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6599159466586195287, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -38447,7 +38455,7 @@ PrefabInstance:
     - target: {fileID: 8102270029977296699, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: a15d51b4deb35af4b895289d4ef0007e, type: 2}
+      objectReference: {fileID: 9100000, guid: 7ea95e0b0bdb425449d786d1a63097cc, type: 2}
     - target: {fileID: 8365422450391847375, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
       value: 603.6557

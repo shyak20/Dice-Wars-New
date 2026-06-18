@@ -49,7 +49,7 @@ public class CombatManager : MonoBehaviour
     [Header("Enemy turn intro")]
     [Tooltip("Sequence: player armor → orb VFX + physical (+ thorns) → TickTurnStart (burn, etc.) → enemy armor reset → this delay → Enemy Turn banner (optional) → Enemy Turn + pause → TickBeforeEnemyTurn → attacks.\nWaits after all damage to the enemy from the player round and related FX.")]
     [SerializeField, Min(0f)] private float enemyTurnIntroDelayAfterPlayerDamageSeconds = 0.35f;
-    [Tooltip("Optional. Shown after the delay above; stays up during the enemy turn and fades out via Canvas Group when actions finish.")]
+    [Tooltip("Optional. Shown after the delay above; stays visible through all enemy actions and fades out when they finish (animator outro on EnemyTurnIntentSequencePlayer when wired, otherwise Canvas Group fade).")]
     [SerializeField] private GameObject enemyTurnIntroRoot;
     [Tooltip("Required when Enemy Turn Intro Root is assigned. Typically on the same GameObject as the root.")]
     [SerializeField] private CanvasGroup enemyTurnIntroCanvasGroup;
@@ -3581,6 +3581,26 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+    private bool TryGetDelayBeforeNextActingEnemy(IReadOnlyList<EnemyController> actingEnemies, int currentIndex, out float delaySeconds)
+    {
+        delaySeconds = 0f;
+        if (enemyTurnIntentSequence == null)
+            return false;
+
+        delaySeconds = enemyTurnIntentSequence.DelayBetweenEnemies;
+        if (delaySeconds <= 0f)
+            return false;
+
+        for (var i = currentIndex + 1; i < actingEnemies.Count; i++)
+        {
+            var next = actingEnemies[i];
+            if (next != null && next.IsAlive && next.IsActiveInRoster)
+                return true;
+        }
+
+        return false;
+    }
+
     private IEnumerator EnemyTurnRoutine()
     {
         _turnRegistry.ResetVolatile();
@@ -3594,10 +3614,12 @@ public class CombatManager : MonoBehaviour
             ChangeState(CombatState.EnemyTurnIntro);
             yield return CoEnemyTurnIntroShow();
             enemyTurnIntroIsUp = true;
+
+            if (enemyTurnIntentSequence != null)
+                yield return enemyTurnIntentSequence.CoWaitBeforeFirstAction();
         }
 
         ChangeState(CombatState.EnemyTurn);
-        yield return new WaitForSeconds(1.0f);
         if (player != null && _activeEnemies.Count > 0)
         {
             // Snapshot so spawned/defeated enemies during the turn don't corrupt iteration.
@@ -3647,6 +3669,9 @@ public class CombatManager : MonoBehaviour
 
                 if (enemy.IsAlive)
                     enemy.PrepareNextAction();
+
+                if (TryGetDelayBeforeNextActingEnemy(actingEnemies, e, out var delayBetweenEnemies))
+                    yield return new WaitForSeconds(delayBetweenEnemies);
             }
 
             player.StatusEffects.TickAfterEnemyTurn(BuildStatusContext());
@@ -3678,6 +3703,13 @@ public class CombatManager : MonoBehaviour
         enemyTurnIntroCanvasGroup.alpha = 0f;
         enemyTurnIntroRoot.SetActive(true);
 
+        if (enemyTurnIntentSequence != null && enemyTurnIntentSequence.UsesTurnIndicatorAnimator)
+        {
+            enemyTurnIntroCanvasGroup.alpha = 1f;
+            yield return enemyTurnIntentSequence.CoPresentTurnIndicatorIntro();
+            yield break;
+        }
+
         if (enemyTurnIntroFadeInSeconds <= 0f)
         {
             enemyTurnIntroCanvasGroup.alpha = 1f;
@@ -3707,6 +3739,17 @@ public class CombatManager : MonoBehaviour
     {
         if (enemyTurnIntroRoot == null || !enemyTurnIntroRoot.activeSelf)
             yield break;
+
+        if (enemyTurnIntentSequence != null)
+            yield return enemyTurnIntentSequence.CoWaitBeforeCloseTrigger();
+
+        if (enemyTurnIntentSequence != null && enemyTurnIntentSequence.UsesTurnIndicatorAnimator)
+        {
+            yield return enemyTurnIntentSequence.CoPresentTurnIndicatorOutro();
+            enemyTurnIntroCanvasGroup.alpha = 0f;
+            enemyTurnIntroRoot.SetActive(false);
+            yield break;
+        }
 
         if (enemyTurnIntroCanvasGroup == null)
         {
