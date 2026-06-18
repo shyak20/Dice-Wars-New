@@ -58,6 +58,9 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [Tooltip("Added to every show call’s anchor-local offset (canvas units; scales with Canvas Scaler).")]
     [SerializeField] private Vector2 hoverTooltipScreenOffset;
 
+    [Tooltip("Added to trial rewards tooltip show calls only (replaces Hover Tooltip Screen Offset for those tooltips).")]
+    [SerializeField] private Vector2 trialRewardsTooltipScreenOffset;
+
     [Tooltip("Anchor-local offset when the trigger passes isAbove=true (replaces the caller offset, not added to it). Still adds Hover Tooltip Screen Offset.")]
     [SerializeField] private Vector2 hoverAboveTooltipScreenOffset;
 
@@ -225,6 +228,9 @@ public sealed class HoverTooltipManager : MonoBehaviour
     Vector2 ResolveScreenOffset(Vector2 callerScreenOffset, bool isAbove) =>
         (isAbove ? hoverAboveTooltipScreenOffset : callerScreenOffset) + hoverTooltipScreenOffset;
 
+    Vector2 ResolveTrialRewardsScreenOffset(Vector2 callerScreenOffset, bool isAbove) =>
+        (isAbove ? hoverAboveTooltipScreenOffset : callerScreenOffset) + trialRewardsTooltipScreenOffset;
+
     public void ShowTrialRewards(
         RectTransform anchor,
         Vector2 screenPixelOffset,
@@ -246,7 +252,7 @@ public sealed class HoverTooltipManager : MonoBehaviour
             return;
 
         _trialRewardsPanel.Show(trial, state, progressionRewardVisualCatalog);
-        _trialRewardsPanel.AlignToRectWithScreenOffset(anchor, ResolveScreenOffset(screenPixelOffset, isAbove));
+        _trialRewardsPanel.AlignToRectWithScreenOffset(anchor, ResolveTrialRewardsScreenOffset(screenPixelOffset, isAbove));
     }
 
     public void Hide()
