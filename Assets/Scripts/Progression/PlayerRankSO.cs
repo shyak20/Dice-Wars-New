@@ -11,7 +11,7 @@ public class PlayerRankSO : ScriptableObject
     [Header("Portrait — large (dice-select preview)")]
     [Tooltip("PSB prefab spawned in dice-select. Must include an Animator with a clip recorded on this rig (not another character's clip).")]
     [SerializeField] private GameObject largePortraitPrefab;
-    [Tooltip("Static sprite for rank-up popup and other UI stills.")]
+    [Tooltip("Static sprite for compact UI stills (not rank-up popup — that uses Large Portrait Prefab).")]
     [SerializeField] private Sprite portrait;
 
     [Header("Portrait — small (UI Image)")]

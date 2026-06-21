@@ -2,22 +2,32 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>Dice Select level-up popup shown after all trials on a rank are acknowledged.</summary>
 public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupViewBase
 {
+    const float CurrentRankInitialReveal = 1f;
+    const float RankUpInitialReveal = 0f;
+
     [SerializeField] private TMP_Text titleText;
     [Tooltip("Subtitle: character display name from PlayerDataSO. Hidden when unset or cleared.")]
     [SerializeField] private TMP_Text characterNameText;
     [Header("Rank portraits")]
     [Tooltip("Portrait for the rank being completed (e.g. Rank 0 when advancing to Rank 1).")]
-    [SerializeField] private Image currentRankPortraitImage;
+    [SerializeField] private RankPortraitPrefabHost currentRankPortraitHost;
     [Tooltip("Portrait for the rank after level-up (e.g. Rank 1 when advancing from Rank 0).")]
-    [SerializeField] private Image rankUpPortraitImage;
-    [Header("Shown with popup")]
-    [Tooltip("Turned on when this popup is shown; turned off when hidden or on startup.")]
-    [SerializeField] private List<GameObject> objectsEnabledOnShow = new List<GameObject>();
+    [SerializeField] private RankPortraitPrefabHost rankUpPortraitHost;
+    [SerializeField] private Material portraitSplatterMaterial;
+    [Tooltip("Optional: hidden while this popup is visible so it does not overlap the celebration portraits.")]
+    [SerializeField] private DiceSelectLargePortraitPresenter diceSelectLargePortraitPresenter;
+    [Header("Rank up scene toggles")]
+    [Tooltip("Activated when the rank-up popup is shown; deactivated when it is hidden.")]
+    [FormerlySerializedAs("objectsEnabledOnShow")]
+    [SerializeField] private List<GameObject> objectsToEnableOnRankUp = new List<GameObject>();
+    [Tooltip("Deactivated when the rank-up popup is shown; only entries that were active are restored when hidden.")]
+    [SerializeField] private List<GameObject> objectsToDisableOnRankUp = new List<GameObject>();
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private Button completeButton;
     [Tooltip("Optional headline override. {0} = completed rank display name.")]
@@ -45,8 +55,10 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
     [SerializeField] private TrialRewardRowElementUI compactRewardRowPrefab;
 
     Action _onCompleteClicked;
+    bool _hidDiceSelectPortrait;
 
     readonly List<GameObject> _spawnedRewardRows = new List<GameObject>();
+    readonly List<GameObject> _disabledForRankUp = new List<GameObject>();
     TMP_Text _descriptionLabel;
     RectTransform _rewardsContainerRt;
     bool _usingAutoCreatedRewardsContainer;
@@ -79,6 +91,12 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
             Debug.LogError($"ProgressionRankUpPopupView on '{name}': assign panelRoot.", this);
         if (completeButton == null)
             Debug.LogError($"ProgressionRankUpPopupView on '{name}': assign completeButton.", this);
+        if (currentRankPortraitHost == null)
+            Debug.LogError($"ProgressionRankUpPopupView on '{name}': assign currentRankPortraitHost.", this);
+        if (rankUpPortraitHost == null)
+            Debug.LogError($"ProgressionRankUpPopupView on '{name}': assign rankUpPortraitHost.", this);
+        if (portraitSplatterMaterial == null)
+            Debug.LogError($"ProgressionRankUpPopupView on '{name}': assign portraitSplatterMaterial.", this);
 
         if (completeButton != null)
             completeButton.onClick.AddListener(HandleCompleteClicked);
@@ -134,14 +152,14 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
         if (character != null)
             ProgressionRankPortraitUtility.TryGetNextRank(character, completedRank, out nextRank);
 
-        ApplyRankPortraitImage(currentRankPortraitImage, completedRank.Portrait);
-        ApplyRankPortraitImage(rankUpPortraitImage, nextRank != null ? nextRank.Portrait : null);
+        HideDiceSelectPortraitIfConfigured();
+        ApplyRankPortraits(completedRank, nextRank);
 
         if (bodyText != null)
             BuildBody(completedRank);
 
         ShowPanel();
-        SetObjectsEnabledOnShow(true);
+        ApplyRankUpSceneToggles(rankUpActive: true);
     }
 
     public void Hide()
@@ -153,25 +171,109 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
             characterNameText.gameObject.SetActive(false);
         }
 
-        ApplyRankPortraitImage(currentRankPortraitImage, null);
-        ApplyRankPortraitImage(rankUpPortraitImage, null);
+        ClearRankPortraits();
+        RestoreDiceSelectPortraitIfHidden();
         HideImmediate();
     }
 
     void HideImmediate()
     {
-        SetObjectsEnabledOnShow(false);
+        ApplyRankUpSceneToggles(rankUpActive: false);
         HidePanelImmediate();
     }
 
-    void SetObjectsEnabledOnShow(bool active)
+    void ApplyRankPortraits(PlayerRankSO completedRank, PlayerRankSO nextRank)
     {
-        if (objectsEnabledOnShow == null)
+        currentRankPortraitHost?.Clear();
+        rankUpPortraitHost?.Clear();
+
+        if (currentRankPortraitHost != null && completedRank != null)
+        {
+            if (currentRankPortraitHost.ApplyRank(completedRank))
+            {
+                currentRankPortraitHost.PrepareManualReveal(portraitSplatterMaterial);
+                currentRankPortraitHost.SetManualRevealImmediate(CurrentRankInitialReveal);
+            }
+        }
+
+        if (rankUpPortraitHost != null && nextRank != null)
+        {
+            if (rankUpPortraitHost.ApplyRank(nextRank))
+            {
+                rankUpPortraitHost.PrepareManualReveal(portraitSplatterMaterial);
+                rankUpPortraitHost.SetManualRevealImmediate(RankUpInitialReveal);
+            }
+        }
+    }
+
+    void ClearRankPortraits()
+    {
+        currentRankPortraitHost?.Clear();
+        rankUpPortraitHost?.Clear();
+    }
+
+    void HideDiceSelectPortraitIfConfigured()
+    {
+        _hidDiceSelectPortrait = false;
+        if (diceSelectLargePortraitPresenter == null)
             return;
 
-        for (var i = 0; i < objectsEnabledOnShow.Count; i++)
+        diceSelectLargePortraitPresenter.SetSpawnRootActive(false);
+        _hidDiceSelectPortrait = true;
+    }
+
+    void RestoreDiceSelectPortraitIfHidden()
+    {
+        if (!_hidDiceSelectPortrait || diceSelectLargePortraitPresenter == null)
+            return;
+
+        diceSelectLargePortraitPresenter.SetSpawnRootActive(true);
+        _hidDiceSelectPortrait = false;
+    }
+
+    void ApplyRankUpSceneToggles(bool rankUpActive)
+    {
+        if (rankUpActive)
         {
-            var go = objectsEnabledOnShow[i];
+            SetListActive(objectsToEnableOnRankUp, true);
+
+            _disabledForRankUp.Clear();
+            if (objectsToDisableOnRankUp == null)
+                return;
+
+            for (var i = 0; i < objectsToDisableOnRankUp.Count; i++)
+            {
+                var go = objectsToDisableOnRankUp[i];
+                if (go == null || !go.activeSelf)
+                    continue;
+
+                _disabledForRankUp.Add(go);
+                go.SetActive(false);
+            }
+
+            return;
+        }
+
+        SetListActive(objectsToEnableOnRankUp, false);
+
+        for (var i = 0; i < _disabledForRankUp.Count; i++)
+        {
+            var go = _disabledForRankUp[i];
+            if (go != null)
+                go.SetActive(true);
+        }
+
+        _disabledForRankUp.Clear();
+    }
+
+    static void SetListActive(IReadOnlyList<GameObject> objects, bool active)
+    {
+        if (objects == null)
+            return;
+
+        for (var i = 0; i < objects.Count; i++)
+        {
+            var go = objects[i];
             if (go != null)
                 go.SetActive(active);
         }
@@ -342,13 +444,4 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
     };
 
     void OnDisable() => ClearSpawnedRows();
-
-    static void ApplyRankPortraitImage(Image image, Sprite sprite)
-    {
-        if (image == null)
-            return;
-
-        image.sprite = sprite;
-        image.enabled = sprite != null;
-    }
 }

@@ -54,6 +54,7 @@ Material:
     - _UseSplatterNoiseMap: 1
     - _WarpStrength: 0.6
     m_Colors:
+    - _ClipRect: {r: -32767, g: -32767, b: 32767, a: 32767}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _GlowColor: {r: 0.35, g: 0.85, b: 1.35, a: 1}
     - _MaskOutlineColor: {r: 0.031372547, g: 0.37588403, b: 1, a: 1}

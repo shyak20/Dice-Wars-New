@@ -43,7 +43,7 @@ Material:
     - _GlowIntensity: 0.94
     - _MaskOutlineWidth: 0.47
     - _Randomness: 0
-    - _RevealAmount: 1
+    - _RevealAmount: 0
     - _SplatterRenderTarget: 0
     - _SplatterScale: 31.1
     - _Stencil: 0

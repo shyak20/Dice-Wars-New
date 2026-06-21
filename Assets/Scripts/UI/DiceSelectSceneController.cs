@@ -52,6 +52,9 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     {
         RefreshAllCharacterButtonPortraits();
 
+        if (DiceSelectProgressionDisplayGate.IsDeferred)
+            return;
+
         if (TryGetSelectedCharacter(out var selected) && selected == changed)
             RefreshCharacterPresentationOnly(selected, replayPortraitReveal: false);
     }
@@ -221,11 +224,7 @@ public sealed class DiceSelectSceneController : MonoBehaviour
 
     void RefreshCharacterPresentationOnly(PlayerDataSO character, bool replayPortraitReveal)
     {
-        if (characterNameLabel != null)
-            characterNameLabel.text = character.DisplayName;
-
-        if (characterDescriptionLabel != null)
-            characterDescriptionLabel.text = character.Description;
+        RefreshCharacterLabelsOnly(character);
 
         if (largePortraitPresenter != null)
             largePortraitPresenter.ApplyCharacter(character, replayPortraitReveal);
@@ -233,6 +232,15 @@ public sealed class DiceSelectSceneController : MonoBehaviour
             Debug.LogError(
                 $"{nameof(DiceSelectSceneController)} on '{name}': assign {nameof(largePortraitPresenter)}.",
                 this);
+    }
+
+    void RefreshCharacterLabelsOnly(PlayerDataSO character)
+    {
+        if (characterNameLabel != null)
+            characterNameLabel.text = character.DisplayName;
+
+        if (characterDescriptionLabel != null)
+            characterDescriptionLabel.text = character.Description;
     }
 
     void RefreshCharacterProgressionAndDisplays(PlayerDataSO character, bool replayPortraitReveal)
