@@ -5,6 +5,9 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
         [PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
         [HDR] _Color("Tint", Color) = (1, 1, 1, 1)
 
+        [Header(Render target)]
+        [KeywordEnum(UI Image, Sprite Renderer)] _SplatterRenderTarget("Render Target", Float) = 0
+
         _RevealAmount("Reveal (0 hidden, 1 full)", Range(0, 1)) = 0
         _SplatterMaskOffset("Splatter mask UV offset (XY)", Vector) = (0, 0, 0, 0)
         _SplatterScale("Splatter scale", Float) = 24
@@ -19,6 +22,7 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
         [HDR] _MaskOutlineColor("Mask outline color", Color) = (0.2, 0.55, 1, 1)
         _MaskOutlineWidth("Mask outline width (× edge softness)", Range(0.05, 6)) = 1.35
 
+        [HideInInspector] _ClipRect("Clip Rect", Vector) = (-32767, -32767, 32767, 32767)
         [HideInInspector] _StencilComp("Stencil Comparison", Float) = 8
         [HideInInspector] _Stencil("Stencil ID", Float) = 0
         [HideInInspector] _StencilOp("Stencil Operation", Float) = 0
@@ -63,6 +67,7 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #pragma shader_feature_local_fragment USE_SPLATTER_NOISE_MAP
+            #pragma shader_feature_local _ _SPLATTERRENDERTARGET_UI_IMAGE _SPLATTERRENDERTARGET_SPRITE_RENDERER
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -79,6 +84,7 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
                 float4 positionCS : SV_POSITION;
                 half4 color : COLOR;
                 float2 uv : TEXCOORD0;
+                float4 worldPosition : TEXCOORD1;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -101,6 +107,8 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
                 half4 _MaskOutlineColor;
                 half _MaskOutlineWidth;
             CBUFFER_END
+
+            float4 _ClipRect;
 
             float Hash21(float2 p)
             {
@@ -214,7 +222,6 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
                 float2 nuv = TRANSFORM_TEX(uv, _SplatterNoiseMap);
                 float3 s = SAMPLE_TEXTURE2D(_SplatterNoiseMap, sampler_SplatterNoiseMap, nuv).rgb;
                 float lum = saturate(dot(s, float3(0.33333333, 0.33333333, 0.33333333)));
-                // Match procedural path end-cap so softness/band clamps behave similarly.
                 return saturate(lum * 0.97 + 0.015);
             }
 
@@ -227,6 +234,16 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
 #endif
             }
 
+            half ApplyUiClipRect(half alpha, float4 worldPosition)
+            {
+#if defined(_SPLATTERRENDERTARGET_UI_IMAGE)
+                half2 inside = step(_ClipRect.xy, worldPosition.xy) * step(worldPosition.xy, _ClipRect.zw);
+                return alpha * inside.x * inside.y;
+#else
+                return alpha;
+#endif
+            }
+
             Varyings vert(Attributes input)
             {
                 Varyings output;
@@ -236,6 +253,7 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex);
                 output.color = input.color;
+                output.worldPosition = input.positionOS;
                 return output;
             }
 
@@ -259,7 +277,6 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
                 half progress = saturate((half)_RevealAmount);
                 half reveal = smoothstep(threshold - edge, threshold + edge, progress);
 
-                // Frontier band: near |progress - threshold| within the soften ramp.
                 half span = edge * (half)2 + (half)1e-5;
                 half uRamp = saturate((progress - (threshold - edge)) / span);
                 half rampCore = saturate(uRamp * ((half)1 - uRamp) * (half)4);
@@ -275,6 +292,7 @@ Shader "DiceGame/UI Splatter Reveal (URP)"
 
                 half baseA = c.a * reveal;
                 c.a = saturate(baseA + outlineA);
+                c.a = ApplyUiClipRect(c.a, input.worldPosition);
 
                 return c;
             }

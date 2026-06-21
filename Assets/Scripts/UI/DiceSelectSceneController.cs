@@ -15,7 +15,8 @@ public sealed class DiceSelectSceneController : MonoBehaviour
     [Header("Character UI")]
     [SerializeField] private Transform characterButtonContainer;
     [SerializeField] private DiceSelectCharacterButton characterButtonPrefab;
-    [SerializeField] private Image characterPortraitImage;
+    [Tooltip("Spawns the active rank PSB prefab under a scene slot; animation is authored on each prefab's Animator.")]
+    [SerializeField] private DiceSelectLargePortraitPresenter largePortraitPresenter;
     [SerializeField] private TMP_Text characterNameLabel;
     [SerializeField] private TMP_Text characterDescriptionLabel;
     [Header("Flow")]
@@ -226,21 +227,12 @@ public sealed class DiceSelectSceneController : MonoBehaviour
         if (characterDescriptionLabel != null)
             characterDescriptionLabel.text = character.Description;
 
-        if (characterPortraitImage != null)
-        {
-            var portrait = ProgressionRankPortraitUtility.GetPortrait(character);
-            characterPortraitImage.sprite = portrait;
-
-            if (replayPortraitReveal && portrait != null)
-            {
-                var portraitRoot = characterPortraitImage.gameObject;
-                portraitRoot.SetActive(false);
-                portraitRoot.SetActive(true);
-                characterPortraitImage.enabled = true;
-            }
-            else
-                characterPortraitImage.enabled = portrait != null;
-        }
+        if (largePortraitPresenter != null)
+            largePortraitPresenter.ApplyCharacter(character, replayPortraitReveal);
+        else
+            Debug.LogError(
+                $"{nameof(DiceSelectSceneController)} on '{name}': assign {nameof(largePortraitPresenter)}.",
+                this);
     }
 
     void RefreshCharacterProgressionAndDisplays(PlayerDataSO character, bool replayPortraitReveal)

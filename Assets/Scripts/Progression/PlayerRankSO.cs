@@ -8,12 +8,17 @@ public class PlayerRankSO : ScriptableObject
     public string rankName;
     [TextArea(2, 4)] public string rankFlavorText;
 
-    [Header("Portrait")]
-    [Tooltip("Large portrait (dice-select preview, rank-up popup).")]
+    [Header("Portrait — large (dice-select preview)")]
+    [Tooltip("PSB prefab spawned in dice-select. Must include an Animator with a clip recorded on this rig (not another character's clip).")]
+    [SerializeField] private GameObject largePortraitPrefab;
+    [Tooltip("Static sprite for rank-up popup and other UI stills.")]
     [SerializeField] private Sprite portrait;
-    [Tooltip("Compact portrait (character buttons, fight HUD). Falls back to Portrait when unset.")]
+
+    [Header("Portrait — small (UI Image)")]
+    [Tooltip("Compact portrait for character buttons and fight HUD. Falls back to Portrait when unset.")]
     [SerializeField] private Sprite smallPortrait;
 
+    public GameObject LargePortraitPrefab => largePortraitPrefab;
     public Sprite Portrait => portrait;
     public Sprite SmallPortrait => smallPortrait != null ? smallPortrait : portrait;
 

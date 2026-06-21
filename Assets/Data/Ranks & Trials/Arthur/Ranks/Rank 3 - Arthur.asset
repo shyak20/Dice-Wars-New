@@ -15,6 +15,7 @@ MonoBehaviour:
   rankIndex: 2
   rankName: The Brave
   rankFlavorText: 
+  largePortraitPrefab: {fileID: 4843985084834002234, guid: 21242e14fe6a7d04e99eaf7eb4fdcfaa, type: 3}
   portrait: {fileID: 21300000, guid: 7a038c6d31b91fd44a76122388af1985, type: 3}
   smallPortrait: {fileID: 21300000, guid: b8f41f31bcf9fc944a95c5d1c8f56c5f, type: 3}
   associatedTrials:

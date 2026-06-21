@@ -15,7 +15,8 @@ MonoBehaviour:
   rankIndex: 0
   rankName: The Novice
   rankFlavorText: 
-  portrait: {fileID: 21300000, guid: 542628cea7502574899c5371a5224315, type: 3}
+  largePortraitPrefab: {fileID: 3341101415536838141, guid: 9cbb92b7fd1153148b5b52a4ff1a2f21, type: 3}
+  portrait: {fileID: 799219442805216509, guid: 21242e14fe6a7d04e99eaf7eb4fdcfaa, type: 3}
   smallPortrait: {fileID: 21300000, guid: b8f41f31bcf9fc944a95c5d1c8f56c5f, type: 3}
   associatedTrials:
   - {fileID: 11400000, guid: 80e7fe667746a394a986cb2e826a4fa4, type: 2}

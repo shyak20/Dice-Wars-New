@@ -12,6 +12,12 @@ public static class ProgressionRankPortraitUtility
         return useSmallPortrait ? rank.SmallPortrait : rank.Portrait;
     }
 
+    public static GameObject GetLargePortraitPrefab(PlayerDataSO character)
+    {
+        var rank = GetActiveRank(character);
+        return rank != null ? rank.LargePortraitPrefab : null;
+    }
+
     /// <summary>
     /// Active rank for <paramref name="character"/> from that character's saved
     /// <see cref="ProgressionProfileSaveData.currentRankIndex"/> (each roster entry has its own save).

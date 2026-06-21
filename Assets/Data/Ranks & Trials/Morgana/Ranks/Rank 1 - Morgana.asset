@@ -15,7 +15,8 @@ MonoBehaviour:
   rankIndex: 0
   rankName: Spark Apprentice
   rankFlavorText: 
-  portrait: {fileID: 21300000, guid: 2d7c2815bdae883429b089bb9076749f, type: 3}
+  largePortraitPrefab: {fileID: 1528727634054375611, guid: c61a121e1acd99d45b0f3b99a87ce2fa, type: 3}
+  portrait: {fileID: -4523505867207002621, guid: ccc4be74c7af75a478638d68bc4807b9, type: 3}
   smallPortrait: {fileID: 21300000, guid: 0a31fcf4bae5acf4181199fd4990fd4c, type: 3}
   associatedTrials:
   - {fileID: 11400000, guid: b31c2403da857fd45b8fb90bf2b675be, type: 2}

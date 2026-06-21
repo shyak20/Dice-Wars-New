@@ -15,6 +15,7 @@ MonoBehaviour:
   rankIndex: 1
   rankName: The Desciple
   rankFlavorText: 
+  largePortraitPrefab: {fileID: 4843985084834002234, guid: 21242e14fe6a7d04e99eaf7eb4fdcfaa, type: 3}
   portrait: {fileID: 21300000, guid: 0195ac8b56c6e564a8ee86dbd1375d59, type: 3}
   smallPortrait: {fileID: 21300000, guid: 0a31fcf4bae5acf4181199fd4990fd4c, type: 3}
   associatedTrials:

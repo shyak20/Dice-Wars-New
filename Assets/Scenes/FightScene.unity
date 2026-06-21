@@ -7948,6 +7948,7 @@ MonoBehaviour:
   progressionRewardVisualCatalog: {fileID: 0}
   fallbackCanvas: {fileID: 1896576052}
   hoverTooltipScreenOffset: {x: 30, y: -60}
+  trialRewardsTooltipScreenOffset: {x: 0, y: 0}
   hoverAboveTooltipScreenOffset: {x: -20, y: 210}
 --- !u!1 &432293861
 GameObject:
@@ -38298,7 +38299,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 274805708800022169, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 4.81583
+      value: 4.2
       objectReference: {fileID: 0}
     - target: {fileID: 980851640993252517, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -38319,6 +38320,10 @@ PrefabInstance:
     - target: {fileID: 1783265104782485300, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2967703833592184776, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -4.95
       objectReference: {fileID: 0}
     - target: {fileID: 3440934713375229664, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.x
@@ -38438,11 +38443,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7321510746874197591, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 117.74
+      value: 75.6058
       objectReference: {fileID: 0}
     - target: {fileID: 7321510746874197591, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -58
+      value: -79.06709
       objectReference: {fileID: 0}
     - target: {fileID: 7564033794443839745, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_IsActive
@@ -38455,7 +38460,7 @@ PrefabInstance:
     - target: {fileID: 8102270029977296699, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 0b94c6194a78f29418600ed8e986a8f8, type: 2}
+      objectReference: {fileID: 9100000, guid: 05ea05f61a9528c47848e38c366f5c5e, type: 2}
     - target: {fileID: 8365422450391847375, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
       value: 603.6557
@@ -38470,7 +38475,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8370870026742447725, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

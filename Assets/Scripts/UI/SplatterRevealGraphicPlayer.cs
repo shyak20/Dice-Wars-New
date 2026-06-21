@@ -16,6 +16,8 @@ public sealed class SplatterRevealGraphicPlayer : MonoBehaviour, IMaterialModifi
     {
         public static readonly int RevealAmount = Shader.PropertyToID("_RevealAmount");
         public static readonly int SplatterMaskOffset = Shader.PropertyToID("_SplatterMaskOffset");
+        public const string KeywordUiImage = "_SPLATTERRENDERTARGET_UI_IMAGE";
+        public const string KeywordSpriteRenderer = "_SPLATTERRENDERTARGET_SPRITE_RENDERER";
     }
 
     [Header("Target")]
@@ -268,6 +270,18 @@ public sealed class SplatterRevealGraphicPlayer : MonoBehaviour, IMaterialModifi
             return false;
 
         _material = graphic.material;
+        if (_material != null)
+            ApplyUiImageRenderTarget(_material);
+
         return _material != null;
+    }
+
+    static void ApplyUiImageRenderTarget(Material material)
+    {
+        if (material == null)
+            return;
+
+        material.EnableKeyword(ShaderPropertyIds.KeywordUiImage);
+        material.DisableKeyword(ShaderPropertyIds.KeywordSpriteRenderer);
     }
 }

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 787fb3fd522aeb64eb7d8d6042ad3fc3
+guid: 2b52a5ce551ffd8429d3dfdce0c2b828
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -69,7 +69,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -110,13 +110,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Rat Breath Sprite_0
+      name: Rat Breath Sprite New_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 2000
-        width: 580
-        height: 400
+        y: 897
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,20 +125,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8a37c282916986149a3d6fdd08d4cd50
-      internalID: -1617934236
+      spriteID: 458f0fd2f21921d4aad3c861e3aad7a9
+      internalID: -302462401
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_1
+      name: Rat Breath Sprite New_1
       rect:
         serializedVersion: 2
-        x: 580
-        y: 2000
-        width: 580
-        height: 400
+        x: 464
+        y: 897
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -147,20 +147,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d0f4d4ce684e25d47bfe6d4840d27c27
-      internalID: 205820096
+      spriteID: eb5197a1edefadb47b700b23c2d2246a
+      internalID: -1623983537
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_2
+      name: Rat Breath Sprite New_2
       rect:
         serializedVersion: 2
-        x: 1160
-        y: 2000
-        width: 580
-        height: 400
+        x: 928
+        y: 897
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -169,20 +169,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3a9eeed96c45c5f4098777cf551b22cc
-      internalID: -139055188
+      spriteID: 7bdaab0c558a79f4a9e3472bd5f77f3b
+      internalID: -350393423
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_3
+      name: Rat Breath Sprite New_3
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1600
-        width: 580
-        height: 400
+        x: 1392
+        y: 897
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -191,64 +191,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2961dfc855e1a4a48aab66315c032aaa
-      internalID: -1573891558
+      spriteID: f9c30104e1207c340b737591047e2d5a
+      internalID: -1688516475
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_4
-      rect:
-        serializedVersion: 2
-        x: 580
-        y: 1600
-        width: 580
-        height: 400
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f04fc2bb6a020254285ea187dfb49748
-      internalID: -1909982150
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Rat Breath Sprite_5
-      rect:
-        serializedVersion: 2
-        x: 1160
-        y: 1600
-        width: 580
-        height: 400
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 0952b1e624d4d924ab5457da0ba5f90c
-      internalID: 881087392
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Rat Breath Sprite_6
+      name: Rat Breath Sprite New_4
       rect:
         serializedVersion: 2
         x: 0
-        y: 1200
-        width: 580
-        height: 400
+        y: 598
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -257,20 +213,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8ec8bd88ce821904a994926dd0e2169a
-      internalID: -746555909
+      spriteID: 93e8a8d5818aaf74d9557056fa4fb738
+      internalID: -845680677
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_7
+      name: Rat Breath Sprite New_5
       rect:
         serializedVersion: 2
-        x: 580
-        y: 1200
-        width: 580
-        height: 400
+        x: 464
+        y: 598
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -279,20 +235,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: db1e8d1b4b9723c4f90397496e2476ed
-      internalID: -440117192
+      spriteID: 6048536dd3b471a4caf4f19d44b6f1a7
+      internalID: -1700392069
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_8
+      name: Rat Breath Sprite New_6
       rect:
         serializedVersion: 2
-        x: 1160
-        y: 1200
-        width: 580
-        height: 400
+        x: 928
+        y: 598
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -301,20 +257,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3db4bc55f0d0b6644867d23a2342663b
-      internalID: -1603087970
+      spriteID: 9dc53e375b6dfa94e8b2164fa5765dbe
+      internalID: -1663056964
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_9
+      name: Rat Breath Sprite New_7
       rect:
         serializedVersion: 2
-        x: 0
-        y: 800
-        width: 580
-        height: 400
+        x: 1392
+        y: 598
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -323,64 +279,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: aa0651fe46d6f2845bbd9fa906d00f87
-      internalID: 995310239
+      spriteID: 113a5ac0600fd0948bad1abf337c4e33
+      internalID: 1790883272
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_10
-      rect:
-        serializedVersion: 2
-        x: 580
-        y: 800
-        width: 580
-        height: 400
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f264a78c4f180344f8eeecc6e7a31dfa
-      internalID: -8147542
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Rat Breath Sprite_11
-      rect:
-        serializedVersion: 2
-        x: 1160
-        y: 800
-        width: 580
-        height: 400
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 6057917e714c03045aab96012d938059
-      internalID: -178338830
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Rat Breath Sprite_12
+      name: Rat Breath Sprite New_8
       rect:
         serializedVersion: 2
         x: 0
-        y: 400
-        width: 580
-        height: 400
+        y: 299
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -389,20 +301,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e160b3cce666364499247b147b98186e
-      internalID: -2098645718
+      spriteID: f515a553bc1337643baad22ab8954cc3
+      internalID: 224256644
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_13
+      name: Rat Breath Sprite New_9
       rect:
         serializedVersion: 2
-        x: 580
-        y: 400
-        width: 580
-        height: 400
+        x: 464
+        y: 299
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -411,20 +323,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 530bb3ab69ab8744a99401114367061a
-      internalID: 472693593
+      spriteID: da47dd7ca0eac6649901f2a64f401f1b
+      internalID: -1757521774
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_14
+      name: Rat Breath Sprite New_10
       rect:
         serializedVersion: 2
-        x: 1160
-        y: 400
-        width: 580
-        height: 400
+        x: 928
+        y: 299
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -433,20 +345,42 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f2ab64e8ab34fb04c95342929af7707e
-      internalID: 1915338988
+      spriteID: cd189616e1449784190c9ec5855489d8
+      internalID: 528493959
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_15
+      name: Rat Breath Sprite New_11
+      rect:
+        serializedVersion: 2
+        x: 1392
+        y: 299
+        width: 464
+        height: 299
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8b63b463ab05edb418b2367e9ea36d8a
+      internalID: 1846061526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rat Breath Sprite New_12
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 580
-        height: 400
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -455,20 +389,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 19a2b95b3fb4d8e4f9365d2118ed3c47
-      internalID: -544566220
+      spriteID: 5a0222e10e837ee49bdfdb7df27ea754
+      internalID: -221824373
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_16
+      name: Rat Breath Sprite New_13
       rect:
         serializedVersion: 2
-        x: 580
+        x: 464
         y: 0
-        width: 580
-        height: 400
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -477,20 +411,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 94a997cdc2c2e9f4583cc8d963b74af4
-      internalID: -709616010
+      spriteID: ad89c86d31312a44583412a6cd259944
+      internalID: -1557454924
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Rat Breath Sprite_17
+      name: Rat Breath Sprite New_14
       rect:
         serializedVersion: 2
-        x: 1160
+        x: 928
         y: 0
-        width: 580
-        height: 400
+        width: 464
+        height: 299
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -499,8 +433,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 0f65786800d95d74b8023b564191b476
-      internalID: 787552043
+      spriteID: 19938792050fb7a438171d39efc03cf8
+      internalID: 1099366364
       vertices: []
       indices: 
       edges: []
@@ -519,26 +453,23 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":6.0},"gridSpriteSize":{"x":580.0,"y":400.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":4.0,"y":4.0},"gridSpriteSize":{"x":464.0,"y":299.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Rat Breath Sprite_0: -1617934236
-      Rat Breath Sprite_1: 205820096
-      Rat Breath Sprite_10: -8147542
-      Rat Breath Sprite_11: -178338830
-      Rat Breath Sprite_12: -2098645718
-      Rat Breath Sprite_13: 472693593
-      Rat Breath Sprite_14: 1915338988
-      Rat Breath Sprite_15: -544566220
-      Rat Breath Sprite_16: -709616010
-      Rat Breath Sprite_17: 787552043
-      Rat Breath Sprite_2: -139055188
-      Rat Breath Sprite_3: -1573891558
-      Rat Breath Sprite_4: -1909982150
-      Rat Breath Sprite_5: 881087392
-      Rat Breath Sprite_6: -746555909
-      Rat Breath Sprite_7: -440117192
-      Rat Breath Sprite_8: -1603087970
-      Rat Breath Sprite_9: 995310239
+      Rat Breath Sprite New_0: -302462401
+      Rat Breath Sprite New_1: -1623983537
+      Rat Breath Sprite New_10: 528493959
+      Rat Breath Sprite New_11: 1846061526
+      Rat Breath Sprite New_12: -221824373
+      Rat Breath Sprite New_13: -1557454924
+      Rat Breath Sprite New_14: 1099366364
+      Rat Breath Sprite New_2: -350393423
+      Rat Breath Sprite New_3: -1688516475
+      Rat Breath Sprite New_4: -845680677
+      Rat Breath Sprite New_5: -1700392069
+      Rat Breath Sprite New_6: -1663056964
+      Rat Breath Sprite New_7: 1790883272
+      Rat Breath Sprite New_8: 224256644
+      Rat Breath Sprite New_9: -1757521774
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
