@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
   m_Name: Attack 2x2
   m_EditorClassIdentifier: 
-  actionName: Attack
+  actionName: Double Bite
   attackTooltipTitle: <style=Attack>Attack</style>
   attackTooltipDescription: Deal <style=Attack>2</style> twice
   armorTooltipTitle: 
@@ -22,9 +22,10 @@ MonoBehaviour:
   damage: 2
   numberOfAttacks: 2
   armor: 0
-  actionAnimatorStateName: Attack
+  actionAnimatorTriggerName: Attack1
   actionAnimationLeadInSeconds: 0.2
   actions: []
+  actionTooltips: []
   references:
     version: 2
     RefIds: []

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9f9639eea3f333643ad23f38fef97395
+guid: 0376b59dcce2a7e408c07e1dc4420e9d
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -93,17 +93,30 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Bramble Mite 1_0
+      name: Rat Die_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 1568
-        width: 588
-        height: 392
+        y: 1215
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,20 +125,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 14c55a35ba3e69a47a4679aa7c614a34
-      internalID: -508614734
+      spriteID: 3759baaa66a36a54e9780fb7d6a8ae20
+      internalID: 905129706
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_1
+      name: Rat Die_1
       rect:
         serializedVersion: 2
-        x: 588
-        y: 1568
-        width: 588
-        height: 392
+        x: 644
+        y: 1215
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -134,20 +147,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: bf2977142ec9bce4e84a1258e49e2260
-      internalID: 1738384133
+      spriteID: de624bbeeff60b84199b48a76b384a6f
+      internalID: -1850481436
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_2
+      name: Rat Die_2
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 1568
-        width: 588
-        height: 392
+        x: 1288
+        y: 1215
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -156,86 +169,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 62ebfddfefe56d34898f0f28e6946a11
-      internalID: 188200134
+      spriteID: d0a2b47d12e6bbc4eb602f9985c77f5d
+      internalID: 750557574
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_3
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 1176
-        width: 588
-        height: 392
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f483f3086c288e74ab1346c77f5d9cfb
-      internalID: -470043128
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bramble Mite 1_4
-      rect:
-        serializedVersion: 2
-        x: 588
-        y: 1176
-        width: 588
-        height: 392
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 9a7732f248cc83641a074825ba576d0c
-      internalID: -839196441
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bramble Mite 1_5
-      rect:
-        serializedVersion: 2
-        x: 1176
-        y: 1176
-        width: 588
-        height: 392
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: fb9603f9cd55ece4ebda29b517ed41df
-      internalID: -304625272
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Bramble Mite 1_6
+      name: Rat Die_3
       rect:
         serializedVersion: 2
         x: 0
-        y: 784
-        width: 588
-        height: 392
+        y: 810
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -244,20 +191,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 34718d38268c47747b9fc8f8b5106065
-      internalID: -1539292379
+      spriteID: b57047d5e0fb71e46901d8e19eb86afa
+      internalID: 748077094
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_7
+      name: Rat Die_4
       rect:
         serializedVersion: 2
-        x: 588
-        y: 784
-        width: 588
-        height: 392
+        x: 644
+        y: 810
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -266,20 +213,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 05c826a7d45718741a1d2e236aedc6c8
-      internalID: 371445022
+      spriteID: e9a8ac73686bdb44f913f7ba19856a4c
+      internalID: -1010421118
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_8
+      name: Rat Die_5
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 784
-        width: 588
-        height: 392
+        x: 1288
+        y: 810
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -288,20 +235,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c695e82026d5cfe48946a285f9e506a8
-      internalID: -1435717863
+      spriteID: 41b30ff40ac3d1d45a9159736512dfa7
+      internalID: -376798229
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_9
+      name: Rat Die_6
       rect:
         serializedVersion: 2
         x: 0
-        y: 392
-        width: 588
-        height: 392
+        y: 405
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -310,20 +257,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 22cf96f533bcb39459185e13b62d397e
-      internalID: 1329514251
+      spriteID: 1bca8043b7121914b992d4809ec19d70
+      internalID: 1386583992
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_10
+      name: Rat Die_7
       rect:
         serializedVersion: 2
-        x: 588
-        y: 392
-        width: 588
-        height: 392
+        x: 644
+        y: 405
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -332,20 +279,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2aaf4c724d1a53f4c8c0036d1745be56
-      internalID: -1702875229
+      spriteID: 2077c273a3ad1ad46ad268c0d90b01ae
+      internalID: -1630981677
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_11
+      name: Rat Die_8
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 392
-        width: 588
-        height: 392
+        x: 1288
+        y: 405
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -354,20 +301,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4db065a80c3f3f44c853032de18ae5fc
-      internalID: -1050613690
+      spriteID: d01aee487395b2b40ad500a45820b0e5
+      internalID: 1717451627
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_12
+      name: Rat Die_9
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 588
-        height: 392
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -376,20 +323,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5769e0e73438e9c4ab89745a93a5968c
-      internalID: -163966647
+      spriteID: e56e930f25d359840acec0e43979c327
+      internalID: 328415559
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_13
+      name: Rat Die_10
       rect:
         serializedVersion: 2
-        x: 588
+        x: 644
         y: 0
-        width: 588
-        height: 392
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -398,20 +345,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4713f6e1464b77a4297c843534553251
-      internalID: 1484775849
+      spriteID: 1b70886bfa2588f459e9da2bc5e0cb51
+      internalID: -1713765905
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bramble Mite 1_14
+      name: Rat Die_11
       rect:
         serializedVersion: 2
-        x: 1176
+        x: 1288
         y: 0
-        width: 588
-        height: 392
+        width: 644
+        height: 405
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -420,8 +367,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 750803bb45b95b043bbe14db2314dec7
-      internalID: -2103719502
+      spriteID: 654d9e66d4c525b40889f8937fd11022
+      internalID: 422387964
       vertices: []
       indices: 
       edges: []
@@ -440,23 +387,20 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":5.0},"gridSpriteSize":{"x":588.0,"y":392.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":4.0},"gridSpriteSize":{"x":644.0,"y":405.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Bramble Mite 1_0: -508614734
-      Bramble Mite 1_1: 1738384133
-      Bramble Mite 1_10: -1702875229
-      Bramble Mite 1_11: -1050613690
-      Bramble Mite 1_12: -163966647
-      Bramble Mite 1_13: 1484775849
-      Bramble Mite 1_14: -2103719502
-      Bramble Mite 1_2: 188200134
-      Bramble Mite 1_3: -470043128
-      Bramble Mite 1_4: -839196441
-      Bramble Mite 1_5: -304625272
-      Bramble Mite 1_6: -1539292379
-      Bramble Mite 1_7: 371445022
-      Bramble Mite 1_8: -1435717863
-      Bramble Mite 1_9: 1329514251
+      Rat Die_0: 905129706
+      Rat Die_1: -1850481436
+      Rat Die_10: -1713765905
+      Rat Die_11: 422387964
+      Rat Die_2: 750557574
+      Rat Die_3: 748077094
+      Rat Die_4: -1010421118
+      Rat Die_5: -376798229
+      Rat Die_6: 1386583992
+      Rat Die_7: -1630981677
+      Rat Die_8: 1717451627
+      Rat Die_9: 328415559
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
