@@ -105,10 +105,14 @@ namespace Enemies
 
         private void ClearSegments()
         {
+            for (var i = 0; i < _activeSegmentViews.Count; i++)
+            {
+                var view = _activeSegmentViews[i];
+                if (view != null)
+                    Destroy(view.gameObject);
+            }
+
             _activeSegmentViews.Clear();
-            if (segmentContainer == null) return;
-            for (var i = segmentContainer.childCount - 1; i >= 0; i--)
-                Destroy(segmentContainer.GetChild(i).gameObject);
         }
     }
 }
