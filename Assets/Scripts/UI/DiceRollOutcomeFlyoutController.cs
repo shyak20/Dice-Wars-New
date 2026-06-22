@@ -830,8 +830,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 line.ResolvesImmediatelyOnDrop);
         }
 
-        // Single-enemy / Main Enemy fallback: this copy landed on the shared player Element Container, so increment it directly.
-        if (applyToSharedPool && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
+        // Single-enemy / Main Enemy fallback: only increment the shared pool when this enemy has no per-enemy pool.
+        if (applyToSharedPool && enemy?.AssignedElementPool == null && storedActionsPoolDisplay != null && storedActionsPoolDisplay.UsesFlyoutIncrementMode)
             storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
 
         Destroy(rt.gameObject);

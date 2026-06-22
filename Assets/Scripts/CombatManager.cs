@@ -211,13 +211,11 @@ public class CombatManager : MonoBehaviour
             pools[key] = cur + v;
         }
 
-        // Multi-enemy: enemy-targeted rows (physical damage, enemy debuffs) live under each enemy's own element layout,
-        // so the shared player Element Container only shows player-targeted outcomes (armor, curse self-damage, heals, etc.).
-        var multiEnemy = IsMultiEnemy;
-
+        // Enemy-targeted rows (physical damage, enemy debuffs) live on each enemy's AssignedElementPool,
+        // not the shared player Element Container (single- or multi-enemy).
         foreach (var face in channeledFaces)
         {
-            if (!multiEnemy)
+            if (!face.HasEnemyDamagePiece)
                 Add(PoolRowKey.FromDieType(DieType.Damage), face.TotalDamageContribution);
             Add(PoolRowKey.FromDieType(DieType.Armor), face.Armor);
             Add(PoolRowKey.FromDieType(DieType.Curse), face.TotalSelfDamageContribution);
@@ -226,13 +224,12 @@ public class CombatManager : MonoBehaviour
             foreach (var extra in face.ActionPoolContributions)
             {
                 if (extra.VisualFlyoutOnly) continue;
-                if (multiEnemy && IsEnemyTargetedPoolContribution(extra)) continue;
+                if (IsEnemyTargetedPoolContribution(extra)) continue;
                 Add(extra.PoolKey, extra.Amount);
             }
         }
 
-        if (!multiEnemy)
-            Add(PoolRowKey.FromDieType(DieType.Damage), bonusDamageFromActions);
+        Add(PoolRowKey.FromDieType(DieType.Damage), bonusDamageFromActions);
         Add(PoolRowKey.FromDieType(DieType.Armor), kineticShieldBonus);
         Add(PoolRowKey.FromDieType(DieType.Armor), bonusArmorFromActions);
         return pools;
@@ -2020,13 +2017,16 @@ public class CombatManager : MonoBehaviour
                 CombatEvents.OnRuntimePoolIconForRow?.Invoke(key, icon);
         }
 
-        Hint(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage));
+        if (!result.HasEnemyDamagePiece)
+            Hint(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage));
         Hint(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
         Hint(PoolRowKey.FromDieType(DieType.Curse), result.TotalSelfDamageContribution, GameIconCatalog.GetElementIcon(DieType.Curse));
 
         if (result.ActionPoolContributions == null) return;
         foreach (var extra in result.ActionPoolContributions)
         {
+            if (IsEnemyTargetedPoolContribution(extra))
+                continue;
             Hint(extra.PoolKey, extra.Amount, extra.Icon);
             var bg = extra.PoolRowBackground != null
                 ? extra.PoolRowBackground
@@ -3122,6 +3122,7 @@ public class CombatManager : MonoBehaviour
             var allTargetPool = enemy.AssignedElementPool;
             if (allTargetPool != null)
                 allTargetPool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+            NotifyStoredActionsPoolUpdated();
             return;
         }
 
@@ -3140,6 +3141,8 @@ public class CombatManager : MonoBehaviour
         var pool = enemy.AssignedElementPool;
         if (pool != null)
             pool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+
+        NotifyStoredActionsPoolUpdated();
     }
 
     /// <summary>Single-enemy fights (no drag): point every still-unassigned enemy-targeted piece at the lone living enemy.</summary>
