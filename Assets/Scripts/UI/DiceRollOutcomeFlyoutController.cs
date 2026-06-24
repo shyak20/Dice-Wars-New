@@ -259,6 +259,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         {
             payload.ReportRaiseFinished();
             payload.ReportVisualFinished();
+            TryNotifyFaceOutcomesSubmittedIfReady(payload);
             return;
         }
 
@@ -855,7 +856,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private void TryBeginDieDissolveForPayload(DiceRollVisualPayload payload)
     {
-        if (payload?.SourceFace != null && combat != null && combat.FaceHasPendingPostSubmitTriggeringReroll(payload.SourceFace))
+        if (payload?.SourceFace != null && combat != null && combat.FaceBlocksDieDissolveForPendingReroll(payload.SourceFace))
             return;
 
         TryBeginDieDissolve(payload != null ? payload.DieTransform : null);

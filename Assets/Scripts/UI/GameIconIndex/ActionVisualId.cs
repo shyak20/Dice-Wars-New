@@ -61,4 +61,7 @@ public enum ActionVisualId
 
     /// <summary><see cref="ApplyBenefitToMainEnemyAction"/> — spawned add supports the Main Enemy (armor, heal, status).</summary>
     ApplyBenefitToMainEnemy = 31,
+
+    /// <summary><see cref="RerollOtherDiceAfterAllSettledAction"/> — reroll every other die in the batch after all settle.</summary>
+    RerollOtherDice = 32,
 }

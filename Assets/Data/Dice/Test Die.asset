@@ -17,9 +17,9 @@ MonoBehaviour:
   uiIcon: {fileID: 21300000, guid: eca18e2cf14c282488edf3fe654b1805, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: 1086363c2a90d07439f392d72ef1197e, type: 3}
   faces:
-  - {fileID: 11400000, guid: db065000c03fd0d47b931806a885e0a3, type: 2}
-  - {fileID: 11400000, guid: db065000c03fd0d47b931806a885e0a3, type: 2}
-  - {fileID: 11400000, guid: db065000c03fd0d47b931806a885e0a3, type: 2}
+  - {fileID: 11400000, guid: dcc4a884d55666b439d437ec3dce52b1, type: 2}
+  - {fileID: 11400000, guid: dcc4a884d55666b439d437ec3dce52b1, type: 2}
+  - {fileID: 11400000, guid: dcc4a884d55666b439d437ec3dce52b1, type: 2}
   - {fileID: 11400000, guid: db065000c03fd0d47b931806a885e0a3, type: 2}
   - {fileID: 11400000, guid: 83377a71033be8a42925b23921587891, type: 2}
   - {fileID: 11400000, guid: 83377a71033be8a42925b23921587891, type: 2}

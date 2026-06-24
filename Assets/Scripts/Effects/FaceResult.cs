@@ -19,6 +19,9 @@ public class FaceResult
     /// <summary>When set, <see cref="RerollDieAction"/> with <c>RerollTriggeringDieOnly</c> runs after this face's outcomes are submitted.</summary>
     public bool AwaitingPostSubmitTriggeringReroll { get; set; }
 
+    /// <summary>First-pass resolve for a die that will be physics-rerolled after the whole batch submits; power is skipped on this resolve.</summary>
+    public bool AwaitingPostBatchOtherDiceReroll { get; set; }
+
     /// <summary>Power actually added for this face (0 when Echo skips power for the batch).</summary>
     public int PowerContributionThisResolve { get; set; }
 
