@@ -173,6 +173,7 @@ public class CombatManager : MonoBehaviour
     private readonly HashSet<FaceResult> _pendingBatchSubmitForRerollOther = new HashSet<FaceResult>();
     private readonly HashSet<FaceResult> _postBatchSecondPassAwaitingSubmit = new HashSet<FaceResult>();
     private int _postBatchRollAgainInFlight;
+    private readonly Dictionary<int, GameObject> _batchLiveDieByGatherIndex = new Dictionary<int, GameObject>();
     private readonly HashSet<int> _noPowerOnNextGatherCommit = new HashSet<int>();
     private readonly HashSet<int> _gemBatchRerollIndicesInFlight = new HashSet<int>();
     private int _rollBatchId;
@@ -1266,6 +1267,7 @@ public class CombatManager : MonoBehaviour
         {
             _pendingBatchSubmitForRerollOther.Clear();
             _postBatchOtherDiceRerollStarted = false;
+            SnapshotBatchLiveDiceForRerollOther(batchGatherStart);
             for (var i = batchGatherStart; i < channeledFaces.Count; i++)
                 _pendingBatchSubmitForRerollOther.Add(channeledFaces[i]);
         }
@@ -1532,7 +1534,9 @@ public class CombatManager : MonoBehaviour
         face != null && _facesAwaitingPostBatchOtherDiceReroll.Contains(face) && _batchHasRerollOtherDicePending;
 
     public bool FaceBlocksDieDissolveForPendingReroll(FaceResult face) =>
-        FaceHasPendingPostSubmitTriggeringReroll(face) || FaceHasPendingPostBatchOtherDiceReroll(face);
+        FaceHasPendingPostSubmitTriggeringReroll(face)
+        || FaceHasPendingPostBatchOtherDiceReroll(face)
+        || ShouldHoldDieAliveForBatchRerollOther(face);
 
     private void TryTriggerPostBatchRerollOtherIfReady()
     {
@@ -1555,6 +1559,62 @@ public class CombatManager : MonoBehaviour
         _pendingBatchSubmitForRerollOther.Clear();
         _postBatchSecondPassAwaitingSubmit.Clear();
         _postBatchRollAgainInFlight = 0;
+        _batchLiveDieByGatherIndex.Clear();
+    }
+
+    private void SnapshotBatchLiveDiceForRerollOther(int batchGatherStart)
+    {
+        _batchLiveDieByGatherIndex.Clear();
+        for (var i = batchGatherStart; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face == null || face.BatchGatherIndex < 0)
+                continue;
+
+            if (face.DieSource != null)
+                _batchLiveDieByGatherIndex[face.BatchGatherIndex] = face.DieSource.gameObject;
+            else if (spawner != null)
+            {
+                var die = spawner.GetActiveDieGameObject(face.BatchGatherIndex);
+                if (die != null)
+                    _batchLiveDieByGatherIndex[face.BatchGatherIndex] = die;
+            }
+        }
+    }
+
+    private bool ShouldHoldDieAliveForBatchRerollOther(FaceResult face)
+    {
+        if (face == null || !_batchHasRerollOtherDicePending || _postBatchOtherDiceRerollCompleted)
+            return false;
+
+        return face.BatchId == _rollBatchId;
+    }
+
+    private GameObject ResolveBatchDieGameObject(int batchGatherIndex, FaceResult firstPassFace = null)
+    {
+        if (firstPassFace?.DieSource != null)
+            return firstPassFace.DieSource.gameObject;
+
+        if (_batchLiveDieByGatherIndex.TryGetValue(batchGatherIndex, out var snap) && snap != null)
+            return snap;
+
+        return spawner != null ? spawner.GetActiveDieGameObject(batchGatherIndex) : null;
+    }
+
+    private void DropFailedBatchRerollOtherTarget(int dieIdx)
+    {
+        _batchRerollOtherTargetIndices.Remove(dieIdx);
+        _batchLiveDieByGatherIndex.Remove(dieIdx);
+
+        for (var i = channeledFaces.Count - 1; i >= 0; i--)
+        {
+            var face = channeledFaces[i];
+            if (face == null || face.BatchGatherIndex != dieIdx || !face.AwaitingPostBatchOtherDiceReroll)
+                continue;
+
+            _facesAwaitingPostBatchOtherDiceReroll.Remove(face);
+            break;
+        }
     }
 
     /// <summary>
@@ -1583,7 +1643,7 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
-        if (FaceHasPendingPostBatchOtherDiceReroll(face))
+        if (FaceHasPendingPostBatchOtherDiceReroll(face) || ShouldHoldDieAliveForBatchRerollOther(face))
             return;
 
         TryDissolveDieForFace(face);
@@ -1642,6 +1702,7 @@ public class CombatManager : MonoBehaviour
         _batchRerollOtherTargetIndices.Clear();
         _pendingBatchSubmitForRerollOther.Clear();
         _postBatchSecondPassAwaitingSubmit.Clear();
+        _batchLiveDieByGatherIndex.Clear();
         TryFinalizeBatchOutcomeAfterDeferredRerolls();
     }
 
@@ -1802,29 +1863,36 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator CoExecutePostBatchRerollOtherDice()
     {
-        if (spawner == null)
-            yield break;
-
-        var indices = new List<int>(_batchRerollOtherTargetIndices);
-        indices.Sort();
-
-        var settledFaces = new Dictionary<int, DieFaceSO>();
-        yield return CoParallelPhysicsRerollOtherDice(indices, settledFaces);
-
-        _postRaiseCombatGateOpen = true;
-
-        var secondPassResults = new List<FaceResult>();
-        foreach (var dieIdx in indices)
+        try
         {
-            if (!settledFaces.TryGetValue(dieIdx, out var face) || face == null)
-                continue;
+            if (spawner == null)
+                yield break;
 
-            var result = TryCommitSecondPassOtherDie(dieIdx, face);
-            if (result != null)
-                secondPassResults.Add(result);
+            var indices = new List<int>(_batchRerollOtherTargetIndices);
+            indices.Sort();
+
+            var settledFaces = new Dictionary<int, DieFaceSO>();
+            yield return CoParallelPhysicsRerollOtherDice(indices, settledFaces);
+
+            _postRaiseCombatGateOpen = true;
+
+            var secondPassResults = new List<FaceResult>();
+            foreach (var dieIdx in indices)
+            {
+                if (!settledFaces.TryGetValue(dieIdx, out var face) || face == null)
+                    continue;
+
+                var result = TryCommitSecondPassOtherDie(dieIdx, face);
+                if (result != null)
+                    secondPassResults.Add(result);
+            }
+
+            BeginAwaitingPostBatchSecondPassSubmit(secondPassResults);
         }
-
-        BeginAwaitingPostBatchSecondPassSubmit(secondPassResults);
+        finally
+        {
+            TryCompletePostBatchRerollOtherDiceSequence();
+        }
     }
 
     private IEnumerator CoParallelPhysicsRerollOtherDice(IReadOnlyList<int> indices, Dictionary<int, DieFaceSO> settledFacesOut)
@@ -1837,15 +1905,15 @@ public class CombatManager : MonoBehaviour
         foreach (var dieIdx in indices)
         {
             var firstPassFace = FindFirstPassFaceAwaitingPostBatchOtherDiceReroll(dieIdx);
-            var dieGo = firstPassFace?.DieSource != null
-                ? firstPassFace.DieSource.gameObject
-                : spawner.GetActiveDieGameObject(dieIdx);
+            var dieGo = ResolveBatchDieGameObject(dieIdx, firstPassFace);
             if (dieGo == null)
             {
                 Debug.LogWarning($"CombatManager: Post-batch reroll other — no die for batch index {dieIdx}.");
+                DropFailedBatchRerollOtherTarget(dieIdx);
                 continue;
             }
 
+            _batchLiveDieByGatherIndex[dieIdx] = dieGo;
             _postSubmitRerollSettledFaces.Remove(dieIdx);
             _postSubmitRerollWaitingIndices.Add(dieIdx);
             launched.Add(dieIdx);
@@ -1880,16 +1948,17 @@ public class CombatManager : MonoBehaviour
     private FaceResult TryCommitSecondPassOtherDie(int dieIdx, DieFaceSO face)
     {
         var firstPassFace = FindFirstPassFaceAwaitingPostBatchOtherDiceReroll(dieIdx);
-        var dieTransform = firstPassFace?.DieSource;
         var dieAsset = firstPassFace?.SourceDieAsset;
-        var dieGo = dieTransform != null ? dieTransform.gameObject : spawner.GetActiveDieGameObject(dieIdx);
+        var dieGo = ResolveBatchDieGameObject(dieIdx, firstPassFace);
         if (dieGo == null)
         {
             Debug.LogWarning($"CombatManager: Post-batch reroll other — no die for batch index {dieIdx} at commit.");
+            DropFailedBatchRerollOtherTarget(dieIdx);
             return null;
         }
 
-        dieTransform = dieGo.transform;
+        var dieTransform = dieGo.transform;
+        _batchLiveDieByGatherIndex[dieIdx] = dieGo;
         var gatherStart = channeledFaces.Count;
 
         CommitResolvedRoll(
@@ -1912,16 +1981,15 @@ public class CombatManager : MonoBehaviour
 
         var face = sourceFaceResult.Face;
         var dieIdx = sourceFaceResult.BatchGatherIndex;
-        var dieTransform = sourceFaceResult.DieSource;
-        var dieAsset = sourceFaceResult.SourceDieAsset;
-        var dieGo = dieTransform != null ? dieTransform.gameObject : spawner.GetActiveDieGameObject(dieIdx);
+        var dieGo = ResolveBatchDieGameObject(dieIdx, sourceFaceResult);
         if (dieGo == null)
         {
             Debug.LogWarning($"CombatManager: Post-batch Roll Again — no die for batch index {dieIdx}.");
             yield break;
         }
 
-        dieTransform = dieGo.transform;
+        var dieTransform = dieGo.transform;
+        var dieAsset = sourceFaceResult.SourceDieAsset;
 
         _postSubmitRerollSettledFaces.Remove(dieIdx);
         _postSubmitRerollWaitingIndices.Add(dieIdx);

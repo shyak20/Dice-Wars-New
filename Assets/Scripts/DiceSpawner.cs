@@ -45,18 +45,35 @@ public class DiceSpawner : MonoBehaviour
     /// <summary>Physical instance for this batch index (same order as <see cref="DiceRoller.BatchIndex"/>).</summary>
     public GameObject GetActiveDieGameObject(int batchIndex)
     {
-        if (batchIndex < 0 || batchIndex >= activeDiceModels.Count)
+        if (batchIndex < 0)
             return null;
-        return activeDiceModels[batchIndex];
+
+        for (var i = 0; i < activeDiceModels.Count; i++)
+        {
+            var die = activeDiceModels[i];
+            if (die == null)
+                continue;
+
+            var roller = die.GetComponent<DiceRoller>();
+            if (roller != null && roller.BatchIndex == batchIndex)
+                return die;
+        }
+
+        return null;
     }
 
     /// <summary>Spawn order index for the active batch (matches <see cref="DiceRoller.BatchIndex"/>).</summary>
     public int GetIndexOfActiveDie(GameObject die)
     {
         if (die == null) return -1;
+        var roller = die.GetComponent<DiceRoller>();
+        if (roller != null && roller.BatchIndex >= 0)
+            return roller.BatchIndex;
+
         for (var i = 0; i < activeDiceModels.Count; i++)
             if (activeDiceModels[i] == die)
                 return i;
+
         return -1;
     }
 
