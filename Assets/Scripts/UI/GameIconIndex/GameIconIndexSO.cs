@@ -90,7 +90,10 @@ public class GameIconIndexSO : ScriptableObject
         public StatusEffectSO effect;
         public Sprite icon;
 
-        [Tooltip("Behind the icon in the stored-actions pool row (PoolRowKey stable id = effect asset name).")]
+        [Tooltip("Optional. Behind enemy intent rows when an action applies this status. Falls back to Pool Row Background.")]
+        public Sprite background;
+
+        [Tooltip("Behind the icon in stored-actions pool rows and enemy intent when Background is unset.")]
         public Sprite poolRowBackground;
     }
 
@@ -126,6 +129,7 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<ActionVisualId, string> _actionTooltipTitleLookup = new Dictionary<ActionVisualId, string>();
     readonly Dictionary<ActionVisualId, string> _actionTooltipDescriptionLookup = new Dictionary<ActionVisualId, string>();
     readonly Dictionary<StatusEffectSO, Sprite> _statusLookup = new Dictionary<StatusEffectSO, Sprite>();
+    readonly Dictionary<StatusEffectSO, Sprite> _statusBackgroundLookup = new Dictionary<StatusEffectSO, Sprite>();
     readonly Dictionary<ActionVisualId, Sprite> _actionBackgroundLookup = new Dictionary<ActionVisualId, Sprite>();
     readonly Dictionary<string, Sprite> _enemyActionIconLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, Sprite> _enemyActionBackgroundLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
@@ -187,6 +191,7 @@ public class GameIconIndexSO : ScriptableObject
         }
 
         _statusLookup.Clear();
+        _statusBackgroundLookup.Clear();
         foreach (var e in statusEffectIcons)
         {
             if (e.effect == null) continue;
@@ -195,6 +200,10 @@ public class GameIconIndexSO : ScriptableObject
             _statusTargetByPoolRowStableId[e.effect.name] = e.effect.target;
             if (e.poolRowBackground != null)
                 _poolRowBackgroundByStableId[e.effect.name] = e.poolRowBackground;
+
+            var statusBarBg = e.background != null ? e.background : e.poolRowBackground;
+            if (statusBarBg != null)
+                _statusBackgroundLookup[e.effect] = statusBarBg;
         }
 
         foreach (var e in enemyResistanceIcons)
@@ -236,6 +245,53 @@ public class GameIconIndexSO : ScriptableObject
         if (_statusLookup.Count == 0 && statusEffectIcons.Count > 0)
             RebuildLookups();
         return _statusLookup.TryGetValue(effect, out var s) ? s : null;
+    }
+
+    /// <summary>Background frame for status-driven UI (enemy intent rows, pool rows).</summary>
+    public Sprite GetStatusBackground(StatusEffectSO effect)
+    {
+        if (effect == null) return null;
+        if (_statusBackgroundLookup.Count == 0 && statusEffectIcons.Count > 0)
+            RebuildLookups();
+        return _statusBackgroundLookup.TryGetValue(effect, out var s) ? s : null;
+    }
+
+    /// <summary>
+    /// Background for one step on the enemy intent strip: Enemy Actions entry, then player ActionVisualId,
+    /// then status background when the action applies a status (e.g. <see cref="ThornsAction"/> → Thorns asset).
+    /// </summary>
+    public Sprite GetIntentActionBackground(IGameAction action)
+    {
+        if (action == null)
+            return null;
+
+        var type = action.GetType();
+        var bg = GetEnemyActionBackground(type.FullName);
+        if (bg == null)
+            bg = GetEnemyActionBackground(type.Name);
+        if (bg != null)
+            return bg;
+
+        if (action is GameActionWithIcon gai)
+        {
+            var id = gai.GetActionVisualId();
+            if (id != ActionVisualId.None)
+                bg = GetActionBackground(id);
+        }
+
+        if (bg != null)
+            return bg;
+
+        if (action is ThornsAction thorns && thorns.ThornsDefinition != null)
+            return GetStatusBackground(thorns.ThornsDefinition);
+
+        if (action is ApplyStatusEffectAction apply && apply.StatusEffectDefinition != null)
+            return GetStatusBackground(apply.StatusEffectDefinition);
+
+        if (action is ApplyBenefitToMainEnemyAction benefit && benefit.StatusEffectDefinition != null)
+            return GetStatusBackground(benefit.StatusEffectDefinition);
+
+        return null;
     }
 
     /// <summary>Background for stored-actions pool rows only (<see cref="TryGetPoolRowBackground"/>).</summary>
@@ -505,6 +561,8 @@ public class GameIconIndexSO : ScriptableObject
             });
             if (status.poolRowBackground != null && status.effect != null)
                 entries.Add(new NamedIconEntry { key = $"Status.{status.effect.name}.PoolRowBackground", sprite = status.poolRowBackground });
+            if (status.background != null && status.effect != null)
+                entries.Add(new NamedIconEntry { key = $"Status.{status.effect.name}.Background", sprite = status.background });
         }
 
         foreach (var resistance in enemyResistanceIcons)

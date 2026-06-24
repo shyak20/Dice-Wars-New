@@ -84,7 +84,7 @@ public static class EnemyIntentSegments
 
             var actionTypeName = a.GetType().FullName ?? a.GetType().Name;
             var icon = GameIconCatalog.GetEnemyActionIcon(actionTypeName) ?? GameActionIconUtility.GetDisplayIcon(a);
-            var bg = GameIconCatalog.GetEnemyActionBackground(actionTypeName);
+            var bg = GameIconCatalog.GetIntentActionBackground(a);
 
             if (a is ApplyStatusEffectAction apply && apply.StatusEffectDefinition != null)
             {
