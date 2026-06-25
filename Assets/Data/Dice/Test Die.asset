@@ -20,7 +20,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: dcc4a884d55666b439d437ec3dce52b1, type: 2}
   - {fileID: 11400000, guid: dcc4a884d55666b439d437ec3dce52b1, type: 2}
   - {fileID: 11400000, guid: dcc4a884d55666b439d437ec3dce52b1, type: 2}
-  - {fileID: 11400000, guid: db065000c03fd0d47b931806a885e0a3, type: 2}
+  - {fileID: 11400000, guid: dcc4a884d55666b439d437ec3dce52b1, type: 2}
   - {fileID: 11400000, guid: 83377a71033be8a42925b23921587891, type: 2}
   - {fileID: 11400000, guid: 83377a71033be8a42925b23921587891, type: 2}
   socketedGems:

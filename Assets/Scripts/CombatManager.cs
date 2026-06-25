@@ -77,6 +77,12 @@ public class CombatManager : MonoBehaviour
     [Header("Reroll (RerollDie action)")]
     [Tooltip("When a face has Reroll Die, after the batch settles the player may pick a die to rethrow (or skip).")]
     [SerializeField] private RerollDieSelectionController rerollDieSelection;
+
+    [Header("Die-to-die projectiles")]
+    [Tooltip("Optional. Flies world-space projectiles from source dice to reroll targets before physics reroll.")]
+    [SerializeField] private DieToDieProjectileController dieToDieProjectileController;
+    [Tooltip("Fallback projectile prefab when an action or gem entry does not specify one.")]
+    [SerializeField] private GameObject defaultDieToDieProjectilePrefab;
     [Header("Roll Platform Glow")]
     [Tooltip("Optional. Platform renderer using a material with _SelfLitIntensity.")]
     [SerializeField] private Renderer rollPlatformRenderer;
@@ -157,7 +163,17 @@ public class CombatManager : MonoBehaviour
     private readonly Dictionary<DieAssetSO, int> _gemExtraRollGrantsThisTurnByDie = new Dictionary<DieAssetSO, int>();
     /// <summary>Per die: how many times <see cref="TryScheduleGemBatchRandomRerollsSkipPower"/> succeeded this roll batch (cleared when a new batch starts).</summary>
     private readonly Dictionary<DieAssetSO, int> _gemBonusRollChainActivationsByDieThisBatch = new Dictionary<DieAssetSO, int>();
-    private readonly HashSet<int> _gemScheduledBatchRerollIndices = new HashSet<int>();
+
+    private struct GemBatchRerollSchedule
+    {
+        public int TargetIndex;
+        public int TriggerGatherIndex;
+        public GameObject ProjectilePrefab;
+    }
+
+    private readonly List<GemBatchRerollSchedule> _gemScheduledBatchRerolls = new List<GemBatchRerollSchedule>();
+    private readonly Queue<int> _pendingPlayerChoiceRerollSources = new Queue<int>();
+    private readonly HashSet<int> _deferDissolveBatchIndicesForDieToDieLaunch = new HashSet<int>();
     private readonly HashSet<FaceResult> _facesAwaitingPostSubmitTriggeringReroll = new HashSet<FaceResult>();
     private readonly HashSet<FaceResult> _faceOutcomesSubmitted = new HashSet<FaceResult>();
     private readonly HashSet<int> _postSubmitRerollWaitingIndices = new HashSet<int>();
@@ -169,6 +185,7 @@ public class CombatManager : MonoBehaviour
     private bool _postBatchOtherDiceRerollCompleted = true;
     private bool _postBatchOtherDiceRerollStarted;
     private readonly HashSet<int> _batchRerollOtherTargetIndices = new HashSet<int>();
+    private readonly HashSet<int> _batchRerollOtherKeeperIndices = new HashSet<int>();
     private readonly HashSet<FaceResult> _facesAwaitingPostBatchOtherDiceReroll = new HashSet<FaceResult>();
     private readonly HashSet<FaceResult> _pendingBatchSubmitForRerollOther = new HashSet<FaceResult>();
     private readonly HashSet<FaceResult> _postBatchSecondPassAwaitingSubmit = new HashSet<FaceResult>();
@@ -445,7 +462,8 @@ public class CombatManager : MonoBehaviour
         DieAssetSO triggerDie,
         int gatherIndex,
         int otherDiceCount,
-        int maxActivationsPerRoll = 3)
+        int maxActivationsPerRoll = 3,
+        GameObject projectilePrefab = null)
     {
         if (triggerDie == null || spawner == null) return false;
         if (otherDiceCount <= 0) return false;
@@ -476,7 +494,12 @@ public class CombatManager : MonoBehaviour
         for (var k = 0; k < pick; k++)
         {
             var idx = candidates[k];
-            _gemScheduledBatchRerollIndices.Add(idx);
+            _gemScheduledBatchRerolls.Add(new GemBatchRerollSchedule
+            {
+                TargetIndex = idx,
+                TriggerGatherIndex = gatherIndex,
+                ProjectilePrefab = projectilePrefab,
+            });
             _gemBatchRerollIndicesInFlight.Add(idx);
         }
 
@@ -996,7 +1019,7 @@ public class CombatManager : MonoBehaviour
         }
 
         _gemBonusRollChainActivationsByDieThisBatch.Clear();
-        _gemScheduledBatchRerollIndices.Clear();
+        _gemScheduledBatchRerolls.Clear();
         _noPowerOnNextGatherCommit.Clear();
         _gemBatchRerollIndicesInFlight.Clear();
         _gemExtraRollGrantsThisTurnByDie.Clear();
@@ -1101,7 +1124,8 @@ public class CombatManager : MonoBehaviour
         StartRollPlatformGlow();
         _rollBatchId++;
         _gemBonusRollChainActivationsByDieThisBatch.Clear();
-        _gemScheduledBatchRerollIndices.Clear();
+        _gemScheduledBatchRerolls.Clear();
+        _deferDissolveBatchIndicesForDieToDieLaunch.Clear();
         _noPowerOnNextGatherCommit.Clear();
         _gemBatchRerollIndicesInFlight.Clear();
         _pendingRerollGrants = 0;
@@ -1193,6 +1217,7 @@ public class CombatManager : MonoBehaviour
             Debug.LogError("CombatManager: Reroll Die on a face but rerollDieSelection is not assigned.");
 
         _pendingRerollGrants = CountRerollGrantsFromAllPendingFaces(RerollDieAction.RerollDieScope.PlayerChoosesAnyDie);
+        BuildPendingPlayerChoiceRerollSourceQueue();
         while (_pendingRerollGrants > 0 && rerollDieSelection != null)
         {
             var dice = spawner.GetActiveDiceSnapshot();
@@ -1213,6 +1238,9 @@ public class CombatManager : MonoBehaviour
             });
             while (wait) yield return null;
 
+            var sourceIdx = _pendingPlayerChoiceRerollSources.Count > 0
+                ? _pendingPlayerChoiceRerollSources.Dequeue()
+                : -1;
             _pendingRerollGrants = Mathf.Max(0, _pendingRerollGrants - 1);
 
             if (!skipped && picked != null)
@@ -1222,6 +1250,20 @@ public class CombatManager : MonoBehaviour
                     Debug.LogWarning("CombatManager: Picked die is not in the active batch.");
                 else
                 {
+                    if (sourceIdx < 0)
+                        Debug.LogWarning("CombatManager: Player-choice reroll grant has no source die index.");
+
+                    var sourceTransform = sourceIdx >= 0 ? GetBatchDieTransform(sourceIdx) : null;
+                    var sourceFace = sourceIdx >= 0 && _pendingTopFaceByDieIndex != null && sourceIdx < _pendingTopFaceByDieIndex.Length
+                        ? _pendingTopFaceByDieIndex[sourceIdx]
+                        : null;
+                    var projectilePrefab = GetPlayerChoiceRerollProjectilePrefabFromFace(sourceFace);
+                    if (sourceTransform != null)
+                    {
+                        var targets = new List<Transform> { picked.transform };
+                        yield return CoLaunchDieToDieProjectiles(sourceTransform, targets, projectilePrefab);
+                    }
+
                     _pendingTopFaceByDieIndex[idx] = null;
                     _pendingDieSourceByIndex[idx] = null;
                     spawner.RerollDiePhysics(picked);
@@ -1350,6 +1392,7 @@ public class CombatManager : MonoBehaviour
         _batchHasRerollOtherDicePending = false;
         _postBatchOtherDiceRerollCompleted = true;
         _batchRerollOtherTargetIndices.Clear();
+        _batchRerollOtherKeeperIndices.Clear();
 
         if (_pendingTopFaceByDieIndex == null || expectedDiceCount <= 1)
             return;
@@ -1363,6 +1406,9 @@ public class CombatManager : MonoBehaviour
 
         if (keeperIndices.Count == 0)
             return;
+
+        foreach (var keeperIdx in keeperIndices)
+            _batchRerollOtherKeeperIndices.Add(keeperIdx);
 
         for (var i = 0; i < expectedDiceCount; i++)
         {
@@ -1387,6 +1433,159 @@ public class CombatManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void BuildPendingPlayerChoiceRerollSourceQueue()
+    {
+        _pendingPlayerChoiceRerollSources.Clear();
+        if (_pendingTopFaceByDieIndex == null)
+            return;
+
+        for (var i = 0; i < expectedDiceCount; i++)
+        {
+            var grants = CountRerollGrantsOnFace(_pendingTopFaceByDieIndex[i], RerollDieAction.RerollDieScope.PlayerChoosesAnyDie);
+            for (var g = 0; g < grants; g++)
+                _pendingPlayerChoiceRerollSources.Enqueue(i);
+        }
+    }
+
+    private Transform GetBatchDieTransform(int batchIndex)
+    {
+        if (_pendingDieSourceByIndex != null
+            && batchIndex >= 0
+            && batchIndex < _pendingDieSourceByIndex.Length
+            && _pendingDieSourceByIndex[batchIndex] != null)
+            return _pendingDieSourceByIndex[batchIndex];
+
+        if (_batchLiveDieByGatherIndex.TryGetValue(batchIndex, out var live) && live != null)
+            return live.transform;
+
+        var go = spawner != null ? spawner.GetActiveDieGameObject(batchIndex) : null;
+        return go != null ? go.transform : null;
+    }
+
+    private GameObject ResolveDieToDieProjectilePrefab(GameObject actionPrefab) =>
+        actionPrefab != null ? actionPrefab : defaultDieToDieProjectilePrefab;
+
+    private IEnumerator CoLaunchDieToDieProjectiles(
+        Transform source,
+        IReadOnlyList<Transform> targets,
+        GameObject actionPrefab)
+    {
+        if (dieToDieProjectileController == null || source == null || targets == null || targets.Count == 0)
+            yield break;
+
+        var prefab = ResolveDieToDieProjectilePrefab(actionPrefab);
+        if (prefab == null)
+        {
+            Debug.LogWarning("CombatManager: dieToDieProjectileController is assigned but no die-to-die projectile prefab is configured.");
+            yield break;
+        }
+
+        var sourceBatchIndex = spawner != null ? spawner.GetIndexOfActiveDie(source.gameObject) : -1;
+        if (sourceBatchIndex >= 0)
+            _deferDissolveBatchIndicesForDieToDieLaunch.Add(sourceBatchIndex);
+
+        yield return dieToDieProjectileController.LaunchAndWait(source, targets, prefab);
+
+        if (sourceBatchIndex >= 0)
+            TryDissolveDeferredDieToDieSource(sourceBatchIndex);
+    }
+
+    private void TryDissolveDeferredDieToDieSource(int batchIndex)
+    {
+        if (!_deferDissolveBatchIndicesForDieToDieLaunch.Remove(batchIndex))
+            return;
+
+        var dieTransform = GetBatchDieTransform(batchIndex);
+        if (dieTransform != null && spawner != null)
+            spawner.BeginDissolveAndDestroyDie(dieTransform.gameObject);
+    }
+
+    private IEnumerator CoPlayDieToDieRerollOtherProjectiles()
+    {
+        if (!_batchHasRerollOtherDicePending
+            || _batchRerollOtherKeeperIndices.Count == 0
+            || _batchRerollOtherTargetIndices.Count == 0)
+            yield break;
+
+        var targetTransforms = new List<Transform>();
+        foreach (var targetIdx in _batchRerollOtherTargetIndices)
+        {
+            var target = GetBatchDieTransform(targetIdx);
+            if (target == null)
+            {
+                Debug.LogWarning($"CombatManager: Post-batch reroll other — no target transform for batch index {targetIdx}.");
+                continue;
+            }
+
+            targetTransforms.Add(target);
+        }
+
+        if (targetTransforms.Count == 0)
+            yield break;
+
+        foreach (var keeperIdx in _batchRerollOtherKeeperIndices)
+        {
+            var source = GetBatchDieTransform(keeperIdx);
+            if (source == null)
+            {
+                Debug.LogWarning($"CombatManager: Post-batch reroll other — no source transform for keeper batch index {keeperIdx}.");
+                continue;
+            }
+
+            var keeperFace = FindKeeperFaceForBatchIndex(keeperIdx);
+            var prefab = GetRerollOtherProjectilePrefabFromFace(keeperFace);
+            yield return CoLaunchDieToDieProjectiles(source, targetTransforms, prefab);
+        }
+    }
+
+    private DieFaceSO FindKeeperFaceForBatchIndex(int keeperIdx)
+    {
+        for (var i = channeledFaces.Count - 1; i >= 0; i--)
+        {
+            var faceResult = channeledFaces[i];
+            if (faceResult != null
+                && faceResult.BatchGatherIndex == keeperIdx
+                && !faceResult.AwaitingPostBatchOtherDiceReroll)
+                return faceResult.Face;
+        }
+
+        if (_pendingTopFaceByDieIndex != null
+            && keeperIdx >= 0
+            && keeperIdx < _pendingTopFaceByDieIndex.Length)
+            return _pendingTopFaceByDieIndex[keeperIdx];
+
+        return null;
+    }
+
+    private static GameObject GetRerollOtherProjectilePrefabFromFace(DieFaceSO face)
+    {
+        if (face?.actions == null)
+            return null;
+
+        for (var i = 0; i < face.actions.Count; i++)
+        {
+            if (face.actions[i] is RerollOtherDiceAfterAllSettledAction other)
+                return other.DieToDieProjectilePrefab;
+        }
+
+        return null;
+    }
+
+    private static GameObject GetPlayerChoiceRerollProjectilePrefabFromFace(DieFaceSO face)
+    {
+        if (face?.actions == null)
+            return null;
+
+        for (var i = 0; i < face.actions.Count; i++)
+        {
+            if (face.actions[i] is RerollDieAction reroll
+                && reroll.Scope == RerollDieAction.RerollDieScope.PlayerChoosesAnyDie)
+                return reroll.DieToDieProjectilePrefab;
+        }
+
+        return null;
     }
 
     IEnumerator CoProcessTriggeringRerollsAtDieIndex(int dieIdx)
@@ -1489,41 +1688,91 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator CoDrainGemScheduledRerolls()
     {
-        while (_gemScheduledBatchRerollIndices.Count > 0)
+        while (_gemScheduledBatchRerolls.Count > 0)
         {
-            var batch = new List<int>(_gemScheduledBatchRerollIndices);
-            _gemScheduledBatchRerollIndices.Clear();
+            var batch = new List<GemBatchRerollSchedule>(_gemScheduledBatchRerolls);
+            _gemScheduledBatchRerolls.Clear();
 
-            foreach (var j in batch)
+            var byTrigger = new Dictionary<int, List<GemBatchRerollSchedule>>();
+            foreach (var entry in batch)
             {
-                if (j < 0 || j >= expectedDiceCount) continue;
-                if (_pendingTopFaceByDieIndex == null || j >= _pendingTopFaceByDieIndex.Length) continue;
-
-                var go = spawner != null ? spawner.GetActiveDieGameObject(j) : null;
-                if (go == null)
+                if (!byTrigger.TryGetValue(entry.TriggerGatherIndex, out var group))
                 {
-                    Debug.LogError($"CombatManager: Gem batch reroll — no active die GameObject for batch index {j}.");
-                    _gemBatchRerollIndicesInFlight.Remove(j);
-                    continue;
+                    group = new List<GemBatchRerollSchedule>();
+                    byTrigger.Add(entry.TriggerGatherIndex, group);
                 }
 
-                _pendingTopFaceByDieIndex[j] = null;
-                _pendingDieSourceByIndex[j] = null;
-                _noPowerOnNextGatherCommit.Add(j);
-                spawner.RerollDiePhysics(go);
+                group.Add(entry);
             }
 
-            yield return new WaitUntil(() =>
+            foreach (var group in byTrigger.Values)
             {
-                if (_pendingTopFaceByDieIndex == null) return true;
-                foreach (var j in batch)
+                if (group.Count == 0)
+                    continue;
+
+                var triggerIdx = group[0].TriggerGatherIndex;
+                var source = GetBatchDieTransform(triggerIdx);
+                var targetTransforms = new List<Transform>();
+                var targetIndices = new List<int>();
+                GameObject projectilePrefab = null;
+
+                foreach (var entry in group)
                 {
-                    if (j < 0 || j >= _pendingTopFaceByDieIndex.Length) continue;
-                    if (_pendingTopFaceByDieIndex[j] == null) return false;
+                    var j = entry.TargetIndex;
+                    if (j < 0 || j >= expectedDiceCount)
+                        continue;
+                    if (_pendingTopFaceByDieIndex == null || j >= _pendingTopFaceByDieIndex.Length)
+                        continue;
+
+                    var targetTransform = GetBatchDieTransform(j);
+                    if (targetTransform == null)
+                    {
+                        Debug.LogError($"CombatManager: Gem batch reroll — no active die transform for batch index {j}.");
+                        _gemBatchRerollIndicesInFlight.Remove(j);
+                        continue;
+                    }
+
+                    targetTransforms.Add(targetTransform);
+                    targetIndices.Add(j);
+                    if (projectilePrefab == null && entry.ProjectilePrefab != null)
+                        projectilePrefab = entry.ProjectilePrefab;
                 }
 
-                return true;
-            });
+                if (source != null && targetTransforms.Count > 0)
+                    yield return CoLaunchDieToDieProjectiles(source, targetTransforms, projectilePrefab);
+
+                foreach (var j in targetIndices)
+                {
+                    var go = spawner != null ? spawner.GetActiveDieGameObject(j) : null;
+                    if (go == null)
+                    {
+                        Debug.LogError($"CombatManager: Gem batch reroll — no active die GameObject for batch index {j}.");
+                        _gemBatchRerollIndicesInFlight.Remove(j);
+                        continue;
+                    }
+
+                    _pendingTopFaceByDieIndex[j] = null;
+                    _pendingDieSourceByIndex[j] = null;
+                    _noPowerOnNextGatherCommit.Add(j);
+                    spawner.RerollDiePhysics(go);
+                }
+
+                yield return new WaitUntil(() =>
+                {
+                    if (_pendingTopFaceByDieIndex == null)
+                        return true;
+
+                    foreach (var j in targetIndices)
+                    {
+                        if (j < 0 || j >= _pendingTopFaceByDieIndex.Length)
+                            continue;
+                        if (_pendingTopFaceByDieIndex[j] == null)
+                            return false;
+                    }
+
+                    return true;
+                });
+            }
         }
     }
 
@@ -1537,6 +1786,16 @@ public class CombatManager : MonoBehaviour
         FaceHasPendingPostSubmitTriggeringReroll(face)
         || FaceHasPendingPostBatchOtherDiceReroll(face)
         || ShouldHoldDieAliveForBatchRerollOther(face);
+
+    /// <summary>Source die for a die-to-die projectile stays visible until projectiles arrive and reroll begins.</summary>
+    public bool DieTransformBlocksDissolveForDieToDieDeferred(Transform dieTransform)
+    {
+        if (dieTransform == null || spawner == null)
+            return false;
+
+        var batchIndex = spawner.GetIndexOfActiveDie(dieTransform.gameObject);
+        return batchIndex >= 0 && _deferDissolveBatchIndicesForDieToDieLaunch.Contains(batchIndex);
+    }
 
     private void TryTriggerPostBatchRerollOtherIfReady()
     {
@@ -1555,6 +1814,7 @@ public class CombatManager : MonoBehaviour
         _postBatchOtherDiceRerollCompleted = true;
         _postBatchOtherDiceRerollStarted = false;
         _batchRerollOtherTargetIndices.Clear();
+        _batchRerollOtherKeeperIndices.Clear();
         _facesAwaitingPostBatchOtherDiceReroll.Clear();
         _pendingBatchSubmitForRerollOther.Clear();
         _postBatchSecondPassAwaitingSubmit.Clear();
@@ -1870,6 +2130,8 @@ public class CombatManager : MonoBehaviour
 
             var indices = new List<int>(_batchRerollOtherTargetIndices);
             indices.Sort();
+
+            yield return CoPlayDieToDieRerollOtherProjectiles();
 
             var settledFaces = new Dictionary<int, DieFaceSO>();
             yield return CoParallelPhysicsRerollOtherDice(indices, settledFaces);
@@ -4422,7 +4684,7 @@ public class CombatManager : MonoBehaviour
         pendingPrecisionChoices.Clear();
         currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
         _gemBonusRollChainActivationsByDieThisBatch.Clear();
-        _gemScheduledBatchRerollIndices.Clear();
+        _gemScheduledBatchRerolls.Clear();
         _noPowerOnNextGatherCommit.Clear();
         _gemBatchRerollIndicesInFlight.Clear();
         _gemExtraRollGrantsThisTurnByDie.Clear();

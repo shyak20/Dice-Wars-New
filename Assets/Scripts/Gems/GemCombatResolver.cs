@@ -123,7 +123,8 @@ public static class GemCombatResolver
                     sourceDie,
                     batchGatherIndex,
                     Mathf.Max(0, entry.param),
-                    DefaultGemBatchRerollProcCapPerRoll);
+                    DefaultGemBatchRerollProcCapPerRoll,
+                    entry.dieToDieProjectilePrefab);
                 break;
 
             case GemEffectKind.CleanseRandomDebuff:

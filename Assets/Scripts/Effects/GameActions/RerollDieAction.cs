@@ -23,11 +23,16 @@ public class RerollDieAction : GameActionWithIcon
     [Tooltip("When on with RerollTriggeringDieOnly, skip the reroll if power already qualifies for Perfect Cast after this face is submitted.")]
     [SerializeField] private bool skipRerollWhenPerfectCast;
 
+    [Tooltip("Optional world projectile that flies from this die to each reroll target before physics reroll.")]
+    [SerializeField] private GameObject dieToDieProjectilePrefab;
+
     public RerollDieScope Scope => scope;
 
     public bool KeepSameFaceOnReroll => keepSameFaceOnReroll;
 
     public bool SkipRerollWhenPerfectCast => skipRerollWhenPerfectCast;
+
+    public GameObject DieToDieProjectilePrefab => dieToDieProjectilePrefab;
 
     protected override ActionVisualId VisualKey => ActionVisualId.RerollDie;
 

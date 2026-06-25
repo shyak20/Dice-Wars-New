@@ -213,7 +213,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6725170449992837645}
-  - component: {fileID: 5228137106365792241}
+  - component: {fileID: 6090595402282947434}
   m_Layer: 0
   m_Name: List Container
   m_TagString: Untagged
@@ -240,7 +240,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 610.5582, y: 110.8945}
   m_Pivot: {x: 0.5, y: 0}
---- !u!114 &5228137106365792241
+--- !u!114 &6090595402282947434
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -249,23 +249,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 1789525825179025365}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Script: {fileID: 11500000, guid: 4f628df2c705f6549899f4c5e183e67d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_EditorClassIdentifier: Assembly-CSharp::AlignedGridLayoutGroup
   m_Padding:
     m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 4
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ChildAlignment: 7
+  startCorner: 5
+  startAxis: 0
+  cellSize: {x: 60, y: 60}
+  spacing: {x: 5, y: 5}
+  constraint: 0
+  constraintCount: 2
+  cellChildAlignment: 0
 --- !u!1 &1858618348769706537
 GameObject:
   m_ObjectHideFlags: 0

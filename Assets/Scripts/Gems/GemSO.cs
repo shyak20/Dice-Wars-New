@@ -19,6 +19,9 @@ public class GemEffectEntry
 
     [Tooltip("Required when Kind is ApplyStatus (same as die-face Gain Status).")]
     public StatusEffectSO statusDefinition;
+
+    [Tooltip("Optional world projectile when Kind affects other dice in the batch (e.g. RandomBatchRerollOtherDiceNoPower).")]
+    public GameObject dieToDieProjectilePrefab;
 }
 
 /// <summary>

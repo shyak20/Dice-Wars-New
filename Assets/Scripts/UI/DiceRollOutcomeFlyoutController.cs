@@ -867,6 +867,9 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (dieTransform == null)
             return;
 
+        if (combat != null && combat.DieTransformBlocksDissolveForDieToDieDeferred(dieTransform))
+            return;
+
         var spawner = combat != null ? combat.spawner : null;
         if (spawner == null)
             return;

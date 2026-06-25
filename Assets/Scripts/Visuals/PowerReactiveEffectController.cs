@@ -360,39 +360,19 @@ public sealed class PowerReactiveEffectController : MonoBehaviour
         Transform anchor,
         System.Action onArrived)
     {
-        float duration = flyTime;
-        float elapsed = 0f;
-        float hitSqr = hitCloseDistanceWorld > 0f ? hitCloseDistanceWorld * hitCloseDistanceWorld : -1f;
-
-        while (elapsed < duration)
+        var settings = new ArcFlightSettings
         {
-            elapsed += Time.deltaTime;
-            float u = Mathf.Clamp01(elapsed / duration);
-            float eased = Mathf.Clamp01(flyCurve.Evaluate(u));
-            Vector3 anchorPos = anchor.position;
-            Vector3 pos = Vector3.LerpUnclamped(flightStartWorld, anchorPos, eased);
+            flyDuration = flyTime,
+            flyCurve = flyCurve,
+            arcHeight = flightArcHeight,
+            arcCurve = flightArcCurve,
+            arcAxis = ArcFlightSettings.ArcAxisMode.WorldX,
+            faceTowardTarget = false,
+            hitCloseDistanceWorld = hitCloseDistanceWorld,
+            hitProximityMinNormalizedTime = hitProximityMinNormalizedTime,
+        };
 
-            if (flightArcHeight != 0f && flightArcCurve != null && flightArcCurve.length > 0)
-            {
-                float arcMult = Mathf.Clamp01(flightArcCurve.Evaluate(u));
-                pos.x += arcMult * flightArcHeight;
-            }
-
-            flyingTransform.position = pos;
-
-            bool curveComplete = eased >= 1f;
-            bool proximityHit = hitSqr > 0f
-                && u >= hitProximityMinNormalizedTime
-                && (pos - anchorPos).sqrMagnitude <= hitSqr;
-
-            if (curveComplete || proximityHit)
-                break;
-
-            yield return null;
-        }
-
-        flyingTransform.position = anchor.position;
-        onArrived?.Invoke();
+        yield return ArcFlightMotion.CoFly(flyingTransform, flightStartWorld, anchor, settings, onArrived);
     }
 
     /// <summary>Convenience: flies to <paramref name="enemy"/>'s power-orb anchor; requires combat power &gt; 0 unless you use <see cref="RunFlightToWorldAnchor"/>.</summary>
