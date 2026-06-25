@@ -67,12 +67,43 @@ public class FaceResult
     /// <summary>Copied from the rolled face; <see cref="IGameAction.ActivateImmediately"/> controls gather vs turn-end <see cref="IGameAction.Execute"/>, and early vs late <see cref="FaceResolveModifierBase.Modify"/>.</summary>
     public List<IGameAction> Actions { get; set; } = new List<IGameAction>();
 
-    /// <summary>
-    /// Multi-enemy: the enemy the <b>damage piece</b> of this face was assigned to (drag-and-drop, or auto-assigned when only one
+    /// <summary>Multi-enemy: the enemy the <b>damage piece</b> of this face was assigned to (drag-and-drop, or auto-assigned when only one
     /// enemy is alive). Null until assigned; resolution falls back to the primary enemy. Each enemy-targeted action is targeted
     /// independently via <see cref="SetActionTarget"/> so one face can hit different enemies (e.g. damage on A, Burn on B).
-    /// </summary>
+    /// When <see cref="UsesSplitDamageHits"/>, use <see cref="SetDamageHitTarget"/> / <see cref="GetDamageHitTarget"/> instead.</summary>
     public EnemyController DamageTargetEnemy { get; set; }
+
+    private EnemyController[] _damageHitTargets;
+
+    /// <summary><see cref="DieType.Damage"/> with <see cref="DamageAttackTimes"/> &gt; 1 — one assignable element value per hit.</summary>
+    public bool UsesSplitDamageHits => Type == DieType.Damage && Damage > 0 && DamageAttackTimes > 1;
+
+    public void SetDamageHitTarget(int hitIndex, EnemyController enemy)
+    {
+        if (hitIndex < 0)
+            return;
+
+        EnsureDamageHitTargetArray();
+        if (hitIndex >= _damageHitTargets.Length)
+            return;
+
+        _damageHitTargets[hitIndex] = enemy;
+    }
+
+    public EnemyController GetDamageHitTarget(int hitIndex)
+    {
+        if (hitIndex < 0 || _damageHitTargets == null || hitIndex >= _damageHitTargets.Length)
+            return null;
+
+        return _damageHitTargets[hitIndex];
+    }
+
+    void EnsureDamageHitTargetArray()
+    {
+        var count = Mathf.Max(1, DamageAttackTimes);
+        if (_damageHitTargets == null || _damageHitTargets.Length != count)
+            _damageHitTargets = new EnemyController[count];
+    }
 
     private Dictionary<IGameAction, EnemyController> _actionTargets;
 

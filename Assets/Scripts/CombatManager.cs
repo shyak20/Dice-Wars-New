@@ -1629,7 +1629,9 @@ public class CombatManager : MonoBehaviour
                 return;
 
             IncreaseOtherElementsAction.ApplyBonusToFace(hit.Face, hit.RowKey, bonusAmount);
-            diceRollOutcomeFlyout?.TryApplyFlyoutLineBonus(hit.Face.BatchGatherIndex, hit.RowKey, bonusAmount);
+            diceRollOutcomeFlyout?.TryApplyFlyoutLineBonus(hit.Face.BatchGatherIndex, hit.RowKey, bonusAmount, hit.Face);
+            if (targetIndex >= 0 && targetIndex < targets.Count)
+                diceRollOutcomeFlyout?.PlayDieActivationFeedbackOnDie(targets[targetIndex]);
         });
 
         if (sourceBatchIndex >= 0)
@@ -3018,7 +3020,26 @@ public class CombatManager : MonoBehaviour
 
         var damageIsEnemyTargeted = result.Type == DieType.Damage || result.Type == DieType.Fire ||
                                     result.Type == DieType.Ice || result.Type == DieType.Nature;
-        AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted);
+
+        if (result.Type == DieType.Damage && result.Damage > 0 && result.DamageAttackTimes > 1)
+        {
+            var damageIcon = GameIconCatalog.GetElementIcon(DieType.Damage);
+            for (var hit = 0; hit < result.DamageAttackTimes; hit++)
+            {
+                lines.Add(new RollOutcomeVisualLine
+                {
+                    RowKey = PoolRowKey.FromDieType(DieType.Damage),
+                    Amount = result.Damage,
+                    IconOverride = damageIcon,
+                    EnemyTargeted = true,
+                    AttackAllEnemies = result.AttackAllEnemies,
+                    IsSplitDamageHitLine = true,
+                    DamageHitIndex = hit,
+                });
+            }
+        }
+        else
+            AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted);
         AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
         AddLine(PoolRowKey.FromDieType(DieType.Curse), result.TotalSelfDamageContribution, GameIconCatalog.GetElementIcon(DieType.Curse));
 
@@ -4068,7 +4089,36 @@ public class CombatManager : MonoBehaviour
                 {
                     var multiTarget = _activeEnemies[e];
                     if (multiTarget == null || !multiTarget.IsAlive) continue;
-                    AddFaceElementDamageToTotals(face, multiTarget, fallback, TotalsFor, Store);
+
+                    if (face.UsesSplitDamageHits)
+                    {
+                        for (var hit = 0; hit < face.DamageAttackTimes; hit++)
+                        {
+                            var t = TotalsFor(multiTarget);
+                            t.Physical += face.Damage;
+                            Store(multiTarget, t);
+                        }
+                    }
+                    else
+                        AddFaceElementDamageToTotals(face, multiTarget, fallback, TotalsFor, Store);
+                }
+
+                continue;
+            }
+
+            if (face.UsesSplitDamageHits)
+            {
+                for (var hit = 0; hit < face.DamageAttackTimes; hit++)
+                {
+                    var hitTarget = face.GetDamageHitTarget(hit);
+                    if (hitTarget == null || !hitTarget.IsAlive)
+                        hitTarget = fallback;
+                    if (hitTarget == null)
+                        continue;
+
+                    var t = TotalsFor(hitTarget);
+                    t.Physical += face.Damage;
+                    Store(hitTarget, t);
                 }
 
                 continue;
@@ -4150,7 +4200,10 @@ public class CombatManager : MonoBehaviour
         switch (face.Type)
         {
             case DieType.Damage:
-                t.Physical += face.TotalDamageContribution;
+                if (face.UsesSplitDamageHits)
+                    t.Physical += face.Damage;
+                else
+                    t.Physical += face.TotalDamageContribution;
                 break;
             case DieType.Fire:
                 t.Fire += face.Damage;
@@ -4187,7 +4240,12 @@ public class CombatManager : MonoBehaviour
         }
 
         if (sourceAction == null)
-            face.DamageTargetEnemy = enemy;
+        {
+            if (line.IsSplitDamageHitLine)
+                face.SetDamageHitTarget(line.DamageHitIndex, enemy);
+            else
+                face.DamageTargetEnemy = enemy;
+        }
         else
             face.SetActionTarget(sourceAction, enemy);
 
@@ -4216,8 +4274,19 @@ public class CombatManager : MonoBehaviour
             if (face.AttackAllEnemies)
                 continue;
 
-            if (face.HasEnemyDamagePiece && face.DamageTargetEnemy == null)
-                face.DamageTargetEnemy = enemy;
+            if (face.HasEnemyDamagePiece)
+            {
+                if (face.UsesSplitDamageHits)
+                {
+                    for (var hit = 0; hit < face.DamageAttackTimes; hit++)
+                    {
+                        if (face.GetDamageHitTarget(hit) == null)
+                            face.SetDamageHitTarget(hit, enemy);
+                    }
+                }
+                else if (face.DamageTargetEnemy == null)
+                    face.DamageTargetEnemy = enemy;
+            }
 
             if (face.Actions == null) continue;
             foreach (var a in face.Actions)
@@ -4465,11 +4534,25 @@ public class CombatManager : MonoBehaviour
 
             if (face.Damage > 0)
             {
-                var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive
-                    ? face.DamageTargetEnemy
-                    : fallback;
-                if (target == enemy)
-                    return true;
+                if (face.UsesSplitDamageHits)
+                {
+                    for (var hit = 0; hit < face.DamageAttackTimes; hit++)
+                    {
+                        var target = face.GetDamageHitTarget(hit);
+                        if (target == null || !target.IsAlive)
+                            target = fallback;
+                        if (target == enemy)
+                            return true;
+                    }
+                }
+                else
+                {
+                    var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive
+                        ? face.DamageTargetEnemy
+                        : fallback;
+                    if (target == enemy)
+                        return true;
+                }
             }
 
             if (face.Actions == null)

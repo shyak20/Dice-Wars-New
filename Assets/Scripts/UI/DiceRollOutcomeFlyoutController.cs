@@ -105,8 +105,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         public int Amount;
     }
 
-    readonly Dictionary<(int BatchGatherIndex, string RowStableId), ActiveFlyoutLineEntry> _activeFlyoutLinesByBatchRow =
-        new Dictionary<(int, string), ActiveFlyoutLineEntry>();
+    readonly Dictionary<(int BatchGatherIndex, string RowStableId, int DamageHitIndex), ActiveFlyoutLineEntry> _activeFlyoutLinesByBatchRow =
+        new Dictionary<(int, string, int), ActiveFlyoutLineEntry>();
 
     readonly Dictionary<int, RectTransform> _inFlightDieToDieActionIconByTargetBatch =
         new Dictionary<int, RectTransform>();
@@ -172,38 +172,73 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         _inFlightDieToDieActionIconByTargetBatch.Clear();
     }
 
-    public bool TryApplyFlyoutLineBonus(int batchGatherIndex, PoolRowKey rowKey, int bonusDelta)
+    public bool TryApplyFlyoutLineBonus(int batchGatherIndex, PoolRowKey rowKey, int bonusDelta, FaceResult face = null)
     {
         if (batchGatherIndex < 0 || bonusDelta <= 0)
             return false;
 
-        var key = (batchGatherIndex, rowKey.StableId);
-        if (!_activeFlyoutLinesByBatchRow.TryGetValue(key, out var entry) || entry.Icon == null)
-            return false;
+        var any = false;
+        if (face != null && face.UsesSplitDamageHits && PoolRowKey.TryGetDieType(rowKey, out var dieType) && dieType == DieType.Damage)
+        {
+            var keysToUpdate = new List<(int BatchGatherIndex, string RowStableId, int DamageHitIndex)>();
+            foreach (var kvp in _activeFlyoutLinesByBatchRow)
+            {
+                if (kvp.Key.BatchGatherIndex != batchGatherIndex || kvp.Key.RowStableId != rowKey.StableId || kvp.Key.DamageHitIndex < 0)
+                    continue;
 
-        entry.Amount += bonusDelta;
-        entry.Icon.SetFlyoutAmountWithPulse(entry.Amount);
-        _activeFlyoutLinesByBatchRow[key] = entry;
-        return true;
+                keysToUpdate.Add(kvp.Key);
+            }
+
+            foreach (var key in keysToUpdate)
+            {
+                if (!_activeFlyoutLinesByBatchRow.TryGetValue(key, out var entry) || entry.Icon == null)
+                    continue;
+
+                entry.Amount += bonusDelta;
+                entry.Icon.SetFlyoutAmountWithPulse(entry.Amount);
+                _activeFlyoutLinesByBatchRow[key] = entry;
+                any = true;
+            }
+        }
+        else
+        {
+            var key = (batchGatherIndex, rowKey.StableId, -1);
+            if (_activeFlyoutLinesByBatchRow.TryGetValue(key, out var entry) && entry.Icon != null)
+            {
+                entry.Amount += bonusDelta;
+                entry.Icon.SetFlyoutAmountWithPulse(entry.Amount);
+                _activeFlyoutLinesByBatchRow[key] = entry;
+                any = true;
+            }
+        }
+
+        if (!any)
+        {
+            var assignment = ResolveTargetAssignment();
+            if (assignment != null && assignment.TryApplyPendingTokenBonus(batchGatherIndex, rowKey, bonusDelta, face))
+                any = true;
+        }
+
+        return any;
     }
 
-    public bool TryGetActiveFlyoutAmount(int batchGatherIndex, PoolRowKey rowKey, out int amount)
+    public bool TryGetActiveFlyoutAmount(int batchGatherIndex, PoolRowKey rowKey, int damageHitIndex, out int amount)
     {
         amount = 0;
         if (batchGatherIndex < 0)
             return false;
 
         return _activeFlyoutLinesByBatchRow.TryGetValue(
-            (batchGatherIndex, rowKey.StableId),
+            (batchGatherIndex, rowKey.StableId, damageHitIndex),
             out var entry) && (amount = entry.Amount) > 0;
     }
 
-    void RegisterActiveFlyoutLine(int batchGatherIndex, PoolRowKey rowKey, StoredActionsPoolIcon icon, int amount)
+    void RegisterActiveFlyoutLine(int batchGatherIndex, PoolRowKey rowKey, int damageHitIndex, StoredActionsPoolIcon icon, int amount)
     {
         if (batchGatherIndex < 0 || icon == null || amount <= 0)
             return;
 
-        _activeFlyoutLinesByBatchRow[(batchGatherIndex, rowKey.StableId)] = new ActiveFlyoutLineEntry
+        _activeFlyoutLinesByBatchRow[(batchGatherIndex, rowKey.StableId, damageHitIndex)] = new ActiveFlyoutLineEntry
         {
             Icon = icon,
             Amount = amount,
@@ -215,7 +250,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (batchGatherIndex < 0)
             return;
 
-        var removeKeys = new List<(int, string)>();
+        var removeKeys = new List<(int, string, int)>();
         foreach (var kvp in _activeFlyoutLinesByBatchRow)
         {
             if (kvp.Key.Item1 == batchGatherIndex)
@@ -533,7 +568,12 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                         && !line.RemoveOnIncreaseOtherLaunch
                         && line.Amount > 0
                         && payload.SourceFace != null)
-                        RegisterActiveFlyoutLine(payload.SourceFace.BatchGatherIndex, line.RowKey, icon, line.Amount);
+                        RegisterActiveFlyoutLine(
+                            payload.SourceFace.BatchGatherIndex,
+                            line.RowKey,
+                            line.IsSplitDamageHitLine ? line.DamageHitIndex : -1,
+                            icon,
+                            line.Amount);
 
                     if (line.RemoveOnIncreaseOtherLaunch && payload.SourceFace != null)
                         RegisterIncreaseOtherSourceFlyout(payload.SourceFace.BatchGatherIndex, rt);
@@ -591,7 +631,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             for (var syncIndex = 0; syncIndex < flyLines.Count; syncIndex++)
             {
                 var syncedLine = flyLines[syncIndex];
-                if (TryGetActiveFlyoutAmount(batchGatherIndex, syncedLine.RowKey, out var syncedAmount))
+                var flyoutHitIndex = syncedLine.IsSplitDamageHitLine ? syncedLine.DamageHitIndex : -1;
+                if (TryGetActiveFlyoutAmount(batchGatherIndex, syncedLine.RowKey, flyoutHitIndex, out var syncedAmount))
                 {
                     syncedLine.Amount = syncedAmount;
                     flyLines[syncIndex] = syncedLine;
@@ -1359,6 +1400,15 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
 
         return null;
+    }
+
+    /// <summary>Self-lit pulse + shake used after gather and when Increase Other projectiles hit a target die.</summary>
+    public void PlayDieActivationFeedbackOnDie(Transform dieTransform)
+    {
+        if (dieTransform == null)
+            return;
+
+        StartCoroutine(PlayDieActivationFeedback(dieTransform));
     }
 
     /// <summary>Projects a world point into a UI parent's local space (pivot-relative), suitable for <see cref="Transform.localPosition"/>.</summary>

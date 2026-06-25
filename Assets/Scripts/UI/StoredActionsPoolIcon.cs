@@ -100,6 +100,15 @@ public class StoredActionsPoolIcon : MonoBehaviour
         PlayFlyoutValueChangePulse();
     }
 
+    /// <summary>Updates a displayed amount (plain number) and pulses — used by drag-to-assign tokens.</summary>
+    public void SetAmountWithPulse(int value)
+    {
+        if (valueText == null) return;
+        if (_jackpotPostMultiplyRevealInProgress) return;
+        valueText.text = value.ToString();
+        PlayFlyoutValueChangePulse();
+    }
+
     /// <summary>When used as a draggable assignment token, turn off child raycasts so the token's drag surface receives pointer hits.</summary>
     public void SetPointerRaycastsEnabled(bool enabled)
     {

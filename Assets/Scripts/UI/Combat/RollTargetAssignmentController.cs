@@ -48,6 +48,30 @@ public class RollTargetAssignmentController : MonoBehaviour
         return false;
     }
 
+    /// <summary>Increase Other Elements: update a pending drag token's amount when its pool row is buffed on projectile hit.</summary>
+    public bool TryApplyPendingTokenBonus(int batchGatherIndex, PoolRowKey rowKey, int bonusDelta, FaceResult face = null)
+    {
+        if (batchGatherIndex < 0 || bonusDelta <= 0)
+            return false;
+
+        var any = false;
+        for (var i = 0; i < _pendingTokens.Count; i++)
+        {
+            var token = _pendingTokens[i];
+            if (token == null || token.Face == null)
+                continue;
+            if (token.Face.BatchGatherIndex != batchGatherIndex)
+                continue;
+            if (!token.Line.RowKey.Equals(rowKey))
+                continue;
+
+            token.ApplyAmountBonus(bonusDelta);
+            any = true;
+        }
+
+        return any;
+    }
+
     /// <summary>Parent the spawned tokens live under. Defaults to <see cref="tokenParent"/>; the flyout can override it to its own canvas.</summary>
     public RectTransform TokenSpawnParent => _spawnParentOverride != null ? _spawnParentOverride : tokenParent;
 

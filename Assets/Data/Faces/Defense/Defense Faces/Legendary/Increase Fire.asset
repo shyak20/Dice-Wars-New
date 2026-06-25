@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
-  m_Name: Increase Damage
+  m_Name: Increase Fire
   m_EditorClassIdentifier: 
   title: Mega Reroll
   description: 
   descriptionLines:
   - Gain <style=Shield>4</style>
-  - Increase all <style=Attack></style> gained this roll by <style=Attack>+2</style>
+  - Increase all <style=Burn></style> gained this roll by <style=Burn>+2</style>
   value: 4
   type: 1
   faceMaterial: {fileID: 2100000, guid: 61cda76acd7a9be43b8a6d84a984da20, type: 2}
@@ -39,7 +39,7 @@ MonoBehaviour:
         activateImmediately: 0
         triggerImmediatelyOnDrop: 0
         targetFilter: 1
-        targetDieType: 0
+        targetDieType: 2
         targetStatusEffect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
-        bonusAmount: 3
+        bonusAmount: 2
         onlyOneRandomTarget: 0

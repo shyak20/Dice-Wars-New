@@ -147,6 +147,25 @@ public class RolledOutcomeToken : MonoBehaviour
             poolIcon.ShowBustDestroyVisual(true);
     }
 
+    /// <summary>Increase Other Elements: bump this piece's displayed amount (keeps token <see cref="Line"/> in sync for assignment).</summary>
+    public void ApplyAmountBonus(int bonusDelta)
+    {
+        if (bonusDelta <= 0)
+            return;
+
+        _line.Amount += bonusDelta;
+        if (poolIcon != null)
+            poolIcon.SetAmountWithPulse(_line.Amount);
+    }
+
+    /// <summary>Sets the displayed amount (e.g. after a per-hit damage buff on a split-attack face).</summary>
+    public void SetDisplayAmount(int value)
+    {
+        _line.Amount = value;
+        if (poolIcon != null)
+            poolIcon.SetAmountWithPulse(value);
+    }
+
     public void SetAnchoredPosition(Vector2 anchored)
     {
         if (_rect == null) _rect = (RectTransform)transform;

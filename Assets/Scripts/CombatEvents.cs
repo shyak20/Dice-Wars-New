@@ -27,6 +27,10 @@ public struct RollOutcomeVisualLine
     public bool ParkUntilDieToDieReroll;
     /// <summary>Increase Other source row: shows bonus as element value above the keeper die, removed when projectiles launch (does not fly to pool).</summary>
     public bool RemoveOnIncreaseOtherLaunch;
+    /// <summary>When true, this row is one hit from a split <see cref="DieType.Damage"/> face (<see cref="FaceResult.DamageAttackTimes"/> &gt; 1).</summary>
+    public bool IsSplitDamageHitLine;
+    /// <summary>0-based hit index when <see cref="IsSplitDamageHitLine"/> is set.</summary>
+    public int DamageHitIndex;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>

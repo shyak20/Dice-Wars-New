@@ -83,8 +83,13 @@ public class IncreaseOtherElementsAction : GameActionWithIcon
                 case DieType.Damage:
                     if (face.Damage > 0)
                     {
-                        var times = Mathf.Max(1, face.DamageAttackTimes);
-                        face.Damage += (bonus + times - 1) / times;
+                        if (face.UsesSplitDamageHits)
+                            face.Damage += bonus;
+                        else
+                        {
+                            var times = Mathf.Max(1, face.DamageAttackTimes);
+                            face.Damage += (bonus + times - 1) / times;
+                        }
                     }
                     break;
                 case DieType.Armor:
