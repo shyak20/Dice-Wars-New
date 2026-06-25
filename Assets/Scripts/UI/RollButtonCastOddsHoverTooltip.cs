@@ -1,11 +1,19 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 /// <summary>
-/// Hover tooltip on the fight-scene Roll button showing Perfect Cast and Cast Overload odds for the current dice selection.
+/// Hover tooltip on fight-scene roll buttons showing Perfect Cast and Cast Overload odds.
 /// </summary>
 public sealed class RollButtonCastOddsHoverTooltip : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
+    public enum CastOddsDiceSource
+    {
+        CurrentSelection,
+        AllTrayDice,
+    }
+
+    [SerializeField] private CastOddsDiceSource diceSource = CastOddsDiceSource.CurrentSelection;
     [SerializeField] private CombatManager combatManager;
     [SerializeField] private CombatUIController combatUi;
     [Tooltip("When true, uses HoverTooltipManager Hover Above Tooltip Screen Offset (see manager on the scene).")]
@@ -32,6 +40,15 @@ public sealed class RollButtonCastOddsHoverTooltip : MonoBehaviour, IPointerEnte
             combatManager = FindObjectOfType<CombatManager>();
         if (combatUi == null)
             combatUi = FindObjectOfType<CombatUIController>();
+    }
+
+    public void Configure(CastOddsDiceSource source, CombatManager manager = null, CombatUIController ui = null)
+    {
+        diceSource = source;
+        if (manager != null)
+            combatManager = manager;
+        if (ui != null)
+            combatUi = ui;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -64,9 +81,16 @@ public sealed class RollButtonCastOddsHoverTooltip : MonoBehaviour, IPointerEnte
             return;
         if (combatManager.GetCombatState() != CombatState.WaitingForRoll)
             return;
-        if (!combatUi.TryGetRollCastOddsInput(out var selectedDice))
+
+        IReadOnlyList<DieAssetSO> diceForOdds;
+        var hasInput = diceSource switch
+        {
+            CastOddsDiceSource.AllTrayDice => combatUi.TryGetRollAllCastOddsInput(out diceForOdds),
+            _ => combatUi.TryGetRollCastOddsInput(out diceForOdds),
+        };
+        if (!hasInput)
             return;
-        if (!combatManager.TryComputeRollCastOdds(selectedDice, out var perfect, out var bust))
+        if (!combatManager.TryComputeRollCastOdds(diceForOdds, out var perfect, out var bust))
             return;
 
         var mgr = HoverTooltipManager.Instance;

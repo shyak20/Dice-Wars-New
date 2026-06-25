@@ -9,11 +9,6 @@ using UnityEngine;
 [Serializable]
 public class RerollOtherDiceAfterAllSettledAction : GameActionWithIcon
 {
-    [Tooltip("Optional world projectile that flies from this die to each rerolled target before physics reroll.")]
-    [SerializeField] private GameObject dieToDieProjectilePrefab;
-
-    public GameObject DieToDieProjectilePrefab => dieToDieProjectilePrefab;
-
     protected override ActionVisualId VisualKey => ActionVisualId.RerollOtherDice;
 
     public override void Execute(GameActionContext context)

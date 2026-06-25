@@ -20,6 +20,8 @@ public class CombatUIController : MonoBehaviour
 
     [Header("Controls")]
     public Button rollButton;
+    [Tooltip("Selects every die in the tray and rolls them.")]
+    [SerializeField] private Button rollAllButton;
     [SerializeField] private CombatManager combatManager;
     public Button endTurnButton;
     public Button cheatWinButton;
@@ -103,6 +105,7 @@ public class CombatUIController : MonoBehaviour
         if (active)
         {
             if (rollButton != null) rollButton.interactable = false;
+            if (rollAllButton != null) rollAllButton.interactable = false;
             if (endTurnButton != null) endTurnButton.interactable = false;
         }
         else
@@ -118,10 +121,15 @@ public class CombatUIController : MonoBehaviour
         {
             rollButton.onClick.AddListener(() => CombatEvents.OnRollCommand?.Invoke());
             rollButton.interactable = false;
-            EnsureRollButtonCastOddsTooltip();
+        }
+        if (rollAllButton != null)
+        {
+            rollAllButton.onClick.AddListener(RollAllDice);
+            rollAllButton.interactable = false;
         }
         if (combatManager == null)
             combatManager = FindObjectOfType<CombatManager>();
+        EnsureRollCastOddsTooltips();
         if (endTurnButton != null) endTurnButton.onClick.AddListener(() => CombatEvents.OnEndTurnPressed?.Invoke());
         if (cheatWinButton != null) cheatWinButton.onClick.AddListener(() => CombatEvents.OnCheatWinPressed?.Invoke());
         if (cheatPerfectStrikeButton != null) cheatPerfectStrikeButton.onClick.AddListener(() => CombatEvents.OnCheatPerfectStrikePressed?.Invoke());
@@ -166,7 +174,7 @@ public class CombatUIController : MonoBehaviour
             RegisterTrayHover(btn, die);
         }
 
-        UpdateNoDiceSelectedIndicator();
+        RefreshRollButtonsInteractable();
     }
 
     private void Update()
@@ -191,17 +199,47 @@ public class CombatUIController : MonoBehaviour
         return true;
     }
 
-    private void EnsureRollButtonCastOddsTooltip()
+    /// <summary>All tray dice — used for Roll All cast-odds tooltip.</summary>
+    public bool TryGetRollAllCastOddsInput(out IReadOnlyList<DieAssetSO> allTrayDice)
     {
-        if (rollButton == null)
+        allTrayDice = null;
+        if (_combatState != CombatState.WaitingForRoll || diceButtons.Count == 0)
+            return false;
+
+        var deck = PlayerDataContainer.Instance?.RuntimeData?.currentDeck;
+        if (deck == null)
+            return false;
+
+        var trayDice = new List<DieAssetSO>();
+        foreach (var die in deck)
+        {
+            if (die != null && diceButtons.ContainsKey(die))
+                trayDice.Add(die);
+        }
+
+        if (trayDice.Count == 0)
+            return false;
+
+        allTrayDice = trayDice;
+        return true;
+    }
+
+    private void EnsureRollCastOddsTooltips()
+    {
+        EnsureRollCastOddsTooltip(rollButton, RollButtonCastOddsHoverTooltip.CastOddsDiceSource.CurrentSelection);
+        EnsureRollCastOddsTooltip(rollAllButton, RollButtonCastOddsHoverTooltip.CastOddsDiceSource.AllTrayDice);
+    }
+
+    private void EnsureRollCastOddsTooltip(Button button, RollButtonCastOddsHoverTooltip.CastOddsDiceSource diceSource)
+    {
+        if (button == null)
             return;
 
-        var tooltip = rollButton.GetComponent<RollButtonCastOddsHoverTooltip>();
+        var tooltip = button.GetComponent<RollButtonCastOddsHoverTooltip>();
         if (tooltip == null)
-            tooltip = rollButton.gameObject.AddComponent<RollButtonCastOddsHoverTooltip>();
+            tooltip = button.gameObject.AddComponent<RollButtonCastOddsHoverTooltip>();
 
-        if (combatManager == null)
-            combatManager = FindObjectOfType<CombatManager>();
+        tooltip.Configure(diceSource, combatManager, this);
     }
 
     private void ToggleSelection(DieAssetSO die)
@@ -231,8 +269,55 @@ public class CombatUIController : MonoBehaviour
                 view.SetSelected(true);
             PinTooltipToDie(die);
         }
+        RefreshRollButtonsInteractable();
+    }
+
+    private void RollAllDice()
+    {
+        if (_combatState != CombatState.WaitingForRoll)
+            return;
+
+        SelectAllTrayDice();
+        if (currentlySelected.Count == 0)
+            return;
+
+        CombatEvents.OnRollCommand?.Invoke();
+    }
+
+    private void SelectAllTrayDice()
+    {
+        var deck = PlayerDataContainer.Instance?.RuntimeData?.currentDeck;
+        if (deck == null)
+            return;
+
+        foreach (var die in deck)
+        {
+            if (die == null || currentlySelected.Contains(die))
+                continue;
+            if (!diceButtons.ContainsKey(die))
+                continue;
+
+            CombatEvents.OnDieToggled?.Invoke(die);
+            currentlySelected.Add(die);
+            if (diceButtonViews.TryGetValue(die, out var view))
+                view.SetSelected(true);
+        }
+
+        if (currentlySelected.Count > 0)
+            PinTooltipToDie(currentlySelected[currentlySelected.Count - 1]);
+        else
+            HideDieTooltip();
+
+        RefreshRollButtonsInteractable();
+    }
+
+    private void RefreshRollButtonsInteractable()
+    {
+        var canRoll = _combatState == CombatState.WaitingForRoll;
         if (rollButton != null)
-            rollButton.interactable = currentlySelected.Count > 0;
+            rollButton.interactable = canRoll && currentlySelected.Count > 0;
+        if (rollAllButton != null)
+            rollAllButton.interactable = canRoll && diceButtons.Count > 0;
         UpdateNoDiceSelectedIndicator();
     }
 
@@ -604,7 +689,10 @@ public class CombatUIController : MonoBehaviour
             hoveredTooltipDie = null;
             HideDieTooltip();
         }
-        if (rollButton != null) { rollButton.gameObject.SetActive(isWaiting); if (isWaiting) rollButton.interactable = currentlySelected.Count > 0; }
+        if (rollButton != null) { rollButton.gameObject.SetActive(isWaiting); }
+        if (rollAllButton != null) { rollAllButton.gameObject.SetActive(isWaiting); }
+        if (isWaiting)
+            RefreshRollButtonsInteractable();
         if (endTurnButton != null) { bool showEndTurn = isWaiting && rollsRemaining > 0; endTurnButton.gameObject.SetActive(showEndTurn); endTurnButton.interactable = showEndTurn; }
         UpdateNoDiceSelectedIndicator();
     }

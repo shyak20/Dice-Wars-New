@@ -23,6 +23,8 @@ public struct RollOutcomeVisualLine
     public bool ResolvesImmediatelyOnDrop;
     /// <summary>When true with <see cref="EnemyTargeted"/>, duplicates fly to every alive enemy automatically after spawn motion.</summary>
     public bool AttackAllEnemies;
+    /// <summary>Spawns with gather flyouts, stays above the die until die-to-die reroll launches, then duplicates per target.</summary>
+    public bool ParkUntilDieToDieReroll;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>

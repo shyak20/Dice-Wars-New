@@ -98,13 +98,23 @@ public class StoredActionsPoolIcon : MonoBehaviour
     }
 
     /// <summary>Icon + amount for <see cref="DiceRollOutcomeFlyoutController"/> (uses +N for positive deltas).</summary>
-    public void SetupForDiceRollFlyout(PoolRowKey key, Sprite iconSprite, int deltaAmount)
+    public void SetupForDiceRollFlyout(PoolRowKey key, Sprite iconSprite, int deltaAmount, Sprite backgroundOverride = null)
     {
         Configure(key);
         SetPoolSprite(iconSprite);
-        SetRowBackground(GameIconCatalog.TryGetPoolRowBackground(key));
+        SetRowBackground(backgroundOverride != null ? backgroundOverride : GameIconCatalog.TryGetPoolRowBackground(key));
         if (valueText == null) return;
         valueText.text = deltaAmount > 0 ? $"+{deltaAmount}" : deltaAmount.ToString();
+    }
+
+    /// <summary>Icon + background only (no amount) for die-to-die reroll flyouts that vanish on arrival.</summary>
+    public void SetupForDieToDieActionFlyout(PoolRowKey key, Sprite iconSprite, Sprite backgroundSprite)
+    {
+        Configure(key);
+        SetPoolSprite(iconSprite);
+        SetRowBackground(backgroundSprite);
+        if (valueText != null)
+            valueText.text = string.Empty;
     }
 
     public void ShowJackpotMultiplierBadge(int multiplier)

@@ -81,6 +81,8 @@ public class CombatManager : MonoBehaviour
     [Header("Die-to-die projectiles")]
     [Tooltip("Optional. Flies world-space projectiles from source dice to reroll targets before physics reroll.")]
     [SerializeField] private DieToDieProjectileController dieToDieProjectileController;
+    [Tooltip("Reroll action icons fly from source die to each target (same prefab as gather flyouts).")]
+    [SerializeField] private DiceRollOutcomeFlyoutController diceRollOutcomeFlyout;
     [Tooltip("Fallback projectile prefab when an action or gem entry does not specify one.")]
     [SerializeField] private GameObject defaultDieToDieProjectilePrefab;
     [Header("Roll Platform Glow")]
@@ -1257,11 +1259,11 @@ public class CombatManager : MonoBehaviour
                     var sourceFace = sourceIdx >= 0 && _pendingTopFaceByDieIndex != null && sourceIdx < _pendingTopFaceByDieIndex.Length
                         ? _pendingTopFaceByDieIndex[sourceIdx]
                         : null;
-                    var projectilePrefab = GetPlayerChoiceRerollProjectilePrefabFromFace(sourceFace);
+                    var launchIcon = ResolveDieToDieLaunchIconFromFace(sourceFace);
                     if (sourceTransform != null)
                     {
                         var targets = new List<Transform> { picked.transform };
-                        yield return CoLaunchDieToDieProjectiles(sourceTransform, targets, projectilePrefab);
+                        yield return CoLaunchDieToDieProjectiles(sourceTransform, targets, null, launchIcon);
                     }
 
                     _pendingTopFaceByDieIndex[idx] = null;
@@ -1364,6 +1366,7 @@ public class CombatManager : MonoBehaviour
         _deferredTriggeringRerollFacesRemaining = 0;
         _facesAwaitingPostSubmitTriggeringReroll.Clear();
         ClearBatchRerollOtherDiceState();
+        diceRollOutcomeFlyout?.ClearParkedRerollFlyouts();
     }
 
     private IEnumerator CoAfterRollVisualsThen(Action onComplete)
@@ -1476,26 +1479,93 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CoLaunchDieToDieProjectiles(
         Transform source,
         IReadOnlyList<Transform> targets,
-        GameObject actionPrefab)
+        GameObject actionPrefab,
+        DieToDieLaunchIcon launchIcon = default)
     {
-        if (dieToDieProjectileController == null || source == null || targets == null || targets.Count == 0)
+        if (source == null || targets == null || targets.Count == 0)
             yield break;
 
         var prefab = ResolveDieToDieProjectilePrefab(actionPrefab);
-        if (prefab == null)
-        {
-            Debug.LogWarning("CombatManager: dieToDieProjectileController is assigned but no die-to-die projectile prefab is configured.");
+        var hasProjectiles = dieToDieProjectileController != null && prefab != null;
+        var hasFlyouts = diceRollOutcomeFlyout != null && launchIcon.HasAny;
+
+        if (!hasProjectiles && !hasFlyouts)
             yield break;
-        }
 
         var sourceBatchIndex = spawner != null ? spawner.GetIndexOfActiveDie(source.gameObject) : -1;
-        if (sourceBatchIndex >= 0)
+        if (sourceBatchIndex >= 0 && hasProjectiles)
             _deferDissolveBatchIndicesForDieToDieLaunch.Add(sourceBatchIndex);
 
-        yield return dieToDieProjectileController.LaunchAndWait(source, targets, prefab);
+        float? flyDuration = null;
+        if (prefab != null && prefab.TryGetComponent<DieToDieProjectileFlight>(out var templateFlight))
+            flyDuration = templateFlight.FlightSettings.flyDuration;
+
+        var routinesRemaining = 0;
+        if (hasProjectiles)
+            routinesRemaining++;
+        if (hasFlyouts)
+            routinesRemaining++;
+
+        if (hasProjectiles)
+        {
+            StartCoroutine(CoRunDieToDieRoutineThenSignal(
+                dieToDieProjectileController.LaunchAndWait(source, targets, prefab),
+                () => routinesRemaining--));
+        }
+
+        if (hasFlyouts)
+        {
+            StartCoroutine(CoRunDieToDieRoutineThenSignal(
+                diceRollOutcomeFlyout.CoLaunchParkedRerollFlyouts(sourceBatchIndex, source, targets, launchIcon, flyDuration),
+                () => routinesRemaining--));
+        }
+
+        yield return new WaitUntil(() => routinesRemaining <= 0);
 
         if (sourceBatchIndex >= 0)
             TryDissolveDeferredDieToDieSource(sourceBatchIndex);
+    }
+
+    static IEnumerator CoRunDieToDieRoutineThenSignal(IEnumerator routine, Action onComplete)
+    {
+        if (routine != null)
+            yield return routine;
+        onComplete?.Invoke();
+    }
+
+    static DieToDieLaunchIcon ResolveDieToDieLaunchIconFromFace(DieFaceSO face)
+    {
+        if (face?.actions == null)
+            return default;
+
+        for (var i = 0; i < face.actions.Count; i++)
+        {
+            if (face.actions[i] is RerollOtherDiceAfterAllSettledAction)
+                return DieToDieLaunchIcon.FromActionVisualId(ActionVisualId.RerollOtherDice);
+            if (face.actions[i] is RerollDieAction)
+                return DieToDieLaunchIcon.FromActionVisualId(ActionVisualId.RerollDie);
+        }
+
+        return default;
+    }
+
+    private DieFaceSO FindKeeperFaceForBatchIndex(int keeperIdx)
+    {
+        for (var i = channeledFaces.Count - 1; i >= 0; i--)
+        {
+            var faceResult = channeledFaces[i];
+            if (faceResult != null
+                && faceResult.BatchGatherIndex == keeperIdx
+                && !faceResult.AwaitingPostBatchOtherDiceReroll)
+                return faceResult.Face;
+        }
+
+        if (_pendingTopFaceByDieIndex != null
+            && keeperIdx >= 0
+            && keeperIdx < _pendingTopFaceByDieIndex.Length)
+            return _pendingTopFaceByDieIndex[keeperIdx];
+
+        return null;
     }
 
     private void TryDissolveDeferredDieToDieSource(int batchIndex)
@@ -1541,57 +1611,9 @@ public class CombatManager : MonoBehaviour
             }
 
             var keeperFace = FindKeeperFaceForBatchIndex(keeperIdx);
-            var prefab = GetRerollOtherProjectilePrefabFromFace(keeperFace);
-            yield return CoLaunchDieToDieProjectiles(source, targetTransforms, prefab);
+            var launchIcon = ResolveDieToDieLaunchIconFromFace(keeperFace);
+            yield return CoLaunchDieToDieProjectiles(source, targetTransforms, null, launchIcon);
         }
-    }
-
-    private DieFaceSO FindKeeperFaceForBatchIndex(int keeperIdx)
-    {
-        for (var i = channeledFaces.Count - 1; i >= 0; i--)
-        {
-            var faceResult = channeledFaces[i];
-            if (faceResult != null
-                && faceResult.BatchGatherIndex == keeperIdx
-                && !faceResult.AwaitingPostBatchOtherDiceReroll)
-                return faceResult.Face;
-        }
-
-        if (_pendingTopFaceByDieIndex != null
-            && keeperIdx >= 0
-            && keeperIdx < _pendingTopFaceByDieIndex.Length)
-            return _pendingTopFaceByDieIndex[keeperIdx];
-
-        return null;
-    }
-
-    private static GameObject GetRerollOtherProjectilePrefabFromFace(DieFaceSO face)
-    {
-        if (face?.actions == null)
-            return null;
-
-        for (var i = 0; i < face.actions.Count; i++)
-        {
-            if (face.actions[i] is RerollOtherDiceAfterAllSettledAction other)
-                return other.DieToDieProjectilePrefab;
-        }
-
-        return null;
-    }
-
-    private static GameObject GetPlayerChoiceRerollProjectilePrefabFromFace(DieFaceSO face)
-    {
-        if (face?.actions == null)
-            return null;
-
-        for (var i = 0; i < face.actions.Count; i++)
-        {
-            if (face.actions[i] is RerollDieAction reroll
-                && reroll.Scope == RerollDieAction.RerollDieScope.PlayerChoosesAnyDie)
-                return reroll.DieToDieProjectilePrefab;
-        }
-
-        return null;
     }
 
     IEnumerator CoProcessTriggeringRerollsAtDieIndex(int dieIdx)
@@ -2466,7 +2488,12 @@ public class CombatManager : MonoBehaviour
 
         if (dieWorldSource != null)
         {
-            var lines = BuildRollVisualLines(result, kineticArmorThisRoll);
+            var lines = BuildRollVisualLines(
+                result,
+                kineticArmorThisRoll,
+                includeParkedRerollLine: allowPostSubmitTriggeringReroll
+                    && allowPostBatchOtherDiceReroll
+                    && !isRerollOtherDiceSecondPass);
             if (lines.Count > 0 && CombatEvents.OnDiceRollVisualFeedback != null)
             {
                 var activateAfterRegularDice =
@@ -2762,7 +2789,10 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private static List<RollOutcomeVisualLine> BuildRollVisualLines(FaceResult result, bool kineticArmorThisRoll)
+    private static List<RollOutcomeVisualLine> BuildRollVisualLines(
+        FaceResult result,
+        bool kineticArmorThisRoll,
+        bool includeParkedRerollLine)
     {
         var lines = new List<RollOutcomeVisualLine>();
 
@@ -2817,7 +2847,63 @@ public class CombatManager : MonoBehaviour
         if (kineticArmorThisRoll)
             AddLine(PoolRowKey.FromDieType(DieType.Armor), 1, GameIconCatalog.GetElementIcon(DieType.Armor));
 
+        if (includeParkedRerollLine)
+            TryAppendCollapsedParkedRerollLine(result.Face, lines);
+
         return lines;
+    }
+
+    /// <summary>One parked reroll row per face (Reroll Other / post-submit Roll Again), not per action instance.</summary>
+    private static void TryAppendCollapsedParkedRerollLine(DieFaceSO face, List<RollOutcomeVisualLine> lines)
+    {
+        if (!TryResolveParkedRerollVisual(face, out var visualId))
+            return;
+
+        var icon = GameIconCatalog.GetActionIcon(visualId);
+        if (icon == null)
+            return;
+
+        lines.Add(new RollOutcomeVisualLine
+        {
+            RowKey = PoolRowKey.Custom(visualId.ToString()),
+            Amount = 0,
+            IconOverride = icon,
+            BackgroundOverride = GameIconCatalog.GetActionBackground(visualId),
+            ParkUntilDieToDieReroll = true,
+            IsVisualFlyoutOnly = true,
+        });
+    }
+
+    private static bool TryResolveParkedRerollVisual(DieFaceSO face, out ActionVisualId visualId)
+    {
+        visualId = default;
+        if (face?.actions == null)
+            return false;
+
+        var hasRerollOther = false;
+        var hasTriggeringReroll = false;
+
+        foreach (var a in face.actions)
+        {
+            if (a is RerollOtherDiceAfterAllSettledAction)
+                hasRerollOther = true;
+            if (a is RerollDieAction reroll && reroll.Scope == RerollDieAction.RerollDieScope.RerollTriggeringDieOnly)
+                hasTriggeringReroll = true;
+        }
+
+        if (hasRerollOther)
+        {
+            visualId = ActionVisualId.RerollOtherDice;
+            return true;
+        }
+
+        if (hasTriggeringReroll)
+        {
+            visualId = ActionVisualId.RerollDie;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>True when a deferred pool row applies an enemy-target status (e.g. enemy Burn) and so must be assigned to an enemy.</summary>

@@ -90,6 +90,29 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     private float _savedPlaneDistance;
     private bool _interactionPriorityActive;
 
+    struct ParkedRerollFlyoutEntry
+    {
+        public RectTransform ParkedRect;
+        public DieToDieLaunchIcon LaunchIcon;
+        public Vector2 AnchoredPosition;
+    }
+
+    readonly Dictionary<int, ParkedRerollFlyoutEntry> _parkedRerollByBatchGatherIndex = new Dictionary<int, ParkedRerollFlyoutEntry>();
+
+    public void ClearParkedRerollFlyouts()
+    {
+        foreach (var entry in _parkedRerollByBatchGatherIndex.Values)
+        {
+            if (entry.ParkedRect != null)
+                Destroy(entry.ParkedRect.gameObject);
+        }
+
+        _parkedRerollByBatchGatherIndex.Clear();
+    }
+
+    public void ClearParkedRerollFlyout(int batchGatherIndex) =>
+        _parkedRerollByBatchGatherIndex.Remove(batchGatherIndex);
+
     private void Awake()
     {
         if (canvas == null)
@@ -152,6 +175,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
         DrainQueueAndReportFinished(regularPayloadQueue);
         DrainQueueAndReportFinished(deferredPayloadQueue);
+        ClearParkedRerollFlyouts();
         ForceUnfreezeStatusBars();
         ForceRestoreInteractionPriority();
     }
@@ -355,7 +379,10 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                     }
 
                     var sprite = line.IconOverride != null ? line.IconOverride : storedActionsPoolDisplay.GetPoolRowSprite(line.RowKey);
-                    icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount);
+                    if (line.ParkUntilDieToDieReroll)
+                        icon.SetupForDieToDieActionFlyout(line.RowKey, sprite, line.BackgroundOverride);
+                    else
+                        icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount, line.BackgroundOverride);
 
                     Vector3 spawnBaseLocalScale = rt.localScale;
                     Vector2 basePos = stackOriginFlyoutLocal + Vector2.up * (lineIndex * lineSpacing);
@@ -419,6 +446,12 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             for (int i = 0; i < flyLines.Count && i < lineRects.Count; i++)
             {
                 var line = flyLines[i];
+                if (line.ParkUntilDieToDieReroll)
+                {
+                    ParkRerollFlyoutUntilLaunch(payload?.SourceFace, line, stackRestAnchored[i], lineRects[i]);
+                    continue;
+                }
+
                 if (line.AttackAllEnemies && line.EnemyTargeted)
                 {
                     flyCoroutines.Add(StartCoroutine(FlyAttackAllLineToEnemies(
@@ -691,7 +724,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 }
 
                 var sprite = line.IconOverride != null ? line.IconOverride : storedActionsPoolDisplay.GetPoolRowSprite(line.RowKey);
-                icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount);
+                icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount, line.BackgroundOverride);
                 SetLocalXY(rt, startAnchored);
                 rt.localScale = templateRt.localScale;
             }
@@ -875,6 +908,164 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             return;
 
         spawner.BeginDissolveAndDestroyDie(dieTransform.gameObject);
+    }
+
+    void ParkRerollFlyoutUntilLaunch(
+        FaceResult sourceFace,
+        RollOutcomeVisualLine line,
+        Vector2 anchoredPosition,
+        RectTransform parkedRect)
+    {
+        if (sourceFace == null || sourceFace.BatchGatherIndex < 0 || parkedRect == null)
+            return;
+
+        var launchIcon = new DieToDieLaunchIcon(
+            line.IconOverride,
+            line.BackgroundOverride != null
+                ? line.BackgroundOverride
+                : GameIconCatalog.TryGetPoolRowBackground(line.RowKey));
+
+        if (!launchIcon.HasAny)
+            return;
+
+        _parkedRerollByBatchGatherIndex[sourceFace.BatchGatherIndex] = new ParkedRerollFlyoutEntry
+        {
+            ParkedRect = parkedRect,
+            LaunchIcon = launchIcon,
+            AnchoredPosition = anchoredPosition,
+        };
+    }
+
+    /// <summary>
+    /// Duplicates the single parked reroll row (if any) once per target, flies each to its die, then destroys.
+    /// Falls back to spawning above <paramref name="sourceDie"/> when no parked row exists (pre-gather player-choice reroll).
+    /// </summary>
+    public IEnumerator CoLaunchParkedRerollFlyouts(
+        int sourceBatchGatherIndex,
+        Transform sourceDie,
+        IReadOnlyList<Transform> targetDice,
+        DieToDieLaunchIcon fallbackLaunchIcon,
+        float? flightDurationOverride = null)
+    {
+        if (targetDice == null || targetDice.Count == 0)
+            yield break;
+        if (canvas == null || flyoutParent == null || flyoutPoolIconPrefab == null)
+        {
+            Debug.LogError($"DiceRollOutcomeFlyoutController on '{name}': cannot launch parked reroll flyouts — assign canvas, flyoutParent, and flyoutPoolIconPrefab.");
+            yield break;
+        }
+
+        var launchIcon = fallbackLaunchIcon;
+        Vector2 stackOrigin;
+        var hasParkedStart = false;
+
+        if (sourceBatchGatherIndex >= 0
+            && _parkedRerollByBatchGatherIndex.TryGetValue(sourceBatchGatherIndex, out var parked))
+        {
+            launchIcon = parked.LaunchIcon;
+            stackOrigin = parked.AnchoredPosition;
+            hasParkedStart = true;
+            if (parked.ParkedRect != null)
+                Destroy(parked.ParkedRect.gameObject);
+            _parkedRerollByBatchGatherIndex.Remove(sourceBatchGatherIndex);
+        }
+        else if (sourceDie != null
+                 && WorldPointToParentLocal(sourceDie.position + Vector3.up * worldOffsetAboveDie, flyoutParent, out var anchorFlyoutLocal))
+        {
+            stackOrigin = anchorFlyoutLocal + Vector2.right * layoutOffsetX;
+        }
+        else
+        {
+            yield break;
+        }
+
+        if (!launchIcon.HasAny)
+            yield break;
+
+        var rowKey = PoolRowKey.Custom("DieToDieReroll");
+        var flyDuration = Mathf.Max(0.01f, flightDurationOverride ?? flyDurationSeconds);
+        var lineRects = new List<RectTransform>();
+        var targetTransforms = new List<Transform>();
+
+        for (var i = 0; i < targetDice.Count; i++)
+        {
+            var target = targetDice[i];
+            if (target == null)
+                continue;
+
+            var icon = Instantiate(flyoutPoolIconPrefab, flyoutParent);
+            var rt = icon.transform as RectTransform;
+            if (rt == null)
+            {
+                Debug.LogError("DiceRollOutcomeFlyoutController: flyoutPoolIconPrefab root must have a RectTransform.");
+                Destroy(icon.gameObject);
+                continue;
+            }
+
+            icon.SetupForDieToDieActionFlyout(rowKey, launchIcon.Icon, launchIcon.Background);
+            SetLocalXY(rt, stackOrigin);
+            rt.localScale = Vector3.one * EvaluateSpawnScaleMultiplier(1f);
+
+            lineRects.Add(rt);
+            targetTransforms.Add(target);
+        }
+
+        if (lineRects.Count == 0)
+            yield break;
+
+        if (!hasParkedStart && lineRects.Count > 1)
+        {
+            for (var i = 1; i < lineRects.Count; i++)
+                SetLocalXY(lineRects[i], stackOrigin);
+        }
+
+        var flyCoroutines = new List<Coroutine>();
+        for (var i = 0; i < lineRects.Count; i++)
+        {
+            flyCoroutines.Add(StartCoroutine(CoFlyDieToDieActionLine(
+                lineRects[i],
+                stackOrigin,
+                targetTransforms[i],
+                flyDuration)));
+        }
+
+        foreach (var c in flyCoroutines)
+        {
+            if (c != null)
+                yield return c;
+        }
+    }
+
+    IEnumerator CoFlyDieToDieActionLine(
+        RectTransform rt,
+        Vector2 startAnchored,
+        Transform targetDie,
+        float durationSeconds)
+    {
+        if (rt == null || targetDie == null)
+            yield break;
+
+        var t = 0f;
+        while (t < durationSeconds)
+        {
+            if (rt == null || targetDie == null)
+                yield break;
+
+            t += Time.deltaTime;
+            var u = Mathf.Clamp01(t / durationSeconds);
+            var eased = flyEase != null ? flyEase.Evaluate(u) : u;
+
+            if (!WorldPointToParentLocal(targetDie.position + Vector3.up * worldOffsetAboveDie, flyoutParent, out var endAnchored))
+                yield break;
+
+            endAnchored += Vector2.right * layoutOffsetX;
+            var mid = (startAnchored + endAnchored) * 0.5f + Vector2.up * arcHeightPixels;
+            SetLocalXY(rt, QuadraticBezier(startAnchored, mid, endAnchored, eased));
+            yield return null;
+        }
+
+        if (rt != null)
+            Destroy(rt.gameObject);
     }
 
     private static Vector2 QuadraticBezier(Vector2 a, Vector2 b, Vector2 c, float t)
