@@ -64,4 +64,7 @@ public enum ActionVisualId
 
     /// <summary><see cref="RerollOtherDiceAfterAllSettledAction"/> — reroll every other die in the batch after all settle.</summary>
     RerollOtherDice = 32,
+
+    /// <summary><see cref="IncreaseOtherElementsAction"/> — add bonus to matching other dice pool rows after gather.</summary>
+    IncreaseOtherElements = 33,
 }

@@ -25,6 +25,8 @@ public struct RollOutcomeVisualLine
     public bool AttackAllEnemies;
     /// <summary>Spawns with gather flyouts, stays above the die until die-to-die reroll launches, then duplicates per target.</summary>
     public bool ParkUntilDieToDieReroll;
+    /// <summary>Increase Other source row: shows bonus as element value above the keeper die, removed when projectiles launch (does not fly to pool).</summary>
+    public bool RemoveOnIncreaseOtherLaunch;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>

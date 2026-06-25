@@ -2089,6 +2089,9 @@ MonoBehaviour:
   jackpotValueRevealBgScaleMultiplier: 1.2
   jackpotValueRevealScaleUpDuration: 0.3
   jackpotValueRevealScaleDownDuration: 0.3
+  flyoutValueChangePulseScaleMultiplier: 1.3
+  flyoutValueChangePulseUpDuration: 0.3
+  flyoutValueChangePulseDownDuration: 0.3
 --- !u!225 &7387232664559664962
 CanvasGroup:
   m_ObjectHideFlags: 0

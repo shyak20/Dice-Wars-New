@@ -194,6 +194,21 @@ public class CombatManager : MonoBehaviour
     private int _postBatchRollAgainInFlight;
     private readonly Dictionary<int, GameObject> _batchLiveDieByGatherIndex = new Dictionary<int, GameObject>();
     private readonly HashSet<int> _noPowerOnNextGatherCommit = new HashSet<int>();
+
+    struct IncreaseOtherBatchGrant
+    {
+        public int KeeperBatchIndex;
+        public IncreaseOtherElementsAction Action;
+    }
+
+    struct IncreaseOtherHitTarget
+    {
+        public FaceResult Face;
+        public PoolRowKey RowKey;
+    }
+
+    private readonly List<IncreaseOtherBatchGrant> _batchIncreaseOtherGrants = new List<IncreaseOtherBatchGrant>();
+    private bool _batchHasIncreaseOtherElementsPending;
     private readonly HashSet<int> _gemBatchRerollIndicesInFlight = new HashSet<int>();
     private int _rollBatchId;
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
@@ -1132,6 +1147,7 @@ public class CombatManager : MonoBehaviour
         _gemBatchRerollIndicesInFlight.Clear();
         _pendingRerollGrants = 0;
         ClearPostSubmitTriggeringRerollState();
+        ClearBatchIncreaseOtherElementsState();
         _echoSkipsPowerThisBatch = player != null &&
                                    player.StatusEffects.TryConsumeEchoPowerSkipForNextRollBatch(BuildStatusContext());
         expectedDiceCount = selectedDice.Count;
@@ -1281,6 +1297,7 @@ public class CombatManager : MonoBehaviour
         }
 
         PrepareBatchRerollOtherDiceTargets();
+        PrepareBatchIncreaseOtherElementsTargets();
 
         // --- Gather: apply resolved faces to combat (power, pools, watchers) in spawn order. ---
         var batchGatherStart = channeledFaces.Count;
@@ -1328,6 +1345,8 @@ public class CombatManager : MonoBehaviour
         _batchDieAssetByGatherIndex.Clear();
 
         yield return new WaitUntil(() => pendingRollVisualRaiseSequences <= 0);
+        if (_batchHasIncreaseOtherElementsPending)
+            yield return CoExecuteBatchIncreaseOtherElements();
         if (ShouldDeferBatchOutcomeForPostSubmitReroll())
             _postRaiseCombatGateOpen = true;
         else
@@ -1367,6 +1386,7 @@ public class CombatManager : MonoBehaviour
         _facesAwaitingPostSubmitTriggeringReroll.Clear();
         ClearBatchRerollOtherDiceState();
         diceRollOutcomeFlyout?.ClearParkedRerollFlyouts();
+        ClearBatchIncreaseOtherElementsState();
     }
 
     private IEnumerator CoAfterRollVisualsThen(Action onComplete)
@@ -1432,6 +1452,190 @@ public class CombatManager : MonoBehaviour
         _postBatchOtherDiceRerollCompleted = false;
     }
 
+    private void PrepareBatchIncreaseOtherElementsTargets()
+    {
+        _batchHasIncreaseOtherElementsPending = false;
+        _batchIncreaseOtherGrants.Clear();
+
+        if (_pendingTopFaceByDieIndex == null || expectedDiceCount <= 1)
+            return;
+
+        for (var i = 0; i < expectedDiceCount; i++)
+        {
+            var face = _pendingTopFaceByDieIndex[i];
+            if (face?.actions == null)
+                continue;
+
+            foreach (var action in face.actions)
+            {
+                if (action is not IncreaseOtherElementsAction increase)
+                    continue;
+
+                _batchIncreaseOtherGrants.Add(new IncreaseOtherBatchGrant
+                {
+                    KeeperBatchIndex = i,
+                    Action = increase,
+                });
+            }
+        }
+
+        if (_batchIncreaseOtherGrants.Count > 0)
+            _batchHasIncreaseOtherElementsPending = true;
+    }
+
+    private void ClearBatchIncreaseOtherElementsState()
+    {
+        _batchHasIncreaseOtherElementsPending = false;
+        _batchIncreaseOtherGrants.Clear();
+    }
+
+    private FaceResult FindIncreaseTargetFace(int batchGatherIndex)
+    {
+        FaceResult match = null;
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face == null || face.BatchGatherIndex != batchGatherIndex || face.BatchId != _rollBatchId)
+                continue;
+            if (face.AwaitingPostBatchOtherDiceReroll)
+                continue;
+
+            match = face;
+        }
+
+        return match;
+    }
+
+    private List<int> ResolveIncreaseOtherTargetIndices(int keeperBatchIndex, IncreaseOtherElementsAction action)
+    {
+        var matching = new List<int>();
+        for (var i = 0; i < expectedDiceCount; i++)
+        {
+            if (i == keeperBatchIndex)
+                continue;
+
+            var face = FindIncreaseTargetFace(i);
+            if (face == null)
+                continue;
+
+            if (!IncreaseOtherElementsAction.TryGetMatchingPoolRow(face, action, out _))
+                continue;
+
+            matching.Add(i);
+        }
+
+        if (action.OnlyOneRandomTarget && matching.Count > 1)
+        {
+            var pick = matching[UnityEngine.Random.Range(0, matching.Count)];
+            matching.Clear();
+            matching.Add(pick);
+        }
+
+        return matching;
+    }
+
+    private IEnumerator CoExecuteBatchIncreaseOtherElements()
+    {
+        try
+        {
+            if (_batchIncreaseOtherGrants.Count == 0)
+                yield break;
+
+            foreach (var grant in _batchIncreaseOtherGrants)
+            {
+                var action = grant.Action;
+                if (action == null)
+                    continue;
+
+                var targetIndices = ResolveIncreaseOtherTargetIndices(grant.KeeperBatchIndex, action);
+                if (targetIndices.Count == 0)
+                    continue;
+
+                var targetTransforms = new List<Transform>();
+                var hitTargets = new List<IncreaseOtherHitTarget>();
+                foreach (var targetIdx in targetIndices)
+                {
+                    var face = FindIncreaseTargetFace(targetIdx);
+                    if (face == null)
+                        continue;
+
+                    if (!IncreaseOtherElementsAction.TryGetMatchingPoolRow(face, action, out var rowKey))
+                        continue;
+
+                    var targetTransform = GetBatchDieTransform(targetIdx);
+                    if (targetTransform == null)
+                    {
+                        Debug.LogWarning($"CombatManager: IncreaseOtherElements — no target transform for batch index {targetIdx}.");
+                        continue;
+                    }
+
+                    targetTransforms.Add(targetTransform);
+                    hitTargets.Add(new IncreaseOtherHitTarget { Face = face, RowKey = rowKey });
+                }
+
+                if (targetTransforms.Count == 0)
+                    continue;
+
+                var source = GetBatchDieTransform(grant.KeeperBatchIndex);
+                if (source == null)
+                {
+                    Debug.LogWarning($"CombatManager: IncreaseOtherElements — no source transform for keeper batch index {grant.KeeperBatchIndex}.");
+                    continue;
+                }
+
+                var bonus = action.BonusAmount;
+                yield return CoLaunchIncreaseOtherProjectiles(
+                    source,
+                    targetTransforms,
+                    hitTargets,
+                    bonus,
+                    grant.KeeperBatchIndex);
+            }
+
+            NotifyStoredActionsPoolUpdated();
+        }
+        finally
+        {
+            ClearBatchIncreaseOtherElementsState();
+        }
+    }
+
+    private IEnumerator CoLaunchIncreaseOtherProjectiles(
+        Transform source,
+        IReadOnlyList<Transform> targets,
+        IReadOnlyList<IncreaseOtherHitTarget> hitTargets,
+        int bonusAmount,
+        int sourceBatchIndex)
+    {
+        if (source == null || targets == null || targets.Count == 0 || hitTargets == null || hitTargets.Count == 0)
+            yield break;
+
+        diceRollOutcomeFlyout?.RemoveIncreaseOtherSourceFlyout(sourceBatchIndex);
+
+        var prefab = ResolveDieToDieProjectilePrefab(null);
+        if (dieToDieProjectileController == null || prefab == null)
+            yield break;
+
+        if (sourceBatchIndex >= 0)
+            _deferDissolveBatchIndicesForDieToDieLaunch.Add(sourceBatchIndex);
+
+        yield return dieToDieProjectileController.LaunchAndWait(source, targets, prefab, targetIndex =>
+        {
+            if (targetIndex < 0 || targetIndex >= hitTargets.Count)
+                return;
+
+            var hit = hitTargets[targetIndex];
+            if (hit.Face == null)
+                return;
+
+            IncreaseOtherElementsAction.ApplyBonusToFace(hit.Face, hit.RowKey, bonusAmount);
+            diceRollOutcomeFlyout?.TryApplyFlyoutLineBonus(hit.Face.BatchGatherIndex, hit.RowKey, bonusAmount);
+        });
+
+        if (sourceBatchIndex >= 0)
+            TryDissolveDeferredDieToDieSource(sourceBatchIndex);
+    }
+
     private static bool FaceHasRerollOtherDiceAfterAllSettled(DieFaceSO face)
     {
         if (face?.actions == null) return false;
@@ -1493,6 +1697,8 @@ public class CombatManager : MonoBehaviour
             yield break;
 
         var sourceBatchIndex = spawner != null ? spawner.GetIndexOfActiveDie(source.gameObject) : -1;
+        if (!hasFlyouts)
+            diceRollOutcomeFlyout?.ConsumeParkedDieToDieActionFlyout(sourceBatchIndex);
         if (sourceBatchIndex >= 0 && hasProjectiles)
             _deferDissolveBatchIndicesForDieToDieLaunch.Add(sourceBatchIndex);
 
@@ -2850,13 +3056,49 @@ public class CombatManager : MonoBehaviour
         if (includeParkedRerollLine)
             TryAppendCollapsedParkedRerollLine(result.Face, lines);
 
+        if (includeParkedRerollLine)
+            TryAppendIncreaseOtherElementsVisualLine(result.Face, lines);
+
         return lines;
     }
 
-    /// <summary>One parked reroll row per face (Reroll Other / post-submit Roll Again), not per action instance.</summary>
+    private static void TryAppendIncreaseOtherElementsVisualLine(DieFaceSO face, List<RollOutcomeVisualLine> lines)
+    {
+        if (face?.actions == null)
+            return;
+
+        IncreaseOtherElementsAction increase = null;
+        foreach (var action in face.actions)
+        {
+            if (action is IncreaseOtherElementsAction inc)
+            {
+                increase = inc;
+                break;
+            }
+        }
+
+        if (increase == null)
+            return;
+
+        var icon = GameIconCatalog.GetActionIcon(ActionVisualId.IncreaseOtherElements);
+        if (icon == null)
+            return;
+
+        lines.Add(new RollOutcomeVisualLine
+        {
+            RowKey = PoolRowKey.Custom(ActionVisualId.IncreaseOtherElements.ToString()),
+            Amount = increase.BonusAmount,
+            IconOverride = icon,
+            BackgroundOverride = GameIconCatalog.GetActionBackground(ActionVisualId.IncreaseOtherElements),
+            IsVisualFlyoutOnly = true,
+            RemoveOnIncreaseOtherLaunch = true,
+        });
+    }
+
+    /// <summary>One parked die-to-die action row per face (Reroll Other / Roll Again), not per action instance.</summary>
     private static void TryAppendCollapsedParkedRerollLine(DieFaceSO face, List<RollOutcomeVisualLine> lines)
     {
-        if (!TryResolveParkedRerollVisual(face, out var visualId))
+        if (!TryResolveParkedDieToDieActionVisual(face, out var visualId))
             return;
 
         var icon = GameIconCatalog.GetActionIcon(visualId);
@@ -2874,7 +3116,7 @@ public class CombatManager : MonoBehaviour
         });
     }
 
-    private static bool TryResolveParkedRerollVisual(DieFaceSO face, out ActionVisualId visualId)
+    private static bool TryResolveParkedDieToDieActionVisual(DieFaceSO face, out ActionVisualId visualId)
     {
         visualId = default;
         if (face?.actions == null)

@@ -34,10 +34,18 @@ public class StoredActionsPoolIcon : MonoBehaviour
     [SerializeField] private float jackpotValueRevealScaleUpDuration = 0.1f;
     [SerializeField] private float jackpotValueRevealScaleDownDuration = 0.1f;
 
+    [Header("Flyout value change pulse (optional)")]
+    [Tooltip("Uniform scale peak when a die flyout amount changes (e.g. Increase Other Elements bonus on hit).")]
+    [SerializeField] private float flyoutValueChangePulseScaleMultiplier = 1.2f;
+    [SerializeField] private float flyoutValueChangePulseUpDuration = 0.08f;
+    [SerializeField] private float flyoutValueChangePulseDownDuration = 0.12f;
+
     private HoverTooltipTargetUI hoverTooltipTarget;
     private PoolRowKey configuredKey;
     private Vector3 _valueBgBaseScale = Vector3.one;
+    private Vector3 _valueTextBaseScale = Vector3.one;
     private Coroutine _valueRevealCoroutine;
+    private Coroutine _flyoutValueChangePulseCoroutine;
     private MonoBehaviour _valueRevealCoroutineRunner;
     private bool _jackpotPostMultiplyRevealInProgress;
     private bool _jackpotPostMultiplyValueTextApplied;
@@ -81,6 +89,15 @@ public class StoredActionsPoolIcon : MonoBehaviour
         if (valueText == null) return;
         if (_jackpotPostMultiplyRevealInProgress) return;
         valueText.text = value.ToString();
+    }
+
+    /// <summary>Updates a die flyout row amount (+N format) and pulses the value presentation.</summary>
+    public void SetFlyoutAmountWithPulse(int value)
+    {
+        if (valueText == null) return;
+        if (_jackpotPostMultiplyRevealInProgress) return;
+        valueText.text = value > 0 ? $"+{value}" : value.ToString();
+        PlayFlyoutValueChangePulse();
     }
 
     /// <summary>When used as a draggable assignment token, turn off child raycasts so the token's drag surface receives pointer hits.</summary>
@@ -202,6 +219,8 @@ public class StoredActionsPoolIcon : MonoBehaviour
             jackpotMultiplierRoot.SetActive(false);
         if (valueAmountBackgroundRoot != null)
             _valueBgBaseScale = valueAmountBackgroundRoot.localScale;
+        if (valueText != null)
+            _valueTextBaseScale = valueText.transform.localScale;
 
         var hoverTargetGo = icon != null ? icon.gameObject : gameObject;
         hoverTooltipTarget = hoverTargetGo.GetComponent<HoverTooltipTargetUI>() ?? hoverTargetGo.AddComponent<HoverTooltipTargetUI>();
@@ -215,7 +234,11 @@ public class StoredActionsPoolIcon : MonoBehaviour
         Instances.Remove(this);
     }
 
-    private void OnDisable() => CancelJackpotValueReveal();
+    private void OnDisable()
+    {
+        CancelJackpotValueReveal();
+        CancelFlyoutValueChangePulse();
+    }
 
     /// <summary>True when this active icon has a bust root and should participate in scene-wide Cast Overload presentation.</summary>
     public bool IsActiveBustTarget => HasBustDestroyRoot && gameObject.activeInHierarchy;
@@ -348,6 +371,70 @@ public class StoredActionsPoolIcon : MonoBehaviour
     {
         if (valueAmountBackgroundRoot != null)
             valueAmountBackgroundRoot.localScale = _valueBgBaseScale;
+    }
+
+    private void PlayFlyoutValueChangePulse()
+    {
+        var pulseRoot = valueAmountBackgroundRoot != null ? valueAmountBackgroundRoot : valueText?.transform;
+        if (pulseRoot == null)
+            return;
+
+        var peakMult = flyoutValueChangePulseScaleMultiplier;
+        if (peakMult <= 1f + 1e-5f)
+            return;
+
+        if (_flyoutValueChangePulseCoroutine != null)
+            StopCoroutine(_flyoutValueChangePulseCoroutine);
+        _flyoutValueChangePulseCoroutine = StartCoroutine(CoFlyoutValueChangePulse(pulseRoot));
+    }
+
+    private void CancelFlyoutValueChangePulse()
+    {
+        if (_flyoutValueChangePulseCoroutine != null)
+        {
+            StopCoroutine(_flyoutValueChangePulseCoroutine);
+            _flyoutValueChangePulseCoroutine = null;
+        }
+
+        RestoreValueBackgroundScale();
+        if (valueText != null)
+            valueText.transform.localScale = _valueTextBaseScale;
+    }
+
+    private IEnumerator CoFlyoutValueChangePulse(Transform pulseRoot)
+    {
+        var baseScale = pulseRoot == valueAmountBackgroundRoot ? _valueBgBaseScale : _valueTextBaseScale;
+        var peakScale = baseScale * flyoutValueChangePulseScaleMultiplier;
+        var up = Mathf.Max(0.0001f, flyoutValueChangePulseUpDuration);
+        var down = Mathf.Max(0.0001f, flyoutValueChangePulseDownDuration);
+
+        for (var t = 0f; t < up; t += Time.deltaTime)
+        {
+            if (pulseRoot == null)
+                yield break;
+
+            var u = Mathf.Clamp01(t / up);
+            pulseRoot.localScale = Vector3.LerpUnclamped(baseScale, peakScale, u);
+            yield return null;
+        }
+
+        if (pulseRoot != null)
+            pulseRoot.localScale = peakScale;
+
+        for (var t = 0f; t < down; t += Time.deltaTime)
+        {
+            if (pulseRoot == null)
+                yield break;
+
+            var u = Mathf.Clamp01(t / down);
+            pulseRoot.localScale = Vector3.LerpUnclamped(peakScale, baseScale, u);
+            yield return null;
+        }
+
+        if (pulseRoot != null)
+            pulseRoot.localScale = baseScale;
+
+        _flyoutValueChangePulseCoroutine = null;
     }
 
     private void UpdateTooltipText()
