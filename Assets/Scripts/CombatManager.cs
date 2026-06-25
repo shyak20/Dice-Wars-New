@@ -1299,8 +1299,7 @@ public class CombatManager : MonoBehaviour
                 : null;
             if (dieAsset != null)
                 _batchDieAssetByGatherIndex[i] = dieAsset;
-            var skipPower = _noPowerOnNextGatherCommit.Remove(i)
-                || (_batchHasRerollOtherDicePending && _batchRerollOtherTargetIndices.Contains(i));
+            var skipPower = _noPowerOnNextGatherCommit.Remove(i);
             CommitResolvedRoll(f, t, dieAsset, i, skipPower);
             yield return CoDrainGemScheduledRerolls();
         }
@@ -1317,6 +1316,9 @@ public class CombatManager : MonoBehaviour
         QueueAddPowerChoicesAfterBatchGather(batchGatherStart, channeledFaces.Count);
         ApplyPostBatchFaceEffects(batchGatherStart, channeledFaces.Count);
 
+        if (currentPower > maxPower)
+            AbortDeferredPostSubmitRerolls();
+
         _rollBatchPipelineRunning = false;
         _pendingTopFaceByDieIndex = null;
         _pendingDieSourceByIndex = null;
@@ -1331,26 +1333,30 @@ public class CombatManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Post-submit Roll Again defers perfect / bust / assignment until reroll outcomes are submitted — except when
-    /// power already qualifies for Perfect Cast or Cast Overload, which must resolve immediately.
+    /// Post-submit Roll Again and reroll-other defer perfect cast until reroll outcomes finish.
+    /// Bust resolves immediately after the initial gather (pending rerolls are aborted).
     /// </summary>
     private bool ShouldDeferBatchOutcomeForPostSubmitReroll()
     {
+        if (currentPower > maxPower)
+            return false;
+
         if (_deferredTriggeringRerollFacesRemaining > 0)
-        {
-            if (QualifiesForPerfectCast())
-                return false;
-            return currentPower <= maxPower;
-        }
+            return true;
 
         if (_batchHasRerollOtherDicePending && !_postBatchOtherDiceRerollCompleted)
-        {
-            if (QualifiesForPerfectCast())
-                return false;
-            return currentPower <= maxPower;
-        }
+            return true;
 
         return false;
+    }
+
+    private bool HasPendingDeferredRerolls()
+    {
+        if (currentPower > maxPower)
+            return false;
+
+        return _deferredTriggeringRerollFacesRemaining > 0
+            || (_batchHasRerollOtherDicePending && !_postBatchOtherDiceRerollCompleted);
     }
 
     private void AbortDeferredPostSubmitRerolls()
@@ -2088,7 +2094,7 @@ public class CombatManager : MonoBehaviour
                 if (dieAsset == null && dieIdx >= 0)
                     _batchDieAssetByGatherIndex.TryGetValue(dieIdx, out dieAsset);
 
-                CommitResolvedRoll(newFace, dieTransform, dieAsset, dieIdx, skipPowerContribution: false, allowPostSubmitTriggeringReroll: false);
+                CommitResolvedRoll(newFace, dieTransform, dieAsset, dieIdx, skipPowerContribution: true, allowPostSubmitTriggeringReroll: false);
 
                 face = newFace;
                 if (!keepFace && face != null)
@@ -2228,7 +2234,7 @@ public class CombatManager : MonoBehaviour
             dieTransform,
             dieAsset,
             dieIdx,
-            skipPowerContribution: false,
+            skipPowerContribution: true,
             allowPostSubmitTriggeringReroll: true,
             allowPostBatchOtherDiceReroll: false,
             isRerollOtherDiceSecondPass: true);
@@ -2271,7 +2277,7 @@ public class CombatManager : MonoBehaviour
             dieTransform,
             dieAsset,
             dieIdx,
-            skipPowerContribution: false,
+            skipPowerContribution: true,
             allowPostSubmitTriggeringReroll: false,
             allowPostBatchOtherDiceReroll: false,
             isRerollOtherDiceSecondPass: true);
@@ -2326,23 +2332,29 @@ public class CombatManager : MonoBehaviour
         result.SourceDieAsset = sourceDieAsset;
         result.BatchGatherIndex = batchGatherIndex;
         result.BatchId = _rollBatchId;
+
+        var awaitingPostSubmitTriggeringReroll = false;
         if (allowPostSubmitTriggeringReroll && TryGetTriggeringRerollAction(face, out _))
         {
+            awaitingPostSubmitTriggeringReroll = true;
             result.AwaitingPostSubmitTriggeringReroll = true;
             _facesAwaitingPostSubmitTriggeringReroll.Add(result);
             _deferredTriggeringRerollFacesRemaining++;
         }
 
-        if (allowPostBatchOtherDiceReroll
+        var awaitingPostBatchOtherDiceReroll = allowPostBatchOtherDiceReroll
             && !isRerollOtherDiceSecondPass
             && _batchHasRerollOtherDicePending
-            && _batchRerollOtherTargetIndices.Contains(batchGatherIndex))
+            && _batchRerollOtherTargetIndices.Contains(batchGatherIndex);
+        if (awaitingPostBatchOtherDiceReroll)
         {
             result.AwaitingPostBatchOtherDiceReroll = true;
             _facesAwaitingPostBatchOtherDiceReroll.Add(result);
         }
 
-        var skipPower = skipPowerContribution || (_echoSkipsPowerThisBatch && !isRerollOtherDiceSecondPass);
+        var skipPower = skipPowerContribution
+            || isRerollOtherDiceSecondPass
+            || (_echoSkipsPowerThisBatch && !isRerollOtherDiceSecondPass);
         result.PowerContributionThisResolve = skipPower ? 0 : modifiedValue;
         result.KineticShieldBonusContribution = kineticArmorThisRoll ? 1 : 0;
 
@@ -3077,6 +3089,9 @@ public class CombatManager : MonoBehaviour
 
     private void CheckBustStatusAndOpenFlyoutGate()
     {
+        if (HasPendingDeferredRerolls())
+            return;
+
         CheckBustStatus();
         _postRaiseCombatGateOpen = true;
     }
@@ -3229,6 +3244,9 @@ public class CombatManager : MonoBehaviour
     private void ManualEndTurn()
     {
         if (currentState != CombatState.WaitingForRoll) return;
+
+        if (HasPendingDeferredRerolls())
+            return;
 
         if (QualifiesForPerfectCast() || currentPower > maxPower)
         {

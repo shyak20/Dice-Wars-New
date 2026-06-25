@@ -83,7 +83,7 @@ public class DiceSpawner : MonoBehaviour
         if (die == null) return;
         var rb = die.GetComponent<Rigidbody>();
         var roller = die.GetComponent<DiceRoller>();
-        if (rb != null) ApplyForces(rb);
+        if (rb != null) ApplyRerollForces(rb);
         if (roller != null) roller.StartCheckingResult();
     }
 
@@ -241,6 +241,27 @@ public class DiceSpawner : MonoBehaviour
         Vector3 throwDirection = (spawnPoint.forward * forwardForce) + (spawnPoint.up * upwardForce);
         rb.AddForce(throwDirection, ForceMode.Impulse);
         float torqueMagnitude = Random.Range(minTorque, maxTorque);
+        rb.AddTorque(Random.insideUnitSphere * torqueMagnitude, ForceMode.Impulse);
+    }
+
+    private void ApplyRerollForces(Rigidbody rb)
+    {
+        if (spawnPoint == null)
+            throw new System.InvalidOperationException("DiceSpawner: spawnPoint is required for reroll forces.");
+
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        var upAxis = spawnPoint.up;
+        var angle = Random.Range(0f, 360f);
+        var horizontalDir = Quaternion.AngleAxis(angle, upAxis) * spawnPoint.forward;
+        var horizontalForce = Random.Range(minForwardForce, maxForwardForce);
+        var upwardForce = Random.Range(minUpwardForce, maxUpwardForce);
+        var throwDirection = horizontalDir * horizontalForce + upAxis * upwardForce;
+
+        rb.AddForce(throwDirection, ForceMode.Impulse);
+
+        var torqueMagnitude = Random.Range(minTorque, maxTorque);
         rb.AddTorque(Random.insideUnitSphere * torqueMagnitude, ForceMode.Impulse);
     }
 
