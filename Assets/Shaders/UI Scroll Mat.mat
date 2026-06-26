@@ -46,8 +46,8 @@ Material:
     - _UseUIAlphaClip: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorA: {r: 0.98039216, g: 0.69777155, b: 0.14509805, a: 1}
-    - _ColorB: {r: 1, g: 0.15988545, b: 0, a: 1}
+    - _ColorA: {r: 0.98039216, g: 0.56234854, b: 0.14509805, a: 1}
+    - _ColorB: {r: 1, g: 0.16078432, b: 0, a: 1}
     - _ColorLeft: {r: 1, g: 1, b: 1, a: 1}
     - _ColorRight: {r: 1, g: 1, b: 1, a: 1}
     - _MovementSpeed: {r: -2, g: 0, b: 0, a: 0}

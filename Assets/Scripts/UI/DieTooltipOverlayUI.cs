@@ -100,6 +100,10 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
 
         CurrentDie = die;
         dieTooltipPanel.SetActive(true);
+        if (dieTooltipSlotContainer != null)
+            dieTooltipSlotContainer.gameObject.SetActive(true);
+        if (dieTooltipGemIconContainer != null)
+            dieTooltipGemIconContainer.gameObject.SetActive(true);
         if (facesInteractable)
             SetDecorativeRaycastBlocking(false);
         DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
@@ -255,6 +259,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         if (faceReplacementRuleErrorObject == null)
             return;
 
+        EnsureFaceHoverHostVisible();
         ApplyFaceReplacementRuleErrorText();
 
         EnsureReplacementErrorShakeRect();
@@ -268,7 +273,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         _replacementErrorShakeRoutine = StartCoroutine(CoShakeReplacementError());
     }
 
-    void HideFaceReplacementRuleError()
+    public void HideFaceReplacementRuleError()
     {
         StopReplacementErrorShake(resetPosition: true);
         if (faceReplacementRuleErrorObject != null)
@@ -409,6 +414,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         HideStatusHoverTooltip();
     }
 
+    public void RegisterFaceSlotHover(UIRewardSlot slot, DieFaceSO face) => RegisterFaceHover(slot, face);
+
     private void RegisterFaceHover(UIRewardSlot slot, DieFaceSO face)
     {
         if (slot == null || face == null) return;
@@ -436,6 +443,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
 
     private void ShowFaceHoverTooltip(DieFaceSO face)
     {
+        EnsureFaceHoverHostVisible();
+
         if (face != null)
             DieTooltipBackgrounds.ApplyFaceTooltip(faceHoverTypeBackground, face);
         else
@@ -455,12 +464,39 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             HideStatusHoverTooltip();
     }
 
+    void EnsureFaceHoverHostVisible()
+    {
+        if (dieTooltipPanel == null)
+            return;
+
+        dieTooltipPanel.SetActive(true);
+
+        var showDieGrid = CurrentDie != null;
+        if (dieTooltipSlotContainer != null)
+            dieTooltipSlotContainer.gameObject.SetActive(showDieGrid);
+        if (dieTooltipGemIconContainer != null)
+            dieTooltipGemIconContainer.gameObject.SetActive(showDieGrid);
+
+        if (!showDieGrid)
+            SetDecorativeRaycastBlocking(false);
+    }
+
     private void HideFaceHoverTooltip()
     {
         if (faceHoverTitleText != null) faceHoverTitleText.text = "";
         if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = "";
         DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
-        if (faceHoverTooltipPanel != null) faceHoverTooltipPanel.SetActive(false);
+        if (faceHoverTooltipPanel != null)
+            faceHoverTooltipPanel.SetActive(false);
+
+        if (CurrentDie != null || dieTooltipPanel == null || !dieTooltipPanel.activeSelf)
+            return;
+
+        dieTooltipPanel.SetActive(false);
+        if (dieTooltipSlotContainer != null)
+            dieTooltipSlotContainer.gameObject.SetActive(true);
+        if (dieTooltipGemIconContainer != null)
+            dieTooltipGemIconContainer.gameObject.SetActive(true);
     }
 
     private void ShowStatusHoverTooltip(string title, string description)

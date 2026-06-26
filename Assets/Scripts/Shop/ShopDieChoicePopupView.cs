@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ShopDieChoicePopupView : MonoBehaviour
@@ -11,14 +10,11 @@ public class ShopDieChoicePopupView : MonoBehaviour
     [SerializeField] GameObject panel;
     [SerializeField] TMP_Text titleText;
     [SerializeField] Button backButton;
-    [SerializeField] Transform diceLayoutContainer;
-    [SerializeField] GameObject dieButtonPrefab;
+    [SerializeField] DieTrayFaceReplaceLayout trayLayout;
     [SerializeField] DieTooltipOverlayUI dieTooltipOverlay;
     [Tooltip("After buying a face in the shop, delay before closing this popup (new-face preview on the clicked slot).")]
     [SerializeField, Min(0f)] private float faceSwapCloseDelay = 1.25f;
 
-    readonly Dictionary<DieAssetSO, DiceTrayButtonView> _views = new();
-    readonly Dictionary<DieAssetSO, Button> _buttons = new();
     DieFaceSO _targetFace;
     GemSO _targetGem;
     Func<DieAssetSO, int, bool> _onFaceCommit;
@@ -34,7 +30,7 @@ public class ShopDieChoicePopupView : MonoBehaviour
         _onGemCommit = null;
         _onCancel = onCancel;
         if (titleText != null) titleText.text = "Choose die and face to replace";
-        ShowCommon();
+        ShowCommon(faceReplaceMode: true);
     }
 
     public void ShowForGemSocket(GemSO targetGem, Func<DieAssetSO, bool> onCommit, Action onCancel)
@@ -45,10 +41,10 @@ public class ShopDieChoicePopupView : MonoBehaviour
         _onGemCommit = onCommit;
         _onCancel = onCancel;
         if (titleText != null) titleText.text = "Choose die for gem";
-        ShowCommon();
+        ShowCommon(faceReplaceMode: false);
     }
 
-    void ShowCommon()
+    void ShowCommon(bool faceReplaceMode)
     {
         if (backButton != null)
         {
@@ -56,6 +52,8 @@ public class ShopDieChoicePopupView : MonoBehaviour
             backButton.onClick.AddListener(Cancel);
         }
 
+        trayLayout.SetHoverTooltipsEnabled(true);
+        trayLayout.CollapseAllFaceReplaceImmediate();
         RebuildDice();
         _activeDie = null;
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
@@ -64,88 +62,55 @@ public class ShopDieChoicePopupView : MonoBehaviour
 
     void RebuildDice()
     {
-        if (diceLayoutContainer == null || PlayerDataContainer.Instance?.RuntimeData == null) return;
-        foreach (Transform c in diceLayoutContainer) Destroy(c.gameObject);
-        _views.Clear();
-        _buttons.Clear();
+        if (trayLayout == null || PlayerDataContainer.Instance?.RuntimeData == null) return;
 
         var deck = PlayerDataContainer.Instance.RuntimeData.currentDeck;
-        for (var i = 0; i < deck.Count; i++)
-        {
-            var die = deck[i];
-            if (die == null) continue;
-
-            var faceCompatible = _targetFace != null && die.CanAttachFace(_targetFace) && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, _targetFace);
-            var gemCompatible = _targetGem != null && die.GetEmptyGemSocketCount() > 0;
-            var compatible = faceCompatible || gemCompatible;
-            if (!compatible) continue;
-
-            var go = Instantiate(dieButtonPrefab, diceLayoutContainer);
-            var txt = go.GetComponentInChildren<TMP_Text>();
-            if (txt != null) txt.text = die.dieName;
-            var view = go.GetComponent<DiceTrayButtonView>();
-            if (view != null)
+        trayLayout.Rebuild(
+            deck,
+            includeFilter: die =>
             {
-                view.SetIcon(die.uiIcon);
-                view.SetSelected(false);
-                view.SetSelectedIconShakeEnabled(false);
-                _views[die] = view;
-            }
-
-            var btn = go.GetComponent<Button>();
-            if (btn == null) continue;
-            _buttons[die] = btn;
-            var captured = die;
-            btn.onClick.AddListener(() => OnDieClicked(captured));
-            RegisterHover(btn, captured);
-        }
-    }
-
-    void RegisterHover(Button btn, DieAssetSO die)
-    {
-        if (btn == null || die == null) return;
-        var et = btn.gameObject.GetComponent<EventTrigger>() ?? btn.gameObject.AddComponent<EventTrigger>();
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => { if (_activeDie == null) dieTooltipOverlay?.ShowDie(die, false, null, GetIconRect(die)); });
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ => { if (_activeDie == null) dieTooltipOverlay?.Hide(); });
-        et.triggers.Add(enter);
-        et.triggers.Add(exit);
+                if (die == null) return false;
+                if (_targetFace != null)
+                    return die.CanAttachFace(_targetFace)
+                           && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, _targetFace);
+                if (_targetGem != null)
+                    return die.GetEmptyGemSocketCount() > 0;
+                return false;
+            },
+            onDieClicked: OnDieClicked);
     }
 
     void OnDieClicked(DieAssetSO die)
     {
         _activeDie = die;
-        foreach (var kv in _views) kv.Value.SetSelected(kv.Key == die);
+
         if (_targetFace != null)
         {
-            dieTooltipOverlay?.ShowDie(
+            trayLayout.SelectDieForFaceReplace(
                 die,
-                true,
+                _targetFace,
+                idx => SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, _targetFace),
                 (slotIndex, _, slot) =>
                 {
                     if (_onFaceCommit == null || !_onFaceCommit(die, slotIndex))
                         return;
                     StartCoroutine(CoCloseAfterFaceSwapPreview(slot, _targetFace));
-                },
-                GetIconRect(die),
-                idx => SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, _targetFace));
+                });
             return;
         }
 
         if (_targetGem != null)
         {
-            dieTooltipOverlay?.ShowDie(die, false, null, GetIconRect(die));
+            trayLayout.SetSelectedDie(die);
+            dieTooltipOverlay?.ShowDie(die, false, null, trayLayout.GetDieIconRect(die));
             if (_onGemCommit != null && _onGemCommit(die))
                 Hide();
         }
     }
 
-    RectTransform GetIconRect(DieAssetSO die) => die != null && _views.TryGetValue(die, out var v) ? v.IconRectTransform : null;
-
     IEnumerator CoCloseAfterFaceSwapPreview(UIRewardSlot slot, DieFaceSO newFace)
     {
-        dieTooltipOverlay?.SetAllFaceSlotsInteractable(false);
+        trayLayout.SetAllSpreadSlotsInteractable(false);
 
         if (slot != null && newFace != null)
             slot.ShowNewFacePickedPreview(newFace);
@@ -156,6 +121,8 @@ public class ShopDieChoicePopupView : MonoBehaviour
         Hide();
     }
 
+    public void NotifyFaceReplacementRuleError() => trayLayout?.NotifyFaceReplacementRuleError();
+
     void Cancel()
     {
         Hide();
@@ -165,6 +132,7 @@ public class ShopDieChoicePopupView : MonoBehaviour
     public void Hide()
     {
         if (panel != null) panel.SetActive(false);
+        trayLayout?.CollapseAllFaceReplaceImmediate();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         _activeDie = null;
     }

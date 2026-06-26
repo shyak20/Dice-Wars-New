@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -10,8 +8,7 @@ using UnityEngine.UI;
 /// Single-screen face reward flow:
 /// 1) Pick one reward face.
 /// 2) Rewards collapse to the picked face.
-/// 3) Replacement panel (shared <see cref="DieTooltipOverlayUI"/>) stays visible: choose a die in the tray to
-///    switch which die’s faces are shown, then click a face slot to swap and finish.
+/// 3) Replacement uses in-tray <see cref="DieFaceSpreadView"/> (not the die tooltip).
 /// </summary>
 public class FacePickerView : MonoBehaviour
 {
@@ -20,11 +17,7 @@ public class FacePickerView : MonoBehaviour
     [SerializeField] private GameObject rewardSlotPrefab;
 
     [Header("Deck dice layout")]
-    [SerializeField] private Transform diceLayoutContainer;
-    [SerializeField] private GameObject dieButtonPrefab;
-    [SerializeField, Min(0f)] private float diceLayoutSpacing = 16f;
-    [SerializeField, Min(0.01f)] private float pickTransitionSeconds = 0.25f;
-    [SerializeField] private AnimationCurve pickTransitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] private DieTrayFaceReplaceLayout trayLayout;
 
     [Header("Shared die tooltip")]
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
@@ -39,9 +32,6 @@ public class FacePickerView : MonoBehaviour
     [SerializeField] private Button backButton;
 
     private readonly List<UIRewardSlot> _rewardSlots = new List<UIRewardSlot>();
-    private readonly Dictionary<UIRewardSlot, CanvasGroup> _rewardSlotGroups = new Dictionary<UIRewardSlot, CanvasGroup>();
-    private readonly Dictionary<DieAssetSO, DiceTrayButtonView> _diceViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
-    private readonly Dictionary<DieAssetSO, Button> _diceButtons = new Dictionary<DieAssetSO, Button>();
 
     private Action<DieFaceSO> _onFacePicked;
     private Action<DieAssetSO, int, UIRewardSlot> _onReplaceFaceSlotPicked;
@@ -49,19 +39,17 @@ public class FacePickerView : MonoBehaviour
     private Action _onRewindToFacePick;
     private DieFaceSO _selectedRewardFace;
     private DieAssetSO _activeReplacementDie;
-    private Coroutine _pickTransitionRoutine;
 
     private void Awake()
     {
         if (panel == null) Debug.LogError("FacePickerView: assign panel.");
         if (slotContainer == null) Debug.LogError("FacePickerView: assign slotContainer.");
         if (rewardSlotPrefab == null) Debug.LogError("FacePickerView: assign rewardSlotPrefab (UIRewardSlot).");
-        if (dieButtonPrefab == null) Debug.LogError("FacePickerView: assign dieButtonPrefab.");
+        if (trayLayout == null) Debug.LogError("FacePickerView: assign trayLayout (DieTrayFaceReplaceLayout).");
     }
 
     private void Update()
     {
-        // In replacement mode the overlay is always on; do not dismiss on background click.
         if (_selectedRewardFace != null) return;
         if (dieTooltipOverlay == null || dieTooltipOverlay.CurrentDie == null) return;
         if (!Input.GetMouseButtonDown(0)) return;
@@ -74,11 +62,11 @@ public class FacePickerView : MonoBehaviour
         {
             var t = hits[i].gameObject != null ? hits[i].gameObject.transform : null;
             if (t == null) continue;
-            if (diceLayoutContainer != null && t.IsChildOf(diceLayoutContainer)) return;
+            if (trayLayout != null && trayLayout.DiceContainer != null && t.IsChildOf(trayLayout.DiceContainer)) return;
         }
 
         _activeReplacementDie = null;
-        ClearDiceSelectionVisuals();
+        trayLayout?.ClearPinnedDieTooltip();
         dieTooltipOverlay.Hide();
     }
 
@@ -104,6 +92,8 @@ public class FacePickerView : MonoBehaviour
 
         ConfigureNavButtons();
         RebuildRewardSlots(options);
+        trayLayout.SetHoverTooltipsEnabled(true);
+        trayLayout.CollapseAllFaceReplaceImmediate();
         RebuildDiceLayout();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         SetPhaseVisuals(phaseBActive: true);
@@ -113,13 +103,8 @@ public class FacePickerView : MonoBehaviour
 
     public void Hide()
     {
-        if (_pickTransitionRoutine != null)
-        {
-            StopCoroutine(_pickTransitionRoutine);
-            _pickTransitionRoutine = null;
-        }
-
         if (panel != null) panel.SetActive(false);
+        trayLayout?.CollapseAllFaceReplaceImmediate();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         SetAllPhaseObjects(false);
     }
@@ -129,7 +114,6 @@ public class FacePickerView : MonoBehaviour
         foreach (Transform c in slotContainer)
             Destroy(c.gameObject);
         _rewardSlots.Clear();
-        _rewardSlotGroups.Clear();
 
         foreach (var face in options)
         {
@@ -146,66 +130,20 @@ public class FacePickerView : MonoBehaviour
             slot.SetInteractable(true);
             slot.EnsureStandaloneHoverReveal();
             _rewardSlots.Add(slot);
-            var cg = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>();
-            _rewardSlotGroups[slot] = cg;
         }
     }
 
     private void RebuildDiceLayout()
     {
-        if (diceLayoutContainer == null || PlayerDataContainer.Instance?.RuntimeData == null)
+        if (trayLayout == null || PlayerDataContainer.Instance?.RuntimeData == null)
             return;
 
-        foreach (Transform c in diceLayoutContainer)
-            Destroy(c.gameObject);
-        _diceViews.Clear();
-        _diceButtons.Clear();
-
-        var layout = diceLayoutContainer.GetComponent<HorizontalOrVerticalLayoutGroup>();
-        if (layout != null)
-            layout.spacing = _selectedRewardFace == null ? 0f : diceLayoutSpacing;
-
         var deck = PlayerDataContainer.Instance.RuntimeData.currentDeck;
-        for (var i = 0; i < deck.Count; i++)
-        {
-            var die = deck[i];
-            if (die == null) continue;
+        Func<DieAssetSO, bool> interactableFilter = _selectedRewardFace != null
+            ? die => DieCanReceiveRewardFace(die, _selectedRewardFace)
+            : _ => true;
 
-            if (dieButtonPrefab == null)
-            {
-                Debug.LogError("FacePickerView: dieButtonPrefab is missing.", this);
-                return;
-            }
-
-            var go = Instantiate(dieButtonPrefab, diceLayoutContainer);
-            var txt = go.GetComponentInChildren<TMP_Text>();
-            if (txt != null) txt.text = die.dieName;
-
-            var view = go.GetComponent<DiceTrayButtonView>();
-            if (view != null)
-            {
-                view.SetIcon(die.uiIcon);
-                view.SetSelected(false);
-                view.SetSelectedIconShakeEnabled(false);
-                _diceViews[die] = view;
-            }
-            else
-            {
-                Debug.LogError("FacePickerView: dieButtonPrefab needs DiceTrayButtonView.", go);
-            }
-
-            var btn = go.GetComponent<Button>();
-            if (btn == null)
-            {
-                Debug.LogError("FacePickerView: dieButtonPrefab needs Button.", go);
-                continue;
-            }
-            _diceButtons[die] = btn;
-            var captured = die;
-            btn.onClick.AddListener(() => OnDieClicked(captured));
-            RegisterDieHover(btn, captured);
-            SetDieButtonInteractable(captured, _selectedRewardFace != null && DieCanReceiveSelectedRewardFace(captured));
-        }
+        trayLayout.Rebuild(deck, interactableFilter: interactableFilter, onDieClicked: OnDieClicked);
     }
 
     private void ConfigureNavButtons()
@@ -217,7 +155,6 @@ public class FacePickerView : MonoBehaviour
             if (_onBack != null)
                 backButton.onClick.AddListener(OnBackClicked);
         }
-
     }
 
     private void OnBackClicked()
@@ -234,38 +171,27 @@ public class FacePickerView : MonoBehaviour
 
     private void ReturnToFaceSelectionPhase()
     {
-        if (_pickTransitionRoutine != null)
-        {
-            StopCoroutine(_pickTransitionRoutine);
-            _pickTransitionRoutine = null;
-        }
-
         _selectedRewardFace = null;
         _activeReplacementDie = null;
         _onRewindToFacePick?.Invoke();
-        SetPhaseVisuals(phaseBActive: true);
 
-        for (var i = 0; i < _rewardSlots.Count; i++)
+        trayLayout.CollapseAllFaceReplace(() =>
         {
-            var slot = _rewardSlots[i];
-            if (slot == null) continue;
-            slot.gameObject.SetActive(true);
-            slot.SetInteractable(true);
-            slot.SetHoverRevealEnabled(true);
-            if (_rewardSlotGroups.TryGetValue(slot, out var cg) && cg != null)
-                cg.alpha = 1f;
-        }
+            SetPhaseVisuals(phaseBActive: true);
 
-        if (diceLayoutContainer != null)
-        {
-            var layout = diceLayoutContainer.GetComponent<HorizontalOrVerticalLayoutGroup>();
-            if (layout != null)
-                layout.spacing = 0f;
-        }
+            for (var i = 0; i < _rewardSlots.Count; i++)
+            {
+                var slot = _rewardSlots[i];
+                if (slot == null) continue;
+                slot.gameObject.SetActive(true);
+                slot.SetInteractable(true);
+                slot.SetHoverRevealEnabled(true);
+            }
 
-        RebuildDiceLayout();
-        if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
-        ClearDiceSelectionVisuals();
+            trayLayout.SetHoverTooltipsEnabled(true);
+            RebuildDiceLayout();
+            if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
+        });
     }
 
     private void OnRewardFaceClicked(DieFaceSO face)
@@ -277,121 +203,61 @@ public class FacePickerView : MonoBehaviour
 
         _selectedRewardFace = face;
         SetPhaseVisuals(phaseBActive: false);
+        trayLayout.ClearPinnedDieTooltip();
+        if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         _onFacePicked?.Invoke(face);
 
-        if (_pickTransitionRoutine != null)
-            StopCoroutine(_pickTransitionRoutine);
-        _pickTransitionRoutine = StartCoroutine(CoRewardPickedTransition(face));
-
-        foreach (var kv in _diceButtons)
-            SetDieButtonInteractable(kv.Key, DieCanReceiveRewardFace(kv.Key, face));
+        CollapseRewardSlotsToSelected(face);
+        RebuildDiceLayout();
+        ShowReplacementSpreadForFirstCompatibleDie();
     }
 
-    private IEnumerator CoRewardPickedTransition(DieFaceSO selectedFace)
+    private void CollapseRewardSlotsToSelected(DieFaceSO selectedFace)
     {
-        var layout = diceLayoutContainer != null ? diceLayoutContainer.GetComponent<HorizontalOrVerticalLayoutGroup>() : null;
-        var startSpacing = layout != null ? layout.spacing : 0f;
-        var endSpacing = diceLayoutSpacing;
-        var duration = Mathf.Max(0.01f, pickTransitionSeconds);
-        var t = 0f;
-
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            var u = Mathf.Clamp01(t / duration);
-            var e = pickTransitionCurve != null ? pickTransitionCurve.Evaluate(u) : u;
-
-            for (var i = 0; i < _rewardSlots.Count; i++)
-            {
-                var slot = _rewardSlots[i];
-                if (slot == null || !_rewardSlotGroups.TryGetValue(slot, out var cg) || cg == null) continue;
-                var keep = slot.Face == selectedFace;
-                if (keep)
-                {
-                    cg.alpha = 1f;
-                    continue;
-                }
-
-                cg.alpha = 1f - e;
-            }
-
-            if (layout != null)
-                layout.spacing = Mathf.Lerp(startSpacing, endSpacing, e);
-            yield return null;
-        }
-
         for (var i = 0; i < _rewardSlots.Count; i++)
         {
             var slot = _rewardSlots[i];
             if (slot == null) continue;
-            var keep = slot.Face == selectedFace;
-            slot.gameObject.SetActive(keep);
+            slot.gameObject.SetActive(slot.Face == selectedFace);
         }
-
-        if (layout != null)
-            layout.spacing = endSpacing;
-        _pickTransitionRoutine = null;
-        ShowReplacementPanelForFirstCompatibleDie();
     }
 
-    private void ShowReplacementPanelForFirstCompatibleDie()
+    private void ShowReplacementSpreadForFirstCompatibleDie()
     {
-        if (dieTooltipOverlay == null || _selectedRewardFace == null) return;
+        if (_selectedRewardFace == null || trayLayout == null || PlayerDataContainer.Instance?.RuntimeData == null)
+            return;
 
-        foreach (var kv in _diceButtons)
+        var deck = PlayerDataContainer.Instance.RuntimeData.currentDeck;
+        for (var i = 0; i < deck.Count; i++)
         {
-            if (!DieCanReceiveSelectedRewardFace(kv.Key)) continue;
-            OnDieClicked(kv.Key);
+            var die = deck[i];
+            if (!DieCanReceiveRewardFace(die, _selectedRewardFace))
+                continue;
+            OnDieClicked(die);
             return;
         }
     }
 
     private void OnDieClicked(DieAssetSO die)
     {
-        if (_selectedRewardFace == null || die == null || !DieCanReceiveSelectedRewardFace(die))
+        if (die == null)
+            return;
+
+        if (_selectedRewardFace == null)
+        {
+            trayLayout.PinDieTooltip(die);
+            return;
+        }
+
+        if (!DieCanReceiveSelectedRewardFace(die))
             return;
 
         _activeReplacementDie = die;
-        ClearDiceSelectionVisuals();
-        if (_diceViews.TryGetValue(die, out var selectedView))
-            selectedView.SetSelected(true);
-        ShowDieReplacementPanel(die);
-    }
-
-    private void RegisterDieHover(Button btn, DieAssetSO die)
-    {
-        if (btn == null || die == null) return;
-        var go = btn.gameObject;
-        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
-
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ =>
-        {
-            if (_selectedRewardFace != null) return;
-            if (dieTooltipOverlay == null) return;
-            dieTooltipOverlay.ShowDie(die, false, null, GetDieIconRectForTooltip(die));
-        });
-        et.triggers.Add(enter);
-
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ =>
-        {
-            if (_selectedRewardFace != null) return;
-            dieTooltipOverlay?.Hide();
-        });
-        et.triggers.Add(exit);
-    }
-
-    private void ShowDieReplacementPanel(DieAssetSO die)
-    {
-        if (dieTooltipOverlay == null || die == null || _selectedRewardFace == null) return;
-        if (!DieCanReceiveSelectedRewardFace(die)) return;
-        dieTooltipOverlay.ShowDie(
+        trayLayout.SelectDieForFaceReplace(
             die,
-            true,
-            OnDieFaceReplacementClicked,
-            GetDieIconRectForTooltip(die),
-            idx => SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, _selectedRewardFace));
+            _selectedRewardFace,
+            idx => SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, _selectedRewardFace),
+            OnDieFaceReplacementClicked);
     }
 
     bool DieCanReceiveSelectedRewardFace(DieAssetSO die) =>
@@ -400,36 +266,14 @@ public class FacePickerView : MonoBehaviour
     static bool DieCanReceiveRewardFace(DieAssetSO die, DieFaceSO face) =>
         die != null && face != null && die.CanAttachFace(face) && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, face);
 
-    public void NotifyFaceReplacementRuleError() => dieTooltipOverlay?.ShowFaceReplacementRuleError();
-
-    private RectTransform GetDieIconRectForTooltip(DieAssetSO die)
-    {
-        if (die == null) return null;
-        return _diceViews.TryGetValue(die, out var view) ? view.IconRectTransform : null;
-    }
+    public void NotifyFaceReplacementRuleError() => trayLayout?.NotifyFaceReplacementRuleError();
 
     private void OnDieFaceReplacementClicked(int slotIndex, DieFaceSO oldFace, UIRewardSlot slot)
     {
         if (_selectedRewardFace == null) return;
         var die = _activeReplacementDie;
-        if (die == null) die = dieTooltipOverlay != null ? dieTooltipOverlay.CurrentDie : null;
         if (die == null) return;
         _onReplaceFaceSlotPicked?.Invoke(die, slotIndex, slot);
-    }
-
-    private void SetDieButtonInteractable(DieAssetSO die, bool interactable)
-    {
-        if (die == null) return;
-        if (_diceButtons.TryGetValue(die, out var button) && button != null)
-            button.interactable = interactable;
-        if (_diceViews.TryGetValue(die, out var view) && view != null)
-            view.SetSelected(false);
-    }
-
-    private void ClearDiceSelectionVisuals()
-    {
-        foreach (var kv in _diceViews)
-            kv.Value.SetSelected(false);
     }
 
     private void SetPhaseVisuals(bool phaseBActive)

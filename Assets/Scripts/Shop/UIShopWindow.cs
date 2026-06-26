@@ -250,7 +250,7 @@ public class UIShopWindow : MonoBehaviour
         {
             if (die == null || !SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, o.Face))
             {
-                dieTooltipOverlay?.ShowFaceReplacementRuleError();
+                dieChoicePopup?.NotifyFaceReplacementRuleError();
                 return false;
             }
 
@@ -260,7 +260,7 @@ public class UIShopWindow : MonoBehaviour
                 die.SwapFace(idx, o.Face);
                 o.Sold = true;
                 RebuildOfferUi();
-                // Keep die tooltip open for ShopDieChoicePopupView face-swap close delay (preview on slot).
+                // Keep spread open for ShopDieChoicePopupView face-swap close delay (preview on slot).
                 RebuildPlayerDice(hideDieTooltipOverlay: false);
                 return true;
             }
