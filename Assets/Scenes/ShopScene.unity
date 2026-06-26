@@ -1126,6 +1126,7 @@ MonoBehaviour:
   progressionRewardVisualCatalog: {fileID: 0}
   fallbackCanvas: {fileID: 394332461}
   hoverTooltipScreenOffset: {x: 50, y: -140}
+  trialRewardsTooltipScreenOffset: {x: 0, y: 0}
   hoverAboveTooltipScreenOffset: {x: 0, y: 0}
 --- !u!1 &310713529
 GameObject:
@@ -1469,12 +1470,12 @@ RectTransform:
   - {fileID: 1501705632}
   - {fileID: 218256563}
   - {fileID: 1957574315}
+  - {fileID: 408337058}
   - {fileID: 1954687248}
   - {fileID: 1220188153}
   - {fileID: 2125311786}
   - {fileID: 1037816752}
   - {fileID: 591769527}
-  - {fileID: 408337058}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2601,6 +2602,7 @@ GameObject:
   - component: {fileID: 647609996}
   - component: {fileID: 647609998}
   - component: {fileID: 647609997}
+  - component: {fileID: 647609999}
   m_Layer: 0
   m_Name: Dice Grid
   m_TagString: Untagged
@@ -2669,6 +2671,23 @@ MonoBehaviour:
   m_ChildScaleWidth: 1
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &647609999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 647609995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dfc77ef4e26ea145aebf7d7a2e084bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DieTrayFaceReplaceLayout
+  diceLayoutContainer: {fileID: 647609996}
+  dieButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
+  dieFaceSpreadPrefab: {fileID: 4060921945928399358, guid: 5c08cefc5c8017f4390b71549940279f, type: 3}
+  dieTooltipOverlay: {fileID: 1037816753}
+  spreadDeselectDuration: 0.35
 --- !u!1 &655457358
 GameObject:
   m_ObjectHideFlags: 0
@@ -6066,8 +6085,7 @@ MonoBehaviour:
   panel: {fileID: 1954687247}
   titleText: {fileID: 453614656}
   backButton: {fileID: 265749962}
-  diceLayoutContainer: {fileID: 647609996}
-  dieButtonPrefab: {fileID: 8094644346593688456, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
+  trayLayout: {fileID: 647609999}
   dieTooltipOverlay: {fileID: 1037816753}
   faceSwapCloseDelay: 1
 --- !u!1001 &1957574314

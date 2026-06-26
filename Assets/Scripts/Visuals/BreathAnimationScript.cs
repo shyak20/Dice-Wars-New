@@ -22,8 +22,8 @@ public sealed class BreathAnimationScript : MonoBehaviour
     private RectTransform _targetRect;
     private Vector2 _lastBreathOffset;
     private DieFaceSpreadView _spreadViewAncestor;
-    private WinStageFlowController _winStageFlow;
-    private FaceRewardManager _faceRewardManager;
+    private static WinStageFlowController _cachedWinStageFlow;
+    private static FaceRewardManager _cachedFaceRewardManager;
 
     private void Awake()
     {
@@ -53,8 +53,6 @@ public sealed class BreathAnimationScript : MonoBehaviour
         }
 
         CacheSpreadAncestor();
-        _winStageFlow = FindObjectOfType<WinStageFlowController>(true);
-        _faceRewardManager = FindObjectOfType<FaceRewardManager>(true);
     }
 
     private void OnEnable()
@@ -146,13 +144,13 @@ public sealed class BreathAnimationScript : MonoBehaviour
 
     private bool ShouldPauseForUi()
     {
-        if (_winStageFlow == null)
-            _winStageFlow = FindObjectOfType<WinStageFlowController>(true);
-        if (_faceRewardManager == null)
-            _faceRewardManager = FindObjectOfType<FaceRewardManager>(true);
+        if (_cachedWinStageFlow == null)
+            _cachedWinStageFlow = FindObjectOfType<WinStageFlowController>(true);
+        if (_cachedFaceRewardManager == null)
+            _cachedFaceRewardManager = FindObjectOfType<FaceRewardManager>(true);
 
-        var winVisible = _winStageFlow != null && _winStageFlow.IsWinStageVisible;
-        var faceRewardVisible = _faceRewardManager != null && _faceRewardManager.gameObject.activeInHierarchy;
+        var winVisible = _cachedWinStageFlow != null && _cachedWinStageFlow.IsWinStageVisible;
+        var faceRewardVisible = _cachedFaceRewardManager != null && _cachedFaceRewardManager.gameObject.activeInHierarchy;
 
         if (faceRewardVisible && IsUnderActiveFaceSpread())
             return false;

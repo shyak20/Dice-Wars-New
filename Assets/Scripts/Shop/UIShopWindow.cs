@@ -260,8 +260,6 @@ public class UIShopWindow : MonoBehaviour
                 die.SwapFace(idx, o.Face);
                 o.Sold = true;
                 RebuildOfferUi();
-                // Keep spread open for ShopDieChoicePopupView face-swap close delay (preview on slot).
-                RebuildPlayerDice(hideDieTooltipOverlay: false);
                 return true;
             }
             catch (Exception e)
@@ -270,7 +268,7 @@ public class UIShopWindow : MonoBehaviour
                 if (RunEconomyManager.Instance != null) RunEconomyManager.Instance.GrantGold(o.Price, null);
                 return false;
             }
-        }, null);
+        }, null, () => RebuildPlayerDice());
     }
 
     void StartGemFlow(OfferData o)

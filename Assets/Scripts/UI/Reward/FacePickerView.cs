@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -39,6 +40,7 @@ public class FacePickerView : MonoBehaviour
     private Action _onRewindToFacePick;
     private DieFaceSO _selectedRewardFace;
     private DieAssetSO _activeReplacementDie;
+    private Coroutine _openSpreadRoutine;
 
     private void Awake()
     {
@@ -95,6 +97,7 @@ public class FacePickerView : MonoBehaviour
         trayLayout.SetHoverTooltipsEnabled(true);
         trayLayout.CollapseAllFaceReplaceImmediate();
         RebuildDiceLayout();
+        trayLayout.StartPrewarmSpreadsForCurrentEntries();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         SetPhaseVisuals(phaseBActive: true);
 
@@ -103,6 +106,13 @@ public class FacePickerView : MonoBehaviour
 
     public void Hide()
     {
+        if (_openSpreadRoutine != null)
+        {
+            StopCoroutine(_openSpreadRoutine);
+            _openSpreadRoutine = null;
+        }
+
+        trayLayout?.StopPrewarmSpreads();
         if (panel != null) panel.SetActive(false);
         trayLayout?.CollapseAllFaceReplaceImmediate();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
@@ -190,6 +200,7 @@ public class FacePickerView : MonoBehaviour
 
             trayLayout.SetHoverTooltipsEnabled(true);
             RebuildDiceLayout();
+            trayLayout.StartPrewarmSpreadsForCurrentEntries();
             if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         });
     }
@@ -209,8 +220,16 @@ public class FacePickerView : MonoBehaviour
         _onFacePicked?.Invoke(face);
 
         CollapseRewardSlotsToSelected(face);
-        RebuildDiceLayout();
+        RefreshDiceInteractable();
         ShowReplacementSpreadForFirstCompatibleDie();
+    }
+
+    private void RefreshDiceInteractable()
+    {
+        if (trayLayout == null || _selectedRewardFace == null)
+            return;
+
+        trayLayout.RefreshInteractable(die => DieCanReceiveRewardFace(die, _selectedRewardFace));
     }
 
     private void CollapseRewardSlotsToSelected(DieFaceSO selectedFace)
@@ -228,15 +247,40 @@ public class FacePickerView : MonoBehaviour
         if (_selectedRewardFace == null || trayLayout == null || PlayerDataContainer.Instance?.RuntimeData == null)
             return;
 
+        if (_openSpreadRoutine != null)
+        {
+            StopCoroutine(_openSpreadRoutine);
+            _openSpreadRoutine = null;
+        }
+
+        _openSpreadRoutine = StartCoroutine(CoOpenFirstCompatibleSpread());
+    }
+
+    private IEnumerator CoOpenFirstCompatibleSpread()
+    {
         var deck = PlayerDataContainer.Instance.RuntimeData.currentDeck;
+        DieAssetSO targetDie = null;
         for (var i = 0; i < deck.Count; i++)
         {
             var die = deck[i];
-            if (!DieCanReceiveRewardFace(die, _selectedRewardFace))
-                continue;
-            OnDieClicked(die);
-            return;
+            if (DieCanReceiveRewardFace(die, _selectedRewardFace))
+            {
+                targetDie = die;
+                break;
+            }
         }
+
+        if (targetDie == null)
+        {
+            _openSpreadRoutine = null;
+            yield break;
+        }
+
+        if (!trayLayout.IsSpreadPrewarmed(targetDie))
+            yield return null;
+
+        OnDieClicked(targetDie);
+        _openSpreadRoutine = null;
     }
 
     private void OnDieClicked(DieAssetSO die)

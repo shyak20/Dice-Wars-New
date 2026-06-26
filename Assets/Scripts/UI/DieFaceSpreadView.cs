@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using AssetKits.ParticleImage;
 using UnityEngine;
 
 /// <summary>
@@ -13,6 +13,7 @@ public sealed class DieFaceSpreadView : MonoBehaviour
     [SerializeField] private DieFaceSpreadSlotView[] faceSlots;
 
     private int _selectedBoolParamHash;
+    private ParticleImage[] _particleImages;
 
     public DieAssetSO BoundDie { get; private set; }
 
@@ -31,12 +32,40 @@ public sealed class DieFaceSpreadView : MonoBehaviour
         if (faceSlots == null || faceSlots.Length == 0)
             throw new InvalidOperationException($"DieFaceSpreadView on '{name}': assign at least one DieFaceSpreadSlotView.");
 
-        faceSlots = faceSlots.OrderBy(s => s.FaceIndex).ToArray();
+        if (faceSlots.Length > 1)
+        {
+            var needsSort = false;
+            for (var i = 1; i < faceSlots.Length; i++)
+            {
+                if (faceSlots[i] == null || faceSlots[i - 1] == null
+                    || faceSlots[i].FaceIndex < faceSlots[i - 1].FaceIndex)
+                {
+                    needsSort = true;
+                    break;
+                }
+            }
+
+            if (needsSort)
+            {
+                Array.Sort(faceSlots, (a, b) =>
+                {
+                    if (a == null && b == null) return 0;
+                    if (a == null) return 1;
+                    if (b == null) return -1;
+                    return a.FaceIndex.CompareTo(b.FaceIndex);
+                });
+            }
+        }
+
+        _particleImages = GetComponentsInChildren<ParticleImage>(true);
+        SetParticleEffectsEnabled(false);
         SetSelected(false);
     }
 
     public void SetSelected(bool selected)
     {
+        SetParticleEffectsEnabled(selected);
+
         if (spreadAnimator == null || spreadAnimator.runtimeAnimatorController == null || _selectedBoolParamHash == 0)
             return;
 
@@ -91,6 +120,18 @@ public sealed class DieFaceSpreadView : MonoBehaviour
         {
             if (faceSlots[i] != null)
                 faceSlots[i].SetInteractable(interactable);
+        }
+    }
+
+    void SetParticleEffectsEnabled(bool enabled)
+    {
+        if (_particleImages == null)
+            return;
+
+        for (var i = 0; i < _particleImages.Length; i++)
+        {
+            if (_particleImages[i] != null)
+                _particleImages[i].enabled = enabled;
         }
     }
 }

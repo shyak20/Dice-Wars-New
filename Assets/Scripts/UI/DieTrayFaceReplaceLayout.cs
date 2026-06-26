@@ -32,6 +32,7 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
 
     private readonly Dictionary<DieAssetSO, TrayEntry> _entries = new();
     private readonly Dictionary<DieAssetSO, Coroutine> _collapseRoutines = new();
+    private Coroutine _prewarmRoutine;
     private bool _hoverTooltipsEnabled = true;
     private DieAssetSO _activeSpreadDie;
     private DieAssetSO _pinnedTooltipDie;
@@ -97,6 +98,7 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         Func<DieAssetSO, bool> interactableFilter = null,
         Action<DieAssetSO> onDieClicked = null)
     {
+        StopPrewarmSpreads();
         CollapseAllFaceReplaceImmediate();
         _onDieClicked = onDieClicked;
         _interactableFilter = interactableFilter;
@@ -171,6 +173,57 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
             entry.ButtonView.SetSelected(false);
     }
 
+    public void RefreshInteractable(Func<DieAssetSO, bool> interactableFilter = null)
+    {
+        if (interactableFilter != null)
+            _interactableFilter = interactableFilter;
+
+        foreach (var kv in _entries)
+        {
+            var interactable = _interactableFilter == null || _interactableFilter(kv.Key);
+            SetDieInteractable(kv.Key, interactable);
+        }
+    }
+
+    public bool IsSpreadPrewarmed(DieAssetSO die) =>
+        die != null && _entries.TryGetValue(die, out var entry) && entry.SpreadView != null;
+
+    public void StartPrewarmSpreadsForCurrentEntries()
+    {
+        StopPrewarmSpreads();
+        if (_entries.Count == 0)
+            return;
+
+        var dice = new List<DieAssetSO>(_entries.Keys);
+        _prewarmRoutine = StartCoroutine(PrewarmSpreadsRoutine(dice));
+    }
+
+    public void StopPrewarmSpreads()
+    {
+        if (_prewarmRoutine == null)
+            return;
+
+        StopCoroutine(_prewarmRoutine);
+        _prewarmRoutine = null;
+    }
+
+    public IEnumerator PrewarmSpreadsRoutine(IReadOnlyList<DieAssetSO> dice)
+    {
+        if (dice == null)
+            yield break;
+
+        for (var i = 0; i < dice.Count; i++)
+        {
+            var die = dice[i];
+            if (die != null && _entries.ContainsKey(die))
+                EnsureSpreadInstance(die);
+
+            yield return null;
+        }
+
+        _prewarmRoutine = null;
+    }
+
     public void ClearButtonSelections()
     {
         foreach (var kv in _entries)
@@ -215,18 +268,10 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
 
         entry.ButtonObject.SetActive(false);
 
-        if (entry.SpreadView == null)
-        {
-            var spreadGo = Instantiate(dieFaceSpreadPrefab, entry.SlotRoot);
-            var spreadRt = spreadGo.GetComponent<RectTransform>();
-            if (spreadRt != null)
-                CenterRectInParent(spreadRt);
-            entry.SpreadView = spreadGo.GetComponent<DieFaceSpreadView>();
-            if (entry.SpreadView == null)
-                throw new InvalidOperationException("DieTrayFaceReplaceLayout: spread instance missing DieFaceSpreadView.");
-        }
-        else
-            entry.SpreadView.gameObject.SetActive(true);
+        if (!EnsureSpreadInstance(die))
+            return;
+
+        entry.SpreadView.gameObject.SetActive(true);
 
         _activeSpreadDie = die;
         entry.SpreadView.Bind(die, targetFace, slotAllowed, onSlotPicked, dieTooltipOverlay);
@@ -384,6 +429,27 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         && _entries.TryGetValue(die, out var entry)
         && entry.SpreadView != null
         && entry.SpreadView.gameObject.activeSelf;
+
+    bool EnsureSpreadInstance(DieAssetSO die)
+    {
+        if (die == null || !_entries.TryGetValue(die, out var entry))
+            return false;
+
+        if (entry.SpreadView != null)
+            return true;
+
+        var spreadGo = Instantiate(dieFaceSpreadPrefab, entry.SlotRoot);
+        var spreadRt = spreadGo.GetComponent<RectTransform>();
+        if (spreadRt != null)
+            CenterRectInParent(spreadRt);
+
+        entry.SpreadView = spreadGo.GetComponent<DieFaceSpreadView>();
+        if (entry.SpreadView == null)
+            throw new InvalidOperationException("DieTrayFaceReplaceLayout: spread instance missing DieFaceSpreadView.");
+
+        spreadGo.SetActive(false);
+        return true;
+    }
 
     static void CenterRectInParent(RectTransform rt)
     {
