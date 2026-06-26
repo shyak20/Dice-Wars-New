@@ -15,6 +15,10 @@ public class DiceSpawner : MonoBehaviour
     [SerializeField] private float spawnAreaHeight = 0.2f;
     [Tooltip("Seconds to wait after each die before spawning the next (reduces overlapping impulses).")]
     [SerializeField] private float delayBetweenDice = 0.12f;
+    [Tooltip("When on, spread dice evenly across spawn width instead of uniform random positions.")]
+    [SerializeField] private bool useEvenSpawnSpacing = true;
+    [Tooltip("Max random offset (world units along right/up) added on top of each slot center.")]
+    [SerializeField] private float spawnPositionJitter = 0.08f;
 
     [Header("Destroy VFX (one per die face, by face type)")]
     public GameObject damageDestroyEffect;
@@ -30,6 +34,8 @@ public class DiceSpawner : MonoBehaviour
     public float maxForwardForce = 25f;
     public float minUpwardForce = 5f;
     public float maxUpwardForce = 10f;
+    [Tooltip("Outward impulse scale from slot position (-1..1 on width) times forward force. 0 = no lateral throw.")]
+    [SerializeField] private float lateralThrowFromSpawnOffset = 0.4f;
 
     [Header("Rotation Settings")]
     public float minTorque = 10f;
@@ -130,16 +136,13 @@ public class DiceSpawner : MonoBehaviour
 
             for (int i = 0; i < diceList.Count; i++)
             {
-                Vector3 lateral = spawnPoint.right * Random.Range(-halfW, halfW);
-                Vector3 vertical = spawnPoint.up * Random.Range(-halfH, halfH);
-                Vector3 pos = spawnPoint.position + lateral + vertical;
-
-                GameObject die = Instantiate(dicePrefab, pos, Random.rotation);
+                var placement = ResolveSpawnPlacement(i, diceList.Count, halfW, halfH);
+                GameObject die = Instantiate(dicePrefab, placement.WorldPosition, Random.rotation);
                 activeDiceModels.Add(die);
                 DieVisualizer visualizer = die.GetComponent<DieVisualizer>();
                 if (visualizer != null) visualizer.Initialize(diceList[i]);
                 Rigidbody rb = die.GetComponent<Rigidbody>();
-                if (rb != null) ApplyForces(rb);
+                if (rb != null) ApplyForces(rb, placement.NormalizedLateralOffset);
                 DiceRoller roller = die.GetComponent<DiceRoller>();
                 if (roller != null)
                 {
@@ -232,13 +235,58 @@ public class DiceSpawner : MonoBehaviour
         }
     }
 
-    private void ApplyForces(Rigidbody rb)
+    struct SpawnPlacement
+    {
+        public Vector3 WorldPosition;
+        public float NormalizedLateralOffset;
+    }
+
+    SpawnPlacement ResolveSpawnPlacement(int dieIndex, int dieCount, float halfW, float halfH)
+    {
+        float lateralAlongRight;
+        float verticalAlongUp;
+        float normalizedLateral;
+
+        if (useEvenSpawnSpacing && dieCount > 0)
+        {
+            var t = (dieIndex + 0.5f) / dieCount;
+            lateralAlongRight = (t - 0.5f) * spawnAreaWidth;
+            verticalAlongUp = 0f;
+            normalizedLateral = dieCount > 1 ? (t - 0.5f) * 2f : 0f;
+        }
+        else
+        {
+            lateralAlongRight = Random.Range(-halfW, halfW);
+            verticalAlongUp = Random.Range(-halfH, halfH);
+            normalizedLateral = halfW > 1e-5f ? lateralAlongRight / halfW : 0f;
+        }
+
+        if (spawnPositionJitter > 0f)
+        {
+            lateralAlongRight += Random.Range(-spawnPositionJitter, spawnPositionJitter);
+            verticalAlongUp += Random.Range(-spawnPositionJitter, spawnPositionJitter);
+        }
+
+        lateralAlongRight = Mathf.Clamp(lateralAlongRight, -halfW, halfW);
+        verticalAlongUp = Mathf.Clamp(verticalAlongUp, -halfH, halfH);
+
+        return new SpawnPlacement
+        {
+            WorldPosition = spawnPoint.position + spawnPoint.right * lateralAlongRight + spawnPoint.up * verticalAlongUp,
+            NormalizedLateralOffset = normalizedLateral,
+        };
+    }
+
+    private void ApplyForces(Rigidbody rb, float normalizedLateralOffset)
     {
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         float forwardForce = Random.Range(minForwardForce, maxForwardForce);
         float upwardForce = Random.Range(minUpwardForce, maxUpwardForce);
         Vector3 throwDirection = (spawnPoint.forward * forwardForce) + (spawnPoint.up * upwardForce);
+        if (lateralThrowFromSpawnOffset > 0f && Mathf.Abs(normalizedLateralOffset) > 1e-5f)
+            throwDirection += spawnPoint.right * (normalizedLateralOffset * lateralThrowFromSpawnOffset * forwardForce);
+
         rb.AddForce(throwDirection, ForceMode.Impulse);
         float torqueMagnitude = Random.Range(minTorque, maxTorque);
         rb.AddTorque(Random.insideUnitSphere * torqueMagnitude, ForceMode.Impulse);

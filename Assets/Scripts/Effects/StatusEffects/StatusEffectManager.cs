@@ -539,11 +539,29 @@ public class StatusEffectManager : MonoBehaviour
         return bonus;
     }
 
-    public int GetTotalPerDieAttackDamageBonus(StatusEffectContext ctx)
+    /// <param name="strengthStacksSnapshot">
+    /// When set, Strength bonus uses this count instead of live stacks (strength gained mid-roll batch does not apply until the next roll).
+    /// </param>
+    public int GetTotalPerDieAttackDamageBonus(StatusEffectContext ctx, int? strengthStacksSnapshot = null)
     {
         var bonus = 0;
+        var strengthCounted = false;
         foreach (var instance in effects)
+        {
+            if (strengthStacksSnapshot.HasValue && instance.Definition is StrengthEffectSO)
+            {
+                if (!strengthCounted)
+                {
+                    bonus += strengthStacksSnapshot.Value;
+                    strengthCounted = true;
+                }
+
+                continue;
+            }
+
             bonus += instance.Definition.GetPerDieAttackDamageBonus(instance, ctx);
+        }
+
         return bonus;
     }
 

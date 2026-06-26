@@ -416,7 +416,11 @@ public class EnemyController : MonoBehaviour
         }
 
         if (healthText != null)
-            healthText.text = currentHealth.ToString();
+        {
+            if (!hasArmor)
+                healthText.text = currentHealth.ToString();
+            healthText.gameObject.SetActive(!hasArmor);
+        }
 
         // 4. Small Armor Icon/Amount Display
         if (armorText != null)

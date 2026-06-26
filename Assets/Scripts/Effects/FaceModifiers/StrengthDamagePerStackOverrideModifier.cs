@@ -15,7 +15,7 @@ public sealed class StrengthDamagePerStackOverrideModifier : FaceResolveModifier
     public override void Modify(DieFaceSO face, FaceResult result, CombatManager combat, TurnRegistry registry)
     {
         if (combat.player == null) return;
-        int str = combat.player.StatusEffects.GetStacks<StrengthEffectSO>();
+        int str = combat.GetStrengthStacksForCurrentRollBatch();
         if (str <= 0) return;
 
         // CommitResolvedRoll already applied +str from Strength GetPerDieAttackDamageBonus (1 per stack).

@@ -211,6 +211,8 @@ public class CombatManager : MonoBehaviour
     private bool _batchHasIncreaseOtherElementsPending;
     private readonly HashSet<int> _gemBatchRerollIndicesInFlight = new HashSet<int>();
     private int _rollBatchId;
+    /// <summary>Player Strength stacks at <see cref="ExecuteBatchRoll"/>; per-die attack damage uses this until the next roll command.</summary>
+    private int _strengthStacksAtRollBatchStart;
     /// <summary>Increments once per settled die (any batch). Used for face-registered value watchers so later dice in the same roll batch can match.</summary>
     private int _faceResolveSequence;
     private bool _echoSkipsPowerThisBatch;
@@ -235,6 +237,9 @@ public class CombatManager : MonoBehaviour
 
     /// <summary>Increments once per player roll command (batch). Used by <see cref="AddValueBasedOnRollDuration.SameTurn"/> / <see cref="AddValueBasedOnRollDuration.EntireCombat"/> watchers.</summary>
     public int CurrentRollBatchId => _rollBatchId;
+
+    /// <summary>Strength stacks frozen at the start of the current roll batch (before any die in that batch resolves).</summary>
+    public int GetStrengthStacksForCurrentRollBatch() => _strengthStacksAtRollBatchStart;
 
     // Updated summation logic to pull from FaceResult properties
     public int GetPendingAttack() => channeledFaces.Sum(f => f.TotalDamageContribution) + bonusDamageFromActions;
@@ -989,6 +994,7 @@ public class CombatManager : MonoBehaviour
         _turnRegistry.ResetVolatile();
         _entireCombatValueWatchers.Clear();
         _rollBatchId = 0;
+        _strengthStacksAtRollBatchStart = 0;
         _faceResolveSequence = 0;
         selectedDice.Clear();
         channeledFaces.Clear();
@@ -1140,6 +1146,9 @@ public class CombatManager : MonoBehaviour
         if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
         StartRollPlatformGlow();
         _rollBatchId++;
+        _strengthStacksAtRollBatchStart = player != null
+            ? player.StatusEffects.GetStacks<StrengthEffectSO>()
+            : 0;
         _gemBonusRollChainActivationsByDieThisBatch.Clear();
         _gemScheduledBatchRerolls.Clear();
         _deferDissolveBatchIndicesForDieToDieLaunch.Clear();
@@ -2539,7 +2548,7 @@ public class CombatManager : MonoBehaviour
         var modifiedValue = player.StatusEffects.ModifyFaceValue(statusCtx, face.value);
         var rolledDamage = face.damage;
         if (rolledDamage > 0 && face.type != DieType.Curse)
-            rolledDamage += player.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
+            rolledDamage += player.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx, _strengthStacksAtRollBatchStart);
 
         var result = new FaceResult
         {

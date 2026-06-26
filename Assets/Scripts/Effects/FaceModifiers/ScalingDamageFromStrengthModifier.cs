@@ -10,7 +10,7 @@ public class ScalingDamageFromStrengthModifier : FaceResolveModifierBase
     public override void Modify(DieFaceSO face, FaceResult result, CombatManager combat, TurnRegistry registry)
     {
         if (combat.player == null) return;
-        var str = combat.player.StatusEffects.GetStacks<StrengthEffectSO>();
+        var str = combat.GetStrengthStacksForCurrentRollBatch();
         result.Damage = damagePerStrength * Mathf.Max(0, str);
     }
 }
