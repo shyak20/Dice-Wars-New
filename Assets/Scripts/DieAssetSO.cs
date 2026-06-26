@@ -20,6 +20,9 @@ public class DieAssetSO : ScriptableObject
     [Tooltip("Frame / panel art behind the full die tooltip (combat, shop, face picker).")]
     public Sprite uiTooltipBackground;
 
+    [Tooltip("Face-replace spread prefab for this die in the deck tray (DieFaceSpreadView root).")]
+    public GameObject faceSpreadViewPrefab;
+
     [Header("Faces Configuration")]
     [Tooltip("The 6 Face SOs that define this die. Materials will be pulled from here.")]
     public DieFaceSO[] faces = new DieFaceSO[6];

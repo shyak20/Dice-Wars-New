@@ -18,7 +18,7 @@ using UnityEngine.UI;
 /// <item>Assign existing compact <c>dieButtonPrefab</c> (<see cref="DiceTrayButtonView"/> + <c>Button</c>).</item>
 /// <item>Author a spread prefab: root <see cref="DieFaceSpreadView"/> + <c>Animator</c> (Face Replace CTRL) + optional rule-error UI;
 /// each of 6 children needs <see cref="DieFaceSpreadSlotView"/> + <see cref="UIRewardSlot"/> + <c>Button</c>, <c>faceIndex</c> 0–5.</item>
-/// <item>Assign spread prefab to <c>dieFaceSpreadPrefab</c> and shared <see cref="DieTooltipOverlayUI"/>.</item>
+/// <item>Assign fallback <c>dieFaceSpreadPrefab</c> on the layout for dies missing <see cref="DieAssetSO.faceSpreadViewPrefab"/>.</item>
 /// <item>Wire <see cref="FacePickerView"/> / <see cref="ShopDieChoicePopupView"/> <c>trayLayout</c> to this component.</item>
 /// </list>
 /// </remarks>
@@ -26,6 +26,7 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
 {
     [SerializeField] private Transform diceLayoutContainer;
     [SerializeField] private GameObject dieButtonPrefab;
+    [Tooltip("Fallback when a die asset has no faceSpreadViewPrefab assigned.")]
     [SerializeField] private GameObject dieFaceSpreadPrefab;
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
     [SerializeField, Min(0f)] private float spreadDeselectDuration = 0.35f;
@@ -46,6 +47,7 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         public DiceTrayButtonView ButtonView;
         public Button Button;
         public DieFaceSpreadView SpreadView;
+        public GameObject SpreadPrefabUsed;
     }
 
     private void Awake()
@@ -54,10 +56,9 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
             diceLayoutContainer = transform;
         if (dieButtonPrefab == null)
             throw new InvalidOperationException($"DieTrayFaceReplaceLayout on '{name}': assign dieButtonPrefab.");
-        if (dieFaceSpreadPrefab == null)
-            throw new InvalidOperationException($"DieTrayFaceReplaceLayout on '{name}': assign dieFaceSpreadPrefab.");
-        if (dieFaceSpreadPrefab.GetComponent<DieFaceSpreadView>() == null)
-            throw new InvalidOperationException($"DieTrayFaceReplaceLayout on '{name}': dieFaceSpreadPrefab needs DieFaceSpreadView.");
+
+        if (dieFaceSpreadPrefab != null)
+            ValidateSpreadPrefab(dieFaceSpreadPrefab, $"DieTrayFaceReplaceLayout on '{name}' (dieFaceSpreadPrefab fallback)");
     }
 
     public Transform DiceContainer => diceLayoutContainer;
@@ -435,20 +436,49 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         if (die == null || !_entries.TryGetValue(die, out var entry))
             return false;
 
-        if (entry.SpreadView != null)
-            return true;
+        var prefab = ResolveSpreadPrefab(die);
 
-        var spreadGo = Instantiate(dieFaceSpreadPrefab, entry.SlotRoot);
+        if (entry.SpreadView != null)
+        {
+            if (entry.SpreadPrefabUsed == prefab)
+                return true;
+
+            Destroy(entry.SpreadView.gameObject);
+            entry.SpreadView = null;
+            entry.SpreadPrefabUsed = null;
+        }
+
+        var spreadGo = Instantiate(prefab, entry.SlotRoot);
         var spreadRt = spreadGo.GetComponent<RectTransform>();
         if (spreadRt != null)
             CenterRectInParent(spreadRt);
 
-        entry.SpreadView = spreadGo.GetComponent<DieFaceSpreadView>();
+        entry.SpreadView = spreadGo.GetComponentInChildren<DieFaceSpreadView>(true);
         if (entry.SpreadView == null)
             throw new InvalidOperationException("DieTrayFaceReplaceLayout: spread instance missing DieFaceSpreadView.");
 
+        entry.SpreadPrefabUsed = prefab;
         spreadGo.SetActive(false);
         return true;
+    }
+
+    GameObject ResolveSpreadPrefab(DieAssetSO die)
+    {
+        if (die == null)
+            throw new InvalidOperationException($"DieTrayFaceReplaceLayout on '{name}': cannot resolve spread prefab for null die.");
+
+        var prefab = die.faceSpreadViewPrefab != null ? die.faceSpreadViewPrefab : dieFaceSpreadPrefab;
+        ValidateSpreadPrefab(prefab, $"DieTrayFaceReplaceLayout on '{name}' (die '{die.dieName}')");
+        return prefab;
+    }
+
+    static void ValidateSpreadPrefab(GameObject prefab, string context)
+    {
+        if (prefab == null)
+            throw new InvalidOperationException($"{context}: assign DieAssetSO.faceSpreadViewPrefab or DieTrayFaceReplaceLayout.dieFaceSpreadPrefab fallback.");
+
+        if (prefab.GetComponentInChildren<DieFaceSpreadView>(true) == null)
+            throw new InvalidOperationException($"{context}: spread prefab '{prefab.name}' must include DieFaceSpreadView.");
     }
 
     static void CenterRectInParent(RectTransform rt)

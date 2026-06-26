@@ -2093,7 +2093,7 @@ GameObject:
   - component: {fileID: 8180172800072360341}
   - component: {fileID: 684895048867934862}
   m_Layer: 0
-  m_Name: Dice Faces Prefab V2
+  m_Name: Dice Faces Prefab Physical
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
