@@ -52,7 +52,7 @@ public class ShopDieChoicePopupView : MonoBehaviour
             backButton.onClick.AddListener(Cancel);
         }
 
-        trayLayout.SetHoverTooltipsEnabled(true);
+        trayLayout.SetHoverTooltipsEnabled(!faceReplaceMode);
         trayLayout.CollapseAllFaceReplaceImmediate();
         RebuildDice();
         _activeDie = null;

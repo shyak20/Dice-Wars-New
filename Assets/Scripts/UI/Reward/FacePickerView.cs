@@ -203,6 +203,7 @@ public class FacePickerView : MonoBehaviour
 
         _selectedRewardFace = face;
         SetPhaseVisuals(phaseBActive: false);
+        trayLayout.SetHoverTooltipsEnabled(false);
         trayLayout.ClearPinnedDieTooltip();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         _onFacePicked?.Invoke(face);
