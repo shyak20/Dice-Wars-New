@@ -28465,6 +28465,13 @@ MonoBehaviour:
   - {fileID: 2110974185}
   - {fileID: 1250900753}
   - {fileID: 1199126977}
+  disableOnFacePicker:
+  - {fileID: 2463767363618923912}
+  - {fileID: 1294703237}
+  - {fileID: 697178258}
+  - {fileID: 967960340}
+  - {fileID: 933661383}
+  - {fileID: 1614142414}
   faceRewardManager: {fileID: 576654137}
   confirmationDialog: {fileID: 622951852}
   unclaimedRewardsMessage: 'You still have unclaimed rewards.
@@ -62490,7 +62497,7 @@ MonoBehaviour:
   _bursts:
   - time: 0
     count: 40
-    used: 0
+    used: 1
   _particleTrailRenderer: {fileID: 0}
   _trailModule:
     enabled: 0
@@ -69161,12 +69168,17 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6603165502161095613, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
   m_PrefabInstance: {fileID: 933661380}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 933661383}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!1 &933661383 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2264819737587340221, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+  m_PrefabInstance: {fileID: 933661380}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &945204683
 GameObject:
   m_ObjectHideFlags: 0
@@ -69200,10 +69212,10 @@ RectTransform:
   - {fileID: 1614142415}
   - {fileID: 1294703238}
   - {fileID: 697178259}
-  - {fileID: 699271342}
   - {fileID: 967960341}
   - {fileID: 933661381}
   - {fileID: 622951851}
+  - {fileID: 699271342}
   m_Father: {fileID: 1222476797}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -76649,7 +76661,7 @@ MonoBehaviour:
   _bursts:
   - time: 0
     count: 1
-    used: 0
+    used: 1
   _particleTrailRenderer: {fileID: 0}
   _trailModule:
     enabled: 0
@@ -92800,7 +92812,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3947313142256605666, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
   m_PrefabInstance: {fileID: 2463767363618923911}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 2463767363618923912}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 461ca65c497a93942909da97704a0a0a, type: 3}
@@ -130360,7 +130372,7 @@ MonoBehaviour:
   _bursts:
   - time: 0
     count: 30
-    used: 0
+    used: 1
   _particleTrailRenderer: {fileID: 238743609}
   _trailModule:
     enabled: 1
@@ -130986,8 +130998,8 @@ RectTransform:
   - {fileID: 2110974186}
   - {fileID: 8772609939825398479}
   - {fileID: 1809300543}
-  - {fileID: 1222476797}
   - {fileID: 576654136}
+  - {fileID: 1222476797}
   - {fileID: 1196472965}
   - {fileID: 240206944}
   - {fileID: 1001816083}
@@ -138679,7 +138691,7 @@ MonoBehaviour:
   _bursts:
   - time: 0
     count: 40
-    used: 0
+    used: 1
   _particleTrailRenderer: {fileID: 0}
   _trailModule:
     enabled: 0
@@ -143975,7 +143987,7 @@ ParticleSystemRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 167
+  m_SortingOrder: 150
   m_MaskInteraction: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -149635,7 +149647,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3113125071131916322, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3492937007377618420, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_AnchorMax.y
@@ -149740,6 +149752,10 @@ PrefabInstance:
     - target: {fileID: 3814188156623495000, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -160
+      objectReference: {fileID: 0}
+    - target: {fileID: 3969219267927031142, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4262939117417066763, guid: 91fe4907739db9541bb5a5717c72e90a, type: 3}
       propertyPath: m_AnchorMax.y
@@ -150358,7 +150374,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 189
+  m_SortingOrder: 160
   m_TargetDisplay: 0
 --- !u!114 &2393565308478563457 stripped
 MonoBehaviour:
@@ -150508,6 +150524,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
+--- !u!1 &2463767363618923912 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7290321484411598953, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
+  m_PrefabInstance: {fileID: 2463767363618923911}
+  m_PrefabAsset: {fileID: 0}
 --- !u!73398921 &3055101069640443819
 VFXRenderer:
   serializedVersion: 1

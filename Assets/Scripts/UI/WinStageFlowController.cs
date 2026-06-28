@@ -28,6 +28,9 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     [Header("Victory — hide in scene")]
     [Tooltip("Set inactive after Delay After Victory Seconds (with enemy root / win panel), not on the victory event itself.")]
     [SerializeField] private List<GameObject> disableOnVictoryScreen = new List<GameObject>();
+    [Header("Select Face — hide in scene")]
+    [Tooltip("Set inactive when the face picker opens from the win stage. Re-enabled when returning to the win popup (Back or after swap completes).")]
+    [SerializeField] private List<GameObject> disableOnFacePicker = new List<GameObject>();
     [Header("Flow")]
     [SerializeField] private FaceRewardManager faceRewardManager;
     [Header("Unclaimed rewards")]
@@ -241,6 +244,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     public void NotifyFacePickerOpening()
     {
         _faceFlowComplete = false;
+        DisableObjectsForFacePicker();
         UpdateContinueInteractable();
     }
 
@@ -248,6 +252,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     public void NotifyFacePickerBackedOut()
     {
         _faceFlowComplete = true;
+        EnableObjectsForFacePicker();
         if (winStagePanel != null)
             winStagePanel.SetActive(true);
         UpdateContinueInteractable();
@@ -258,6 +263,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     {
         _faceRewardRowPending = false;
         _faceFlowComplete = true;
+        EnableObjectsForFacePicker();
         if (winStagePanel != null)
             winStagePanel.SetActive(true);
         UpdateContinueInteractable();
@@ -336,13 +342,28 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
 
     private void DisableObjectsForVictoryScreen()
     {
-        if (disableOnVictoryScreen == null)
+        SetObjectListActive(disableOnVictoryScreen, false);
+    }
+
+    private void DisableObjectsForFacePicker()
+    {
+        SetObjectListActive(disableOnFacePicker, false);
+    }
+
+    private void EnableObjectsForFacePicker()
+    {
+        SetObjectListActive(disableOnFacePicker, true);
+    }
+
+    private static void SetObjectListActive(List<GameObject> list, bool active)
+    {
+        if (list == null)
             return;
-        for (var i = 0; i < disableOnVictoryScreen.Count; i++)
+        for (var i = 0; i < list.Count; i++)
         {
-            var go = disableOnVictoryScreen[i];
+            var go = list[i];
             if (go != null)
-                go.SetActive(false);
+                go.SetActive(active);
         }
     }
 
