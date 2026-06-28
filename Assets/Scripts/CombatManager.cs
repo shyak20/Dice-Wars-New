@@ -1743,41 +1743,84 @@ public class CombatManager : MonoBehaviour
         LogIncreaseOtherRerollFlow(
             $"CoLaunchIncreaseOtherProjectiles sourceIdx={sourceBatchIndex} targetCount={targets.Count} bonus={bonusAmount}");
 
-        diceRollOutcomeFlyout?.RemoveIncreaseOtherSourceFlyout(sourceBatchIndex);
-
         var prefab = ResolveDieToDieProjectilePrefab(null);
-        if (dieToDieProjectileController == null || prefab == null)
+        var hasProjectiles = dieToDieProjectileController != null && prefab != null;
+        var launchIcon = DieToDieLaunchIcon.FromActionVisualId(ActionVisualId.IncreaseOtherElements);
+        var hasFlyouts = diceRollOutcomeFlyout != null && launchIcon.HasAny;
+
+        if (!hasProjectiles && !hasFlyouts)
         {
             IncreaseOtherRerollFlowDebug.LogWarning(
-                $"CoLaunchIncreaseOtherProjectiles skipped — projectile controller={dieToDieProjectileController != null}, prefab={prefab != null}");
+                $"CoLaunchIncreaseOtherProjectiles skipped — no flyout or projectile path (flyout={diceRollOutcomeFlyout != null}, projectiles={hasProjectiles}).");
             yield break;
         }
 
         if (sourceBatchIndex >= 0)
             _deferDissolveBatchIndicesForDieToDieLaunch.Add(sourceBatchIndex);
 
-        yield return dieToDieProjectileController.LaunchAndWait(source, targets, prefab, targetIndex =>
+        float? flyDuration = null;
+        if (prefab != null && prefab.TryGetComponent<DieToDieProjectileFlight>(out var templateFlight))
+            flyDuration = templateFlight.FlightSettings.flyDuration;
+
+        var routinesRemaining = 0;
+        if (hasProjectiles)
+            routinesRemaining++;
+        if (hasFlyouts)
+            routinesRemaining++;
+
+        if (hasProjectiles)
         {
-            if (targetIndex < 0 || targetIndex >= hitTargets.Count)
-                return;
+            StartCoroutine(CoRunDieToDieRoutineThenSignal(
+                dieToDieProjectileController.LaunchAndWait(
+                    source,
+                    targets,
+                    prefab,
+                    hasFlyouts ? null : targetIndex => ApplyIncreaseOtherHit(hitTargets, bonusAmount, targets, targetIndex)),
+                () => routinesRemaining--));
+        }
 
-            var hit = hitTargets[targetIndex];
-            if (hit.Face == null)
-                return;
+        if (hasFlyouts)
+        {
+            StartCoroutine(CoRunDieToDieRoutineThenSignal(
+                diceRollOutcomeFlyout.CoLaunchParkedIncreaseOtherFlyouts(
+                    sourceBatchIndex,
+                    source,
+                    targets,
+                    launchIcon,
+                    bonusAmount,
+                    targetIndex => ApplyIncreaseOtherHit(hitTargets, bonusAmount, targets, targetIndex),
+                    flyDuration),
+                () => routinesRemaining--));
+        }
 
-            IncreaseOtherElementsAction.ApplyBonusToFace(hit.Face, hit.RowKey, bonusAmount);
-            LogIncreaseOtherRerollFlow(
-                $"Increase-other hit targetIdx={hit.Face.BatchGatherIndex} row={hit.RowKey.StableId} +{bonusAmount} " +
-                $"face={IncreaseOtherRerollFlowDebug.DescribeFace(hit.Face)}");
-            diceRollOutcomeFlyout?.TryApplyFlyoutLineBonus(hit.Face.BatchGatherIndex, hit.RowKey, bonusAmount, hit.Face);
-            if (targetIndex >= 0 && targetIndex < targets.Count)
-                diceRollOutcomeFlyout?.PlayDieActivationFeedbackOnDie(targets[targetIndex]);
-        });
+        yield return new WaitUntil(() => routinesRemaining <= 0);
 
         if (sourceBatchIndex >= 0)
             TryDissolveDeferredDieToDieSource(sourceBatchIndex);
 
         LogIncreaseOtherRerollFlow($"CoLaunchIncreaseOtherProjectiles finished sourceIdx={sourceBatchIndex}");
+    }
+
+    private void ApplyIncreaseOtherHit(
+        IReadOnlyList<IncreaseOtherHitTarget> hitTargets,
+        int bonusAmount,
+        IReadOnlyList<Transform> targets,
+        int targetIndex)
+    {
+        if (targetIndex < 0 || hitTargets == null || targetIndex >= hitTargets.Count)
+            return;
+
+        var hit = hitTargets[targetIndex];
+        if (hit.Face == null)
+            return;
+
+        IncreaseOtherElementsAction.ApplyBonusToFace(hit.Face, hit.RowKey, bonusAmount);
+        LogIncreaseOtherRerollFlow(
+            $"Increase-other hit targetIdx={hit.Face.BatchGatherIndex} row={hit.RowKey.StableId} +{bonusAmount} " +
+            $"face={IncreaseOtherRerollFlowDebug.DescribeFace(hit.Face)}");
+        diceRollOutcomeFlyout?.TryApplyFlyoutLineBonus(hit.Face.BatchGatherIndex, hit.RowKey, bonusAmount, hit.Face);
+        if (targets != null && targetIndex >= 0 && targetIndex < targets.Count)
+            diceRollOutcomeFlyout?.PlayDieActivationFeedbackOnDie(targets[targetIndex]);
     }
 
     private static bool FaceHasRerollOtherDiceAfterAllSettled(DieFaceSO face)

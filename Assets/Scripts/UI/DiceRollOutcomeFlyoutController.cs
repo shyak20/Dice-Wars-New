@@ -111,41 +111,71 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     readonly Dictionary<int, RectTransform> _inFlightDieToDieActionIconByTargetBatch =
         new Dictionary<int, RectTransform>();
 
-    readonly Dictionary<int, RectTransform> _increaseOtherSourceFlyoutByBatch =
-        new Dictionary<int, RectTransform>();
+    struct ParkedIncreaseOtherFlyoutEntry
+    {
+        public RectTransform ParkedRect;
+        public DieToDieLaunchIcon LaunchIcon;
+        public Vector2 AnchoredPosition;
+        public int BonusAmount;
+    }
+
+    readonly Dictionary<int, ParkedIncreaseOtherFlyoutEntry> _parkedIncreaseOtherByBatchGatherIndex =
+        new Dictionary<int, ParkedIncreaseOtherFlyoutEntry>();
 
     public void ClearActiveFlyoutLineRegistry() => _activeFlyoutLinesByBatchRow.Clear();
 
-    public void RemoveIncreaseOtherSourceFlyout(int sourceBatchGatherIndex)
+    void ClearParkedIncreaseOtherFlyouts()
+    {
+        foreach (var entry in _parkedIncreaseOtherByBatchGatherIndex.Values)
+        {
+            if (entry.ParkedRect != null)
+                Destroy(entry.ParkedRect.gameObject);
+        }
+
+        _parkedIncreaseOtherByBatchGatherIndex.Clear();
+    }
+
+    void ParkIncreaseOtherFlyoutUntilLaunch(
+        FaceResult sourceFace,
+        RollOutcomeVisualLine line,
+        Vector2 anchoredPosition,
+        RectTransform parkedRect)
+    {
+        if (sourceFace == null || sourceFace.BatchGatherIndex < 0 || parkedRect == null)
+            return;
+
+        var launchIcon = new DieToDieLaunchIcon(
+            line.IconOverride,
+            line.BackgroundOverride != null
+                ? line.BackgroundOverride
+                : GameIconCatalog.TryGetPoolRowBackground(line.RowKey));
+
+        if (!launchIcon.HasAny)
+            return;
+
+        _parkedIncreaseOtherByBatchGatherIndex[sourceFace.BatchGatherIndex] = new ParkedIncreaseOtherFlyoutEntry
+        {
+            ParkedRect = parkedRect,
+            LaunchIcon = launchIcon,
+            AnchoredPosition = anchoredPosition,
+            BonusAmount = line.Amount,
+        };
+    }
+
+    void RemoveParkedIncreaseOtherSourceVisual(int sourceBatchGatherIndex)
     {
         if (sourceBatchGatherIndex < 0)
             return;
 
-        if (!_increaseOtherSourceFlyoutByBatch.TryGetValue(sourceBatchGatherIndex, out var rt))
+        if (!_parkedIncreaseOtherByBatchGatherIndex.TryGetValue(sourceBatchGatherIndex, out var parked))
             return;
 
-        _increaseOtherSourceFlyoutByBatch.Remove(sourceBatchGatherIndex);
-        if (rt != null)
-            Destroy(rt.gameObject);
-    }
-
-    void ClearIncreaseOtherSourceFlyouts()
-    {
-        foreach (var kvp in _increaseOtherSourceFlyoutByBatch)
-        {
-            if (kvp.Value != null)
-                Destroy(kvp.Value.gameObject);
-        }
-
-        _increaseOtherSourceFlyoutByBatch.Clear();
-    }
-
-    void RegisterIncreaseOtherSourceFlyout(int batchGatherIndex, RectTransform rt)
-    {
-        if (batchGatherIndex < 0 || rt == null)
+        _parkedIncreaseOtherByBatchGatherIndex.Remove(sourceBatchGatherIndex);
+        if (parked.ParkedRect == null)
             return;
 
-        _increaseOtherSourceFlyoutByBatch[batchGatherIndex] = rt;
+        parked.ParkedRect.gameObject.SetActive(false);
+        Destroy(parked.ParkedRect.gameObject);
     }
 
     public void TryDestroyInFlightDieToDieActionIcon(int targetBatchGatherIndex)
@@ -272,7 +302,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         _parkedRerollByBatchGatherIndex.Clear();
         ClearActiveFlyoutLineRegistry();
         ClearInFlightDieToDieActionIcons();
-        ClearIncreaseOtherSourceFlyouts();
+        ClearParkedIncreaseOtherFlyouts();
     }
 
     public void ClearParkedRerollFlyout(int batchGatherIndex) =>
@@ -575,9 +605,6 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                             icon,
                             line.Amount);
 
-                    if (line.RemoveOnIncreaseOtherLaunch && payload.SourceFace != null)
-                        RegisterIncreaseOtherSourceFlyout(payload.SourceFace.BatchGatherIndex, rt);
-
                     Vector3 spawnBaseLocalScale = rt.localScale;
                     Vector2 basePos = stackOriginFlyoutLocal + Vector2.up * (lineIndex * lineSpacing);
                     Vector2 restAnchored = basePos + Vector2.up * spawnYOffsetOverTime.Evaluate(1f);
@@ -613,6 +640,23 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             if (payload.DieTransform != null)
                 yield return PlayDieActivationFeedback(payload.DieTransform);
 
+            float spawnScaleEnd = EvaluateSpawnScaleMultiplier(1f);
+            for (int s = 0; s < lineRects.Count; s++)
+            {
+                var rt = lineRects[s];
+                if (rt == null) continue;
+                SetLocalXY(rt, stackRestAnchored[s]);
+                rt.localScale = spawnRootBaseScales[s] * spawnScaleEnd;
+            }
+
+            // Park before the fly gate so Increase Other can consume this row when duplicates launch
+            // (that phase runs after raises finish but before flyouts fly to the pool).
+            for (var i = 0; i < flyLines.Count && i < lineRects.Count; i++)
+            {
+                if (flyLines[i].RemoveOnIncreaseOtherLaunch && lineRects[i] != null)
+                    ParkIncreaseOtherFlyoutUntilLaunch(payload?.SourceFace, flyLines[i], stackRestAnchored[i], lineRects[i]);
+            }
+
             payload.ReportRaiseFinished();
 
             if (combat != null)
@@ -639,7 +683,6 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 }
             }
 
-            float spawnScaleEnd = EvaluateSpawnScaleMultiplier(1f);
             for (int s = 0; s < lineRects.Count; s++)
             {
                 var rt = lineRects[s];
@@ -1260,12 +1303,131 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Duplicates the parked Increase Other row once per target, flies each to its die, applies bonus on arrival.
+    /// </summary>
+    public IEnumerator CoLaunchParkedIncreaseOtherFlyouts(
+        int sourceBatchGatherIndex,
+        Transform sourceDie,
+        IReadOnlyList<Transform> targetDice,
+        DieToDieLaunchIcon fallbackLaunchIcon,
+        int bonusAmount,
+        System.Action<int> onTargetArrived,
+        float? flightDurationOverride = null)
+    {
+        if (targetDice == null || targetDice.Count == 0)
+            yield break;
+        if (canvas == null || flyoutParent == null || flyoutPoolIconPrefab == null)
+        {
+            Debug.LogError($"DiceRollOutcomeFlyoutController on '{name}': cannot launch Increase Other flyouts — assign canvas, flyoutParent, and flyoutPoolIconPrefab.");
+            yield break;
+        }
+
+        var launchIcon = fallbackLaunchIcon;
+        var displayAmount = bonusAmount;
+        Vector2 stackOrigin;
+        var hasParkedStart = false;
+
+        if (sourceBatchGatherIndex >= 0
+            && _parkedIncreaseOtherByBatchGatherIndex.TryGetValue(sourceBatchGatherIndex, out var parked))
+        {
+            launchIcon = parked.LaunchIcon;
+            displayAmount = parked.BonusAmount > 0 ? parked.BonusAmount : bonusAmount;
+            stackOrigin = parked.AnchoredPosition;
+            hasParkedStart = true;
+            RemoveParkedIncreaseOtherSourceVisual(sourceBatchGatherIndex);
+        }
+        else if (sourceDie != null
+                 && WorldPointToParentLocal(sourceDie.position + Vector3.up * worldOffsetAboveDie, flyoutParent, out var anchorFlyoutLocal))
+        {
+            stackOrigin = anchorFlyoutLocal + Vector2.right * layoutOffsetX;
+        }
+        else
+        {
+            yield break;
+        }
+
+        if (!launchIcon.HasAny)
+            yield break;
+
+        var rowKey = PoolRowKey.Custom(ActionVisualId.IncreaseOtherElements.ToString());
+        var flyDuration = Mathf.Max(0.01f, flightDurationOverride ?? flyDurationSeconds);
+        var lineRects = new List<RectTransform>();
+        var targetTransforms = new List<Transform>();
+
+        for (var i = 0; i < targetDice.Count; i++)
+        {
+            var target = targetDice[i];
+            if (target == null)
+                continue;
+
+            var icon = Instantiate(flyoutPoolIconPrefab, flyoutParent);
+            var rt = icon.transform as RectTransform;
+            if (rt == null)
+            {
+                Debug.LogError("DiceRollOutcomeFlyoutController: flyoutPoolIconPrefab root must have a RectTransform.");
+                Destroy(icon.gameObject);
+                continue;
+            }
+
+            if (displayAmount > 0)
+                icon.SetupForDiceRollFlyout(rowKey, launchIcon.Icon, displayAmount, launchIcon.Background);
+            else
+                icon.SetupForDieToDieActionFlyout(rowKey, launchIcon.Icon, launchIcon.Background);
+
+            SetLocalXY(rt, stackOrigin);
+            rt.localScale = Vector3.one * EvaluateSpawnScaleMultiplier(1f);
+
+            var targetBatchIndex = -1;
+            if (combat != null && combat.spawner != null)
+                targetBatchIndex = combat.spawner.GetIndexOfActiveDie(target.gameObject);
+            if (targetBatchIndex >= 0)
+                _inFlightDieToDieActionIconByTargetBatch[targetBatchIndex] = rt;
+
+            lineRects.Add(rt);
+            targetTransforms.Add(target);
+        }
+
+        if (lineRects.Count == 0)
+            yield break;
+
+        if (!hasParkedStart && lineRects.Count > 1)
+        {
+            for (var i = 1; i < lineRects.Count; i++)
+                SetLocalXY(lineRects[i], stackOrigin);
+        }
+
+        var flyCoroutines = new List<Coroutine>();
+        for (var i = 0; i < lineRects.Count; i++)
+        {
+            var targetIndex = i;
+            var targetBatchIndex = -1;
+            if (combat != null && combat.spawner != null && targetTransforms[i] != null)
+                targetBatchIndex = combat.spawner.GetIndexOfActiveDie(targetTransforms[i].gameObject);
+
+            flyCoroutines.Add(StartCoroutine(CoFlyDieToDieActionLine(
+                lineRects[i],
+                stackOrigin,
+                targetTransforms[i],
+                flyDuration,
+                targetBatchIndex,
+                () => onTargetArrived?.Invoke(targetIndex))));
+        }
+
+        foreach (var c in flyCoroutines)
+        {
+            if (c != null)
+                yield return c;
+        }
+    }
+
     IEnumerator CoFlyDieToDieActionLine(
         RectTransform rt,
         Vector2 startAnchored,
         Transform targetDie,
         float durationSeconds,
-        int targetBatchIndex)
+        int targetBatchIndex,
+        System.Action onArrived = null)
     {
         if (rt == null || targetDie == null)
             yield break;
@@ -1290,6 +1452,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 SetLocalXY(rt, QuadraticBezier(startAnchored, mid, endAnchored, eased));
                 yield return null;
             }
+
+            onArrived?.Invoke();
         }
         finally
         {

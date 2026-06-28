@@ -25,7 +25,7 @@ public struct RollOutcomeVisualLine
     public bool AttackAllEnemies;
     /// <summary>Spawns with gather flyouts, stays above the die until die-to-die reroll launches, then duplicates per target.</summary>
     public bool ParkUntilDieToDieReroll;
-    /// <summary>Increase Other source row: shows bonus as element value above the keeper die, removed when projectiles launch (does not fly to pool).</summary>
+    /// <summary>Increase Other source row: shows bonus above the keeper die, parked until die-to-die flyouts launch (does not fly to pool).</summary>
     public bool RemoveOnIncreaseOtherLaunch;
     /// <summary>When true, this row is one hit from a split <see cref="DieType.Damage"/> face (<see cref="FaceResult.DamageAttackTimes"/> &gt; 1).</summary>
     public bool IsSplitDamageHitLine;
