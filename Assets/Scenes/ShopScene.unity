@@ -6087,7 +6087,7 @@ MonoBehaviour:
   backButton: {fileID: 265749962}
   trayLayout: {fileID: 647609999}
   dieTooltipOverlay: {fileID: 1037816753}
-  faceSwapCloseDelay: 1
+  faceSwapCloseDelay: 1.5
 --- !u!1001 &1957574314
 PrefabInstance:
   m_ObjectHideFlags: 0
