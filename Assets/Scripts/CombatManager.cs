@@ -190,6 +190,10 @@ public class CombatManager : MonoBehaviour
     private readonly HashSet<int> _batchRerollOtherKeeperIndices = new HashSet<int>();
     private readonly HashSet<FaceResult> _facesAwaitingPostBatchOtherDiceReroll = new HashSet<FaceResult>();
     private readonly HashSet<FaceResult> _pendingBatchSubmitForRerollOther = new HashSet<FaceResult>();
+    /// <summary>First-pass faces from the current gather still waiting for pool / enemy assignment flyout completion.</summary>
+    private readonly HashSet<FaceResult> _pendingFirstPassBatchOutcomeSubmit = new HashSet<FaceResult>();
+    private readonly Queue<FaceResult> _queuedPostSubmitTriggeringRerolls = new Queue<FaceResult>();
+    private bool _batchIncreaseOtherPhaseComplete = true;
     private readonly HashSet<FaceResult> _postBatchSecondPassAwaitingSubmit = new HashSet<FaceResult>();
     private int _postBatchRollAgainInFlight;
     private readonly Dictionary<int, GameObject> _batchLiveDieByGatherIndex = new Dictionary<int, GameObject>();
@@ -1307,6 +1311,7 @@ public class CombatManager : MonoBehaviour
 
         PrepareBatchRerollOtherDiceTargets();
         PrepareBatchIncreaseOtherElementsTargets();
+        LogIncreaseOtherRerollFlowState("AfterPrepareBatchSpecialEffects");
 
         // --- Gather: apply resolved faces to combat (power, pools, watchers) in spawn order. ---
         var batchGatherStart = channeledFaces.Count;
@@ -1341,6 +1346,8 @@ public class CombatManager : MonoBehaviour
                 _pendingBatchSubmitForRerollOther.Add(channeledFaces[i]);
         }
 
+        RegisterPendingFirstPassBatchOutcomeSubmits(batchGatherStart);
+
         QueueAddPowerChoicesAfterBatchGather(batchGatherStart, channeledFaces.Count);
         ApplyPostBatchFaceEffects(batchGatherStart, channeledFaces.Count);
 
@@ -1354,12 +1361,32 @@ public class CombatManager : MonoBehaviour
         _batchDieAssetByGatherIndex.Clear();
 
         yield return new WaitUntil(() => pendingRollVisualRaiseSequences <= 0);
+        LogIncreaseOtherRerollFlow("All flyout raise sequences finished; starting increase-other / fly gate phase.");
+        LogIncreaseOtherRerollFlowState("BeforeIncreaseOtherPhase");
+
+        _batchIncreaseOtherPhaseComplete = !_batchHasIncreaseOtherElementsPending;
         if (_batchHasIncreaseOtherElementsPending)
+        {
+            LogIncreaseOtherRerollFlow($"Running increase-other ({_batchIncreaseOtherGrants.Count} grant(s)).");
             yield return CoExecuteBatchIncreaseOtherElements();
+            _batchIncreaseOtherPhaseComplete = true;
+            LogIncreaseOtherRerollFlow("Increase-other phase complete.");
+            LogIncreaseOtherRerollFlowState("AfterIncreaseOtherPhase");
+            TryFlushQueuedPostSubmitTriggeringRerolls();
+        }
+
         if (ShouldDeferBatchOutcomeForPostSubmitReroll())
+        {
             _postRaiseCombatGateOpen = true;
+            LogIncreaseOtherRerollFlow("Fly gate opened (deferring batch outcome for post-submit reroll).");
+        }
         else
+        {
+            LogIncreaseOtherRerollFlow("No deferred reroll outcome — calling ProcessPrecisionQueue (fly gate via bust/perfect path).");
             ProcessPrecisionQueue();
+        }
+
+        LogIncreaseOtherRerollFlowState("CoRollBatchPipelineEnd");
     }
 
     /// <summary>
@@ -1391,8 +1418,13 @@ public class CombatManager : MonoBehaviour
 
     private void AbortDeferredPostSubmitRerolls()
     {
+        LogIncreaseOtherRerollFlow("AbortDeferredPostSubmitRerolls (bust overflow).");
+        LogIncreaseOtherRerollFlowState("AbortDeferredPostSubmitRerolls");
         _deferredTriggeringRerollFacesRemaining = 0;
         _facesAwaitingPostSubmitTriggeringReroll.Clear();
+        _queuedPostSubmitTriggeringRerolls.Clear();
+        _pendingFirstPassBatchOutcomeSubmit.Clear();
+        _batchIncreaseOtherPhaseComplete = true;
         ClearBatchRerollOtherDiceState();
         diceRollOutcomeFlyout?.ClearParkedRerollFlyouts();
         ClearBatchIncreaseOtherElementsState();
@@ -1459,6 +1491,10 @@ public class CombatManager : MonoBehaviour
 
         _batchHasRerollOtherDicePending = true;
         _postBatchOtherDiceRerollCompleted = false;
+
+        LogIncreaseOtherRerollFlow(
+            $"PrepareRerollOther: keepers=[{string.Join(",", _batchRerollOtherKeeperIndices)}], " +
+            $"targets=[{string.Join(",", _batchRerollOtherTargetIndices)}]");
     }
 
     private void PrepareBatchIncreaseOtherElementsTargets()
@@ -1490,12 +1526,84 @@ public class CombatManager : MonoBehaviour
 
         if (_batchIncreaseOtherGrants.Count > 0)
             _batchHasIncreaseOtherElementsPending = true;
+
+        LogIncreaseOtherRerollFlow(
+            $"PrepareIncreaseOther: grants={_batchIncreaseOtherGrants.Count}, pending={_batchHasIncreaseOtherElementsPending}");
     }
 
     private void ClearBatchIncreaseOtherElementsState()
     {
         _batchHasIncreaseOtherElementsPending = false;
         _batchIncreaseOtherGrants.Clear();
+    }
+
+    private void RegisterPendingFirstPassBatchOutcomeSubmits(int batchGatherStart)
+    {
+        _pendingFirstPassBatchOutcomeSubmit.Clear();
+        _queuedPostSubmitTriggeringRerolls.Clear();
+
+        for (var i = batchGatherStart; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face != null)
+                _pendingFirstPassBatchOutcomeSubmit.Add(face);
+        }
+
+        LogIncreaseOtherRerollFlow(
+            $"Registered {_pendingFirstPassBatchOutcomeSubmit.Count} first-pass outcome submits (gatherStart={batchGatherStart}).");
+        LogIncreaseOtherRerollFlowState("RegisterPendingFirstPassBatchOutcomeSubmits");
+    }
+
+    private void LogIncreaseOtherRerollFlow(string message) => IncreaseOtherRerollFlowDebug.Log(message);
+
+    private void LogIncreaseOtherRerollFlowState(string phase)
+    {
+        if (!IncreaseOtherRerollFlowDebug.Enabled)
+            return;
+
+        IncreaseOtherRerollFlowDebug.Log(
+            $"STATE @ {phase}: batchId={_rollBatchId}, increaseComplete={_batchIncreaseOtherPhaseComplete}, " +
+            $"increasePendingFlag={_batchHasIncreaseOtherElementsPending}, increaseGrants={_batchIncreaseOtherGrants.Count}, " +
+            $"pendingOutcomeSubmit={_pendingFirstPassBatchOutcomeSubmit.Count}, pendingRerollOtherSubmit={_pendingBatchSubmitForRerollOther.Count}, " +
+            $"queuedPostSubmitReroll={_queuedPostSubmitTriggeringRerolls.Count}, awaitingPostSubmitReroll={_facesAwaitingPostSubmitTriggeringReroll.Count}, " +
+            $"deferredTriggeringRemaining={_deferredTriggeringRerollFacesRemaining}, rerollOtherPending={_batchHasRerollOtherDicePending}, " +
+            $"rerollOtherComplete={_postBatchOtherDiceRerollCompleted}, rerollOtherStarted={_postBatchOtherDiceRerollStarted}, " +
+            $"secondPassAwaitingSubmit={_postBatchSecondPassAwaitingSubmit.Count}, rollAgainInFlight={_postBatchRollAgainInFlight}, " +
+            $"flyGateOpen={_postRaiseCombatGateOpen}, raisePending={pendingRollVisualRaiseSequences}, visualPending={pendingRollVisualSequences}");
+    }
+
+    private bool CanStartPostSubmitTriggeringReroll()
+    {
+        var canStart = _batchIncreaseOtherPhaseComplete && _pendingFirstPassBatchOutcomeSubmit.Count == 0;
+        if (!canStart && IncreaseOtherRerollFlowDebug.Enabled)
+        {
+            IncreaseOtherRerollFlowDebug.Log(
+                $"CanStartPostSubmitTriggeringReroll=false (increaseComplete={_batchIncreaseOtherPhaseComplete}, " +
+                $"pendingOutcomeSubmit={_pendingFirstPassBatchOutcomeSubmit.Count})");
+        }
+
+        return canStart;
+    }
+
+    private void TryFlushQueuedPostSubmitTriggeringRerolls()
+    {
+        if (!CanStartPostSubmitTriggeringReroll())
+            return;
+
+        var flushed = 0;
+        while (_queuedPostSubmitTriggeringRerolls.Count > 0)
+        {
+            var face = _queuedPostSubmitTriggeringRerolls.Dequeue();
+            if (face == null)
+                continue;
+
+            flushed++;
+            LogIncreaseOtherRerollFlow($"Flushing queued post-submit reroll for {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
+            StartCoroutine(CoExecutePostSubmitTriggeringReroll(face));
+        }
+
+        if (flushed > 0)
+            LogIncreaseOtherRerollFlowState("AfterFlushQueuedPostSubmitRerolls");
     }
 
     private FaceResult FindIncreaseTargetFace(int batchGatherIndex)
@@ -1505,8 +1613,6 @@ public class CombatManager : MonoBehaviour
         {
             var face = channeledFaces[i];
             if (face == null || face.BatchGatherIndex != batchGatherIndex || face.BatchId != _rollBatchId)
-                continue;
-            if (face.AwaitingPostBatchOtherDiceReroll)
                 continue;
 
             match = face;
@@ -1548,7 +1654,12 @@ public class CombatManager : MonoBehaviour
         try
         {
             if (_batchIncreaseOtherGrants.Count == 0)
+            {
+                LogIncreaseOtherRerollFlow("CoExecuteBatchIncreaseOtherElements: no grants — skip.");
                 yield break;
+            }
+
+            LogIncreaseOtherRerollFlowState("CoExecuteBatchIncreaseOtherElementsStart");
 
             foreach (var grant in _batchIncreaseOtherGrants)
             {
@@ -1557,6 +1668,10 @@ public class CombatManager : MonoBehaviour
                     continue;
 
                 var targetIndices = ResolveIncreaseOtherTargetIndices(grant.KeeperBatchIndex, action);
+                LogIncreaseOtherRerollFlow(
+                    $"Increase-other grant keeperIdx={grant.KeeperBatchIndex} bonus={action.BonusAmount} " +
+                    $"filter={action.TargetFilter} targets=[{string.Join(",", targetIndices)}]");
+
                 if (targetIndices.Count == 0)
                     continue;
 
@@ -1602,10 +1717,12 @@ public class CombatManager : MonoBehaviour
             }
 
             NotifyStoredActionsPoolUpdated();
+            LogIncreaseOtherRerollFlowState("CoExecuteBatchIncreaseOtherElementsDone");
         }
         finally
         {
             ClearBatchIncreaseOtherElementsState();
+            LogIncreaseOtherRerollFlow("CoExecuteBatchIncreaseOtherElements: cleared batch increase state.");
         }
     }
 
@@ -1617,13 +1734,24 @@ public class CombatManager : MonoBehaviour
         int sourceBatchIndex)
     {
         if (source == null || targets == null || targets.Count == 0 || hitTargets == null || hitTargets.Count == 0)
+        {
+            LogIncreaseOtherRerollFlow(
+                $"CoLaunchIncreaseOtherProjectiles aborted (source={source != null}, targets={targets?.Count ?? 0}, hits={hitTargets?.Count ?? 0}).");
             yield break;
+        }
+
+        LogIncreaseOtherRerollFlow(
+            $"CoLaunchIncreaseOtherProjectiles sourceIdx={sourceBatchIndex} targetCount={targets.Count} bonus={bonusAmount}");
 
         diceRollOutcomeFlyout?.RemoveIncreaseOtherSourceFlyout(sourceBatchIndex);
 
         var prefab = ResolveDieToDieProjectilePrefab(null);
         if (dieToDieProjectileController == null || prefab == null)
+        {
+            IncreaseOtherRerollFlowDebug.LogWarning(
+                $"CoLaunchIncreaseOtherProjectiles skipped — projectile controller={dieToDieProjectileController != null}, prefab={prefab != null}");
             yield break;
+        }
 
         if (sourceBatchIndex >= 0)
             _deferDissolveBatchIndicesForDieToDieLaunch.Add(sourceBatchIndex);
@@ -1638,6 +1766,9 @@ public class CombatManager : MonoBehaviour
                 return;
 
             IncreaseOtherElementsAction.ApplyBonusToFace(hit.Face, hit.RowKey, bonusAmount);
+            LogIncreaseOtherRerollFlow(
+                $"Increase-other hit targetIdx={hit.Face.BatchGatherIndex} row={hit.RowKey.StableId} +{bonusAmount} " +
+                $"face={IncreaseOtherRerollFlowDebug.DescribeFace(hit.Face)}");
             diceRollOutcomeFlyout?.TryApplyFlyoutLineBonus(hit.Face.BatchGatherIndex, hit.RowKey, bonusAmount, hit.Face);
             if (targetIndex >= 0 && targetIndex < targets.Count)
                 diceRollOutcomeFlyout?.PlayDieActivationFeedbackOnDie(targets[targetIndex]);
@@ -1645,6 +1776,8 @@ public class CombatManager : MonoBehaviour
 
         if (sourceBatchIndex >= 0)
             TryDissolveDeferredDieToDieSource(sourceBatchIndex);
+
+        LogIncreaseOtherRerollFlow($"CoLaunchIncreaseOtherProjectiles finished sourceIdx={sourceBatchIndex}");
     }
 
     private static bool FaceHasRerollOtherDiceAfterAllSettled(DieFaceSO face)
@@ -1787,12 +1920,50 @@ public class CombatManager : MonoBehaviour
 
     private void TryDissolveDeferredDieToDieSource(int batchIndex)
     {
-        if (!_deferDissolveBatchIndicesForDieToDieLaunch.Remove(batchIndex))
+        if (!_deferDissolveBatchIndicesForDieToDieLaunch.Contains(batchIndex))
             return;
+
+        if (ShouldHoldBatchIndexAliveForPendingRerollOther(batchIndex))
+        {
+            LogIncreaseOtherRerollFlow(
+                $"TryDissolveDeferredDieToDieSource skipped — batchIdx={batchIndex} still needed for reroll-other.");
+            return;
+        }
+
+        _deferDissolveBatchIndicesForDieToDieLaunch.Remove(batchIndex);
 
         var dieTransform = GetBatchDieTransform(batchIndex);
         if (dieTransform != null && spawner != null)
             spawner.BeginDissolveAndDestroyDie(dieTransform.gameObject);
+    }
+
+    private bool ShouldHoldBatchIndexAliveForPendingRerollOther(int batchIndex)
+    {
+        if (batchIndex < 0 || !_batchHasRerollOtherDicePending || _postBatchOtherDiceRerollCompleted)
+            return false;
+
+        if (_batchRerollOtherTargetIndices.Contains(batchIndex))
+            return true;
+
+        // Keeper must stay alive through increase-other and die-to-die projectiles; may dissolve once reroll-other starts.
+        return _batchRerollOtherKeeperIndices.Contains(batchIndex) && !_postBatchOtherDiceRerollStarted;
+    }
+
+    private void ReleaseDeferredDissolveHoldsForRerollOtherDice()
+    {
+        foreach (var idx in _batchRerollOtherTargetIndices)
+            _deferDissolveBatchIndicesForDieToDieLaunch.Remove(idx);
+        foreach (var idx in _batchRerollOtherKeeperIndices)
+            _deferDissolveBatchIndicesForDieToDieLaunch.Remove(idx);
+    }
+
+    private static bool DieCanReceivePhysicsReroll(GameObject dieGo)
+    {
+        if (dieGo == null)
+            return false;
+
+        var roller = dieGo.GetComponent<DiceRoller>();
+        return roller != null && roller.enabled;
     }
 
     private IEnumerator CoPlayDieToDieRerollOtherProjectiles()
@@ -2045,11 +2216,29 @@ public class CombatManager : MonoBehaviour
     private void TryTriggerPostBatchRerollOtherIfReady()
     {
         if (!_batchHasRerollOtherDicePending || _postBatchOtherDiceRerollStarted)
+        {
+            if (IncreaseOtherRerollFlowDebug.Enabled && _batchHasRerollOtherDicePending)
+                IncreaseOtherRerollFlowDebug.Log(
+                    $"TryTriggerPostBatchRerollOtherIfReady blocked (started={_postBatchOtherDiceRerollStarted}).");
             return;
+        }
+
+        if (!_batchIncreaseOtherPhaseComplete)
+        {
+            LogIncreaseOtherRerollFlow("TryTriggerPostBatchRerollOtherIfReady blocked — increase-other phase not complete.");
+            return;
+        }
+
         if (_pendingBatchSubmitForRerollOther.Count > 0)
+        {
+            LogIncreaseOtherRerollFlow(
+                $"TryTriggerPostBatchRerollOtherIfReady blocked — {_pendingBatchSubmitForRerollOther.Count} face(s) still awaiting submit.");
             return;
+        }
 
         _postBatchOtherDiceRerollStarted = true;
+        LogIncreaseOtherRerollFlow("Starting CoExecutePostBatchRerollOtherDice.");
+        LogIncreaseOtherRerollFlowState("PostBatchRerollOtherStart");
         StartCoroutine(CoExecutePostBatchRerollOtherDice());
     }
 
@@ -2128,8 +2317,18 @@ public class CombatManager : MonoBehaviour
     /// </summary>
     public void NotifyFaceOutcomesSubmitted(FaceResult face)
     {
-        if (face == null || !_faceOutcomesSubmitted.Add(face))
+        if (face == null)
             return;
+
+        if (!_faceOutcomesSubmitted.Add(face))
+        {
+            LogIncreaseOtherRerollFlow($"NotifyFaceOutcomesSubmitted duplicate ignored: {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
+            return;
+        }
+
+        LogIncreaseOtherRerollFlow($"NotifyFaceOutcomesSubmitted: {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
+
+        _pendingFirstPassBatchOutcomeSubmit.Remove(face);
 
         _pendingBatchSubmitForRerollOther.Remove(face);
         TryTriggerPostBatchRerollOtherIfReady();
@@ -2137,13 +2336,28 @@ public class CombatManager : MonoBehaviour
         if (_facesAwaitingPostSubmitTriggeringReroll.Remove(face))
         {
             _postBatchSecondPassAwaitingSubmit.Remove(face);
+            if (!CanStartPostSubmitTriggeringReroll())
+            {
+                _queuedPostSubmitTriggeringRerolls.Enqueue(face);
+                LogIncreaseOtherRerollFlow(
+                    $"Queued post-submit reroll (waiting for batch outcomes / increase-other): {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
+                LogIncreaseOtherRerollFlowState("QueuedPostSubmitReroll");
+                TryCompletePostBatchRerollOtherDiceSequence();
+                return;
+            }
+
+            LogIncreaseOtherRerollFlow($"Starting post-submit reroll now: {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
             StartCoroutine(CoExecutePostSubmitTriggeringReroll(face));
             TryCompletePostBatchRerollOtherDiceSequence();
             return;
         }
 
+        TryFlushQueuedPostSubmitTriggeringRerolls();
+
         if (_postBatchSecondPassAwaitingSubmit.Remove(face))
         {
+            LogIncreaseOtherRerollFlow(
+                $"Post-batch second-pass outcome submitted: {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
             OnPostBatchSecondPassFaceSubmitted(face);
             return;
         }
@@ -2160,10 +2374,15 @@ public class CombatManager : MonoBehaviour
             CountRerollGrantsOnFace(face.Face, RerollDieAction.RerollDieScope.RerollTriggeringDieOnly) > 0)
         {
             _postBatchRollAgainInFlight++;
+            LogIncreaseOtherRerollFlow(
+                $"Post-batch second-pass roll-again chain start: {IncreaseOtherRerollFlowDebug.DescribeFace(face)} " +
+                $"(inFlight={_postBatchRollAgainInFlight})");
             StartCoroutine(CoPostSecondPassRollAgainChainWrapped(face));
         }
         else
         {
+            LogIncreaseOtherRerollFlow(
+                $"Post-batch second-pass dissolve (no roll-again): {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
             TryDissolveDieForFace(face);
         }
 
@@ -2174,12 +2393,16 @@ public class CombatManager : MonoBehaviour
     {
         try
         {
+            LogIncreaseOtherRerollFlow(
+                $"CoPostSecondPassRollAgainChain start: {IncreaseOtherRerollFlowDebug.DescribeFace(sourceFaceResult)}");
             yield return CoPostSecondPassRollAgainChainForOtherDie(sourceFaceResult);
         }
         finally
         {
-            if (_postBatchRollAgainInFlight > 0)
-                _postBatchRollAgainInFlight--;
+            _postBatchRollAgainInFlight--;
+            LogIncreaseOtherRerollFlow(
+                $"CoPostSecondPassRollAgainChain end: {IncreaseOtherRerollFlowDebug.DescribeFace(sourceFaceResult)} " +
+                $"(inFlight={_postBatchRollAgainInFlight})");
             TryCompletePostBatchRerollOtherDiceSequence();
         }
     }
@@ -2189,8 +2412,14 @@ public class CombatManager : MonoBehaviour
         if (_postBatchOtherDiceRerollCompleted)
             return;
         if (_postBatchSecondPassAwaitingSubmit.Count > 0 || _postBatchRollAgainInFlight > 0)
+        {
+            LogIncreaseOtherRerollFlow(
+                $"TryCompletePostBatchRerollOther blocked (secondPassAwaiting={_postBatchSecondPassAwaitingSubmit.Count}, " +
+                $"rollAgainInFlight={_postBatchRollAgainInFlight}).");
             return;
+        }
 
+        LogIncreaseOtherRerollFlow("Completing post-batch reroll-other sequence.");
         CompletePostBatchRerollOtherDiceSequence();
     }
 
@@ -2198,6 +2427,8 @@ public class CombatManager : MonoBehaviour
     {
         if (_postBatchOtherDiceRerollCompleted)
             return;
+
+        LogIncreaseOtherRerollFlowState("CompletePostBatchRerollOtherDiceSequence");
 
         foreach (var firstPassFace in _facesAwaitingPostBatchOtherDiceReroll)
             TryDissolveDieForFace(firstPassFace);
@@ -2208,6 +2439,7 @@ public class CombatManager : MonoBehaviour
         _pendingBatchSubmitForRerollOther.Clear();
         _postBatchSecondPassAwaitingSubmit.Clear();
         _batchLiveDieByGatherIndex.Clear();
+        LogIncreaseOtherRerollFlow("Post-batch reroll-other sequence completed; calling TryFinalizeBatchOutcomeAfterDeferredRerolls.");
         TryFinalizeBatchOutcomeAfterDeferredRerolls();
     }
 
@@ -2222,6 +2454,9 @@ public class CombatManager : MonoBehaviour
                     _postBatchSecondPassAwaitingSubmit.Add(result);
             }
         }
+
+        LogIncreaseOtherRerollFlow(
+            $"BeginAwaitingPostBatchSecondPassSubmit awaiting={_postBatchSecondPassAwaitingSubmit.Count}");
 
         if (_postBatchSecondPassAwaitingSubmit.Count == 0)
             TryCompletePostBatchRerollOtherDiceSequence();
@@ -2243,6 +2478,9 @@ public class CombatManager : MonoBehaviour
         _postSubmitRerollSettledFaces.Clear();
         _batchDieAssetByGatherIndex.Clear();
         _deferredTriggeringRerollFacesRemaining = 0;
+        _pendingFirstPassBatchOutcomeSubmit.Clear();
+        _queuedPostSubmitTriggeringRerolls.Clear();
+        _batchIncreaseOtherPhaseComplete = true;
         ClearBatchRerollOtherDiceState();
     }
 
@@ -2252,16 +2490,27 @@ public class CombatManager : MonoBehaviour
             return;
 
         _deferredTriggeringRerollFacesRemaining--;
+        LogIncreaseOtherRerollFlow(
+            $"CompleteDeferredTriggeringRerollFace remaining={_deferredTriggeringRerollFacesRemaining}");
         TryFinalizeBatchOutcomeAfterDeferredRerolls();
     }
 
     private void TryFinalizeBatchOutcomeAfterDeferredRerolls()
     {
         if (_deferredTriggeringRerollFacesRemaining > 0)
+        {
+            LogIncreaseOtherRerollFlow(
+                $"TryFinalizeBatchOutcome blocked — deferredTriggeringRemaining={_deferredTriggeringRerollFacesRemaining}");
             return;
-        if (_batchHasRerollOtherDicePending && !_postBatchOtherDiceRerollCompleted)
-            return;
+        }
 
+        if (_batchHasRerollOtherDicePending && !_postBatchOtherDiceRerollCompleted)
+        {
+            LogIncreaseOtherRerollFlow("TryFinalizeBatchOutcome blocked — reroll-other still in progress.");
+            return;
+        }
+
+        LogIncreaseOtherRerollFlow("TryFinalizeBatchOutcome — calling ProcessPrecisionQueue.");
         ProcessPrecisionQueue();
     }
 
@@ -2269,6 +2518,8 @@ public class CombatManager : MonoBehaviour
     {
         if (face == null || _faceOutcomesSubmitted.Contains(face))
             yield break;
+
+        LogIncreaseOtherRerollFlow($"CoWaitUntilFaceOutcomesSubmitted waiting: {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
 
         const float timeoutSeconds = 120f;
         var elapsed = 0f;
@@ -2279,13 +2530,24 @@ public class CombatManager : MonoBehaviour
         }
 
         if (!_faceOutcomesSubmitted.Contains(face))
+        {
+            LogIncreaseOtherRerollFlowState("CoWaitUntilFaceOutcomesSubmittedTimeout");
             Debug.LogError($"CombatManager: Timed out waiting for face '{face.Face?.name}' outcomes to submit before post-submit reroll dissolve.");
+        }
+        else
+        {
+            LogIncreaseOtherRerollFlow($"CoWaitUntilFaceOutcomesSubmitted done: {IncreaseOtherRerollFlowDebug.DescribeFace(face)}");
+        }
     }
 
     private IEnumerator CoExecutePostSubmitTriggeringReroll(FaceResult sourceFaceResult)
     {
         try
         {
+            LogIncreaseOtherRerollFlow(
+                $"CoExecutePostSubmitTriggeringReroll start: {IncreaseOtherRerollFlowDebug.DescribeFace(sourceFaceResult)}");
+            LogIncreaseOtherRerollFlowState("CoExecutePostSubmitTriggeringRerollStart");
+
             if (sourceFaceResult == null || spawner == null)
                 yield break;
 
@@ -2315,6 +2577,7 @@ public class CombatManager : MonoBehaviour
 
                 _postSubmitRerollSettledFaces.Remove(dieIdx);
                 _postSubmitRerollWaitingIndices.Add(dieIdx);
+                LogIncreaseOtherRerollFlow($"Post-submit reroll physics dieIdx={dieIdx} keepFace={keepFace}");
                 spawner.RerollDiePhysics(dieGo);
                 yield return new WaitUntil(() => !_postSubmitRerollWaitingIndices.Contains(dieIdx));
 
@@ -2336,18 +2599,25 @@ public class CombatManager : MonoBehaviour
                 CommitResolvedRoll(newFace, dieTransform, dieAsset, dieIdx, skipPowerContribution: true, allowPostSubmitTriggeringReroll: false);
 
                 face = newFace;
+                LogIncreaseOtherRerollFlow(
+                    $"Post-submit reroll committed dieIdx={dieIdx} face={(face != null ? face.name : "null")}");
+
                 if (!keepFace && face != null)
                     grantsRemaining += CountRerollGrantsOnFace(face, RerollDieAction.RerollDieScope.RerollTriggeringDieOnly);
 
                 if (channeledFaces.Count > 0)
                 {
                     var latestResult = channeledFaces[channeledFaces.Count - 1];
+                    LogIncreaseOtherRerollFlow(
+                        $"Post-submit reroll waiting for second-pass outcomes: {IncreaseOtherRerollFlowDebug.DescribeFace(latestResult)}");
                     yield return CoWaitUntilFaceOutcomesSubmitted(latestResult);
                 }
             }
         }
         finally
         {
+            LogIncreaseOtherRerollFlow(
+                $"CoExecutePostSubmitTriggeringReroll end: {IncreaseOtherRerollFlowDebug.DescribeFace(sourceFaceResult)}");
             CompleteDeferredTriggeringRerollFace();
             TryDissolveDieForFace(sourceFaceResult);
             TryCompletePostBatchRerollOtherDiceSequence();
@@ -2370,6 +2640,9 @@ public class CombatManager : MonoBehaviour
     {
         try
         {
+            LogIncreaseOtherRerollFlow("CoExecutePostBatchRerollOtherDice start.");
+            LogIncreaseOtherRerollFlowState("CoExecutePostBatchRerollOtherDiceStart");
+
             if (spawner == null)
                 yield break;
 
@@ -2379,9 +2652,11 @@ public class CombatManager : MonoBehaviour
             yield return CoPlayDieToDieRerollOtherProjectiles();
 
             var settledFaces = new Dictionary<int, DieFaceSO>();
+            LogIncreaseOtherRerollFlow($"Post-batch reroll-other physics indices=[{string.Join(",", indices)}]");
             yield return CoParallelPhysicsRerollOtherDice(indices, settledFaces);
 
             _postRaiseCombatGateOpen = true;
+            LogIncreaseOtherRerollFlow("Fly gate opened for reroll-other second pass.");
 
             var secondPassResults = new List<FaceResult>();
             foreach (var dieIdx in indices)
@@ -2391,13 +2666,21 @@ public class CombatManager : MonoBehaviour
 
                 var result = TryCommitSecondPassOtherDie(dieIdx, face);
                 if (result != null)
+                {
                     secondPassResults.Add(result);
+                    LogIncreaseOtherRerollFlow(
+                        $"Reroll-other second pass committed dieIdx={dieIdx} face={face.name} " +
+                        $"result={IncreaseOtherRerollFlowDebug.DescribeFace(result)}");
+                }
             }
 
+            LogIncreaseOtherRerollFlow(
+                $"BeginAwaitingPostBatchSecondPassSubmit count={secondPassResults.Count}");
             BeginAwaitingPostBatchSecondPassSubmit(secondPassResults);
         }
         finally
         {
+            LogIncreaseOtherRerollFlow("CoExecutePostBatchRerollOtherDice finally — TryCompletePostBatchRerollOtherDiceSequence.");
             TryCompletePostBatchRerollOtherDiceSequence();
         }
     }
@@ -2407,6 +2690,8 @@ public class CombatManager : MonoBehaviour
         settledFacesOut.Clear();
         if (indices == null || indices.Count == 0 || spawner == null)
             yield break;
+
+        ReleaseDeferredDissolveHoldsForRerollOtherDice();
 
         var launched = new List<int>();
         foreach (var dieIdx in indices)
@@ -2420,35 +2705,70 @@ public class CombatManager : MonoBehaviour
                 continue;
             }
 
+            if (!DieCanReceivePhysicsReroll(dieGo))
+            {
+                LogIncreaseOtherRerollFlow(
+                    $"Post-batch reroll other — die batchIdx={dieIdx} cannot reroll (missing or disabled DiceRoller).");
+                DropFailedBatchRerollOtherTarget(dieIdx);
+                continue;
+            }
+
             _batchLiveDieByGatherIndex[dieIdx] = dieGo;
             _postSubmitRerollSettledFaces.Remove(dieIdx);
             _postSubmitRerollWaitingIndices.Add(dieIdx);
             launched.Add(dieIdx);
+            LogIncreaseOtherRerollFlow($"Post-batch reroll other — launching physics for batchIdx={dieIdx}.");
             spawner.RerollDiePhysics(dieGo);
         }
 
         if (launched.Count == 0)
             yield break;
 
-        yield return new WaitUntil(() =>
+        const float timeoutSeconds = 120f;
+        var elapsed = 0f;
+        while (elapsed < timeoutSeconds)
         {
+            var allSettled = true;
             foreach (var dieIdx in launched)
             {
                 if (_postSubmitRerollWaitingIndices.Contains(dieIdx))
-                    return false;
+                {
+                    allSettled = false;
+                    break;
+                }
             }
 
-            return true;
-        });
+            if (allSettled)
+                break;
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (elapsed >= timeoutSeconds)
+        {
+            LogIncreaseOtherRerollFlowState("CoParallelPhysicsRerollOtherDiceTimeout");
+            foreach (var dieIdx in launched)
+            {
+                if (!_postSubmitRerollWaitingIndices.Contains(dieIdx))
+                    continue;
+
+                LogIncreaseOtherRerollFlow(
+                    $"Post-batch reroll other timed out waiting for batchIdx={dieIdx}; abandoning reroll for this die.");
+                _postSubmitRerollWaitingIndices.Remove(dieIdx);
+                DropFailedBatchRerollOtherTarget(dieIdx);
+            }
+        }
 
         foreach (var dieIdx in launched)
         {
             if (_postSubmitRerollSettledFaces.TryGetValue(dieIdx, out var face) && face != null)
                 settledFacesOut[dieIdx] = face;
-            else
+            else if (!_postSubmitRerollWaitingIndices.Contains(dieIdx))
                 Debug.LogError($"CombatManager: Post-batch reroll other — no settled face for batch index {dieIdx}.");
 
             _postSubmitRerollSettledFaces.Remove(dieIdx);
+            _postSubmitRerollWaitingIndices.Remove(dieIdx);
         }
     }
 
@@ -3448,8 +3768,15 @@ public class CombatManager : MonoBehaviour
     private void CheckBustStatusAndOpenFlyoutGate()
     {
         if (HasPendingDeferredRerolls())
+        {
+            LogIncreaseOtherRerollFlow(
+                $"CheckBustStatusAndOpenFlyoutGate blocked — deferred rerolls pending " +
+                $"(deferredTriggering={_deferredTriggeringRerollFacesRemaining}, " +
+                $"rerollOtherPending={_batchHasRerollOtherDicePending}, rerollOtherComplete={_postBatchOtherDiceRerollCompleted})");
             return;
+        }
 
+        LogIncreaseOtherRerollFlow("CheckBustStatusAndOpenFlyoutGate — opening fly gate.");
         CheckBustStatus();
         _postRaiseCombatGateOpen = true;
     }

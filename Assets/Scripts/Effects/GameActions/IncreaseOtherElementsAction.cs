@@ -76,6 +76,10 @@ public class IncreaseOtherElementsAction : GameActionWithIcon
         if (face == null || bonus <= 0)
             return;
 
+        IncreaseOtherRerollFlowDebug.Log(
+            $"ApplyBonusToFace batchIdx={face.BatchGatherIndex} row={rowKey.StableId} +{bonus} " +
+            $"dmg={face.Damage} armor={face.Armor} before apply");
+
         if (PoolRowKey.TryGetDieType(rowKey, out var dieType))
         {
             switch (dieType)
