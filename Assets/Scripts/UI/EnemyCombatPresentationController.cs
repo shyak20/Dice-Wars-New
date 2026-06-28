@@ -383,6 +383,7 @@ public sealed class EnemyCombatPresentationController : MonoBehaviour
 
         combatAnimator.Rebind();
         combatAnimator.Update(0f);
+        StartInRandomFrameUtility.TryApply(combatAnimator);
         EnsurePresentationVisible();
     }
 

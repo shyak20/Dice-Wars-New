@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc42d404de71e764ab485897952cfdd6, type: 3}
+  m_Name: Strength Gain
+  m_EditorClassIdentifier: 
+  actionName: Attack
+  attackTooltipTitle: <style=Attack>Attack</style>
+  attackTooltipDescription: Deal <style=Attack>3</style>
+  armorTooltipTitle: 
+  armorTooltipDescription: 
+  legacyActionDescription: 
+  icon: {fileID: 21300000, guid: edcfefc5b76fb4d4ea44a7de2a3392ea, type: 3}
+  damage: 0
+  numberOfAttacks: 1
+  armor: 0
+  actionAnimatorTriggerName: Action
+  actionAnimationLeadInSeconds: 0.2
+  actions:
+  - rid: 6557384603223720053
+  actionTooltips:
+  - title: <style=Strength>Strength</style>
+    description: Gain <style=Strength>2</style>
+  references:
+    version: 2
+    RefIds:
+    - rid: 6557384603223720053
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        triggerImmediatelyOnDrop: 0
+        statusEffect: {fileID: 11400000, guid: ebf544cc10a2325409bf6d6ef50a8f63, type: 2}
+        stacks: 2
