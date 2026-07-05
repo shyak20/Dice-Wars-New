@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,6 +26,7 @@ public class UIMapGridView : MonoBehaviour
     private Coroutine _markerLayoutSnapRoutine;
     private RectTransform _markerParentRt;
     private Canvas _canvas;
+    private readonly HashSet<Vector2Int> _reachableMoveTargetsScratch = new HashSet<Vector2Int>();
     /// <summary>While the pawn animates, the Selected visual uses this cell (the click target), not <see cref="MapMovementManager.PlayerGridPosition"/>.</summary>
     private Vector2Int? _tileStateSelectedCellOverride;
     /// <summary>While the pawn animates, “standing here” background/arrows use this cell until the move completes.</summary>
@@ -156,12 +158,30 @@ public class UIMapGridView : MonoBehaviour
     /// <summary>Moves the marker from <paramref name="fromCell"/> to <paramref name="toCell"/>, then invokes <paramref name="onComplete"/>.</summary>
     public void MovePlayerMarkerThen(Vector2Int fromCell, Vector2Int toCell, float durationSeconds, AnimationCurve moveCurve, Action onComplete)
     {
-        if (_tiles == null || _manager == null)
+        MovePlayerMarkerAlongPath(new[] { fromCell, toCell }, durationSeconds, moveCurve, null, onComplete);
+    }
+
+    /// <summary>
+    /// While the pawn animates along <paramref name="path"/>, updates the standing-tile visual to the cell the marker has reached.
+    /// </summary>
+    public void SetMoveAnimationStandingCell(Vector2Int cell) => _standingVisualCellOverride = cell;
+
+    /// <summary>Moves the marker through each cell in <paramref name="path"/> (in order), then invokes <paramref name="onComplete"/>.</summary>
+    public void MovePlayerMarkerAlongPath(
+        IReadOnlyList<Vector2Int> path,
+        float durationSeconds,
+        AnimationCurve moveCurve,
+        Action<int> onReachedPathIndex,
+        Action onComplete)
+    {
+        if (_tiles == null || _manager == null || path == null || path.Count < 2)
         {
             onComplete?.Invoke();
             return;
         }
 
+        var fromCell = path[0];
+        var toCell = path[path.Count - 1];
         var duration = Mathf.Max(0f, durationSeconds);
         var animateMove = duration > 0f && fromCell != toCell;
         _tileStateSelectedCellOverride = animateMove ? toCell : (Vector2Int?)null;
@@ -197,6 +217,9 @@ public class UIMapGridView : MonoBehaviour
 
         if (!animateMove)
         {
+            for (var i = 1; i < path.Count; i++)
+                onReachedPathIndex?.Invoke(i);
+
             ClearMoveVisualOverrides();
             SnapPlayerMarkerToCell(toCell);
             RefreshPlayerStandingVisuals();
@@ -204,7 +227,7 @@ public class UIMapGridView : MonoBehaviour
             return;
         }
 
-        _markerMoveRoutine = StartCoroutine(CoMovePlayerMarker(fromCell, toCell, duration, curve, onComplete));
+        _markerMoveRoutine = StartCoroutine(CoMovePlayerMarkerAlongPath(path, duration, curve, onReachedPathIndex, onComplete));
     }
 
     private IEnumerator CoSnapPlayerMarkerAfterLayout()
@@ -223,17 +246,41 @@ public class UIMapGridView : MonoBehaviour
         _markerLayoutSnapRoutine = null;
     }
 
-    private IEnumerator CoMovePlayerMarker(Vector2Int fromCell, Vector2Int toCell, float duration, AnimationCurve curve, Action onComplete)
+    private IEnumerator CoMovePlayerMarkerAlongPath(
+        IReadOnlyList<Vector2Int> path,
+        float totalDuration,
+        AnimationCurve curve,
+        Action<int> onReachedPathIndex,
+        Action onComplete)
+    {
+        var segmentCount = path.Count - 1;
+        var segmentDuration = segmentCount > 0 ? totalDuration / segmentCount : 0f;
+
+        for (var segment = 0; segment < segmentCount; segment++)
+        {
+            yield return CoMovePlayerMarkerSegment(path[segment], path[segment + 1], segmentDuration, curve);
+            onReachedPathIndex?.Invoke(segment + 1);
+        }
+
+        _markerMoveRoutine = null;
+        ClearMoveVisualOverrides();
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator CoMovePlayerMarkerSegment(Vector2Int fromCell, Vector2Int toCell, float duration, AnimationCurve curve)
     {
         var w = _tiles.GetLength(0);
         var h = _tiles.GetLength(1);
         if (fromCell.x < 0 || fromCell.x >= w || fromCell.y < 0 || fromCell.y >= h ||
             toCell.x < 0 || toCell.x >= w || toCell.y < 0 || toCell.y >= h)
         {
-            ClearMoveVisualOverrides();
             SnapPlayerMarkerToCell(toCell);
-            _markerMoveRoutine = null;
-            onComplete?.Invoke();
+            yield break;
+        }
+
+        if (duration <= 0f)
+        {
+            playerMarker.anchoredPosition = GetCellCenterAnchoredInMarkerParent(toCell);
             yield break;
         }
 
@@ -252,9 +299,6 @@ public class UIMapGridView : MonoBehaviour
         }
 
         playerMarker.anchoredPosition = end;
-        _markerMoveRoutine = null;
-        ClearMoveVisualOverrides();
-        onComplete?.Invoke();
     }
 
     /// <summary>Runs the landing scale-down on the destination tile when the player commits to a move (press).</summary>
@@ -281,6 +325,8 @@ public class UIMapGridView : MonoBehaviour
         if (_tiles.GetLength(0) != w || _tiles.GetLength(1) != h)
             return;
 
+        _manager.CollectReachableMoveTargetsFrom(toCell, _reachableMoveTargetsScratch);
+
         for (var y = 0; y < h; y++)
         {
             for (var x = 0; x < w; x++)
@@ -293,7 +339,7 @@ public class UIMapGridView : MonoBehaviour
                 MapTileUIViewState reachAtEnd;
                 if (standingEnd)
                     reachAtEnd = MapTileUIViewState.Selected;
-                else if (_manager.IsValidOneStepMoveTargetFrom(toCell, cell))
+                else if (_reachableMoveTargetsScratch.Contains(cell))
                     reachAtEnd = MapTileUIViewState.Available;
                 else
                     reachAtEnd = MapTileUIViewState.Idle;
@@ -360,6 +406,7 @@ public class UIMapGridView : MonoBehaviour
 
         var pStand = _standingVisualCellOverride ?? _manager.PlayerGridPosition;
         var pSelected = _tileStateSelectedCellOverride ?? _manager.PlayerGridPosition;
+        _manager.CollectReachableMoveTargetsFrom(_manager.PlayerGridPosition, _reachableMoveTargetsScratch);
 
         for (var y = 0; y < h; y++)
         {
@@ -370,10 +417,11 @@ public class UIMapGridView : MonoBehaviour
                     continue;
 
                 var standingHere = pStand.x == x && pStand.y == y;
+                var cell = new Vector2Int(x, y);
                 MapTileUIViewState state;
                 if (pSelected.x == x && pSelected.y == y)
                     state = MapTileUIViewState.Selected;
-                else if (_manager.IsValidOneStepMoveTarget(new Vector2Int(x, y)))
+                else if (_reachableMoveTargetsScratch.Contains(cell))
                     state = MapTileUIViewState.Available;
                 else
                     state = MapTileUIViewState.Idle;

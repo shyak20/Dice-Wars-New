@@ -148,4 +148,120 @@ public static class MapPathfinding
             return -1;
         return distFromStart[i];
     }
+
+    /// <summary>Visited tiles and empty (<see cref="MapEventType.None"/>) tiles the player may move through.</summary>
+    public static bool IsTraversableIntermediateTile(MapTile tile) =>
+        tile.eventConsumed || tile.eventType == MapEventType.None;
+
+    /// <summary>
+    /// True when the player may move through <paramref name="cell"/> on the way to <paramref name="destination"/>.
+    /// The destination itself is always allowed; earlier hops must be traversable intermediates.
+    /// </summary>
+    public static bool IsPassableIntermediateTile(MapTile tile, Vector2Int cell, Vector2Int destination)
+    {
+        if (cell == destination)
+            return true;
+
+        return IsTraversableIntermediateTile(tile);
+    }
+
+    /// <summary>
+    /// All cells reachable from <paramref name="from"/> following directed exits through visited or empty intermediates.
+    /// Does not include <paramref name="from"/>.
+    /// </summary>
+    public static void CollectReachableMoveTargets(MapGrid grid, Vector2Int from, HashSet<Vector2Int> results)
+    {
+        results?.Clear();
+        if (results == null || grid == null || !grid.Contains(from))
+            return;
+
+        var visited = new HashSet<Vector2Int> { from };
+        var q = new Queue<Vector2Int>();
+        q.Enqueue(from);
+
+        while (q.Count > 0)
+        {
+            var current = q.Dequeue();
+            var tile = grid.Get(current.x, current.y);
+            for (var di = 0; di < 4; di++)
+            {
+                var dir = (MapCardinalDirection)di;
+                if (!tile.exitMask.Contains(dir))
+                    continue;
+
+                var next = current + dir.ToDelta();
+                if (!grid.Contains(next) || !visited.Add(next))
+                    continue;
+
+                results.Add(next);
+
+                var nextTile = grid.Get(next.x, next.y);
+                if (IsTraversableIntermediateTile(nextTile))
+                    q.Enqueue(next);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds a directed path from <paramref name="from"/> to <paramref name="to"/> following tile exits.
+    /// Every intermediate cell must be visited or empty (<see cref="IsPassableIntermediateTile"/>).
+    /// Returns false when no such path exists.
+    /// </summary>
+    public static bool TryBuildMovePath(MapGrid grid, Vector2Int from, Vector2Int to, List<Vector2Int> path)
+    {
+        path?.Clear();
+        if (path == null || grid == null || !grid.Contains(from) || !grid.Contains(to) || from == to)
+            return false;
+
+        var previous = new Dictionary<Vector2Int, Vector2Int>();
+        var q = new Queue<Vector2Int>();
+        q.Enqueue(from);
+
+        while (q.Count > 0)
+        {
+            var current = q.Dequeue();
+            if (current == to)
+            {
+                ReconstructPath(previous, from, to, path);
+                return path.Count >= 2;
+            }
+
+            var tile = grid.Get(current.x, current.y);
+            for (var di = 0; di < 4; di++)
+            {
+                var dir = (MapCardinalDirection)di;
+                if (!tile.exitMask.Contains(dir))
+                    continue;
+
+                var next = current + dir.ToDelta();
+                if (!grid.Contains(next) || previous.ContainsKey(next))
+                    continue;
+
+                var nextTile = grid.Get(next.x, next.y);
+                if (next != to && !IsTraversableIntermediateTile(nextTile))
+                    continue;
+
+                previous[next] = current;
+                q.Enqueue(next);
+            }
+        }
+
+        path.Clear();
+        return false;
+    }
+
+    static void ReconstructPath(Dictionary<Vector2Int, Vector2Int> previous, Vector2Int from, Vector2Int to, List<Vector2Int> path)
+    {
+        path.Clear();
+        var cursor = to;
+        while (true)
+        {
+            path.Add(cursor);
+            if (cursor == from)
+                break;
+            cursor = previous[cursor];
+        }
+
+        path.Reverse();
+    }
 }

@@ -23327,7 +23327,7 @@ MonoBehaviour:
   m_text: "Gain<style=Shield> Shield 4</style>\nGain <style=Shield>4</style> \nDeal
     <style=Attack>5</style>\nGain <style=Strength>5</style>\nGain <style=Cleanse>5</style>\nGain
     <style=Burn>5</style>\nGain <style=Heal>5</style>\nGain <style=Poison>5</style>\nWhen
-    you roll <style=die1> <style=die2> <style=die3> <style=die4> <style=die5> <style=die6>\nGain
+    you roll<style=die1> <style=die2> <style=die3> <style=die4> <style=die5> <style=die6>\nGain
     <style=Thorns>6</style>\nGain <style=Pyromaniac>6</style>\nGain <style=Ablaze>6</style>\nGain
     <style=Kinetic Shield>6</style>"
   m_isRightToLeft: 0
@@ -65363,7 +65363,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1001816083
 RectTransform:
   m_ObjectHideFlags: 0
@@ -65372,7 +65372,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1001816082}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -126976,7 +126976,6 @@ RectTransform:
   - {fileID: 1222476797}
   - {fileID: 1196472965}
   - {fileID: 240206944}
-  - {fileID: 1001816083}
   - {fileID: 776683534}
   - {fileID: 43255128}
   - {fileID: 1956466324}
@@ -126987,6 +126986,7 @@ RectTransform:
   - {fileID: 484564939}
   - {fileID: 1067698247}
   - {fileID: 7613276264664916397}
+  - {fileID: 1001816083}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

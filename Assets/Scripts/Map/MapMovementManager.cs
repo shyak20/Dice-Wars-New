@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -59,6 +60,11 @@ public sealed class MapMovementManager : MonoBehaviour
     private int _effectiveMoveLimit;
 
     private bool _loseScreenShown;
+    private bool _moveInProgress;
+    private readonly List<Vector2Int> _movePathScratch = new List<Vector2Int>();
+    private readonly HashSet<Vector2Int> _reachableMoveTargetsCache = new HashSet<Vector2Int>();
+    private Vector2Int _reachableCacheOrigin;
+    private bool _reachableCacheValid;
 
     public int MovesTaken { get; private set; }
     public int MoveLimit => _effectiveMoveLimit;
@@ -192,6 +198,7 @@ public sealed class MapMovementManager : MonoBehaviour
             _grid = restoredGrid;
             PlayerGridPosition = playerCell;
             MovesTaken = moves;
+            InvalidateReachableMoveTargetCache();
             EnsureMapViewHierarchyActive();
             mapView?.Present(_grid, this, mapPresentation);
             moveCounterUI?.Bind(this);
@@ -337,15 +344,22 @@ public sealed class MapMovementManager : MonoBehaviour
         RunManager.Instance?.OnNewMapGeneratedCleanupDraws();
         MovesTaken = 0;
         PlayerGridPosition = StartPosition;
+        InvalidateReachableMoveTargetCache();
 
         EnsureMapViewHierarchyActive();
         mapView?.Present(_grid, this, mapPresentation);
         moveCounterUI?.Bind(this);
     }
 
-    /// <summary>Move to an orthogonally adjacent tile if the current tile has a directed exit toward it.</summary>
+    /// <summary>
+    /// Move to <paramref name="target"/> along directed exits when a valid path exists.
+    /// Intermediate tiles must already be visited; each step counts as a separate move.
+    /// </summary>
     public bool TryMoveTo(Vector2Int target)
     {
+        if (_moveInProgress)
+            return false;
+
         if (RunManager.Instance != null && RunManager.Instance.IsRunDefeated)
             return false;
 
@@ -356,19 +370,61 @@ public sealed class MapMovementManager : MonoBehaviour
         if (from == target)
             return false;
 
-        if (!IsOrthogonalAdjacent(from, target))
+        if (!MapPathfinding.TryBuildMovePath(_grid, from, target, _movePathScratch))
             return false;
 
-        var dir = DirectionFromTo(from, target);
-        if (!_grid.HasExit(from.x, from.y, dir))
-            return false;
+        _moveInProgress = true;
 
-        var fromCell = from;
+        var animationPath = _movePathScratch.ToArray();
+
+        void OnReachedPathIndex(int pathIndex)
+        {
+            var isFinal = pathIndex == animationPath.Length - 1;
+            ApplySingleMoveStep(animationPath[pathIndex], isFinal);
+            InvalidateReachableMoveTargetCache();
+            mapView?.SetMoveAnimationStandingCell(animationPath[pathIndex]);
+            mapView?.RefreshPlayerStandingVisuals();
+        }
+
+        void AfterPlayerMarkerArrived()
+        {
+            _moveInProgress = false;
+            if (PlayerGridPosition == BossPosition)
+                OnBossReached?.Invoke();
+            // Resolve first so combat/shop loads without doing a full standing refresh on a scene we are about to unload.
+            ResolveTileAfterMoveIfMapRun();
+            mapView?.RefreshPlayerStandingVisuals();
+        }
+
+        if (mapView != null)
+        {
+            var curve = playerMarkerMoveCurve != null && playerMarkerMoveCurve.keys.Length > 0
+                ? playerMarkerMoveCurve
+                : AnimationCurve.Linear(0f, 0f, 1f, 1f);
+            var stepCount = animationPath.Length - 1;
+            var duration = Mathf.Max(0f, playerMarkerMoveDurationSeconds * stepCount);
+            mapView.MovePlayerMarkerAlongPath(animationPath, duration, curve, OnReachedPathIndex, AfterPlayerMarkerArrived);
+        }
+        else
+        {
+            for (var i = 1; i < animationPath.Length; i++)
+                OnReachedPathIndex(i);
+            AfterPlayerMarkerArrived();
+        }
+
+        return true;
+    }
+
+    void ApplySingleMoveStep(Vector2Int target, bool isFinalStepOfMove)
+    {
         PlayerGridPosition = target;
         MovesTaken++;
         OnPlayerMoved?.Invoke();
         ProgressionEventBridge.NotifyMapTileMoved();
         moveCounterUI?.Refresh();
+
+        if (!isFinalStepOfMove)
+            MarkPassedThroughTileIfNeeded(target);
 
         if (MovesTaken > _effectiveMoveLimit)
         {
@@ -388,29 +444,52 @@ public sealed class MapMovementManager : MonoBehaviour
                 Debug.LogWarning("MapMovementManager: corruption could not close any passage without leaving a path from the player to the boss — map unchanged.", this);
             mapView?.RefreshAllTileExits();
         }
+    }
 
-        var becameBoss = PlayerGridPosition == BossPosition;
+    void MarkPassedThroughTileIfNeeded(Vector2Int cell)
+    {
+        var tile = _grid.Get(cell.x, cell.y);
+        if (tile.eventConsumed || tile.eventType != MapEventType.None)
+            return;
 
-        void AfterPlayerMarkerArrived()
+        tile.eventConsumed = true;
+        _grid.SetTile(cell.x, cell.y, tile);
+        mapView?.RefreshTile(_grid, cell);
+        InvalidateReachableMoveTargetCache();
+    }
+
+    void InvalidateReachableMoveTargetCache() => _reachableCacheValid = false;
+
+    void EnsureReachableMoveTargetCache()
+    {
+        if (_reachableCacheValid && _reachableCacheOrigin == PlayerGridPosition)
+            return;
+
+        _reachableCacheOrigin = PlayerGridPosition;
+        MapPathfinding.CollectReachableMoveTargets(_grid, PlayerGridPosition, _reachableMoveTargetsCache);
+        _reachableCacheValid = true;
+    }
+
+    /// <summary>Reachable click targets from <paramref name="from"/> (any distance, through visited/empty tiles).</summary>
+    public void CollectReachableMoveTargetsFrom(Vector2Int from, HashSet<Vector2Int> results)
+    {
+        if (_grid == null)
         {
-            if (becameBoss)
-                OnBossReached?.Invoke();
-            // Resolve first so combat/shop loads without doing a full standing refresh on a scene we are about to unload.
-            ResolveTileAfterMoveIfMapRun();
-            mapView?.RefreshPlayerStandingVisuals();
+            results?.Clear();
+            return;
         }
 
-        if (mapView != null)
+        if (from == PlayerGridPosition && _reachableCacheValid)
         {
-            var curve = playerMarkerMoveCurve != null && playerMarkerMoveCurve.keys.Length > 0
-                ? playerMarkerMoveCurve
-                : AnimationCurve.Linear(0f, 0f, 1f, 1f);
-            mapView.MovePlayerMarkerThen(fromCell, target, Mathf.Max(0f, playerMarkerMoveDurationSeconds), curve, AfterPlayerMarkerArrived);
+            results?.Clear();
+            if (results == null)
+                return;
+            foreach (var cell in _reachableMoveTargetsCache)
+                results.Add(cell);
+            return;
         }
-        else
-            AfterPlayerMarkerArrived();
 
-        return true;
+        MapPathfinding.CollectReachableMoveTargets(_grid, from, results);
     }
 
     private void MarkCurrentTileConsumedAndRefresh()
@@ -419,6 +498,7 @@ public sealed class MapMovementManager : MonoBehaviour
         var t = _grid.Get(c.x, c.y);
         t.eventConsumed = true;
         _grid.SetTile(c.x, c.y, t);
+        InvalidateReachableMoveTargetCache();
         mapView?.RefreshTile(_grid, c);
         mapView?.RefreshPlayerStandingVisuals();
     }
@@ -521,6 +601,38 @@ public sealed class MapMovementManager : MonoBehaviour
     public bool IsStart(Vector2Int cell) => cell == StartPosition;
 
     /// <summary>
+    /// True when a directed path exists from <paramref name="from"/> to <paramref name="target"/> and every
+    /// intermediate tile is already visited (<see cref="MapTile.eventConsumed"/>).
+    /// </summary>
+    public bool IsValidMoveTargetFrom(Vector2Int from, Vector2Int target)
+    {
+        if (_grid == null || from == target)
+            return false;
+
+        if (from == PlayerGridPosition)
+        {
+            EnsureReachableMoveTargetCache();
+            return _reachableMoveTargetsCache.Contains(target);
+        }
+
+        _movePathScratch.Clear();
+        return MapPathfinding.TryBuildMovePath(_grid, from, target, _movePathScratch);
+    }
+
+    /// <summary>
+    /// True when <paramref name="target"/> is reachable from <see cref="PlayerGridPosition"/> via visited intermediates
+    /// (same checks as <see cref="TryMoveTo"/> before the move is applied).
+    /// </summary>
+    public bool IsValidMoveTarget(Vector2Int target)
+    {
+        if (_grid == null || target == PlayerGridPosition)
+            return false;
+
+        EnsureReachableMoveTargetCache();
+        return _reachableMoveTargetsCache.Contains(target);
+    }
+
+    /// <summary>
     /// True when <paramref name="target"/> is orthogonally adjacent to <paramref name="from"/> and
     /// <paramref name="from"/> has a directed exit toward it.
     /// </summary>
@@ -536,7 +648,7 @@ public sealed class MapMovementManager : MonoBehaviour
     }
 
     /// <summary>
-    /// True when <paramref name="target"/> is orthogonally adjacent to <see cref="PlayerGridPosition"/> and the current tile has a directed exit toward it (same checks as <see cref="TryMoveTo"/> before the move is applied).
+    /// True when <paramref name="target"/> is a valid one-step move from <see cref="PlayerGridPosition"/>.
     /// </summary>
     public bool IsValidOneStepMoveTarget(Vector2Int target)
     {
@@ -544,7 +656,7 @@ public sealed class MapMovementManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Value for map move-counter tooltip <c>{0}</c>: while the next step would stay within <see cref="MoveLimit"/>, returns <see cref="overflowDamageBase"/> (first corruption hit). Once the next step would exceed the limit, returns the same total as <see cref="TryMoveTo"/> applies after that move.
+    /// Value for map move-counter tooltip <c>{0}</c>: while the next step would stay within <see cref="MoveLimit"/>, returns <see cref="overflowDamageBase"/> (first corruption hit). Once the next step would exceed the limit, returns the same total as one <see cref="ApplySingleMoveStep"/> after that move.
     /// </summary>
     public int GetCorruptionDamageForNextStep()
     {

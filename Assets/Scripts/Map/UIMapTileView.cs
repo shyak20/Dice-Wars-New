@@ -8,9 +8,9 @@ using UnityEngine.UI;
 /// <summary>Reachability / selection state for map tile UI (drives colors and optional available pulse).</summary>
 public enum MapTileUIViewState
 {
-    /// <summary>Not a valid one-step move from the player.</summary>
+    /// <summary>Not the player tile and not a valid move target from the player.</summary>
     Idle = 0,
-    /// <summary>Orthogonal neighbor of the player with a directed exit from the player’s tile toward it.</summary>
+    /// <summary>Valid move target from the player (one step, or multi-step through visited tiles).</summary>
     Available = 1,
     /// <summary>Tile the player is on, or the click target while the pawn is moving.</summary>
     Selected = 2
@@ -41,7 +41,7 @@ public class UIMapTileView : MonoBehaviour
     [Header("Tile background")]
     [Tooltip("Background tint on the tile the pawn is standing on.")]
     [SerializeField] private Color playerCurrentTileBackgroundColor = new Color(0.85f, 0.85f, 0.4f, 1f);
-    [Tooltip("Background tint on reachable one-step move targets (not the standing tile).")]
+    [Tooltip("Background tint on reachable move targets from the player (any distance through visited/empty tiles).")]
     [SerializeField] private Color availableTileBackgroundColor = new Color(0.5f, 0.85f, 0.55f, 1f);
     [Header("Event icon (reachability)")]
     [SerializeField] private Color iconColorAvailable = new Color(0.35f, 0.95f, 0.45f, 1f);
@@ -451,7 +451,7 @@ public class UIMapTileView : MonoBehaviour
             var p = manager.PlayerGridPosition;
             if (cell == p)
                 _reachabilityState = MapTileUIViewState.Selected;
-            else if (manager.IsValidOneStepMoveTarget(cell))
+            else if (manager.IsValidMoveTarget(cell))
                 _reachabilityState = MapTileUIViewState.Available;
             else
                 _reachabilityState = MapTileUIViewState.Idle;
