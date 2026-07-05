@@ -1,10 +1,11 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// Fades RealToon <c>Cutout</c> (<c>_Cutout</c>) from 0 (visible) to 1 (hidden) on die renderers.
 /// Disabled on the dice prefab; enabled only when dissolving after a roll. Face materials must be assigned first
-/// (see <see cref="DieVisualizer.Initialize"/>).
+/// (see <see cref="DieVisualizer.Initialize"/>). Active face effect icon quads fade from their current cutout.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class DissolveFadeController : MonoBehaviour
@@ -15,7 +16,14 @@ public sealed class DissolveFadeController : MonoBehaviour
     private static readonly int CutoutId = Shader.PropertyToID(RealToonCutoutPropertyName);
     private static readonly int CutoutFeatureToggleId = Shader.PropertyToID("_N_F_CO");
 
-    [Tooltip("Renderers to fade. If empty, uses the DieVisualizer mesh renderer or all child renderers.")]
+    struct CutoutFadeSlot
+    {
+        public Material Material;
+        public float StartCutout;
+        public bool IsDieBody;
+    }
+
+    [Tooltip("Renderers to fade. If empty, uses the DieVisualizer mesh renderer plus active face effect icon quads.")]
     [SerializeField] private Renderer[] renderers;
 
     [SerializeField] private bool includeInactiveChildren = true;
@@ -29,7 +37,11 @@ public sealed class DissolveFadeController : MonoBehaviour
 
     [SerializeField, Range(0f, 1f)] private float cutoutAmount;
 
-    private Coroutine _fadeRoutine;
+    Renderer _dieBodyRenderer;
+    CutoutFadeSlot[] _fadeSlots;
+    float _fadeTargetCutout = 1f;
+    float _fadeStartCutout;
+    Coroutine _fadeRoutine;
 
     /// <summary>0 = fully shown, 1 = fully cut out.</summary>
     public float CutoutAmount
@@ -61,6 +73,7 @@ public sealed class DissolveFadeController : MonoBehaviour
         if (!ValidateRealToonMaterials())
             return;
 
+        RebuildFadeSlots();
         ApplyCutoutAmount();
     }
 
@@ -71,6 +84,7 @@ public sealed class DissolveFadeController : MonoBehaviour
 
         var target = cutoutAmount;
         cutoutAmount = 0f;
+        RebuildFadeSlots();
         ApplyCutoutAmount();
         FadeTo(target, fadeDurationSeconds);
     }
@@ -144,13 +158,17 @@ public sealed class DissolveFadeController : MonoBehaviour
         if (_fadeRoutine != null)
             StopCoroutine(_fadeRoutine);
 
+        _fadeTargetCutout = Mathf.Clamp01(targetAmount);
+        _fadeStartCutout = cutoutAmount;
+        RefreshIconFadeStarts();
+
         if (durationSeconds <= 0f)
         {
-            CutoutAmount = targetAmount;
+            CutoutAmount = _fadeTargetCutout;
             return;
         }
 
-        _fadeRoutine = StartCoroutine(CoFadeTo(targetAmount, durationSeconds));
+        _fadeRoutine = StartCoroutine(CoFadeTo(_fadeTargetCutout, durationSeconds));
     }
 
     public void StopFade()
@@ -162,11 +180,16 @@ public sealed class DissolveFadeController : MonoBehaviour
         }
     }
 
-    /// <summary>Immediately visible (cutout 0).</summary>
+    /// <summary>Die body immediately visible (cutout 0). Icon quads keep their current cutout.</summary>
     public void ShowImmediate()
     {
         StopFade();
-        CutoutAmount = 0f;
+        cutoutAmount = 0f;
+        _fadeStartCutout = 0f;
+        _fadeTargetCutout = 1f;
+        ApplyDieBodyCutout(0f);
+        SyncDieBodyFadeStarts(0f);
+        ApplyCutoutAmount();
     }
 
     /// <summary>Immediately hidden (cutout 1).</summary>
@@ -179,8 +202,10 @@ public sealed class DissolveFadeController : MonoBehaviour
     private IEnumerator CoFadeTo(float target, float duration)
     {
         var start = cutoutAmount;
+        _fadeStartCutout = start;
         var elapsed = 0f;
         target = Mathf.Clamp01(target);
+        _fadeTargetCutout = target;
 
         while (elapsed < duration)
         {
@@ -198,24 +223,127 @@ public sealed class DissolveFadeController : MonoBehaviour
     public void RefreshRenderers()
     {
         renderers = null;
+        _fadeSlots = null;
         CacheRenderers();
         if (!isActiveAndEnabled)
             return;
 
         ValidateRealToonMaterials();
+        RebuildFadeSlots();
         ApplyCutoutAmount();
     }
 
     private void CacheRenderers()
     {
+        if (renderers != null && renderers.Length > 0)
+            return;
+
         var visualizer = GetComponent<DieVisualizer>();
         if (visualizer != null && visualizer.meshRenderer != null)
         {
-            renderers = new[] { visualizer.meshRenderer };
+            _dieBodyRenderer = visualizer.meshRenderer;
+            var combined = new List<Renderer> { _dieBodyRenderer };
+            visualizer.AppendActiveFaceEffectIconRenderers(combined);
+            renderers = combined.ToArray();
             return;
         }
 
+        _dieBodyRenderer = null;
         renderers = GetComponentsInChildren<Renderer>(includeInactiveChildren);
+    }
+
+    private void RebuildFadeSlots()
+    {
+        if (renderers == null || renderers.Length == 0)
+        {
+            _fadeSlots = null;
+            return;
+        }
+
+        var slots = new List<CutoutFadeSlot>();
+        for (var i = 0; i < renderers.Length; i++)
+        {
+            var renderer = renderers[i];
+            if (renderer == null)
+                continue;
+
+            var materials = renderer.materials;
+            var isDieBody = _dieBodyRenderer != null && renderer == _dieBodyRenderer;
+            for (var m = 0; m < materials.Length; m++)
+            {
+                var mat = materials[m];
+                if (mat == null || !mat.HasProperty(CutoutId))
+                    continue;
+
+                slots.Add(new CutoutFadeSlot
+                {
+                    Material = mat,
+                    StartCutout = mat.GetFloat(CutoutId),
+                    IsDieBody = isDieBody
+                });
+            }
+        }
+
+        _fadeSlots = slots.ToArray();
+    }
+
+    void RefreshIconFadeStarts()
+    {
+        if (_fadeSlots == null || _fadeSlots.Length == 0)
+            RebuildFadeSlots();
+
+        if (_fadeSlots == null)
+            return;
+
+        for (var i = 0; i < _fadeSlots.Length; i++)
+        {
+            if (_fadeSlots[i].IsDieBody)
+                continue;
+
+            var mat = _fadeSlots[i].Material;
+            if (mat == null)
+                continue;
+
+            var slot = _fadeSlots[i];
+            slot.StartCutout = mat.GetFloat(CutoutId);
+            _fadeSlots[i] = slot;
+        }
+    }
+
+    void SyncDieBodyFadeStarts(float cutout)
+    {
+        if (_fadeSlots == null)
+            RebuildFadeSlots();
+
+        if (_fadeSlots == null)
+            return;
+
+        for (var i = 0; i < _fadeSlots.Length; i++)
+        {
+            if (!_fadeSlots[i].IsDieBody)
+                continue;
+
+            var slot = _fadeSlots[i];
+            slot.StartCutout = cutout;
+            _fadeSlots[i] = slot;
+        }
+    }
+
+    void ApplyDieBodyCutout(float cutout)
+    {
+        if (_dieBodyRenderer == null)
+            return;
+
+        var materials = _dieBodyRenderer.materials;
+        for (var m = 0; m < materials.Length; m++)
+        {
+            var mat = materials[m];
+            if (mat == null || !mat.HasProperty(CutoutId))
+                continue;
+
+            EnableRealToonCutout(mat);
+            mat.SetFloat(CutoutId, cutout);
+        }
     }
 
     private static void EnableRealToonCutout(Material material)
@@ -227,25 +355,38 @@ public sealed class DissolveFadeController : MonoBehaviour
 
     private void ApplyCutoutAmount()
     {
-        if (!isActiveAndEnabled || renderers == null || renderers.Length == 0)
+        if (!isActiveAndEnabled)
             return;
 
-        for (var i = 0; i < renderers.Length; i++)
+        if (_fadeSlots == null || _fadeSlots.Length == 0)
+            RebuildFadeSlots();
+
+        if (_fadeSlots == null || _fadeSlots.Length == 0)
+            return;
+
+        var progress = ComputeFadeProgress();
+
+        for (var i = 0; i < _fadeSlots.Length; i++)
         {
-            var renderer = renderers[i];
-            if (renderer == null)
+            var slot = _fadeSlots[i];
+            var mat = slot.Material;
+            if (mat == null || !mat.HasProperty(CutoutId))
                 continue;
 
-            var materials = renderer.materials;
-            for (var m = 0; m < materials.Length; m++)
-            {
-                var mat = materials[m];
-                if (mat == null || !mat.HasProperty(CutoutId))
-                    continue;
+            var value = slot.IsDieBody
+                ? cutoutAmount
+                : Mathf.Lerp(slot.StartCutout, _fadeTargetCutout, progress);
 
-                EnableRealToonCutout(mat);
-                mat.SetFloat(CutoutId, cutoutAmount);
-            }
+            EnableRealToonCutout(mat);
+            mat.SetFloat(CutoutId, value);
         }
+    }
+
+    float ComputeFadeProgress()
+    {
+        if (Mathf.Approximately(_fadeStartCutout, _fadeTargetCutout))
+            return Mathf.Approximately(cutoutAmount, _fadeTargetCutout) ? 1f : 0f;
+
+        return Mathf.Clamp01(Mathf.InverseLerp(_fadeStartCutout, _fadeTargetCutout, cutoutAmount));
     }
 }
