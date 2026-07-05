@@ -11,8 +11,10 @@ public sealed class RankPortraitPrefabHost : MonoBehaviour
 
     [SerializeField] private Transform spawnRoot;
     [SerializeField] private SplatterRevealSpritePlayer revealPlayer;
-    [Tooltip("Applied to all spawned sprite renderers. Use a higher value when this portrait should draw above another at the same position.")]
+    [Tooltip("Order in Layer applied to every SpriteRenderer on the spawned rank portrait.")]
     [SerializeField] private int spawnedSortingOrder;
+    [Tooltip("Optional sorting layer for spawned portrait sprites. Leave empty to keep each renderer's layer.")]
+    [SerializeField] private string spawnedSortingLayerName;
     [Header("Canvas spawn root fix")]
     [Tooltip("When Spawn Root lives under a Canvas, reparent it to world space so SpriteRenderer portraits render at full scale.")]
     [SerializeField] private bool reparentCanvasSpawnRootToWorld = true;
@@ -24,6 +26,14 @@ public sealed class RankPortraitPrefabHost : MonoBehaviour
 
     public GameObject SpawnedInstance => _spawnedInstance;
     public Animator SpawnedAnimator => _spawnedAnimator;
+
+    /// <summary>Sorting applied the next time <see cref="ApplyRank"/> spawns a portrait.</summary>
+    public void ConfigureSpawnedSorting(int sortingOrder, string sortingLayerName = null)
+    {
+        spawnedSortingOrder = sortingOrder;
+        if (sortingLayerName != null)
+            spawnedSortingLayerName = sortingLayerName;
+    }
 
     public bool ApplyRank(PlayerRankSO rank)
     {
@@ -182,12 +192,16 @@ public sealed class RankPortraitPrefabHost : MonoBehaviour
 
     void ApplySpawnedSortingOrder()
     {
-        if (_spawnedInstance == null || spawnedSortingOrder == 0)
+        if (_spawnedInstance == null)
             return;
 
         var renderers = _spawnedInstance.GetComponentsInChildren<SpriteRenderer>(true);
         for (var i = 0; i < renderers.Length; i++)
+        {
             renderers[i].sortingOrder = spawnedSortingOrder;
+            if (!string.IsNullOrWhiteSpace(spawnedSortingLayerName))
+                renderers[i].sortingLayerName = spawnedSortingLayerName;
+        }
     }
 
     static void SuppressPrefabAutoReveal(GameObject spawnedInstance)

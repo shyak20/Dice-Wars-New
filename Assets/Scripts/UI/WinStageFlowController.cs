@@ -28,6 +28,9 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     [Header("Victory — hide in scene")]
     [Tooltip("Set inactive after Delay After Victory Seconds (with enemy root / win panel), not on the victory event itself.")]
     [SerializeField] private List<GameObject> disableOnVictoryScreen = new List<GameObject>();
+    [Header("Victory — show in scene")]
+    [Tooltip("Set active when the win stage panel is shown. Set inactive again when the player continues past the win stage.")]
+    [SerializeField] private List<GameObject> enableOnVictoryScreen = new List<GameObject>();
     [Header("Select Face — hide in scene")]
     [Tooltip("Set inactive when the face picker opens from the win stage. Re-enabled when returning to the win popup (Back or after swap completes).")]
     [SerializeField] private List<GameObject> disableOnFacePicker = new List<GameObject>();
@@ -79,8 +82,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         // Spurious second victory notification: bring win UI back without replaying delay or rebuilding rewards.
         if (_victoryIntroCompletedForCurrentFight)
         {
-            if (winStagePanel != null)
-                winStagePanel.SetActive(true);
+            ShowVictoryScreen();
             UpdateContinueInteractable();
             return;
         }
@@ -113,8 +115,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         if (enemyRoot != null)
             enemyRoot.SetActive(false);
 
-        if (winStagePanel != null)
-            winStagePanel.SetActive(true);
+        ShowVictoryScreen();
 
         RebuildRewardsLayout();
         _victoryIntroCompletedForCurrentFight = true;
@@ -253,8 +254,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
     {
         _faceFlowComplete = true;
         EnableObjectsForFacePicker();
-        if (winStagePanel != null)
-            winStagePanel.SetActive(true);
+        ShowVictoryScreen();
         UpdateContinueInteractable();
     }
 
@@ -264,8 +264,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         _faceRewardRowPending = false;
         _faceFlowComplete = true;
         EnableObjectsForFacePicker();
-        if (winStagePanel != null)
-            winStagePanel.SetActive(true);
+        ShowVictoryScreen();
         UpdateContinueInteractable();
     }
 
@@ -327,6 +326,8 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         if (winStagePanel != null)
             winStagePanel.SetActive(false);
 
+        DisableVictoryScreenShownObjects();
+
         if (RunManager.Instance == null)
         {
             Debug.LogError("WinStageFlowController: RunManager missing — cannot advance.");
@@ -340,9 +341,27 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         RunManager.Instance.HandleVictoryContinueFromCombat();
     }
 
+    private void ShowVictoryScreen()
+    {
+        if (winStagePanel != null)
+            winStagePanel.SetActive(true);
+
+        EnableObjectsForVictoryScreen();
+    }
+
     private void DisableObjectsForVictoryScreen()
     {
         SetObjectListActive(disableOnVictoryScreen, false);
+    }
+
+    private void EnableObjectsForVictoryScreen()
+    {
+        SetObjectListActive(enableOnVictoryScreen, true);
+    }
+
+    private void DisableVictoryScreenShownObjects()
+    {
+        SetObjectListActive(enableOnVictoryScreen, false);
     }
 
     private void DisableObjectsForFacePicker()

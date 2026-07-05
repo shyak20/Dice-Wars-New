@@ -149,11 +149,15 @@ public class FacePickerView : MonoBehaviour
             return;
 
         var deck = PlayerDataContainer.Instance.RuntimeData.currentDeck;
-        Func<DieAssetSO, bool> interactableFilter = _selectedRewardFace != null
+        Func<DieAssetSO, bool> faceReplaceFilter = _selectedRewardFace != null
             ? die => DieCanReceiveRewardFace(die, _selectedRewardFace)
-            : _ => true;
+            : null;
 
-        trayLayout.Rebuild(deck, interactableFilter: interactableFilter, onDieClicked: OnDieClicked);
+        trayLayout.Rebuild(
+            deck,
+            includeFilter: faceReplaceFilter,
+            interactableFilter: faceReplaceFilter ?? (_ => true),
+            onDieClicked: OnDieClicked);
     }
 
     private void ConfigureNavButtons()
@@ -220,16 +224,9 @@ public class FacePickerView : MonoBehaviour
         _onFacePicked?.Invoke(face);
 
         CollapseRewardSlotsToSelected(face);
-        RefreshDiceInteractable();
+        RebuildDiceLayout();
+        trayLayout.StartPrewarmSpreadsForCurrentEntries();
         ShowReplacementSpreadForFirstCompatibleDie();
-    }
-
-    private void RefreshDiceInteractable()
-    {
-        if (trayLayout == null || _selectedRewardFace == null)
-            return;
-
-        trayLayout.RefreshInteractable(die => DieCanReceiveRewardFace(die, _selectedRewardFace));
     }
 
     private void CollapseRewardSlotsToSelected(DieFaceSO selectedFace)
@@ -309,7 +306,7 @@ public class FacePickerView : MonoBehaviour
         DieCanReceiveRewardFace(die, _selectedRewardFace);
 
     static bool DieCanReceiveRewardFace(DieAssetSO die, DieFaceSO face) =>
-        die != null && face != null && die.CanAttachFace(face) && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, face);
+        PlayerInventory.IsDieEligibleForFaceReplacement(die, face);
 
     public void NotifyFaceReplacementRuleError() => trayLayout?.NotifyFaceReplacementRuleError();
 

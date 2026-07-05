@@ -25,7 +25,7 @@ MonoBehaviour:
   - rid: 6434882425854361676
   - rid: 6434882480546251015
   - rid: 6434882480546251016
-  - rid: 6434882480546251017
+  - rid: 8217493839827173460
   references:
     version: 2
     RefIds:
@@ -44,8 +44,8 @@ MonoBehaviour:
       data:
         rowFormat: Max Cast Power
         amount: 2
-    - rid: 6434882480546251017
-      type: {class: ProgressionAddStartingDieReward, ns: , asm: Assembly-CSharp}
+    - rid: 8217493839827173460
+      type: {class: ProgressionMapMoveLimitReward, ns: , asm: Assembly-CSharp}
       data:
-        rowFormat: Start with extra Die
-        die: {fileID: 11400000, guid: af5ae1f182387454bb002a3799780387, type: 2}
+        rowFormat: Max Movement
+        amount: 1

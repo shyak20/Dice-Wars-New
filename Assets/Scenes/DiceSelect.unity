@@ -4399,7 +4399,7 @@ MonoBehaviour:
   fallbackCanvas: {fileID: 94979826}
   hoverTooltipScreenOffset: {x: 30, y: 60}
   trialRewardsTooltipScreenOffset: {x: 0, y: 0}
-  hoverAboveTooltipScreenOffset: {x: 360, y: -140}
+  hoverAboveTooltipScreenOffset: {x: 390, y: -100}
 --- !u!114 &338194162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7779,6 +7779,8 @@ GameObject:
   - component: {fileID: 632517910}
   - component: {fileID: 632517912}
   - component: {fileID: 632517911}
+  - component: {fileID: 632517913}
+  - component: {fileID: 632517914}
   m_Layer: 0
   m_Name: Panel
   m_TagString: Untagged
@@ -7852,6 +7854,46 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 632517909}
   m_CullTransparentMesh: 1
+--- !u!223 &632517913
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 632517909}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 20
+  m_TargetDisplay: 0
+--- !u!114 &632517914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 632517909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 55
 --- !u!1 &635686302
 GameObject:
   m_ObjectHideFlags: 0
@@ -8876,8 +8918,8 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 767390875}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -2.54849}
-  m_LocalScale: {x: 0.0078, y: 0.0078, z: 0.0078}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.3435, y: 2.3435, z: 2.3435}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1908285985}
@@ -8889,7 +8931,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.86688, y: 0.8289555}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &767390877
@@ -15884,7 +15926,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1255090939
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21072,7 +21114,7 @@ MonoBehaviour:
       ctime6: 0
       ctime7: 0
       atime0: 0
-      atime1: 65535
+      atime1: 13107
       atime2: 0
       atime3: 0
       atime4: 0
@@ -21080,7 +21122,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     m_ColorMin: {r: 0, g: 0, b: 0, a: 1}
@@ -22702,7 +22744,7 @@ MonoBehaviour:
       ctime6: 0
       ctime7: 0
       atime0: 0
-      atime1: 65535
+      atime1: 13107
       atime2: 0
       atime3: 0
       atime4: 0
@@ -22710,7 +22752,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     m_ColorMin: {r: 0, g: 0, b: 0, a: 1}
@@ -23814,13 +23856,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1305084701}
   - component: {fileID: 1305084700}
+  - component: {fileID: 1305084702}
   m_Layer: 0
   m_Name: Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!223 &1305084700
 Canvas:
   m_ObjectHideFlags: 0
@@ -23851,20 +23894,32 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1305084699}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -4.95151}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1255090941}
   - {fileID: 767390876}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1305560259}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.86688, y: -0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &1305084702
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1305084699}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1305560258
 GameObject:
   m_ObjectHideFlags: 0
@@ -23900,6 +23955,7 @@ RectTransform:
   - {fileID: 1910801604}
   - {fileID: 632517910}
   - {fileID: 1839229274}
+  - {fileID: 1305084701}
   m_Father: {fileID: 1875969563}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -23924,11 +23980,13 @@ MonoBehaviour:
   characterNameText: {fileID: 1289365073}
   currentRankPortraitHost: {fileID: 9182736450123460003}
   rankUpPortraitHost: {fileID: 9182736450123460013}
+  currentRankSpawnedSortingOrder: 13
+  rankUpSpawnedSortingOrder: 14
+  spawnedPortraitSortingLayerName: 
   portraitSplatterMaterial: {fileID: 2100000, guid: ab0a162aad88eb24f9d8d24ff0ba4784, type: 2}
   diceSelectLargePortraitPresenter: {fileID: 1888000003}
   objectsToEnableOnRankUp:
   - {fileID: 1836815712}
-  - {fileID: 1305084699}
   objectsToDisableOnRankUp:
   - {fileID: 753428132}
   - {fileID: 791339470}
@@ -25053,7 +25111,7 @@ MonoBehaviour:
       ctime6: 0
       ctime7: 0
       atime0: 0
-      atime1: 65535
+      atime1: 13107
       atime2: 0
       atime3: 0
       atime4: 0
@@ -25061,7 +25119,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     m_ColorMin: {r: 0, g: 0, b: 0, a: 1}
@@ -26417,7 +26475,7 @@ MonoBehaviour:
       ctime6: 0
       ctime7: 0
       atime0: 0
-      atime1: 65535
+      atime1: 13107
       atime2: 0
       atime3: 0
       atime4: 0
@@ -26425,7 +26483,7 @@ MonoBehaviour:
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     m_ColorMin: {r: 0, g: 0, b: 0, a: 1}
@@ -30400,7 +30458,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1825230844
 RectTransform:
   m_ObjectHideFlags: 0
@@ -31434,7 +31492,7 @@ MonoBehaviour:
       serializedVersion: 2
       key0: {r: 1, g: 1, b: 1, a: 1}
       key1: {r: 1, g: 1, b: 1, a: 1}
-      key2: {r: 0, g: 0, b: 0, a: 0}
+      key2: {r: 0, g: 0, b: 0, a: 1}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
       key5: {r: 0, g: 0, b: 0, a: 0}
@@ -31449,15 +31507,15 @@ MonoBehaviour:
       ctime6: 0
       ctime7: 0
       atime0: 0
-      atime1: 65535
-      atime2: 0
+      atime1: 13107
+      atime2: 13107
       atime3: 0
       atime4: 0
       atime5: 0
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     m_ColorMin: {r: 0, g: 0, b: 0, a: 1}
@@ -35931,6 +35989,7 @@ MonoBehaviour:
   spawnRoot: {fileID: 9182736450123460002}
   revealPlayer: {fileID: 9182736450123460004}
   spawnedSortingOrder: 0
+  spawnedSortingLayerName: 
   reparentCanvasSpawnRootToWorld: 1
   worldPortraitLocalPosition: {x: -0.39, y: -4.85, z: 0}
 --- !u!114 &9182736450123460004
@@ -36018,6 +36077,7 @@ MonoBehaviour:
   spawnRoot: {fileID: 1888000002}
   revealPlayer: {fileID: 0}
   spawnedSortingOrder: 4
+  spawnedSortingLayerName: 
   reparentCanvasSpawnRootToWorld: 1
   worldPortraitLocalPosition: {x: -0.39, y: -4.85, z: 0}
 --- !u!1 &9182736450123460011
@@ -36066,6 +36126,7 @@ MonoBehaviour:
   spawnRoot: {fileID: 9182736450123460012}
   revealPlayer: {fileID: 9182736450123460014}
   spawnedSortingOrder: 1
+  spawnedSortingLayerName: 
   reparentCanvasSpawnRootToWorld: 1
   worldPortraitLocalPosition: {x: -0.39, y: -4.85, z: 0}
 --- !u!114 &9182736450123460014
@@ -36192,4 +36253,3 @@ SceneRoots:
   - {fileID: 72731946}
   - {fileID: 1888000002}
   - {fileID: 9182736450123460021}
-  - {fileID: 1305084701}

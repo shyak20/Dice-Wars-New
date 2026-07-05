@@ -16,12 +16,19 @@ MonoBehaviour:
   displaySprite: {fileID: -1862756426, guid: 5c1a8d3f761329049bfbe1f54dc8e8cf, type: 3}
   combatAnimatorController: {fileID: 9100000, guid: 0b94c6194a78f29418600ed8e986a8f8, type: 2}
   enemyRank: 2
+  spawnOnLoadAdds: []
   excludeFromFirstFight: 1
   maxHealth: 250
   startArmor: 40
   minGoldReward: 300
   maxGoldReward: 350
-  additionalRewardDrops: []
+  additionalRewardDrops:
+  - pool: 2
+    dropChance: 1
+    rolls: 1
+  - pool: 1
+    dropChance: 1
+    rolls: 1
   faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
   dieRewardPool: {fileID: 11400000, guid: 1152cb419b51fd04ba67b7865c94871d, type: 2}
   relicRewardPool: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}

@@ -28,6 +28,13 @@ public static class PlayerInventory
     }
 
     /// <summary>
+    /// True when the die matches the face element and has at least one legal replacement slot.
+    /// </summary>
+    public static bool IsDieEligibleForFaceReplacement(DieAssetSO die, DieFaceSO face) =>
+        die != null && face != null && die.CanAttachFace(face)
+        && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, face);
+
+    /// <summary>
     /// Dice that match the face's element and have at least one slot where equipping this face would not exceed
     /// the act's <see cref="MapActDefinitionSO.maxSameNumericValueFacesPerDie"/>.
     /// </summary>
@@ -37,7 +44,7 @@ public static class PlayerInventory
         var list = new List<DieAssetSO>();
         foreach (var d in data.currentDeck)
         {
-            if (d != null && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(d, face))
+            if (IsDieEligibleForFaceReplacement(d, face))
                 list.Add(d);
         }
 

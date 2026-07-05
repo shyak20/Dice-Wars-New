@@ -19,6 +19,13 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
     [SerializeField] private RankPortraitPrefabHost currentRankPortraitHost;
     [Tooltip("Portrait for the rank after level-up (e.g. Rank 1 when advancing from Rank 0).")]
     [SerializeField] private RankPortraitPrefabHost rankUpPortraitHost;
+    [Header("Spawned portrait sprites")]
+    [Tooltip("Order in Layer for the completed-rank portrait instantiated during level-up.")]
+    [SerializeField] private int currentRankSpawnedSortingOrder;
+    [Tooltip("Order in Layer for the next-rank portrait instantiated during level-up.")]
+    [SerializeField] private int rankUpSpawnedSortingOrder = 4;
+    [Tooltip("Optional sorting layer for both spawned portraits. Leave empty to keep each renderer's layer.")]
+    [SerializeField] private string spawnedPortraitSortingLayerName;
     [SerializeField] private Material portraitSplatterMaterial;
     [Tooltip("Optional: hidden while this popup is visible so it does not overlap the celebration portraits.")]
     [SerializeField] private DiceSelectLargePortraitPresenter diceSelectLargePortraitPresenter;
@@ -189,6 +196,9 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
 
         if (currentRankPortraitHost != null && completedRank != null)
         {
+            currentRankPortraitHost.ConfigureSpawnedSorting(
+                currentRankSpawnedSortingOrder,
+                spawnedPortraitSortingLayerName);
             if (currentRankPortraitHost.ApplyRank(completedRank))
             {
                 currentRankPortraitHost.PrepareManualReveal(portraitSplatterMaterial);
@@ -198,6 +208,9 @@ public sealed class ProgressionRankUpPopupView : ProgressionCelebrationPopupView
 
         if (rankUpPortraitHost != null && nextRank != null)
         {
+            rankUpPortraitHost.ConfigureSpawnedSorting(
+                rankUpSpawnedSortingOrder,
+                spawnedPortraitSortingLayerName);
             if (rankUpPortraitHost.ApplyRank(nextRank))
             {
                 rankUpPortraitHost.PrepareManualReveal(portraitSplatterMaterial);

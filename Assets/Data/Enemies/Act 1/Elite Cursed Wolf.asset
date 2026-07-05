@@ -24,13 +24,7 @@ MonoBehaviour:
   minGoldReward: 110
   maxGoldReward: 180
   additionalRewardDrops:
-  - pool: 3
-    dropChance: 1
-    rolls: 1
   - pool: 2
-    dropChance: 1
-    rolls: 1
-  - pool: 1
     dropChance: 1
     rolls: 1
   faceRewardPool: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}

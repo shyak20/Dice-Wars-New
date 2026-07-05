@@ -96,8 +96,7 @@ public class ShopDieChoicePopupView : MonoBehaviour
             {
                 if (die == null) return false;
                 if (_targetFace != null)
-                    return die.CanAttachFace(_targetFace)
-                           && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, _targetFace);
+                    return PlayerInventory.IsDieEligibleForFaceReplacement(die, _targetFace);
                 if (_targetGem != null)
                     return die.GetEmptyGemSocketCount() > 0;
                 return false;
@@ -131,8 +130,7 @@ public class ShopDieChoicePopupView : MonoBehaviour
             var die = deck[i];
             if (die == null)
                 continue;
-            if (die.CanAttachFace(_targetFace)
-                && SameValueFaceCapUtility.DieHasAnyLegalReplacementSlot(die, _targetFace))
+            if (PlayerInventory.IsDieEligibleForFaceReplacement(die, _targetFace))
             {
                 targetDie = die;
                 break;
