@@ -36,6 +36,6 @@ MonoBehaviour:
     - rid: 6494956272364552440
       type: {class: AddPowerAction, ns: , asm: Assembly-CSharp}
       data:
-        activateImmediately: 0
+        activateImmediately: 1
         triggerImmediatelyOnDrop: 0
         powerAmount: 1

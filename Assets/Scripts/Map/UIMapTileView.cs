@@ -362,7 +362,7 @@ public class UIMapTileView : MonoBehaviour
                 : _hoverHighlightBaseLocalScale;
     }
 
-    /// <summary>Starts the landing scale-down on this tile (call when the player finishes moving here).</summary>
+    /// <summary>Starts the landing scale-down on this tile (call when the pawn leaves the adjacent tile on the final step).</summary>
     public void PlayLandingScaleDown()
     {
         CancelLandedScaleAnimation(restoreScale: true);

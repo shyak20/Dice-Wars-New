@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Damage per Pips
   description: Harness <style=Damage>4</style>
   descriptionLines:
-  - Deal <style=Attack>3</style> for every <style=Die3></style> on all your dice 
+  - Deal <style=Attack>3</style> for every <style=Die3></style> on all your dice
     (<style=Attack>{0}</style>)
   value: 3
   type: 0

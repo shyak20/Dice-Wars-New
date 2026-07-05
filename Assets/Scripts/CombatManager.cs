@@ -245,6 +245,82 @@ public class CombatManager : MonoBehaviour
     /// <summary>Strength stacks frozen at the start of the current roll batch (before any die in that batch resolves).</summary>
     public int GetStrengthStacksForCurrentRollBatch() => _strengthStacksAtRollBatchStart;
 
+    /// <summary>
+    /// Per-hit physical damage this face would deal if rolled now (base pip + Strength/buffs + face modifiers).
+    /// </summary>
+    public bool TryPreviewPhysicalAttackPerHit(DieFaceSO face, out int perHitDamage)
+    {
+        perHitDamage = 0;
+        if (face == null || player == null || face.type != DieType.Damage)
+            return false;
+
+        var statusCtx = BuildStatusContext();
+        var strengthStacks = ResolveStrengthStacksForPhysicalPreview();
+        var rolledDamage = face.damage;
+        if (rolledDamage > 0)
+            rolledDamage += player.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx, strengthStacks);
+
+        var result = new FaceResult
+        {
+            Face = face,
+            Type = face.type,
+            Damage = rolledDamage,
+            DamageAttackTimes = Mathf.Max(1, face.damageAttackTimes),
+        };
+
+        if (face.actions != null)
+        {
+            for (var i = 0; i < face.actions.Count; i++)
+            {
+                if (face.actions[i] != null)
+                    result.Actions.Add(face.actions[i]);
+            }
+        }
+
+        ApplyQueuedNextRollMultiplierPreview(result, _turnRegistry);
+
+        if (face.actions != null)
+        {
+            for (var i = 0; i < face.actions.Count; i++)
+            {
+                if (face.actions[i] is FaceResolveModifierBase mod && mod.ActivateImmediately)
+                    mod.Modify(face, result, this, _turnRegistry);
+            }
+
+            for (var i = 0; i < face.actions.Count; i++)
+            {
+                if (face.actions[i] is FaceResolveModifierBase mod && !mod.ActivateImmediately)
+                    mod.Modify(face, result, this, _turnRegistry);
+            }
+        }
+
+        perHitDamage = Mathf.Max(0, result.Damage);
+        return true;
+    }
+
+    int ResolveStrengthStacksForPhysicalPreview()
+    {
+        if (player == null)
+            return 0;
+
+        if (currentState == CombatState.WaitingForRoll)
+            return player.StatusEffects.GetStacks<StrengthEffectSO>();
+
+        return _strengthStacksAtRollBatchStart;
+    }
+
+    static void ApplyQueuedNextRollMultiplierPreview(FaceResult result, TurnRegistry registry)
+    {
+        if (registry == null || !registry.NextRollMultiplierActive || registry.NextRollMultiplier <= 0f)
+            return;
+
+        if (registry.NextRollMultiplyDamage && result.Damage > 0)
+            result.Damage = Mathf.Max(0, Mathf.RoundToInt(result.Damage * registry.NextRollMultiplier));
+
+        if (registry.NextRollMultiplyArmor && result.Armor > 0)
+            result.Armor = Mathf.Max(0, Mathf.RoundToInt(result.Armor * registry.NextRollMultiplier));
+    }
+
     // Updated summation logic to pull from FaceResult properties
     public int GetPendingAttack() => channeledFaces.Sum(f => f.TotalDamageContribution) + bonusDamageFromActions;
     public int GetPendingDefense() => channeledFaces.Sum(f => f.Armor) + kineticShieldBonus + bonusArmorFromActions;

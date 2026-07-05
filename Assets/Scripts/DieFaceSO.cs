@@ -11,8 +11,30 @@ public class DieFaceSO : ScriptableObject
 
     public string Title => string.IsNullOrEmpty(title) ? name : title;
 
-    /// <summary>Description with <c>{0}</c> resolved from face actions when supported.</summary>
-    public string Description => BuildDescription();
+    /// <summary>Description with live combat values when available.</summary>
+    public string Description => BuildDescription(null);
+
+    /// <summary>Description using an explicit combat context (e.g. hover tooltips during a fight).</summary>
+    public string GetDescription(DieFaceDescriptionContext context) => BuildDescription(context);
+
+    string BuildDescription(DieFaceDescriptionContext context)
+    {
+        if (descriptionLines != null && descriptionLines.Count > 0)
+        {
+            var nonEmptyLines = new List<string>();
+            for (var i = 0; i < descriptionLines.Count; i++)
+            {
+                var line = descriptionLines[i];
+                if (!string.IsNullOrWhiteSpace(line))
+                    nonEmptyLines.Add(DieFaceDescriptionUtility.FormatDescription(this, line.Trim(), context));
+            }
+
+            if (nonEmptyLines.Count > 0)
+                return string.Join("\n", nonEmptyLines);
+        }
+
+        return DieFaceDescriptionUtility.FormatDescription(this, LegacyDescriptionFallback, context);
+    }
 
     public int value; // Keeping this for the Power Bar calculation
     public DieType type;
@@ -48,23 +70,6 @@ public class DieFaceSO : ScriptableObject
     [Tooltip("Executed in list order. Use + in the inspector to add multiple polymorphic actions. Timing is per action (Activate Immediately on each action).")]
     [SerializeReference] public List<IGameAction> actions = new List<IGameAction>();
 
-    private string BuildDescription()
-    {
-        if (descriptionLines != null && descriptionLines.Count > 0)
-        {
-            var nonEmptyLines = new List<string>();
-            for (var i = 0; i < descriptionLines.Count; i++)
-            {
-                var line = descriptionLines[i];
-                if (!string.IsNullOrWhiteSpace(line))
-                    nonEmptyLines.Add(DieFaceDescriptionUtility.FormatDescription(this, line.Trim()));
-            }
-
-            if (nonEmptyLines.Count > 0)
-                return string.Join("\n", nonEmptyLines);
-        }
-
-        return DieFaceDescriptionUtility.FormatDescription(this,
-            string.IsNullOrEmpty(description) ? name : description);
-    }
+    internal string LegacyDescriptionFallback =>
+        string.IsNullOrEmpty(description) ? name : description;
 }

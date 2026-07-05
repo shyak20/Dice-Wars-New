@@ -4,6 +4,7 @@ using System.Reflection;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using System.Linq;
 using System;
@@ -31,9 +32,9 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
     [SerializeField] private int atlasSize = 1024;
     [SerializeField] private int atlasPadding = 2;
     [SerializeField] private bool setAsTmpDefaultSpriteAsset = true;
-    [Tooltip("Added to every baked sprite glyph’s Horizontal Bearing X (BX) after generation. Example: existing 0 + tool 0 → 0.")]
+    [Tooltip("Added to each new sprite glyph’s Horizontal Bearing X (BX) after bake. Existing atlas icons keep their previous BX.")]
     [SerializeField] private int addToBakedGlyphBearingX;
-    [Tooltip("Added to every baked sprite glyph’s Horizontal Bearing Y (BY) after generation. Example: existing 55 + tool 23 → 78.")]
+    [Tooltip("Added to each new sprite glyph’s Horizontal Bearing Y (BY) after bake. Existing atlas icons keep their previous BY.")]
     [SerializeField] private int addToBakedGlyphBearingY;
 
     [MenuItem("Tools/Dice Wars/Create TMP Atlas From GameIconIndex")]
@@ -141,6 +142,7 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         EditorGUILayout.HelpBox(
             "Reads icons from GameIconIndexSO and/or the folders below, packs them into one atlas texture, then creates a TMP Sprite Asset. " +
             "Sprite names in the atlas match each source Sprite’s name in Unity (first wins if two sprites share a name). " +
+            "Re-running the tool keeps unicode and glyph metrics (BX/BY/advance) for icons already in the atlas and only refreshes their image; Add BX/BY applies to new icons only. " +
             "Object fields and options are saved for this project when the window closes (survives reopening Unity).",
             MessageType.Info);
 
@@ -160,8 +162,8 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         atlasSize = Mathf.Clamp(EditorGUILayout.IntField("Atlas Size", atlasSize), 128, 8192);
         atlasPadding = Mathf.Clamp(EditorGUILayout.IntField("Atlas Padding", atlasPadding), 0, 64);
         setAsTmpDefaultSpriteAsset = EditorGUILayout.ToggleLeft("Set generated atlas as TMP default sprite asset", setAsTmpDefaultSpriteAsset);
-        addToBakedGlyphBearingX = EditorGUILayout.IntField(new GUIContent("Add to baked BX", "Added to each glyph’s Horizontal Bearing X after bake."), addToBakedGlyphBearingX);
-        addToBakedGlyphBearingY = EditorGUILayout.IntField(new GUIContent("Add to baked BY", "Added to each glyph’s Horizontal Bearing Y after bake."), addToBakedGlyphBearingY);
+        addToBakedGlyphBearingX = EditorGUILayout.IntField(new GUIContent("Add to baked BX", "Applied only to icons that are new in the atlas. Existing icons keep their previous BX."), addToBakedGlyphBearingX);
+        addToBakedGlyphBearingY = EditorGUILayout.IntField(new GUIContent("Add to baked BY", "Applied only to icons that are new in the atlas. Existing icons keep their previous BY."), addToBakedGlyphBearingY);
 
         EditorGUILayout.Space(12f);
         var hasFolder = additionalIconFolders != null && additionalIconFolders.Exists(f => f != null);
@@ -245,6 +247,9 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         var spriteAssetPath = Path.Combine(folderPath, atlasBaseName + ".asset");
         var materialPath = Path.Combine(folderPath, atlasBaseName + "_Material.mat");
 
+        var existingSpriteAsset = AssetDatabase.LoadAssetAtPath<TMP_SpriteAsset>(spriteAssetPath);
+        var preservedGlyphs = CapturePreservedGlyphsByName(existingSpriteAsset);
+
         var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
         if (material == null)
         {
@@ -268,7 +273,7 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         spriteAsset.spriteSheet = importedAtlas;
         spriteAsset.material = material;
         spriteAsset.hashCode = TMP_TextUtilities.GetSimpleHashCode(spriteAsset.name);
-        PopulateLegacySpriteInfoFromAtlas(spriteAsset, atlasPngPath);
+        PopulateLegacySpriteInfoFromAtlas(spriteAsset, atlasPngPath, preservedGlyphs);
 
         if (!TryUpdateLookupTablesSafe(spriteAsset))
         {
@@ -283,7 +288,14 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
             return;
         }
 
-        AddToAllSpriteGlyphBearings(spriteAsset, addToBakedGlyphBearingX, addToBakedGlyphBearingY);
+        RefreshGlyphSpritesFromAtlas(spriteAsset, atlasPngPath);
+        ApplyPreservedOrNewGlyphBearings(spriteAsset, preservedGlyphs, addToBakedGlyphBearingX, addToBakedGlyphBearingY);
+
+        if (!TryUpdateLookupTablesSafe(spriteAsset))
+        {
+            Debug.LogError("TMP Atlas Tool: Failed to rebuild TMP sprite lookup tables after preserving glyph metrics.");
+            return;
+        }
 
         EditorUtility.SetDirty(spriteAsset);
 
@@ -396,7 +408,97 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
         }
     }
 
-    private static void PopulateLegacySpriteInfoFromAtlas(TMP_SpriteAsset spriteAsset, string atlasTexturePath)
+    private struct PreservedSpriteGlyphData
+    {
+        public int Unicode;
+        public float HorizontalBearingX;
+        public float HorizontalBearingY;
+        public float HorizontalAdvance;
+        public float Width;
+        public float Height;
+        public float Scale;
+
+        public static PreservedSpriteGlyphData FromGlyph(TMP_SpriteCharacter character, TMP_SpriteGlyph glyph)
+        {
+            var metrics = glyph.metrics;
+            return new PreservedSpriteGlyphData
+            {
+                Unicode = (int)character.unicode,
+                HorizontalBearingX = metrics.horizontalBearingX,
+                HorizontalBearingY = metrics.horizontalBearingY,
+                HorizontalAdvance = metrics.horizontalAdvance,
+                Width = metrics.width,
+                Height = metrics.height,
+                Scale = glyph.scale
+            };
+        }
+
+        public void ApplyToGlyph(TMP_SpriteGlyph glyph)
+        {
+            var metrics = glyph.metrics;
+            metrics.horizontalBearingX = HorizontalBearingX;
+            metrics.horizontalBearingY = HorizontalBearingY;
+            metrics.horizontalAdvance = HorizontalAdvance;
+            metrics.width = Width;
+            metrics.height = Height;
+            glyph.metrics = metrics;
+            glyph.scale = Scale;
+        }
+    }
+
+    private static bool TryGetSpriteGlyph(
+        TMP_SpriteCharacter character,
+        IList<TMP_SpriteGlyph> glyphs,
+        out TMP_SpriteGlyph spriteGlyph)
+    {
+        spriteGlyph = null;
+        if (character == null || glyphs == null || glyphs.Count == 0)
+            return false;
+
+        if (character.glyph is TMP_SpriteGlyph typedGlyph)
+        {
+            spriteGlyph = typedGlyph;
+            return true;
+        }
+
+        var index = (int)character.glyphIndex;
+        if (index < 0 || index >= glyphs.Count)
+            return false;
+
+        spriteGlyph = glyphs[index];
+        return spriteGlyph != null;
+    }
+
+    private static Dictionary<string, PreservedSpriteGlyphData> CapturePreservedGlyphsByName(TMP_SpriteAsset spriteAsset)
+    {
+        var map = new Dictionary<string, PreservedSpriteGlyphData>(StringComparer.Ordinal);
+        if (spriteAsset == null)
+            return map;
+
+        var chars = spriteAsset.spriteCharacterTable;
+        var glyphs = spriteAsset.spriteGlyphTable;
+        if (chars == null || glyphs == null)
+            return map;
+
+        for (var i = 0; i < chars.Count; i++)
+        {
+            var ch = chars[i];
+            if (ch == null || string.IsNullOrEmpty(ch.name))
+                continue;
+
+            if (!TryGetSpriteGlyph(ch, glyphs, out var glyph))
+                continue;
+
+            map[ch.name] = PreservedSpriteGlyphData.FromGlyph(ch, glyph);
+        }
+
+        return map;
+    }
+
+    private static void PopulateLegacySpriteInfoFromAtlas(
+        TMP_SpriteAsset spriteAsset,
+        string atlasTexturePath,
+        Dictionary<string, PreservedSpriteGlyphData> preservedGlyphs)
     {
         if (spriteAsset == null || string.IsNullOrEmpty(atlasTexturePath)) return;
 
@@ -407,24 +509,59 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
             .ToList();
 
         var legacyList = new List<TMP_Sprite>(atlasSprites.Count);
+        var usedUnicodes = new HashSet<int>();
+        if (preservedGlyphs != null)
+        {
+            foreach (var entry in preservedGlyphs.Values)
+                usedUnicodes.Add(entry.Unicode);
+        }
+
+        var nextUnicode = PrivateUseAreaStart;
         for (var i = 0; i < atlasSprites.Count; i++)
         {
             var s = atlasSprites[i];
             var r = s.rect;
+            int unicode;
+            float xOffset;
+            float yOffset;
+            float xAdvance;
+            float scale;
+
+            if (preservedGlyphs != null && preservedGlyphs.TryGetValue(s.name, out var preserved))
+            {
+                unicode = preserved.Unicode;
+                xOffset = preserved.HorizontalBearingX;
+                yOffset = preserved.HorizontalBearingY;
+                xAdvance = preserved.HorizontalAdvance;
+                scale = preserved.Scale;
+            }
+            else
+            {
+                while (usedUnicodes.Contains(nextUnicode))
+                    nextUnicode++;
+                unicode = nextUnicode;
+                usedUnicodes.Add(unicode);
+                nextUnicode++;
+                xOffset = 0f;
+                yOffset = r.height;
+                xAdvance = r.width;
+                scale = 1f;
+            }
+
             legacyList.Add(new TMP_Sprite
             {
                 id = i,
                 name = s.name,
                 hashCode = TMP_TextUtilities.GetSimpleHashCode(s.name),
-                unicode = PrivateUseAreaStart + i,
+                unicode = unicode,
                 x = r.x,
                 y = r.y,
                 width = r.width,
                 height = r.height,
-                xOffset = 0f,
-                yOffset = r.height,
-                xAdvance = r.width,
-                scale = 1f,
+                xOffset = xOffset,
+                yOffset = yOffset,
+                xAdvance = xAdvance,
+                scale = scale,
                 pivot = s.pivot,
                 sprite = s
             });
@@ -454,25 +591,86 @@ public class GameIconIndexTmpAtlasTool : EditorWindow
     }
 
     /// <summary>
-    /// TMP sprite glyphs use <see cref="GlyphMetrics.horizontalBearingX"/> / <see cref="GlyphMetrics.horizontalBearingY"/>
-    /// (inspector BX/BY). Adds the tool deltas to whatever values the bake produced for every glyph.
+    /// Existing icons keep unicode/metrics/scale; only their atlas sprite image is refreshed.
+    /// New icons receive the tool's Add BX/BY offsets on top of the baked values.
     /// </summary>
-    private static void AddToAllSpriteGlyphBearings(TMP_SpriteAsset spriteAsset, int addBx, int addBy)
+    private static void ApplyPreservedOrNewGlyphBearings(
+        TMP_SpriteAsset spriteAsset,
+        Dictionary<string, PreservedSpriteGlyphData> preservedGlyphs,
+        int addBx,
+        int addBy)
     {
-        if (spriteAsset == null || (addBx == 0 && addBy == 0)) return;
+        if (spriteAsset == null)
+            return;
+
+        preservedGlyphs ??= new Dictionary<string, PreservedSpriteGlyphData>();
+        var chars = spriteAsset.spriteCharacterTable;
         var glyphs = spriteAsset.spriteGlyphTable;
-        if (glyphs == null) return;
+        if (chars == null || glyphs == null)
+            return;
 
         var dBx = (float)addBx;
         var dBy = (float)addBy;
-        for (var i = 0; i < glyphs.Count; i++)
+
+        for (var i = 0; i < chars.Count; i++)
         {
-            var g = glyphs[i];
-            if (g == null) continue;
-            var m = g.metrics;
-            m.horizontalBearingX += dBx;
-            m.horizontalBearingY += dBy;
-            g.metrics = m;
+            var ch = chars[i];
+            if (ch == null || string.IsNullOrEmpty(ch.name))
+                continue;
+
+            if (!TryGetSpriteGlyph(ch, glyphs, out var glyph))
+                continue;
+
+            if (preservedGlyphs.TryGetValue(ch.name, out var preserved))
+            {
+                ch.unicode = (uint)preserved.Unicode;
+                preserved.ApplyToGlyph(glyph);
+                continue;
+            }
+
+            if (addBx == 0 && addBy == 0)
+                continue;
+
+            var metrics = glyph.metrics;
+            metrics.horizontalBearingX += dBx;
+            metrics.horizontalBearingY += dBy;
+            glyph.metrics = metrics;
+        }
+    }
+
+    private static void RefreshGlyphSpritesFromAtlas(TMP_SpriteAsset spriteAsset, string atlasTexturePath)
+    {
+        if (spriteAsset == null || string.IsNullOrEmpty(atlasTexturePath))
+            return;
+
+        var atlasSprites = AssetDatabase
+            .LoadAllAssetsAtPath(atlasTexturePath)
+            .OfType<Sprite>()
+            .ToDictionary(s => s.name, StringComparer.Ordinal);
+
+        var chars = spriteAsset.spriteCharacterTable;
+        var glyphs = spriteAsset.spriteGlyphTable;
+        if (chars == null || glyphs == null)
+            return;
+
+        for (var i = 0; i < chars.Count; i++)
+        {
+            var ch = chars[i];
+            if (ch == null || string.IsNullOrEmpty(ch.name))
+                continue;
+            if (!atlasSprites.TryGetValue(ch.name, out var atlasSprite))
+                continue;
+
+            if (!TryGetSpriteGlyph(ch, glyphs, out var glyph))
+                continue;
+
+            glyph.sprite = atlasSprite;
+            var r = atlasSprite.rect;
+            glyph.glyphRect = new GlyphRect(
+                Mathf.RoundToInt(r.x),
+                Mathf.RoundToInt(r.y),
+                Mathf.RoundToInt(r.width),
+                Mathf.RoundToInt(r.height));
         }
     }
 

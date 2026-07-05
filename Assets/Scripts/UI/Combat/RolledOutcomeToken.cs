@@ -30,10 +30,24 @@ public class RolledOutcomeToken : MonoBehaviour
     private RollTargetAssignmentController _owner;
     private RollOutcomeVisualLine _line;
     private Vector2 _dragPointerOffset;
-    private bool _dragEnabled = true;
+    private bool _dragEnabled;
+    private bool _isDragging;
 
     public RectTransform RectTransform => _rect != null ? _rect : (_rect = (RectTransform)transform);
     public bool IsDragEnabled => _dragEnabled;
+    public bool IsDragging => _isDragging;
+
+    /// <summary>Fired when the player begins dragging this token.</summary>
+    public event System.Action DragStarted;
+
+    /// <summary>Fired when the player releases this token (whether or not it was dropped on an enemy).</summary>
+    public event System.Action DragEnded;
+
+    /// <summary>Fired when this token is dropped on an enemy and assignment begins.</summary>
+    public event System.Action AssignedToEnemy;
+
+    /// <summary>Fired when drag input is enabled or disabled (e.g. after spawn presentation completes).</summary>
+    public event System.Action<bool> DragEnabledChanged;
 
     /// <summary>The rolled face this token's piece belongs to.</summary>
     public FaceResult Face { get; private set; }
@@ -84,10 +98,14 @@ public class RolledOutcomeToken : MonoBehaviour
     /// <summary>When false, the spawn presentation is running and pointer drag is ignored.</summary>
     public void SetDragEnabled(bool enabled)
     {
+        if (_dragEnabled == enabled)
+            return;
+
         _dragEnabled = enabled;
         _canvasGroup.interactable = enabled;
         if (dragRaycastTarget != null)
             dragRaycastTarget.raycastTarget = enabled;
+        DragEnabledChanged?.Invoke(enabled);
     }
 
     /// <summary>
@@ -182,8 +200,9 @@ public class RolledOutcomeToken : MonoBehaviour
             _dragPointerOffset = (Vector2)_rect.localPosition - local;
 
         _canvasGroup.blocksRaycasts = false;
-        _canvasGroup.alpha = 0.85f;
         transform.SetAsLastSibling();
+        _isDragging = true;
+        DragStarted?.Invoke();
     }
 
     /// <summary>Called by <see cref="RolledOutcomeTokenDragRelay"/> on the drag raycast surface.</summary>
@@ -203,8 +222,9 @@ public class RolledOutcomeToken : MonoBehaviour
     public void HandleEndDrag(PointerEventData eventData)
     {
         _canvasGroup.blocksRaycasts = true;
-        _canvasGroup.alpha = 1f;
         EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
+        _isDragging = false;
+        DragEnded?.Invoke();
         // If not consumed by an EnemyDropTarget.OnDrop, the token stays pending where it was released.
         if (_owner != null)
             _owner.NotifyTokenDragEnded(this);
@@ -294,6 +314,7 @@ public class RolledOutcomeToken : MonoBehaviour
     /// <summary>Called by <see cref="EnemyDropTarget"/> when this token is dropped on an enemy.</summary>
     public void AssignToEnemy(EnemyController enemy)
     {
+        AssignedToEnemy?.Invoke();
         if (_owner != null)
             _owner.AssignTokenToEnemy(this, enemy);
     }

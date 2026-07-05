@@ -601,9 +601,9 @@ MonoBehaviour:
     m_Metrics:
       m_Width: 105
       m_Height: 114
-      m_HorizontalBearingX: 20
+      m_HorizontalBearingX: 10
       m_HorizontalBearingY: 84
-      m_HorizontalAdvance: 105
+      m_HorizontalAdvance: 130
     m_GlyphRect:
       m_X: 1254
       m_Y: 290
@@ -809,9 +809,9 @@ MonoBehaviour:
     m_Metrics:
       m_Width: 105
       m_Height: 114
-      m_HorizontalBearingX: 20
+      m_HorizontalBearingX: 10
       m_HorizontalBearingY: 84
-      m_HorizontalAdvance: 105
+      m_HorizontalAdvance: 130
     m_GlyphRect:
       m_X: 1419
       m_Y: 290
@@ -969,9 +969,9 @@ MonoBehaviour:
     m_Metrics:
       m_Width: 105
       m_Height: 114
-      m_HorizontalBearingX: 20
+      m_HorizontalBearingX: 10
       m_HorizontalBearingY: 84
-      m_HorizontalAdvance: 105
+      m_HorizontalAdvance: 130
     m_GlyphRect:
       m_X: 1526
       m_Y: 290
@@ -1179,8 +1179,8 @@ MonoBehaviour:
     y: 850
     width: 261
     height: 258
-    xOffset: 0
-    yOffset: 258
+    xOffset: 20
+    yOffset: 228
     xAdvance: 261
     scale: 1
     name: Ablaze Icon
@@ -1193,8 +1193,8 @@ MonoBehaviour:
     y: 290
     width: 123
     height: 127
-    xOffset: 0
-    yOffset: 127
+    xOffset: 20
+    yOffset: 97
     xAdvance: 123
     scale: 1
     name: Arcane Sigil
@@ -1207,8 +1207,8 @@ MonoBehaviour:
     y: 1579
     width: 143
     height: 141
-    xOffset: 0
-    yOffset: 141
+    xOffset: 20
+    yOffset: 111
     xAdvance: 143
     scale: 1
     name: arcane_twirl
@@ -1221,8 +1221,8 @@ MonoBehaviour:
     y: 0
     width: 837
     height: 422
-    xOffset: 0
-    yOffset: 422
+    xOffset: 20
+    yOffset: 392
     xAdvance: 837
     scale: 1
     name: Armor Die Tooltip BG - No Gems
@@ -1235,8 +1235,8 @@ MonoBehaviour:
     y: 850
     width: 255
     height: 267
-    xOffset: 0
-    yOffset: 267
+    xOffset: 20
+    yOffset: 237
     xAdvance: 255
     scale: 1
     name: Attack Icon
@@ -1249,8 +1249,8 @@ MonoBehaviour:
     y: 1723
     width: 288
     height: 283
-    xOffset: 0
-    yOffset: 283
+    xOffset: 20
+    yOffset: 253
     xAdvance: 288
     scale: 1
     name: Attack Icon BG 2
@@ -1263,8 +1263,8 @@ MonoBehaviour:
     y: 1113
     width: 189
     height: 191
-    xOffset: 0
-    yOffset: 191
+    xOffset: 20
+    yOffset: 161
     xAdvance: 189
     scale: 1
     name: Bite Icon
@@ -1277,8 +1277,8 @@ MonoBehaviour:
     y: 912
     width: 254
     height: 519
-    xOffset: 0
-    yOffset: 519
+    xOffset: 20
+    yOffset: 489
     xAdvance: 254
     scale: 1
     name: blood_02_0002
@@ -1291,8 +1291,8 @@ MonoBehaviour:
     y: 850
     width: 259
     height: 261
-    xOffset: 0
-    yOffset: 261
+    xOffset: 20
+    yOffset: 231
     xAdvance: 259
     scale: 1
     name: Burn Icon
@@ -1305,8 +1305,8 @@ MonoBehaviour:
     y: 409
     width: 4
     height: 4
-    xOffset: 0
-    yOffset: 4
+    xOffset: 20
+    yOffset: -26
     xAdvance: 4
     scale: 1
     name: Burn Icon BG
@@ -1319,8 +1319,8 @@ MonoBehaviour:
     y: 1681
     width: 263
     height: 261
-    xOffset: 0
-    yOffset: 261
+    xOffset: 20
+    yOffset: 231
     xAdvance: 263
     scale: 1
     name: Burn Resistance Icon
@@ -1333,8 +1333,8 @@ MonoBehaviour:
     y: 1425
     width: 275
     height: 254
-    xOffset: 0
-    yOffset: 254
+    xOffset: 20
+    yOffset: 224
     xAdvance: 275
     scale: 1
     name: Cleanse Icon
@@ -1347,8 +1347,8 @@ MonoBehaviour:
     y: 1860
     width: 72
     height: 72
-    xOffset: 0
-    yOffset: 72
+    xOffset: 20
+    yOffset: 42
     xAdvance: 72
     scale: 1
     name: Coin Icon
@@ -1361,8 +1361,8 @@ MonoBehaviour:
     y: 1723
     width: 134
     height: 135
-    xOffset: 0
-    yOffset: 135
+    xOffset: 20
+    yOffset: 105
     xAdvance: 134
     scale: 1
     name: Coin Rewards Icon
@@ -1375,8 +1375,8 @@ MonoBehaviour:
     y: 424
     width: 288
     height: 283
-    xOffset: 0
-    yOffset: 283
+    xOffset: 20
+    yOffset: 253
     xAdvance: 288
     scale: 1
     name: Curse BG
@@ -1389,8 +1389,8 @@ MonoBehaviour:
     y: 1135
     width: 279
     height: 288
-    xOffset: 0
-    yOffset: 288
+    xOffset: 20
+    yOffset: 258
     xAdvance: 279
     scale: 1
     name: Defence Icon BG
@@ -1403,8 +1403,8 @@ MonoBehaviour:
     y: 424
     width: 288
     height: 283
-    xOffset: 0
-    yOffset: 283
+    xOffset: 20
+    yOffset: 253
     xAdvance: 288
     scale: 1
     name: Defence Icon BG 2
@@ -1417,8 +1417,8 @@ MonoBehaviour:
     y: 1433
     width: 144
     height: 144
-    xOffset: 0
-    yOffset: 144
+    xOffset: 20
+    yOffset: 114
     xAdvance: 144
     scale: 1
     name: Defense Dice 5
@@ -1431,9 +1431,9 @@ MonoBehaviour:
     y: 290
     width: 105
     height: 114
-    xOffset: 0
-    yOffset: 114
-    xAdvance: 105
+    xOffset: 10
+    yOffset: 84
+    xAdvance: 130
     scale: 1
     name: Defense Die Icon
     hashCode: -128081351
@@ -1445,8 +1445,8 @@ MonoBehaviour:
     y: 290
     width: 72
     height: 72
-    xOffset: 0
-    yOffset: 72
+    xOffset: 20
+    yOffset: 60
     xAdvance: 72
     scale: 1
     name: Die Icon Face 1
@@ -1459,8 +1459,8 @@ MonoBehaviour:
     y: 290
     width: 72
     height: 72
-    xOffset: 0
-    yOffset: 72
+    xOffset: 20
+    yOffset: 60
     xAdvance: 72
     scale: 1
     name: Die Icon Face 2
@@ -1473,8 +1473,8 @@ MonoBehaviour:
     y: 290
     width: 72
     height: 72
-    xOffset: 0
-    yOffset: 72
+    xOffset: 20
+    yOffset: 60
     xAdvance: 72
     scale: 1
     name: Die Icon Face 3
@@ -1487,8 +1487,8 @@ MonoBehaviour:
     y: 1860
     width: 72
     height: 72
-    xOffset: 0
-    yOffset: 72
+    xOffset: 20
+    yOffset: 60
     xAdvance: 72
     scale: 1
     name: Die Icon Face 4
@@ -1501,8 +1501,8 @@ MonoBehaviour:
     y: 290
     width: 72
     height: 72
-    xOffset: 0
-    yOffset: 72
+    xOffset: 20
+    yOffset: 60
     xAdvance: 72
     scale: 1
     name: Die Icon Face 5
@@ -1515,8 +1515,8 @@ MonoBehaviour:
     y: 290
     width: 72
     height: 72
-    xOffset: 0
-    yOffset: 72
+    xOffset: 20
+    yOffset: 60
     xAdvance: 72
     scale: 1
     name: Die Icon Face 6
@@ -1529,8 +1529,8 @@ MonoBehaviour:
     y: 1388
     width: 248
     height: 265
-    xOffset: 0
-    yOffset: 265
+    xOffset: 20
+    yOffset: 235
     xAdvance: 248
     scale: 1
     name: Double Burn
@@ -1543,8 +1543,8 @@ MonoBehaviour:
     y: 0
     width: 288
     height: 288
-    xOffset: 0
-    yOffset: 288
+    xOffset: 20
+    yOffset: 258
     xAdvance: 288
     scale: 1
     name: Enemy Attack Icon BG
@@ -1557,8 +1557,8 @@ MonoBehaviour:
     y: 0
     width: 288
     height: 288
-    xOffset: 0
-    yOffset: 288
+    xOffset: 20
+    yOffset: 258
     xAdvance: 288
     scale: 1
     name: Enemy Fire Icon BG
@@ -1571,8 +1571,8 @@ MonoBehaviour:
     y: 0
     width: 288
     height: 288
-    xOffset: 0
-    yOffset: 288
+    xOffset: 20
+    yOffset: 258
     xAdvance: 288
     scale: 1
     name: Enemy Icon BG 2
@@ -1585,8 +1585,8 @@ MonoBehaviour:
     y: 0
     width: 288
     height: 288
-    xOffset: 0
-    yOffset: 288
+    xOffset: 20
+    yOffset: 258
     xAdvance: 288
     scale: 1
     name: Enemy Poison Icon BG
@@ -1599,8 +1599,8 @@ MonoBehaviour:
     y: 290
     width: 141
     height: 117
-    xOffset: 0
-    yOffset: 117
+    xOffset: 20
+    yOffset: 87
     xAdvance: 141
     scale: 1
     name: Face Select Icon
@@ -1613,9 +1613,9 @@ MonoBehaviour:
     y: 290
     width: 105
     height: 114
-    xOffset: 0
-    yOffset: 114
-    xAdvance: 105
+    xOffset: 10
+    yOffset: 84
+    xAdvance: 130
     scale: 1
     name: Fire Die Icon
     hashCode: -249178309
@@ -1627,8 +1627,8 @@ MonoBehaviour:
     y: 1558
     width: 228
     height: 231
-    xOffset: 0
-    yOffset: 231
+    xOffset: 20
+    yOffset: 201
     xAdvance: 228
     scale: 1
     name: Freeze Icon
@@ -1641,8 +1641,8 @@ MonoBehaviour:
     y: 850
     width: 288
     height: 283
-    xOffset: 0
-    yOffset: 283
+    xOffset: 20
+    yOffset: 253
     xAdvance: 288
     scale: 1
     name: Green Icon BG
@@ -1655,8 +1655,8 @@ MonoBehaviour:
     y: 1113
     width: 210
     height: 220
-    xOffset: 0
-    yOffset: 220
+    xOffset: 20
+    yOffset: 190
     xAdvance: 210
     scale: 1
     name: Heal Icon
@@ -1669,8 +1669,8 @@ MonoBehaviour:
     y: 424
     width: 288
     height: 283
-    xOffset: 0
-    yOffset: 283
+    xOffset: 20
+    yOffset: 253
     xAdvance: 288
     scale: 1
     name: Heal Icon BG
@@ -1683,8 +1683,8 @@ MonoBehaviour:
     y: 424
     width: 463
     height: 486
-    xOffset: 0
-    yOffset: 486
+    xOffset: 20
+    yOffset: 456
     xAdvance: 463
     scale: 1
     name: Health Icon
@@ -1697,8 +1697,8 @@ MonoBehaviour:
     y: 1331
     width: 236
     height: 225
-    xOffset: 0
-    yOffset: 225
+    xOffset: 20
+    yOffset: 195
     xAdvance: 236
     scale: 1
     name: Howl Icon
@@ -1711,8 +1711,8 @@ MonoBehaviour:
     y: 850
     width: 256
     height: 236
-    xOffset: 0
-    yOffset: 236
+    xOffset: 20
+    yOffset: 206
     xAdvance: 256
     scale: 1
     name: Kinetic Shield Icon
@@ -1725,8 +1725,8 @@ MonoBehaviour:
     y: 850
     width: 249
     height: 227
-    xOffset: 0
-    yOffset: 227
+    xOffset: 20
+    yOffset: 197
     xAdvance: 249
     scale: 1
     name: Max HP Icon
@@ -1739,8 +1739,8 @@ MonoBehaviour:
     y: 1113
     width: 248
     height: 216
-    xOffset: 0
-    yOffset: 216
+    xOffset: 20
+    yOffset: 186
     xAdvance: 248
     scale: 1
     name: Movement Icon
@@ -1753,9 +1753,9 @@ MonoBehaviour:
     y: 290
     width: 105
     height: 114
-    xOffset: 0
-    yOffset: 114
-    xAdvance: 105
+    xOffset: 10
+    yOffset: 84
+    xAdvance: 130
     scale: 1
     name: Physical Die Icon
     hashCode: 1289067062
@@ -1767,8 +1767,8 @@ MonoBehaviour:
     y: 1341
     width: 190
     height: 271
-    xOffset: 0
-    yOffset: 271
+    xOffset: 20
+    yOffset: 241
     xAdvance: 190
     scale: 1
     name: Poison Icon
@@ -1781,8 +1781,8 @@ MonoBehaviour:
     y: 1433
     width: 288
     height: 288
-    xOffset: 0
-    yOffset: 288
+    xOffset: 20
+    yOffset: 258
     xAdvance: 288
     scale: 1
     name: Power Icon
@@ -1795,8 +1795,8 @@ MonoBehaviour:
     y: 424
     width: 215
     height: 247
-    xOffset: 0
-    yOffset: 247
+    xOffset: 20
+    yOffset: 217
     xAdvance: 215
     scale: 1
     name: Pyromaniac Icon
@@ -1809,8 +1809,8 @@ MonoBehaviour:
     y: 1934
     width: 69
     height: 71
-    xOffset: 0
-    yOffset: 71
+    xOffset: 20
+    yOffset: 41
     xAdvance: 69
     scale: 1
     name: Roll Icon
@@ -1823,8 +1823,8 @@ MonoBehaviour:
     y: 290
     width: 144
     height: 131
-    xOffset: 0
-    yOffset: 131
+    xOffset: 20
+    yOffset: 101
     xAdvance: 144
     scale: 1
     name: Ruby Shard Icon
@@ -1837,8 +1837,8 @@ MonoBehaviour:
     y: 1119
     width: 255
     height: 267
-    xOffset: 0
-    yOffset: 267
+    xOffset: 20
+    yOffset: 237
     xAdvance: 255
     scale: 1
     name: Self Damage Icon
@@ -1851,8 +1851,8 @@ MonoBehaviour:
     y: 1172
     width: 189
     height: 229
-    xOffset: 0
-    yOffset: 229
+    xOffset: 20
+    yOffset: 199
     xAdvance: 189
     scale: 1
     name: Shield Icon
@@ -1865,8 +1865,8 @@ MonoBehaviour:
     y: 1113
     width: 228
     height: 226
-    xOffset: 0
-    yOffset: 226
+    xOffset: 20
+    yOffset: 196
     xAdvance: 228
     scale: 1
     name: Spawn minion
@@ -1879,8 +1879,8 @@ MonoBehaviour:
     y: 1791
     width: 225
     height: 231
-    xOffset: 0
-    yOffset: 231
+    xOffset: 20
+    yOffset: 201
     xAdvance: 225
     scale: 1
     name: Strength Icon
@@ -1893,8 +1893,8 @@ MonoBehaviour:
     y: 1655
     width: 227
     height: 249
-    xOffset: 0
-    yOffset: 249
+    xOffset: 20
+    yOffset: 219
     xAdvance: 227
     scale: 1
     name: Thorns Icon
@@ -1907,8 +1907,8 @@ MonoBehaviour:
     y: 912
     width: 202
     height: 258
-    xOffset: 0
-    yOffset: 258
+    xOffset: 20
+    yOffset: 228
     xAdvance: 202
     scale: 1
     name: Vulnerable Icon
@@ -1921,8 +1921,8 @@ MonoBehaviour:
     y: 424
     width: 495
     height: 424
-    xOffset: 0
-    yOffset: 424
+    xOffset: 20
+    yOffset: 394
     xAdvance: 495
     scale: 1
     name: Water_Splash_16_07

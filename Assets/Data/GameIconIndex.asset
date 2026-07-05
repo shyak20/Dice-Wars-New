@@ -51,8 +51,8 @@ MonoBehaviour:
     title: 
     description: 
   - id: 8
-    sprite: {fileID: 0}
-    background: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 7dcf9c627b3b48946ae01ea84285daf4, type: 3}
+    background: {fileID: 21300000, guid: a99fc84c451825e4bbb3607028255e4c, type: 3}
     title: Broken
     description: Completely remove enemy's <style=Shield></style> (Immidiate)
   - id: 9

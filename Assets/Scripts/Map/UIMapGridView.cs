@@ -187,7 +187,6 @@ public class UIMapGridView : MonoBehaviour
         _tileStateSelectedCellOverride = animateMove ? toCell : (Vector2Int?)null;
         _standingVisualCellOverride = animateMove ? fromCell : (Vector2Int?)null;
 
-        PlayLandingScaleDownAt(toCell);
         RefreshPlayerStandingVisuals();
         if (animateMove && standingVisitedBackgroundTransitionSeconds > 0f)
             BeginStandingVisitedBackgroundTransitionsForMove(toCell, standingVisitedBackgroundTransitionSeconds);
@@ -217,6 +216,7 @@ public class UIMapGridView : MonoBehaviour
 
         if (!animateMove)
         {
+            PlayLandingScaleDownAt(toCell);
             for (var i = 1; i < path.Count; i++)
                 onReachedPathIndex?.Invoke(i);
 
@@ -258,6 +258,9 @@ public class UIMapGridView : MonoBehaviour
 
         for (var segment = 0; segment < segmentCount; segment++)
         {
+            if (segment == segmentCount - 1)
+                PlayLandingScaleDownAt(path[path.Count - 1]);
+
             yield return CoMovePlayerMarkerSegment(path[segment], path[segment + 1], segmentDuration, curve);
             onReachedPathIndex?.Invoke(segment + 1);
         }
@@ -301,7 +304,7 @@ public class UIMapGridView : MonoBehaviour
         playerMarker.anchoredPosition = end;
     }
 
-    /// <summary>Runs the landing scale-down on the destination tile when the player commits to a move (press).</summary>
+    /// <summary>Runs the landing scale-down on the destination tile (call when the pawn leaves the tile before it).</summary>
     public void PlayLandingScaleDownAt(Vector2Int cell)
     {
         if (_tiles == null || _manager == null)

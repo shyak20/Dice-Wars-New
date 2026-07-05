@@ -16,7 +16,8 @@ MonoBehaviour:
   description: Harness <style=Damage>2</style>
   descriptionLines:
   - Deal <style=Attack>2</style>
-  - If you didn't reach Perfect Cast, roll this die again
+  - If you didn't reach Perfect Cast, reroll this die without adding its value to
+    the Cast Power
   value: 2
   type: 0
   faceMaterial: {fileID: 2100000, guid: 52b940e1549b9774ebc0a8ab346d6eab, type: 2}
@@ -27,6 +28,7 @@ MonoBehaviour:
   selfDamage: 0
   uiIcon: {fileID: 21300000, guid: a7129468cb1a3ab45864828edc698b50, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: ef2484216e99c0941b22ffaf9b054f28, type: 3}
+  attackAllEnemies: 0
   actions:
   - rid: 7100000000000000105
   references:
@@ -36,6 +38,7 @@ MonoBehaviour:
       type: {class: RerollDieAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 0
+        triggerImmediatelyOnDrop: 0
         scope: 1
         keepSameFaceOnReroll: 1
         skipRerollWhenPerfectCast: 1

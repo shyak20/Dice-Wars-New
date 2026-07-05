@@ -2012,7 +2012,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 7a869ff3c11587943a84801f2d72d2f0, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a99fc84c451825e4bbb3607028255e4c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2034,6 +2034,7 @@ GameObject:
   - component: {fileID: 5249868910516358313}
   - component: {fileID: 7387232664559664962}
   - component: {fileID: -3360711824233859665}
+  - component: {fileID: 8464002401391201083}
   m_Layer: 0
   m_Name: Element Value
   m_TagString: Untagged
@@ -2053,6 +2054,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 8967211539985821423}
   - {fileID: 9136597556445201730}
   - {fileID: 6860265577677029948}
   - {fileID: 5997970860646032216}
@@ -2118,6 +2120,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RolledOutcomeToken
   poolIcon: {fileID: 5249868910516358313}
   dragRaycastTarget: {fileID: 4441035601870813751}
+--- !u!114 &8464002401391201083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5159189451782972255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77c187009e2910545bea2fb6ba19c06a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RolledOutcomeTokenAssignHintFeedback
+  shakeTarget: {fileID: 311205929736018651}
+  highlight: {fileID: 6064831023749257600}
+  shakeRotationAmplitude: 2
+  shakeFrequency: 40
+  useUnscaledTime: 1
 --- !u!1 &5235846175692833323
 GameObject:
   m_ObjectHideFlags: 0
@@ -3504,6 +3523,81 @@ MonoBehaviour:
   moduleAdvancedFoldout: 0
   m_Sprite: {fileID: 21300000, guid: dc672a285c0e1ae4eb2fb64a06d69a5a, type: 3}
   m_Texture: {fileID: 10300, guid: 0000000000000000f000000000000000, type: 0}
+--- !u!1 &6064831023749257600
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8967211539985821423}
+  - component: {fileID: 2473715340561363181}
+  - component: {fileID: 495919065618713062}
+  m_Layer: 0
+  m_Name: Select Outline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &8967211539985821423
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6064831023749257600}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 311205929736018651}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 8, y: 8}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2473715340561363181
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6064831023749257600}
+  m_CullTransparentMesh: 1
+--- !u!114 &495919065618713062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6064831023749257600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.82745105, g: 0.07058824, b: 0.8745099, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 82cd32309c73d6a449abeb410383ab15, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &6102197186023502521
 GameObject:
   m_ObjectHideFlags: 0

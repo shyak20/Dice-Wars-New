@@ -538,7 +538,10 @@ public class CombatUIController : MonoBehaviour
         if (faceHoverTooltipPanel != null)
         {
             if (faceHoverTitleText != null) faceHoverTitleText.text = face != null ? face.Title : "";
-            if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = face != null ? face.Description : "";
+            if (faceHoverDescriptionText != null)
+                faceHoverDescriptionText.text = face != null
+                    ? face.GetDescription(DieFaceDescriptionContext.FromCombat(combatManager))
+                    : "";
             faceHoverTooltipPanel.SetActive(true);
         }
 
