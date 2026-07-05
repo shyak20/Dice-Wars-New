@@ -1123,7 +1123,7 @@ MonoBehaviour:
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   trialRewardsPanelPrefab: {fileID: 0}
   gameIconIndex: {fileID: 0}
-  progressionRewardVisualCatalog: {fileID: 0}
+  progressionRewardVisualCatalog: {fileID: 11400000, guid: 40ed2a32a4e511a40a8b517aaf7e6c91, type: 2}
   fallbackCanvas: {fileID: 394332461}
   hoverTooltipScreenOffset: {x: 50, y: -140}
   trialRewardsTooltipScreenOffset: {x: 0, y: 0}

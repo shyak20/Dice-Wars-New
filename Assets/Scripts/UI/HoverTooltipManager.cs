@@ -10,6 +10,11 @@ using UnityEngine.SceneManagement;
 public sealed class HoverTooltipManager : MonoBehaviour
 {
     static readonly List<HoverTooltipManager> Registry = new List<HoverTooltipManager>();
+    static ProgressionRewardVisualCatalogSO _sharedProgressionRewardVisualCatalog;
+
+    /// <summary>Last assigned catalog from any enabled manager (e.g. map scene while fight loads additively).</summary>
+    public static ProgressionRewardVisualCatalogSO SharedProgressionRewardVisualCatalog =>
+        _sharedProgressionRewardVisualCatalog;
 
     /// <summary>
     /// Enabled manager in the <see cref="SceneManager.GetActiveScene"/> with a valid prefab, or null if none qualifies.
@@ -50,7 +55,7 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [Tooltip("Shared progression reward visuals for trial tooltips and celebration popups.")]
     [SerializeField] private ProgressionRewardVisualCatalogSO progressionRewardVisualCatalog;
 
-    public ProgressionRewardVisualCatalogSO ProgressionRewardVisualCatalog => progressionRewardVisualCatalog;
+    public ProgressionRewardVisualCatalogSO ProgressionRewardVisualCatalog => ResolveProgressionRewardVisualCatalog();
 
     [Tooltip("When the hovered UI has no Canvas in parents (rare), parent the tooltip here.")]
     [SerializeField] private Canvas fallbackCanvas;
@@ -75,11 +80,21 @@ public sealed class HoverTooltipManager : MonoBehaviour
 
     void Awake()
     {
+        if (progressionRewardVisualCatalog != null)
+            _sharedProgressionRewardVisualCatalog = progressionRewardVisualCatalog;
+
         if (panelPrefab == null)
             Debug.LogError($"HoverTooltipManager on '{name}': assign panelPrefab (HoverTooltipPanelUI prefab).", this);
-        if (progressionRewardVisualCatalog == null)
-            Debug.LogError($"HoverTooltipManager on '{name}': assign progressionRewardVisualCatalog.", this);
+        if (trialRewardsPanelPrefab != null && ResolveProgressionRewardVisualCatalog() == null)
+            Debug.LogError(
+                $"HoverTooltipManager on '{name}': assign progressionRewardVisualCatalog when trialRewardsPanelPrefab is set.",
+                this);
     }
+
+    ProgressionRewardVisualCatalogSO ResolveProgressionRewardVisualCatalog() =>
+        progressionRewardVisualCatalog != null
+            ? progressionRewardVisualCatalog
+            : _sharedProgressionRewardVisualCatalog;
 
     void OnEnable() => RegisterSelf();
 
@@ -248,10 +263,10 @@ public sealed class HoverTooltipManager : MonoBehaviour
         EnsureTrialRewardsPanelUnderCanvas(targetCanvas);
         _panel?.Hide();
 
-        if (progressionRewardVisualCatalog == null)
+        if (ResolveProgressionRewardVisualCatalog() == null)
             return;
 
-        _trialRewardsPanel.Show(trial, state, progressionRewardVisualCatalog);
+        _trialRewardsPanel.Show(trial, state, ResolveProgressionRewardVisualCatalog());
         _trialRewardsPanel.AlignToRectWithScreenOffset(anchor, ResolveTrialRewardsScreenOffset(screenPixelOffset, isAbove));
     }
 

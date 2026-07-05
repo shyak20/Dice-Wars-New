@@ -9,6 +9,8 @@ public static class ProgressionRewardVisualCatalogSetupMenu
     const string GameIconIndexPath = "Assets/Data/GameIconIndex.asset";
     const string DiceSelectScenePath = "Assets/Scenes/DiceSelect.unity";
     const string MapScenePath = "Assets/Scenes/MapScene.unity";
+    const string FightScenePath = "Assets/Scenes/FightScene.unity";
+    const string ShopScenePath = "Assets/Scenes/ShopScene.unity";
     const string CompactRowPrefabPath = "Assets/Prefabs/UI/Tooltips/Trial Reward Row Element.prefab";
     const string FaceRewardDisplayPrefabPath = "Assets/Prefabs/UI/Dice Select/Relic & Gem Display Reward.prefab";
 
@@ -36,6 +38,8 @@ public static class ProgressionRewardVisualCatalogSetupMenu
 
         var changed = WireScene(DiceSelectScenePath, catalog, compactRow, faceRewardDisplay, wirePopups: true);
         changed |= WireScene(MapScenePath, catalog, compactRow, faceRewardDisplay, wirePopups: false);
+        changed |= WireScene(FightScenePath, catalog, compactRow, faceRewardDisplay, wirePopups: false);
+        changed |= WireScene(ShopScenePath, catalog, compactRow, faceRewardDisplay, wirePopups: false);
 
         if (changed)
             Debug.Log("ProgressionRewardVisualCatalogSetupMenu: wired progression reward visual catalog.");

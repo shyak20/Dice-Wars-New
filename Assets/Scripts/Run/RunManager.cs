@@ -72,6 +72,7 @@ public class RunManager : MonoBehaviour
     private Coroutine _preloadMapSubscenesRoutine;
     private bool _fightScenePreloadedForMapRun;
     private bool _shopScenePreloadedForMapRun;
+    private bool _mapFightShopPreloadIntroGateReleased;
     private readonly List<SceneRootActiveSnapshot> _fightRootDefaultActives = new List<SceneRootActiveSnapshot>();
     private readonly List<SceneRootActiveSnapshot> _shopRootDefaultActives = new List<SceneRootActiveSnapshot>();
     /// <summary>Map root actives stashed when opening fight/shop so the map scene stays loaded but hidden (mirrors subscene hiding on the map).</summary>
@@ -177,11 +178,12 @@ public class RunManager : MonoBehaviour
             return true;
         if (!preloadFightAndShopWhileOnMap)
             return true;
-        return _fightScenePreloadedForMapRun && _shopScenePreloadedForMapRun;
+        return _mapFightShopPreloadIntroGateReleased;
     }
 
     private void RaiseMapFightShopPreloadFinished()
     {
+        _mapFightShopPreloadIntroGateReleased = true;
         OnMapFightShopPreloadUnhideVisuals?.Invoke();
         OnMapFightShopPreloadFinished?.Invoke();
     }
@@ -690,6 +692,7 @@ public class RunManager : MonoBehaviour
     {
         _fightScenePreloadedForMapRun = false;
         _shopScenePreloadedForMapRun = false;
+        _mapFightShopPreloadIntroGateReleased = false;
         _fightRootDefaultActives.Clear();
         _shopRootDefaultActives.Clear();
         yield return null;
@@ -720,6 +723,10 @@ public class RunManager : MonoBehaviour
         }
 
         _fightScenePreloadedForMapRun = IsSceneLoadedByName(combatSceneName) && _fightRootDefaultActives.Count > 0;
+        if (IsSceneLoadedByName(combatSceneName) && _fightRootDefaultActives.Count == 0)
+            Debug.LogWarning(
+                $"RunManager: additive load of '{combatSceneName}' finished but no root objects were captured — map tile fights will fall back to single-scene load.",
+                this);
 
         if (!IsSceneLoadedByName(shopSceneName))
         {
@@ -747,6 +754,10 @@ public class RunManager : MonoBehaviour
         }
 
         _shopScenePreloadedForMapRun = IsSceneLoadedByName(shopSceneName) && _shopRootDefaultActives.Count > 0;
+        if (IsSceneLoadedByName(shopSceneName) && _shopRootDefaultActives.Count == 0)
+            Debug.LogWarning(
+                $"RunManager: additive load of '{shopSceneName}' finished but no root objects were captured — map tile shops will fall back to single-scene load.",
+                this);
         _preloadMapSubscenesRoutine = null;
         RaiseMapFightShopPreloadFinished();
     }
@@ -875,6 +886,7 @@ public class RunManager : MonoBehaviour
         _shopRootDefaultActives.Clear();
         _fightScenePreloadedForMapRun = false;
         _shopScenePreloadedForMapRun = false;
+        _mapFightShopPreloadIntroGateReleased = false;
     }
 
     private IEnumerator CoUnloadFightAndShopScenesIfLoaded()
@@ -954,6 +966,7 @@ public class RunManager : MonoBehaviour
             RestoreSceneRootsToCapturedDefaults(_mapRootStashedWhenLeavingForSubScene);
             _mapRootStashedWhenLeavingForSubScene.Clear();
             SceneManager.SetActiveScene(mapScene);
+            MapScenePresentationCleanup.Apply(mapScene);
             yield break;
         }
 

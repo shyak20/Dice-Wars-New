@@ -5020,6 +5020,7 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
   availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
+  backgroundColorTransitionSeconds: 0.35
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -13813,6 +13814,7 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
   availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
+  backgroundColorTransitionSeconds: 0.35
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -14546,6 +14548,7 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
   availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
+  backgroundColorTransitionSeconds: 0.35
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -14862,6 +14865,7 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
   availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
+  backgroundColorTransitionSeconds: 0.35
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -17580,7 +17584,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.33962262, g: 0, b: 0, a: 0.53333336}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -26899,6 +26903,7 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
   availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
+  backgroundColorTransitionSeconds: 0.35
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -33038,6 +33043,7 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
   availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
+  backgroundColorTransitionSeconds: 0.35
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80
@@ -38965,6 +38971,7 @@ MonoBehaviour:
   arrowColorOtherTiles: {r: 0.6156863, g: 0.5686275, b: 0.4784314, a: 1}
   playerCurrentTileBackgroundColor: {r: 0.5072904, g: 0.8207547, b: 0.35230508, a: 1}
   availableTileBackgroundColor: {r: 0.5, g: 0.85, b: 0.55, a: 1}
+  backgroundColorTransitionSeconds: 0.35
   iconColorAvailable: {r: 0.35, g: 0.95, b: 0.45, a: 1}
   iconColorNotAvailable: {r: 1, g: 1, b: 1, a: 1}
   oneWayExitArrowWidth: 80

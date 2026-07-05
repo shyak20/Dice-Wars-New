@@ -64,6 +64,7 @@ public class CombatUIController : MonoBehaviour
     private int rollsRemaining;
     private int maxRolls;
     private CombatState _combatState = CombatState.WaitingForRoll;
+    private bool _rerollSelectionActive;
 
     private void OnEnable()
     {
@@ -92,15 +93,12 @@ public class CombatUIController : MonoBehaviour
     {
         CancelInvoke(nameof(InitializeDiceButtons));
         InitializeDiceButtons();
+        RefreshRollControlsVisibility();
     }
 
     private void HandleRerollDieSelectionMode(bool active)
     {
-        if (trayCanvasGroup != null)
-        {
-            trayCanvasGroup.interactable = !active;
-            trayCanvasGroup.blocksRaycasts = true;
-        }
+        _rerollSelectionActive = active;
 
         if (active)
         {
@@ -110,6 +108,8 @@ public class CombatUIController : MonoBehaviour
         }
         else
             HandleStateChange(_combatState);
+
+        RefreshRollControlsVisibility();
     }
 
     private void Start()
@@ -358,7 +358,7 @@ public class CombatUIController : MonoBehaviour
     {
         if (noDiceSelectedIndicator == null)
             return;
-        noDiceSelectedIndicator.SetActive(_combatState == CombatState.WaitingForRoll && currentlySelected.Count == 0);
+        noDiceSelectedIndicator.SetActive(AreRollControlsVisible() && currentlySelected.Count == 0);
     }
 
     private void ShowDieTooltip(DieAssetSO die)
@@ -675,28 +675,43 @@ public class CombatUIController : MonoBehaviour
     private void HandleStateChange(CombatState state)
     {
         _combatState = state;
-        bool isWaiting = (state == CombatState.WaitingForRoll);
-        bool isRolling = (state == CombatState.Rolling);
+        bool isWaiting = AreRollControlsVisible();
 
-        if (trayCanvasGroup != null)
-        {
-            // Hide the tray while a roll is being resolved, then show it again afterward.
-            trayCanvasGroup.gameObject.SetActive(!isRolling);
-            trayCanvasGroup.interactable = isWaiting;
-            trayCanvasGroup.blocksRaycasts = isWaiting;
-            trayCanvasGroup.alpha = isWaiting ? 1f : 0.5f;
-        }
+        RefreshRollControlsVisibility();
+
         if (!isWaiting)
         {
             pinnedTooltipDie = null;
             hoveredTooltipDie = null;
             HideDieTooltip();
         }
-        if (rollButton != null) { rollButton.gameObject.SetActive(isWaiting); }
-        if (rollAllButton != null) { rollAllButton.gameObject.SetActive(isWaiting); }
         if (isWaiting)
             RefreshRollButtonsInteractable();
         if (endTurnButton != null) { bool showEndTurn = isWaiting && rollsRemaining > 0; endTurnButton.gameObject.SetActive(showEndTurn); endTurnButton.interactable = showEndTurn; }
         UpdateNoDiceSelectedIndicator();
+    }
+
+    bool AreRollControlsVisible() => _combatState == CombatState.WaitingForRoll;
+
+    void RefreshRollControlsVisibility()
+    {
+        var showRollControls = AreRollControlsVisible();
+
+        if (rollButton != null)
+            rollButton.gameObject.SetActive(showRollControls);
+        if (rollAllButton != null)
+            rollAllButton.gameObject.SetActive(showRollControls);
+
+        if (trayCanvasGroup == null)
+            return;
+
+        trayCanvasGroup.gameObject.SetActive(showRollControls);
+        if (!showRollControls)
+            return;
+
+        var trayInteractive = !_rerollSelectionActive;
+        trayCanvasGroup.interactable = trayInteractive;
+        trayCanvasGroup.blocksRaycasts = trayInteractive;
+        trayCanvasGroup.alpha = 1f;
     }
 }

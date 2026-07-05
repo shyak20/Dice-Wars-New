@@ -128,7 +128,8 @@ public abstract class DamageHitFeedbackBase : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    private void OnDisable()
+    /// <summary>Clears in-flight hit VFX/flash (e.g. when the map is stashed or re-shown after movement damage).</summary>
+    public void ResetTransientPresentation()
     {
         if (_hitEffectRoutine != null)
         {
@@ -146,5 +147,10 @@ public abstract class DamageHitFeedbackBase : MonoBehaviour
             hitEffectRoot.SetActive(false);
         if (HasHitFlashTargets())
             SetHitFlashActive(false);
+    }
+
+    private void OnDisable()
+    {
+        ResetTransientPresentation();
     }
 }

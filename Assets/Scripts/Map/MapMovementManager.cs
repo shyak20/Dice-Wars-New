@@ -192,6 +192,8 @@ public sealed class MapMovementManager : MonoBehaviour
 
     private void CompleteMapBootstrapAfterFightShopPreload()
     {
+        MapScenePresentationCleanup.Apply(gameObject.scene);
+
         if (RunManager.Instance != null && RunManager.Instance.UseMapBasedRun &&
             RunManager.Instance.TryRestorePersistedMap(out var restoredGrid, out var playerCell, out var moves))
         {

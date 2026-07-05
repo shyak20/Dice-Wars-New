@@ -36,7 +36,16 @@ public sealed class SpriteRendererAlphaFlicker : MonoBehaviour
     private void Awake()
     {
         if (targetRenderer == null)
-            throw new System.InvalidOperationException("SpriteRendererAlphaFlicker requires targetRenderer.");
+            targetRenderer = GetComponent<SpriteRenderer>();
+
+        if (targetRenderer == null)
+        {
+            Debug.LogError(
+                $"SpriteRendererAlphaFlicker on '{name}': assign targetRenderer or add a SpriteRenderer on the same GameObject.",
+                this);
+            enabled = false;
+            return;
+        }
 
         if (minAlpha > maxAlpha)
             (minAlpha, maxAlpha) = (maxAlpha, minAlpha);
@@ -52,6 +61,8 @@ public sealed class SpriteRendererAlphaFlicker : MonoBehaviour
 
     private void Update()
     {
+        if (targetRenderer == null)
+            return;
         var t = useUnscaledTime ? Time.unscaledTime : Time.time;
         t += phaseOffsetSeconds;
 

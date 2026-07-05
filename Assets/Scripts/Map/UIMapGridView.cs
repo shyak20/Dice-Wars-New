@@ -16,8 +16,13 @@ public class UIMapGridView : MonoBehaviour
     [Tooltip("Optional. If unset, uses Image on playerMarker.")]
     [SerializeField] private Image playerMarkerImage;
     [Header("Move start visuals")]
-    [Tooltip("When the pawn starts moving, standing tile background color and visited/standing background scale (and hover scale) lerp toward their post-move state over this many seconds (linear).")]
+    [Tooltip("When the pawn starts moving, visited/standing background scale (and hover scale) lerp toward their post-move state over this many seconds (linear). Background color lerps use each tile's Background Color Transition Seconds and, on multi-step moves, start when the pawn leaves the tile before the destination.")]
     [SerializeField, Min(0f)] private float standingVisitedBackgroundTransitionSeconds = 0.35f;
+
+    /// <summary>While a multi-step move animates, background color lerps wait until the pawn leaves the tile before the destination.</summary>
+    private bool _deferBackgroundColorLerpUntilFinalSegment;
+    /// <summary>While a multi-step move animates, the click target keeps its pre-move tint until the final segment.</summary>
+    private bool _deferDestinationSelectedVisualUntilFinalSegment;
 
     private UIMapTileView[,] _tiles;
     private MapMovementManager _manager;
@@ -184,12 +189,21 @@ public class UIMapGridView : MonoBehaviour
         var toCell = path[path.Count - 1];
         var duration = Mathf.Max(0f, durationSeconds);
         var animateMove = duration > 0f && fromCell != toCell;
-        _tileStateSelectedCellOverride = animateMove ? toCell : (Vector2Int?)null;
+        var multiStepAnimatedMove = animateMove && path.Count > 2;
+        _deferBackgroundColorLerpUntilFinalSegment = multiStepAnimatedMove;
+        _deferDestinationSelectedVisualUntilFinalSegment = multiStepAnimatedMove;
+        _tileStateSelectedCellOverride = animateMove && !multiStepAnimatedMove ? toCell : (Vector2Int?)null;
         _standingVisualCellOverride = animateMove ? fromCell : (Vector2Int?)null;
 
         RefreshPlayerStandingVisuals();
         if (animateMove && standingVisitedBackgroundTransitionSeconds > 0f)
-            BeginStandingVisitedBackgroundTransitionsForMove(toCell, standingVisitedBackgroundTransitionSeconds);
+        {
+            BeginStandingVisitedBackgroundTransitionsForMove(
+                toCell,
+                standingVisitedBackgroundTransitionSeconds,
+                includeColorTransition: !multiStepAnimatedMove,
+                includeScaleTransition: true);
+        }
 
         if (playerMarker == null)
         {
@@ -216,6 +230,7 @@ public class UIMapGridView : MonoBehaviour
 
         if (!animateMove)
         {
+            _deferBackgroundColorLerpUntilFinalSegment = false;
             PlayLandingScaleDownAt(toCell);
             for (var i = 1; i < path.Count; i++)
                 onReachedPathIndex?.Invoke(i);
@@ -259,7 +274,17 @@ public class UIMapGridView : MonoBehaviour
         for (var segment = 0; segment < segmentCount; segment++)
         {
             if (segment == segmentCount - 1)
+            {
                 PlayLandingScaleDownAt(path[path.Count - 1]);
+                if (_deferBackgroundColorLerpUntilFinalSegment || _deferDestinationSelectedVisualUntilFinalSegment)
+                {
+                    _deferBackgroundColorLerpUntilFinalSegment = false;
+                    _deferDestinationSelectedVisualUntilFinalSegment = false;
+                    _tileStateSelectedCellOverride = path[path.Count - 1];
+                    BeginMoveEndBackgroundColorTransitionsForMove(path[path.Count - 1]);
+                    RefreshPlayerStandingVisuals();
+                }
+            }
 
             yield return CoMovePlayerMarkerSegment(path[segment], path[segment + 1], segmentDuration, curve);
             onReachedPathIndex?.Invoke(segment + 1);
@@ -317,7 +342,11 @@ public class UIMapGridView : MonoBehaviour
         _tiles[cell.x, cell.y]?.PlayLandingScaleDown();
     }
 
-    private void BeginStandingVisitedBackgroundTransitionsForMove(Vector2Int toCell, float durationSeconds)
+    private void BeginStandingVisitedBackgroundTransitionsForMove(
+        Vector2Int toCell,
+        float durationSeconds,
+        bool includeColorTransition = true,
+        bool includeScaleTransition = true)
     {
         if (_tiles == null || _manager == null || _manager.Grid == null)
             return;
@@ -346,7 +375,47 @@ public class UIMapGridView : MonoBehaviour
                     reachAtEnd = MapTileUIViewState.Available;
                 else
                     reachAtEnd = MapTileUIViewState.Idle;
-                v.BeginStandingVisitedBackgroundTransition(standingEnd, reachAtEnd, durationSeconds);
+                v.BeginStandingVisitedBackgroundTransition(
+                    standingEnd,
+                    reachAtEnd,
+                    durationSeconds,
+                    includeColorTransition,
+                    includeScaleTransition);
+            }
+        }
+    }
+
+    /// <summary>Starts background color lerps toward post-move tints when the pawn leaves the tile before the destination.</summary>
+    private void BeginMoveEndBackgroundColorTransitionsForMove(Vector2Int toCell)
+    {
+        if (_tiles == null || _manager == null || _manager.Grid == null)
+            return;
+
+        var grid = _manager.Grid;
+        var w = grid.Width;
+        var h = grid.Height;
+        if (_tiles.GetLength(0) != w || _tiles.GetLength(1) != h)
+            return;
+
+        _manager.CollectReachableMoveTargetsFrom(toCell, _reachableMoveTargetsScratch);
+
+        for (var y = 0; y < h; y++)
+        {
+            for (var x = 0; x < w; x++)
+            {
+                var v = _tiles[x, y];
+                if (v == null)
+                    continue;
+                var cell = new Vector2Int(x, y);
+                var standingEnd = toCell.x == x && toCell.y == y;
+                MapTileUIViewState reachAtEnd;
+                if (standingEnd)
+                    reachAtEnd = MapTileUIViewState.Selected;
+                else if (_reachableMoveTargetsScratch.Contains(cell))
+                    reachAtEnd = MapTileUIViewState.Available;
+                else
+                    reachAtEnd = MapTileUIViewState.Idle;
+                v.BeginBackgroundColorTransitionForState(standingEnd, reachAtEnd);
             }
         }
     }
@@ -408,7 +477,7 @@ public class UIMapGridView : MonoBehaviour
             return;
 
         var pStand = _standingVisualCellOverride ?? _manager.PlayerGridPosition;
-        var pSelected = _tileStateSelectedCellOverride ?? _manager.PlayerGridPosition;
+        var pSelected = ResolveSelectedVisualCell(pStand);
         _manager.CollectReachableMoveTargetsFrom(_manager.PlayerGridPosition, _reachableMoveTargetsScratch);
 
         for (var y = 0; y < h; y++)
@@ -429,15 +498,26 @@ public class UIMapGridView : MonoBehaviour
                 else
                     state = MapTileUIViewState.Idle;
 
-                v.ApplyPlayerStandingAndReachabilityVisual(standingHere, state);
+                v.ApplyPlayerStandingAndReachabilityVisual(standingHere, state, allowBackgroundColorLerp: !_deferBackgroundColorLerpUntilFinalSegment);
             }
         }
+    }
+
+    Vector2Int ResolveSelectedVisualCell(Vector2Int standingVisualCell)
+    {
+        if (_tileStateSelectedCellOverride.HasValue)
+            return _tileStateSelectedCellOverride.Value;
+        if (_deferDestinationSelectedVisualUntilFinalSegment)
+            return standingVisualCell;
+        return _manager.PlayerGridPosition;
     }
 
     private void ClearMoveVisualOverrides()
     {
         _tileStateSelectedCellOverride = null;
         _standingVisualCellOverride = null;
+        _deferBackgroundColorLerpUntilFinalSegment = false;
+        _deferDestinationSelectedVisualUntilFinalSegment = false;
     }
 
     private void DetachPlayerMarkerBeforeClearingTiles()

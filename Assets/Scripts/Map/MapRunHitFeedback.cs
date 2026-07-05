@@ -33,6 +33,7 @@ public sealed class MapRunHitFeedback : DamageHitFeedbackBase
 
     private void OnEnable()
     {
+        ResetTransientPresentation();
         TrySubscribe(RunManager.Instance);
         TryRegisterMapUiShakeTargets();
     }
@@ -50,6 +51,8 @@ public sealed class MapRunHitFeedback : DamageHitFeedbackBase
             _subscribedRun.OnRunDamageTaken -= OnRunDamageTaken;
             _subscribedRun = null;
         }
+
+        ResetTransientPresentation();
     }
 
     private void TryRegisterMapUiShakeTargets()

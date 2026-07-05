@@ -28616,7 +28616,7 @@ MonoBehaviour:
   panelPrefab: {fileID: 6651844007766589498, guid: 14947f11f148552488a7d4a226d95d49, type: 3}
   trialRewardsPanelPrefab: {fileID: 0}
   gameIconIndex: {fileID: 0}
-  progressionRewardVisualCatalog: {fileID: 0}
+  progressionRewardVisualCatalog: {fileID: 11400000, guid: 40ed2a32a4e511a40a8b517aaf7e6c91, type: 2}
   fallbackCanvas: {fileID: 1896576052}
   hoverTooltipScreenOffset: {x: 30, y: -60}
   trialRewardsTooltipScreenOffset: {x: 0, y: 0}
@@ -77483,7 +77483,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1794899447419394447, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.75
+      value: -0.5700002
       objectReference: {fileID: 0}
     - target: {fileID: 1939886097156947229, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_IsActive
@@ -77585,6 +77585,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -26.402802
       objectReference: {fileID: 0}
+    - target: {fileID: 4006552654541177221, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
+      objectReference: {fileID: 0}
     - target: {fileID: 4033452898730898653, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -77607,7 +77611,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4054491613257956303, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.65
+      value: -0.67
       objectReference: {fileID: 0}
     - target: {fileID: 4101363524488668439, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_Name
@@ -77635,7 +77639,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5345750536508011809, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.09
+      value: -0.23000026
       objectReference: {fileID: 0}
     - target: {fileID: 5936467632504727033, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x
