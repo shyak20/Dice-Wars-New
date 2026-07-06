@@ -11,6 +11,15 @@ public static class RelicActionRunner
         ExecuteAllRelics(ctx);
     }
 
+    /// <summary>Runs relic actions for <see cref="RelicPhases.OnLeavingVictoryScreen"/> before the fight scene unloads.</summary>
+    public static void RunLeavingVictoryScreenRelics()
+    {
+        var combat = Object.FindObjectOfType<CombatManager>();
+        if (combat == null)
+            return;
+        RunPhase(combat, RelicPhases.OnLeavingVictoryScreen);
+    }
+
     public static int QueryIntSum(string phase, CombatManager combat = null)
     {
         var ctx = combat != null ? combat.BuildRelicContext(null) : BuildMapOnlyContext();

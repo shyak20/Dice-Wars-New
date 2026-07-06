@@ -7,6 +7,8 @@ using UnityEngine.UI;
 /// <summary>Spawns a tile UI per cell and drives a separate player marker (sprite from <see cref="MapPresentationSO"/>).</summary>
 public class UIMapGridView : MonoBehaviour
 {
+    static readonly AnimationCurve LinearMoveProgressCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
     [SerializeField] private RectTransform tilesParent;
     [SerializeField] private GridLayoutGroup gridLayout;
     [SerializeField] private UIMapTileView tilePrefab;
@@ -161,9 +163,15 @@ public class UIMapGridView : MonoBehaviour
     }
 
     /// <summary>Moves the marker from <paramref name="fromCell"/> to <paramref name="toCell"/>, then invokes <paramref name="onComplete"/>.</summary>
-    public void MovePlayerMarkerThen(Vector2Int fromCell, Vector2Int toCell, float durationSeconds, AnimationCurve moveCurve, Action onComplete)
+    public void MovePlayerMarkerThen(Vector2Int fromCell, Vector2Int toCell, float finalSegmentDurationSeconds, AnimationCurve moveCurve, Action onComplete)
     {
-        MovePlayerMarkerAlongPath(new[] { fromCell, toCell }, durationSeconds, moveCurve, null, onComplete);
+        MovePlayerMarkerAlongPath(
+            new[] { fromCell, toCell },
+            finalSegmentDurationSeconds,
+            intermediateSegmentDurationSeconds: 0f,
+            moveCurve,
+            null,
+            onComplete);
     }
 
     /// <summary>
@@ -174,7 +182,8 @@ public class UIMapGridView : MonoBehaviour
     /// <summary>Moves the marker through each cell in <paramref name="path"/> (in order), then invokes <paramref name="onComplete"/>.</summary>
     public void MovePlayerMarkerAlongPath(
         IReadOnlyList<Vector2Int> path,
-        float durationSeconds,
+        float finalSegmentDurationSeconds,
+        float intermediateSegmentDurationSeconds,
         AnimationCurve moveCurve,
         Action<int> onReachedPathIndex,
         Action onComplete)
@@ -187,8 +196,11 @@ public class UIMapGridView : MonoBehaviour
 
         var fromCell = path[0];
         var toCell = path[path.Count - 1];
-        var duration = Mathf.Max(0f, durationSeconds);
-        var animateMove = duration > 0f && fromCell != toCell;
+        var segmentCount = path.Count - 1;
+        var finalDuration = Mathf.Max(0f, finalSegmentDurationSeconds);
+        var intermediateDuration = Mathf.Max(0f, intermediateSegmentDurationSeconds);
+        var totalDuration = ComputePathMoveDuration(segmentCount, finalDuration, intermediateDuration);
+        var animateMove = totalDuration > 0f && fromCell != toCell;
         var multiStepAnimatedMove = animateMove && path.Count > 2;
         _deferBackgroundColorLerpUntilFinalSegment = multiStepAnimatedMove;
         _deferDestinationSelectedVisualUntilFinalSegment = multiStepAnimatedMove;
@@ -242,7 +254,22 @@ public class UIMapGridView : MonoBehaviour
             return;
         }
 
-        _markerMoveRoutine = StartCoroutine(CoMovePlayerMarkerAlongPath(path, duration, curve, onReachedPathIndex, onComplete));
+        _markerMoveRoutine = StartCoroutine(CoMovePlayerMarkerAlongPath(
+            path,
+            finalDuration,
+            intermediateDuration,
+            curve,
+            onReachedPathIndex,
+            onComplete));
+    }
+
+    static float ComputePathMoveDuration(int segmentCount, float finalDuration, float intermediateDuration)
+    {
+        if (segmentCount <= 0)
+            return 0f;
+        if (segmentCount == 1)
+            return finalDuration;
+        return intermediateDuration * (segmentCount - 1) + finalDuration;
     }
 
     private IEnumerator CoSnapPlayerMarkerAfterLayout()
@@ -263,17 +290,20 @@ public class UIMapGridView : MonoBehaviour
 
     private IEnumerator CoMovePlayerMarkerAlongPath(
         IReadOnlyList<Vector2Int> path,
-        float totalDuration,
+        float finalSegmentDuration,
+        float intermediateSegmentDuration,
         AnimationCurve curve,
         Action<int> onReachedPathIndex,
         Action onComplete)
     {
         var segmentCount = path.Count - 1;
-        var segmentDuration = segmentCount > 0 ? totalDuration / segmentCount : 0f;
 
         for (var segment = 0; segment < segmentCount; segment++)
         {
-            if (segment == segmentCount - 1)
+            var isFinalSegment = segment == segmentCount - 1;
+            var segmentDuration = isFinalSegment ? finalSegmentDuration : intermediateSegmentDuration;
+
+            if (isFinalSegment)
             {
                 PlayLandingScaleDownAt(path[path.Count - 1]);
                 if (_deferBackgroundColorLerpUntilFinalSegment || _deferDestinationSelectedVisualUntilFinalSegment)
@@ -286,7 +316,11 @@ public class UIMapGridView : MonoBehaviour
                 }
             }
 
-            yield return CoMovePlayerMarkerSegment(path[segment], path[segment + 1], segmentDuration, curve);
+            yield return CoMovePlayerMarkerSegment(
+                path[segment],
+                path[segment + 1],
+                segmentDuration,
+                isFinalSegment ? curve : LinearMoveProgressCurve);
             onReachedPathIndex?.Invoke(segment + 1);
         }
 

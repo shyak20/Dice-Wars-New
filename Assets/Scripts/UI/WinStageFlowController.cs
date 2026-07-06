@@ -334,6 +334,8 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
             return;
         }
 
+        RelicActionRunner.RunLeavingVictoryScreenRelics();
+
         var player = FindObjectOfType<PlayerStatus>();
         if (player != null)
             RunManager.Instance.CaptureRunVitalityFromPlayer(player);

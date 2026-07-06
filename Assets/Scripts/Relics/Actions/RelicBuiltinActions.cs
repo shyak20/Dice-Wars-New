@@ -319,7 +319,7 @@ public sealed class RelicHealOnCombatVictoryAction : RelicGameActionBase
 
     public override void Execute(GameActionContext ctx)
     {
-        if (ctx.RelicPhase != RelicPhases.OnCombatVictory || ctx.Player == null || healAmount <= 0) return;
+        if (ctx.RelicPhase != RelicPhases.OnLeavingVictoryScreen || ctx.Player == null || healAmount <= 0) return;
         ctx.Player.Heal(healAmount);
     }
 }

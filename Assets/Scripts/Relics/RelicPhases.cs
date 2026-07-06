@@ -24,6 +24,8 @@ public static class RelicPhases
 
     public const string OnPerfectStrike = "Relic_OnPerfectStrike";
     public const string OnCombatVictory = "Relic_OnCombatVictory";
+    /// <summary>Player dismissed the post-combat victory screen (Continue). Used for heals that should apply before returning to the map.</summary>
+    public const string OnLeavingVictoryScreen = "Relic_OnLeavingVictoryScreen";
     public const string BeforeSubmitTurn = "Relic_BeforeSubmitTurn";
 
     /// <summary>Player is over max power; if any action sets <see cref="GameActionContext.RelicBoolAccumulator"/>, bust UI may be skipped once.</summary>

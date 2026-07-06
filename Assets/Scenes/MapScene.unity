@@ -12884,6 +12884,7 @@ MonoBehaviour:
   overflowDamageNumberWorldAnchor: {fileID: 0}
   mapPresentation: {fileID: 11400000, guid: 238a49579a84c7249a153f8e06e6d3dd, type: 2}
   playerMarkerMoveDurationSeconds: 0.5
+  playerMarkerIntermediateMoveDurationSeconds: 0.4
   playerMarkerMoveCurve:
     serializedVersion: 2
     m_Curve:

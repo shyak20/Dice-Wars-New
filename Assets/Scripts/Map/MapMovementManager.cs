@@ -36,9 +36,11 @@ public sealed class MapMovementManager : MonoBehaviour
     [SerializeField] private Transform overflowDamageNumberWorldAnchor;
     [Header("Presentation (map run)")]
     [SerializeField] private MapPresentationSO mapPresentation;
-    [Tooltip("Seconds to move the player marker to the new tile. When this elapses, map events run and combat/shop loads immediately (no extra delay after the move).")]
+    [Tooltip("Seconds for the last tile of a move (eased with Player Marker Move Curve). Intermediate tiles on multi-tile paths use Player Marker Intermediate Move Duration.")]
     [SerializeField, Min(0f)] private float playerMarkerMoveDurationSeconds = 0.35f;
-    [Tooltip("Normalized time (0–1) → eased progress for the marker move.")]
+    [Tooltip("Seconds per intermediate tile when moving multiple tiles along a path. Not used for the destination tile.")]
+    [SerializeField, Min(0f)] private float playerMarkerIntermediateMoveDurationSeconds = 0.2f;
+    [Tooltip("Normalized time (0–1) → eased progress for the final tile of a move only.")]
     [SerializeField] private AnimationCurve playerMarkerMoveCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
     [SerializeField] private MapShrineChoicePanel shrineChoicePanel;
     [SerializeField] private MapTreasurePanel treasurePanel;
@@ -211,7 +213,12 @@ public sealed class MapMovementManager : MonoBehaviour
         TryShowLoseScreenIfHpDepleted();
     }
 
-    private void OnRunVitalityChanged() => TryShowLoseScreenIfHpDepleted();
+    private void OnRunVitalityChanged()
+    {
+        if (_moveInProgress)
+            return;
+        TryShowLoseScreenIfHpDepleted();
+    }
 
     /// <summary>Shows the map defeat screen when run HP is already 0 (e.g. options abandon run).</summary>
     public void ForceShowDefeatScreen()
@@ -241,6 +248,12 @@ public sealed class MapMovementManager : MonoBehaviour
 
         loseScreen.SetActive(true);
         ConfigureLoseScreenForInput();
+    }
+
+    private bool IsMapRunHpDepleted()
+    {
+        var run = RunManager.Instance;
+        return run != null && run.UseMapBasedRun && run.RunCurrentHp <= 0;
     }
 
     private void ConfigureLoseScreenForInput()
@@ -362,7 +375,8 @@ public sealed class MapMovementManager : MonoBehaviour
         if (_moveInProgress)
             return false;
 
-        if (RunManager.Instance != null && RunManager.Instance.IsRunDefeated)
+        if (RunManager.Instance != null &&
+            (RunManager.Instance.IsRunDefeated || RunManager.Instance.RunCurrentHp <= 0))
             return false;
 
         if (_grid == null || !_grid.Contains(target))
@@ -391,6 +405,13 @@ public sealed class MapMovementManager : MonoBehaviour
         void AfterPlayerMarkerArrived()
         {
             _moveInProgress = false;
+            if (IsMapRunHpDepleted())
+            {
+                TryShowLoseScreenIfHpDepleted();
+                mapView?.RefreshPlayerStandingVisuals();
+                return;
+            }
+
             if (PlayerGridPosition == BossPosition)
                 OnBossReached?.Invoke();
             // Resolve first so combat/shop loads without doing a full standing refresh on a scene we are about to unload.
@@ -403,9 +424,13 @@ public sealed class MapMovementManager : MonoBehaviour
             var curve = playerMarkerMoveCurve != null && playerMarkerMoveCurve.keys.Length > 0
                 ? playerMarkerMoveCurve
                 : AnimationCurve.Linear(0f, 0f, 1f, 1f);
-            var stepCount = animationPath.Length - 1;
-            var duration = Mathf.Max(0f, playerMarkerMoveDurationSeconds * stepCount);
-            mapView.MovePlayerMarkerAlongPath(animationPath, duration, curve, OnReachedPathIndex, AfterPlayerMarkerArrived);
+            mapView.MovePlayerMarkerAlongPath(
+                animationPath,
+                playerMarkerMoveDurationSeconds,
+                playerMarkerIntermediateMoveDurationSeconds,
+                curve,
+                OnReachedPathIndex,
+                AfterPlayerMarkerArrived);
         }
         else
         {
@@ -509,6 +534,12 @@ public sealed class MapMovementManager : MonoBehaviour
     {
         if (RunManager.Instance == null || !RunManager.Instance.UseMapBasedRun || _grid == null)
             return;
+
+        if (IsMapRunHpDepleted())
+        {
+            TryShowLoseScreenIfHpDepleted();
+            return;
+        }
 
         var tile = _grid.Get(PlayerGridPosition);
         if (tile.eventConsumed)

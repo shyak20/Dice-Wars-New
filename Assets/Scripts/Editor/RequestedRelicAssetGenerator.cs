@@ -93,7 +93,7 @@ public static class RequestedRelicAssetGenerator
             "Perfect Strike multiply Outcome by X",
             new List<RelicGameActionBase> { new RelicPerfectStrikeMultiplierAction { multiplier = 4 } });
         Create("Blood Vial", FaceRarity.Common,
-            "Heal 2 HP at the end of each combat.",
+            "Heal 2 HP when you leave the victory screen.",
             new List<RelicGameActionBase> { new RelicHealOnCombatVictoryAction { healAmount = 2 } });
         Create("Beating Heart", FaceRarity.Legendary,
             "Gain X Max HP at the end of each combat",

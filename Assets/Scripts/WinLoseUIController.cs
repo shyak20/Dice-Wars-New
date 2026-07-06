@@ -73,6 +73,7 @@ public class WinLoseUIController : MonoBehaviour
 
         if (RunManager.Instance != null)
         {
+            RelicActionRunner.RunLeavingVictoryScreenRelics();
             if (RunManager.Instance.UseMapBasedRun)
                 RunManager.Instance.HandleVictoryContinueFromCombat();
             else
