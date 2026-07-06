@@ -40,6 +40,15 @@ public class StoredActionsPoolIcon : MonoBehaviour
     [SerializeField] private float flyoutValueChangePulseUpDuration = 0.08f;
     [SerializeField] private float flyoutValueChangePulseDownDuration = 0.12f;
 
+    [Header("Relic / gem buff source (optional)")]
+    [Tooltip("Root object toggled on when a relic or gem buff created this element row (e.g. Relic Trigger on Element Value prefab).")]
+    [SerializeField] private GameObject relicGemIconRoot;
+    [Tooltip("Image that displays the relic or gem icon sprite.")]
+    [SerializeField] private Image relicGemIconImage;
+    [Tooltip("How long the relic/gem icon stays visible before the root is hidden again.")]
+    [SerializeField, Min(0f)] private float relicGemIconDisplaySeconds = 2f;
+
+    private Coroutine _sourceBuffIconCoroutine;
     private HoverTooltipTargetUI hoverTooltipTarget;
     private PoolRowKey configuredKey;
     private Vector3 _valueBgBaseScale = Vector3.one;
@@ -109,6 +118,47 @@ public class StoredActionsPoolIcon : MonoBehaviour
         PlayFlyoutValueChangePulse();
     }
 
+    /// <summary>Shows the relic or gem that buffed this element row, then hides after <see cref="relicGemIconDisplaySeconds"/>.</summary>
+    public void PresentSourceBuffIcon(Sprite sourceIcon)
+    {
+        HideSourceBuffIconImmediate();
+
+        if (sourceIcon == null || relicGemIconRoot == null || relicGemIconImage == null)
+            return;
+
+        relicGemIconImage.sprite = sourceIcon;
+        relicGemIconImage.enabled = true;
+        relicGemIconRoot.SetActive(true);
+
+        if (relicGemIconDisplaySeconds <= 0f)
+            return;
+
+        if (!gameObject.activeInHierarchy)
+            return;
+
+        _sourceBuffIconCoroutine = StartCoroutine(CoHideSourceBuffIconAfterDelay());
+    }
+
+    void HideSourceBuffIconImmediate()
+    {
+        if (_sourceBuffIconCoroutine != null)
+        {
+            StopCoroutine(_sourceBuffIconCoroutine);
+            _sourceBuffIconCoroutine = null;
+        }
+
+        if (relicGemIconRoot != null)
+            relicGemIconRoot.SetActive(false);
+    }
+
+    IEnumerator CoHideSourceBuffIconAfterDelay()
+    {
+        yield return new WaitForSeconds(relicGemIconDisplaySeconds);
+        _sourceBuffIconCoroutine = null;
+        if (relicGemIconRoot != null)
+            relicGemIconRoot.SetActive(false);
+    }
+
     /// <summary>When used as a draggable assignment token, turn off child raycasts so the token's drag surface receives pointer hits.</summary>
     public void SetPointerRaycastsEnabled(bool enabled)
     {
@@ -124,13 +174,14 @@ public class StoredActionsPoolIcon : MonoBehaviour
     }
 
     /// <summary>Icon + amount for <see cref="DiceRollOutcomeFlyoutController"/> (uses +N for positive deltas).</summary>
-    public void SetupForDiceRollFlyout(PoolRowKey key, Sprite iconSprite, int deltaAmount, Sprite backgroundOverride = null)
+    public void SetupForDiceRollFlyout(PoolRowKey key, Sprite iconSprite, int deltaAmount, Sprite backgroundOverride = null, Sprite sourceBuffIcon = null)
     {
         Configure(key);
         SetPoolSprite(iconSprite);
         SetRowBackground(backgroundOverride != null ? backgroundOverride : GameIconCatalog.TryGetPoolRowBackground(key));
         if (valueText == null) return;
         valueText.text = deltaAmount > 0 ? $"+{deltaAmount}" : deltaAmount.ToString();
+        PresentSourceBuffIcon(sourceBuffIcon);
     }
 
     /// <summary>Icon + background only (no amount) for die-to-die reroll flyouts that vanish on arrival.</summary>
@@ -226,6 +277,8 @@ public class StoredActionsPoolIcon : MonoBehaviour
             Debug.LogError($"StoredActionsPoolIcon on '{gameObject.name}': bustDestroyRoot is not assigned!", this);
         if (jackpotMultiplierRoot != null)
             jackpotMultiplierRoot.SetActive(false);
+        if (relicGemIconRoot != null)
+            relicGemIconRoot.SetActive(false);
         if (valueAmountBackgroundRoot != null)
             _valueBgBaseScale = valueAmountBackgroundRoot.localScale;
         if (valueText != null)
@@ -247,6 +300,7 @@ public class StoredActionsPoolIcon : MonoBehaviour
     {
         CancelJackpotValueReveal();
         CancelFlyoutValueChangePulse();
+        HideSourceBuffIconImmediate();
     }
 
     /// <summary>True when this active icon has a bust root and should participate in scene-wide Cast Overload presentation.</summary>

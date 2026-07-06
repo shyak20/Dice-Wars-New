@@ -20,6 +20,9 @@ namespace Enemies
         [Tooltip("Pause after one enemy finishes their full intent, before the next enemy's turn begins.")]
         [SerializeField, Min(0f)] private float delayBetweenEnemies = 0.5f;
 
+        [Tooltip("Multi-enemy only: after an enemy's turn begins, show their intent rows for this long before the first effect resolves.")]
+        [SerializeField, Min(0f)] private float delayBeforeMultiEnemyIntentActionSeconds = 1f;
+
         public float DelayBetweenEnemies => delayBetweenEnemies;
 
         [Header("Turn indicator animator")]
@@ -75,6 +78,20 @@ namespace Enemies
         {
             if (delayBeforeFirstActionSeconds > 0f)
                 yield return new WaitForSeconds(delayBeforeFirstActionSeconds);
+        }
+
+        public void PresentActingEnemyIntent(EnemyController enemy, EnemyActionSO action)
+        {
+            if (actionUI == null || enemy == null || action == null)
+                return;
+
+            actionUI.PresentIntent(enemy, action);
+        }
+
+        public IEnumerator CoWaitBeforeMultiEnemyIntentAction()
+        {
+            if (delayBeforeMultiEnemyIntentActionSeconds > 0f)
+                yield return new WaitForSeconds(delayBeforeMultiEnemyIntentActionSeconds);
         }
 
         public IEnumerator CoWaitBeforeCloseTrigger()

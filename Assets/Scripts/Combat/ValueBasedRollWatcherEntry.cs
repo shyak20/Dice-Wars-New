@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>Queued rule applied by <see cref="CombatManager"/> when a settled face matches <see cref="RequiredFaceValues"/> or <see cref="MatchAnyFaceValue"/>.</summary>
 public sealed class ValueBasedRollWatcherEntry
@@ -12,4 +13,6 @@ public sealed class ValueBasedRollWatcherEntry
     public int FirstEligibleBatchId;
     /// <summary>Face scheduling: first monotonic resolve index (inclusive). 0 = do not gate on resolve index.</summary>
     public int FirstEligibleResolveSequence;
+    /// <summary>Relic icon shown on flyout rows when this watcher adds armor/damage/burn.</summary>
+    public Sprite SourceBuffIcon;
 }

@@ -108,6 +108,7 @@ public sealed class RelicAddDamageOnFaceValueAction : RelicGameActionBase
         if (ctx.TriggeringFace.Value != faceValue) return;
         if (ctx.TriggeringFace.Damage > 0)
             ctx.TriggeringFace.Damage += bonusDamage;
+        RollBuffSourceIcon.TagFace(ctx.TriggeringFace, ctx.SourceRelic);
     }
 }
 
@@ -122,6 +123,7 @@ public sealed class RelicAddArmorOnFaceValueAction : RelicGameActionBase
         if (ctx.RelicPhase != RelicPhases.ModifyFaceResult || ctx.TriggeringFace == null) return;
         if (ctx.TriggeringFace.Value != faceValue) return;
         ctx.TriggeringFace.Armor += bonusArmor;
+        RollBuffSourceIcon.TagFace(ctx.TriggeringFace, ctx.SourceRelic);
     }
 }
 
@@ -189,6 +191,7 @@ public sealed class RelicDoubleNextFiveAfterFiveAction : RelicGameActionBase
         {
             ctx.TriggeringFace.Damage *= 2;
             ctx.RelicRuntime.DoubleFivePrimed = false;
+            RollBuffSourceIcon.TagFace(ctx.TriggeringFace, ctx.SourceRelic);
         }
         else if (v == 5)
             ctx.RelicRuntime.DoubleFivePrimed = true;
@@ -226,7 +229,10 @@ public sealed class RelicArmorBonusPerArmorDieAction : RelicGameActionBase
         }
 
         if (armorDice > 0)
+        {
             ctx.TriggeringFace.Armor += armorDice * bonusArmorPerArmorDie;
+            RollBuffSourceIcon.TagFace(ctx.TriggeringFace, ctx.SourceRelic);
+        }
     }
 }
 
@@ -338,7 +344,10 @@ public sealed class RelicDamageBelowHpPercentAction : RelicGameActionBase
         var maxHp = Mathf.Max(1, ctx.Player.maxHealth);
         var currentHpPercent = (float)ctx.Player.GetCurrentHealth() / maxHp * 100f;
         if (currentHpPercent <= hpThresholdPercent)
+        {
             ctx.TriggeringFace.Damage *= Mathf.Max(2, multiplier);
+            RollBuffSourceIcon.TagFace(ctx.TriggeringFace, ctx.SourceRelic);
+        }
     }
 }
 
@@ -381,6 +390,7 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEn
                 if (ctx.RelicPhase != RelicPhases.ModifyFaceResult)
                     return;
                 ctx.TriggeringFace.Armor += amount;
+                RollBuffSourceIcon.TagFace(ctx.TriggeringFace, ctx.SourceRelic);
                 break;
             case RollBonusType.Damage:
                 if (ctx.RelicPhase != RelicPhases.ModifyFaceResult)
@@ -435,7 +445,7 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEn
                 return;
         }
 
-        face.ActionPoolContributions.Add(new FacePoolExtraContribution
+        face.ActionPoolContributions.Add(RollBuffSourceIcon.WithRelic(new FacePoolExtraContribution
         {
             PoolKey = poolKey,
             Amount = stacks,
@@ -443,7 +453,7 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEn
             PoolRowBackground = rowBackground,
             PreAssignedEnemy = enemy,
             DeferredEnemyStatusDefinition = deferredStatus
-        });
+        }, ctx.SourceRelic));
     }
 }
 

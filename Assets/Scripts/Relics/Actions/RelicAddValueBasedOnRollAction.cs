@@ -47,7 +47,8 @@ public sealed class RelicAddValueBasedOnRollAction : RelicGameActionBase, ISeria
             if (ctx.CombatManager == null)
                 return;
             ctx.CombatManager.RegisterValueBasedRollWatcher(
-                requiredFaceValues, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: true);
+                requiredFaceValues, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: true,
+                sourceBuffIcon: ctx.SourceRelic?.icon);
             return;
         }
 
@@ -58,7 +59,8 @@ public sealed class RelicAddValueBasedOnRollAction : RelicGameActionBase, ISeria
             if (ctx.CombatManager == null)
                 return;
             ctx.CombatManager.RegisterValueBasedRollWatcher(
-                requiredFaceValues, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: false);
+                requiredFaceValues, bonusType, amount, burnDefinition, duration, fromRelicCombatStart: false,
+                sourceBuffIcon: ctx.SourceRelic?.icon);
             return;
         }
 

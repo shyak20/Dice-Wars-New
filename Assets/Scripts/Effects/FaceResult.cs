@@ -161,4 +161,7 @@ public class FaceResult
 
     /// <summary>Deferred-action rows for <see cref="StoredActionsPoolDisplay"/> (ApplyStatusEffect, Thorns, Max HP, etc.); filled before this face is added to channeled faces.</summary>
     public List<FacePoolExtraContribution> ActionPoolContributions { get; } = new List<FacePoolExtraContribution>();
+
+    /// <summary>When set, primary damage/armor flyout rows from this face show this relic/gem icon briefly.</summary>
+    public Sprite BuffSourceIcon { get; set; }
 }

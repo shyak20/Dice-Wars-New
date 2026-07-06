@@ -185,7 +185,8 @@ public class AddValueBasedOnRollAction : GameActionWithIcon, ISerializationCallb
         System.Collections.Generic.IReadOnlyList<int> requiredValues,
         bool matchAnyFaceValue,
         int amount,
-        BurnEffectSO burnDefinition)
+        BurnEffectSO burnDefinition,
+        Sprite sourceBuffIcon = null)
     {
         if (result == null || player == null)
             return;
@@ -194,7 +195,7 @@ public class AddValueBasedOnRollAction : GameActionWithIcon, ISerializationCallb
         if (!FaceValueMatchSet.MatchesAny(result.Value, requiredValues, matchAnyFaceValue))
             return;
 
-        AppendBurnPoolLineCore(result, player, amount, burnDefinition);
+        AppendBurnPoolLineCore(result, player, amount, burnDefinition, sourceBuffIcon);
     }
 
     public static void TryAppendBurnPoolLine(
@@ -218,7 +219,8 @@ public class AddValueBasedOnRollAction : GameActionWithIcon, ISerializationCallb
         FaceResult result,
         PlayerStatus player,
         int amount,
-        BurnEffectSO burnDefinition)
+        BurnEffectSO burnDefinition,
+        Sprite sourceBuffIcon = null)
     {
         var applyStacks = amount;
         if (burnDefinition.target == StatusEffectTarget.Enemy)
@@ -229,12 +231,12 @@ public class AddValueBasedOnRollAction : GameActionWithIcon, ISerializationCallb
 
         applyStacks = result.ApplyFireDoubleToEnemyBurnStacks(applyStacks, burnDefinition);
 
-        result.ActionPoolContributions.Add(new FacePoolExtraContribution
+        result.ActionPoolContributions.Add(RollBuffSourceIcon.WithSource(new FacePoolExtraContribution
         {
             PoolKey = PoolRowKey.Custom(burnDefinition.name),
             Amount = applyStacks,
             Icon = GameIconCatalog.GetStatusIcon(burnDefinition)
-        });
+        }, sourceBuffIcon));
     }
 
 #if UNITY_EDITOR

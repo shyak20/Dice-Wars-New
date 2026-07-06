@@ -33,4 +33,6 @@ public struct FacePoolExtraContribution
     public EnemyController PreAssignedEnemy;
     /// <summary>Deferred enemy status resolved at submit when <see cref="PoolSourceAction"/> is null (e.g. relic burn bonus).</summary>
     public StatusEffectSO DeferredEnemyStatusDefinition;
+    /// <summary>When set, the element-value flyout shows this relic/gem icon briefly (see <see cref="StoredActionsPoolIcon"/>).</summary>
+    public Sprite SourceBuffIcon;
 }

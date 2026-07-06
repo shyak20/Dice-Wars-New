@@ -37,6 +37,8 @@ public struct RollOutcomeVisualLine
     public bool IsRelicPoolExtraLine;
     /// <summary>Self-damage / player-only deferred rows that must land on the shared player element container (never enemy drag tokens).</summary>
     public bool FlyToPlayerElementContainer;
+    /// <summary>Relic or gem that granted this row; shown briefly on the element-value flyout.</summary>
+    public Sprite SourceBuffIcon;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>

@@ -12,6 +12,12 @@ public static class GemCombatResolver
     {
         public int AddedDamageBonusSoFar;
         public int PendingDamageMultiplier = 1;
+        public Sprite SourceBuffIcon;
+    }
+
+    static void AddGemPoolContribution(FaceResult result, FacePoolExtraContribution contribution, GemSO gem)
+    {
+        result.ActionPoolContributions.Add(RollBuffSourceIcon.WithGem(contribution, gem));
     }
 
     public static void ApplySocketedGems(DieAssetSO die, FaceResult result, CombatManager combat, int batchGatherIndex)
@@ -26,6 +32,8 @@ public static class GemCombatResolver
                 continue;
             if (!gem.MatchesRolledValue(result.Value))
                 continue;
+            if (gem.icon != null)
+                state.SourceBuffIcon = gem.icon;
             ApplyGemEffects(die, gem, result, combat, state, batchGatherIndex);
         }
 
@@ -66,13 +74,13 @@ public static class GemCombatResolver
             combat.AddBonusDamageFromAction(extraFromMultiplier);
 
             // Visual-only line so flyout mode reflects multiplied gem-added pending damage.
-            result.ActionPoolContributions.Add(new FacePoolExtraContribution
+            result.ActionPoolContributions.Add(RollBuffSourceIcon.WithSource(new FacePoolExtraContribution
             {
                 PoolKey = PoolRowKey.FromDieType(DieType.Damage),
                 Amount = extraFromMultiplier,
                 Icon = GameIconCatalog.GetElementIcon(DieType.Damage),
                 VisualFlyoutOnly = true
-            });
+            }, state.SourceBuffIcon));
         }
     }
 
@@ -156,6 +164,7 @@ public static class GemCombatResolver
 
             case GemEffectKind.AddArmorToThisFace:
                 result.Armor += Mathf.Max(0, entry.param);
+                RollBuffSourceIcon.TagFace(result, gem);
                 break;
 
             case GemEffectKind.AddDamageToThisFace:
@@ -166,13 +175,13 @@ public static class GemCombatResolver
                 combat.AddBonusDamageFromAction(amount);
                 state.AddedDamageBonusSoFar += amount;
                 // Flyout-only line so flyout-increment UI shows the gain immediately, then resyncs to combat truth.
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.FromDieType(DieType.Damage),
                     Amount = amount,
                     Icon = GameIconCatalog.GetElementIcon(DieType.Damage),
                     VisualFlyoutOnly = true
-                });
+                }, gem);
                 break;
             }
 
@@ -211,7 +220,7 @@ public static class GemCombatResolver
                 var baseAmount = Mathf.Max(0, entry.param);
                 if (baseAmount <= 0 || combat.player == null) break;
                 var handle = NextDeferredHandleId();
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Heal),
                     Amount = baseAmount,
@@ -220,7 +229,7 @@ public static class GemCombatResolver
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true
-                });
+                }, gem);
                 combat.QueueTurnEndAction(endCtx =>
                 {
                     var finalAmount = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);
@@ -238,7 +247,7 @@ public static class GemCombatResolver
                 var baseStacks = Mathf.Max(0, entry.param);
                 if (baseStacks <= 0) break;
                 var handle = NextDeferredHandleId();
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Burn),
                     Amount = baseStacks,
@@ -248,7 +257,7 @@ public static class GemCombatResolver
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyDamage = true
-                });
+                }, gem);
                 combat.QueueTurnEndAction(endCtx =>
                 {
                     var finalStacks = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);
@@ -261,7 +270,7 @@ public static class GemCombatResolver
                 var baseAmount = entry.param;
                 if (baseAmount == 0) break;
                 var handle = NextDeferredHandleId();
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Power),
                     Amount = baseAmount,
@@ -270,7 +279,7 @@ public static class GemCombatResolver
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyDamage = true
-                });
+                }, gem);
                 combat.QueueTurnEndAction(endCtx =>
                 {
                     var finalAmount = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);
@@ -283,7 +292,7 @@ public static class GemCombatResolver
                 var baseAmount = Mathf.Max(0, entry.param);
                 if (baseAmount <= 0 || combat.player == null) break;
                 var handle = NextDeferredHandleId();
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Cleanse),
                     Amount = baseAmount,
@@ -292,7 +301,7 @@ public static class GemCombatResolver
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true
-                });
+                }, gem);
                 combat.QueueTurnEndAction(endCtx =>
                 {
                     var finalStacks = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);
@@ -311,7 +320,7 @@ public static class GemCombatResolver
                 var baseAmount = Mathf.Max(0, entry.param);
                 if (baseAmount <= 0) break;
                 var handle = NextDeferredHandleId();
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.Gold),
                     Amount = baseAmount,
@@ -320,7 +329,7 @@ public static class GemCombatResolver
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true
-                });
+                }, gem);
                 combat.QueueTurnEndAction(endCtx =>
                 {
                     var finalAmount = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);
@@ -334,7 +343,7 @@ public static class GemCombatResolver
                 var baseAmount = Mathf.Max(0, entry.param);
                 if (baseAmount <= 0 || combat.player == null) break;
                 var handle = NextDeferredHandleId();
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.Custom(GemDeferredPoolRowIds.MaxHp),
                     Amount = baseAmount,
@@ -343,7 +352,7 @@ public static class GemCombatResolver
                     PerfectStrikeScales = true,
                     GemDeferredHandleId = handle,
                     CancelOnBustNullifyArmor = true
-                });
+                }, gem);
                 combat.QueueTurnEndAction(endCtx =>
                 {
                     var finalAmount = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);
@@ -355,14 +364,14 @@ public static class GemCombatResolver
             {
                 var baseAmount = Mathf.Max(0, entry.param);
                 if (baseAmount <= 0) break;
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.FromDieType(DieType.Armor),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetElementIcon(DieType.Armor),
                     // Flyout-only row: real pending armor is tracked via bonusArmorFromActions.
                     VisualFlyoutOnly = true
-                });
+                }, gem);
                 combat.AddBonusArmorFromAction(baseAmount);
                 break;
             }
@@ -370,14 +379,14 @@ public static class GemCombatResolver
             {
                 var baseAmount = Mathf.Max(0, entry.param);
                 if (baseAmount <= 0) break;
-                result.ActionPoolContributions.Add(new FacePoolExtraContribution
+                AddGemPoolContribution(result, new FacePoolExtraContribution
                 {
                     PoolKey = PoolRowKey.FromDieType(DieType.Damage),
                     Amount = baseAmount,
                     Icon = GameIconCatalog.GetElementIcon(DieType.Damage),
                     // Flyout-only row: real pending damage is tracked via bonusDamageFromActions.
                     VisualFlyoutOnly = true
-                });
+                }, gem);
                 combat.AddBonusDamageFromAction(baseAmount);
                 state.AddedDamageBonusSoFar += baseAmount;
                 break;
@@ -416,6 +425,13 @@ public static class GemCombatResolver
             return;
 
         ApplyStatusEffectAction.AppendPoolContribution(result, ctx.Player, statusDefinition, baseStacks, visualFlyoutOnly: true);
+        if (gem.icon != null && result.ActionPoolContributions.Count > 0)
+        {
+            var idx = result.ActionPoolContributions.Count - 1;
+            var contribution = result.ActionPoolContributions[idx];
+            contribution.SourceBuffIcon = gem.icon;
+            result.ActionPoolContributions[idx] = contribution;
+        }
         var applyStacks = ApplyStatusEffectAction.ResolveApplyStacks(statusDefinition, baseStacks, ctx, result);
         ApplyStatusEffectAction.ApplyFromContext(ctx, statusDefinition, applyStacks);
     }
@@ -432,7 +448,7 @@ public static class GemCombatResolver
         var handle = NextDeferredHandleId();
         var poolKey = PoolRowKey.Custom(statusDefinition.name);
         var cancelOnEnemyTarget = statusDefinition.target == StatusEffectTarget.Enemy;
-        result.ActionPoolContributions.Add(new FacePoolExtraContribution
+        AddGemPoolContribution(result, new FacePoolExtraContribution
         {
             PoolKey = poolKey,
             Amount = baseStacks,
@@ -443,7 +459,7 @@ public static class GemCombatResolver
             GemDeferredHandleId = handle,
             CancelOnBustNullifyDamage = cancelOnEnemyTarget,
             CancelOnBustNullifyArmor = !cancelOnEnemyTarget
-        });
+        }, gem);
         combat.QueueTurnEndAction(endCtx =>
         {
             var finalStacks = endCtx.CombatManager.ResolveGemDeferredPoolAmount(handle);

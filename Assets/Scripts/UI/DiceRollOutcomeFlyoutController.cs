@@ -159,6 +159,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             yield break;
 
         var icons = storedActionsPoolDisplay.GetVisiblePoolIconsTopToBottom();
+        icons.Sort(ComparePlayerPoolDrainIcons);
         var snapshots = new List<PlayerPoolDrainSnapshot>(icons.Count);
         for (var i = 0; i < icons.Count; i++)
         {
@@ -233,6 +234,33 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         var mid = (start + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
         yield return FlyLineRoutine(rt, start, mid, endLocal, default, applyPoolDeltaOnLanding: false);
         onRowLanded?.Invoke(snap.Key, snap.Amount);
+    }
+
+    /// <summary>Armor applies before other rows; self-damage (curse) applies last so shield can absorb it.</summary>
+    static int ComparePlayerPoolDrainIcons(StoredActionsPoolIcon a, StoredActionsPoolIcon b)
+    {
+        if (a == null && b == null) return 0;
+        if (a == null) return 1;
+        if (b == null) return -1;
+
+        var order = GetPlayerPoolDrainSortOrder(a.RowKey).CompareTo(GetPlayerPoolDrainSortOrder(b.RowKey));
+        if (order != 0)
+            return order;
+
+        return a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex());
+    }
+
+    static int GetPlayerPoolDrainSortOrder(PoolRowKey key)
+    {
+        if (!PoolRowKey.TryGetDieType(key, out var dieType))
+            return 1;
+
+        return dieType switch
+        {
+            DieType.Armor => 0,
+            DieType.Curse => 2,
+            _ => 1
+        };
     }
 
     void ClearParkedIncreaseOtherFlyouts()
@@ -703,7 +731,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                     if (line.ParkUntilDieToDieReroll)
                         icon.SetupForDieToDieActionFlyout(line.RowKey, sprite, line.BackgroundOverride);
                     else
-                        icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount, line.BackgroundOverride);
+                        icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount, line.BackgroundOverride, line.SourceBuffIcon);
 
                     if (!line.ParkUntilDieToDieReroll
                         && !line.RemoveOnIncreaseOtherLaunch
@@ -1115,7 +1143,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 }
 
                 var sprite = line.IconOverride != null ? line.IconOverride : storedActionsPoolDisplay.GetPoolRowSprite(line.RowKey);
-                icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount, line.BackgroundOverride);
+                icon.SetupForDiceRollFlyout(line.RowKey, sprite, line.Amount, line.BackgroundOverride, line.SourceBuffIcon);
                 SetLocalXY(rt, startAnchored);
                 rt.localScale = templateRt.localScale;
             }

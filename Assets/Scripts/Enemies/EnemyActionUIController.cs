@@ -74,14 +74,20 @@ namespace Enemies
             RebuildIntentRows(intent);
         }
 
-        private void RebuildIntentRows(EnemyActionSO intent)
+        private void RebuildIntentRows(EnemyActionSO intent) =>
+            PresentIntent(_enemyController, intent);
+
+        /// <summary>
+        /// Rebuilds intent rows for a specific acting enemy (multi-enemy shared turn overlay).
+        /// </summary>
+        public void PresentIntent(EnemyController enemy, EnemyActionSO intent)
         {
             ClearSegments();
 
-            if (intent == null || segmentContainer == null || segmentPrefab == null)
+            if (intent == null || enemy == null || segmentContainer == null || segmentPrefab == null)
                 return;
 
-            EnemyIntentSegments.BuildRows(intent, _rowsScratch, _enemyController, _combatManager, intentBuffDamageColor);
+            EnemyIntentSegments.BuildRows(intent, _rowsScratch, enemy, _combatManager, intentBuffDamageColor);
             foreach (var row in _rowsScratch)
             {
                 var seg = Instantiate(segmentPrefab, segmentContainer);

@@ -122,6 +122,7 @@ public class CombatManager : MonoBehaviour
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
     private readonly HashSet<IGameAction> _playerPoolActionsAppliedViaStatusBar = new HashSet<IGameAction>();
     private int _playerPoolSelfDamageAppliedViaStatusBar;
+    private int _playerPoolArmorAppliedViaStatusBar;
     private struct PrecisionChoiceEntry
     {
         public int Amount;
@@ -3297,7 +3298,8 @@ public class CombatManager : MonoBehaviour
         int amount,
         BurnEffectSO burnDefinition,
         AddValueBasedOnRollDuration duration,
-        bool fromRelicCombatStart = false)
+        bool fromRelicCombatStart = false,
+        Sprite sourceBuffIcon = null)
     {
         if (duration == AddValueBasedOnRollDuration.SameRoll)
         {
@@ -3315,6 +3317,7 @@ public class CombatManager : MonoBehaviour
         var entry = CreateValueBasedRollWatcherEntry(matchAnyFaceValue: true, bonusType, amount, burnDefinition);
         entry.FirstEligibleBatchId = firstBatch;
         entry.FirstEligibleResolveSequence = 0;
+        entry.SourceBuffIcon = sourceBuffIcon;
 
         AddValueBasedRollWatcherEntry(entry, duration);
     }
@@ -3423,6 +3426,9 @@ public class CombatManager : MonoBehaviour
                 result.Damage += w.Amount;
                 break;
         }
+
+        if (w.SourceBuffIcon != null)
+            result.BuffSourceIcon = w.SourceBuffIcon;
     }
 
     private void ApplyValueBasedRollWatchersBurn(FaceResult result)
@@ -3444,7 +3450,7 @@ public class CombatManager : MonoBehaviour
 
         AddValueBasedOnRollAction.ApplyBurnToEnemyFromContext(ctx, w.Amount, w.BurnDefinition);
         AddValueBasedOnRollAction.TryAppendBurnPoolLineForWatcher(
-            result, player, w.RequiredFaceValues, w.MatchAnyFaceValue, w.Amount, w.BurnDefinition);
+            result, player, w.RequiredFaceValues, w.MatchAnyFaceValue, w.Amount, w.BurnDefinition, w.SourceBuffIcon);
     }
 
     private static bool FaceHasAnyDeferredExecutableAction(FaceResult result)
@@ -3491,7 +3497,7 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private static List<RollOutcomeVisualLine> BuildRollVisualLines(
+    private List<RollOutcomeVisualLine> BuildRollVisualLines(
         FaceResult result,
         bool kineticArmorThisRoll,
         bool includeParkedRerollLine)
@@ -3500,7 +3506,7 @@ public class CombatManager : MonoBehaviour
 
         var lines = new List<RollOutcomeVisualLine>();
 
-        void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false, bool flyToPlayerElementContainer = false)
+        void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false, bool flyToPlayerElementContainer = false, Sprite sourceBuffIcon = null)
         {
             if (amt <= 0) return;
             var attackAll = result.AttackAllEnemies && enemyTargeted;
@@ -3514,9 +3520,12 @@ public class CombatManager : MonoBehaviour
                 FlyToPlayerElementContainer = flyToPlayerElementContainer,
                 BackgroundOverride = flyToPlayerElementContainer
                     ? GameIconCatalog.TryGetPoolRowBackground(key)
-                    : null
+                    : null,
+                SourceBuffIcon = sourceBuffIcon
             });
         }
+
+        var faceBuffSourceIcon = result.BuffSourceIcon;
 
         var damageIsEnemyTargeted = result.Type == DieType.Damage || result.Type == DieType.Fire ||
                                     result.Type == DieType.Ice || result.Type == DieType.Nature;
@@ -3535,12 +3544,13 @@ public class CombatManager : MonoBehaviour
                     AttackAllEnemies = result.AttackAllEnemies,
                     IsSplitDamageHitLine = true,
                     DamageHitIndex = hit,
+                    SourceBuffIcon = faceBuffSourceIcon,
                 });
             }
         }
         else
-            AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted);
-        AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
+            AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted, sourceBuffIcon: faceBuffSourceIcon);
+        AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor), sourceBuffIcon: faceBuffSourceIcon);
         AddLine(
             PoolRowKey.FromDieType(DieType.Curse),
             result.TotalSelfDamageContribution,
@@ -3573,7 +3583,8 @@ public class CombatManager : MonoBehaviour
                                                 extra.PoolSourceAction != null &&
                                                 extra.PoolSourceAction.TriggerImmediatelyOnDrop,
                     PreAssignedEnemy = extra.PreAssignedEnemy,
-                    IsRelicPoolExtraLine = extra.PreAssignedEnemy != null
+                    IsRelicPoolExtraLine = extra.PreAssignedEnemy != null,
+                    SourceBuffIcon = extra.SourceBuffIcon
                 });
             }
         }
@@ -3582,16 +3593,54 @@ public class CombatManager : MonoBehaviour
             AddLine(PoolRowKey.FromDieType(DieType.Armor), 1, GameIconCatalog.GetElementIcon(DieType.Armor));
 
         if (includeParkedRerollLine)
-            TryAppendCollapsedParkedRerollLine(result.Face, lines);
+            TryAppendCollapsedParkedRerollLine(result, lines);
 
         if (includeParkedRerollLine)
-            TryAppendIncreaseOtherElementsVisualLine(result.Face, lines);
+            TryAppendIncreaseOtherElementsVisualLine(result, lines);
 
         return lines;
     }
 
-    private static void TryAppendIncreaseOtherElementsVisualLine(DieFaceSO face, List<RollOutcomeVisualLine> lines)
+    private bool HasDieToDieFlyTargetTransforms(IEnumerable<int> batchIndices)
     {
+        if (batchIndices == null)
+            return false;
+
+        foreach (var batchIndex in batchIndices)
+        {
+            if (GetBatchDieTransform(batchIndex) != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasIncreaseOtherDieToDieFlyTargets(int keeperBatchIndex, IncreaseOtherElementsAction action)
+    {
+        if (action == null || keeperBatchIndex < 0)
+            return false;
+
+        var targetIndices = ResolveIncreaseOtherTargetIndices(keeperBatchIndex, action);
+        return HasDieToDieFlyTargetTransforms(targetIndices);
+    }
+
+    private bool ShouldShowRerollOtherDiceFlyout(FaceResult result)
+    {
+        if (result?.Face == null || result.BatchGatherIndex < 0)
+            return false;
+        if (!FaceHasRerollOtherDiceAfterAllSettled(result.Face))
+            return false;
+        if (!_batchHasRerollOtherDicePending || _batchRerollOtherTargetIndices.Count == 0)
+            return false;
+        if (!_batchRerollOtherKeeperIndices.Contains(result.BatchGatherIndex))
+            return false;
+
+        return HasDieToDieFlyTargetTransforms(_batchRerollOtherTargetIndices);
+    }
+
+    private void TryAppendIncreaseOtherElementsVisualLine(FaceResult result, List<RollOutcomeVisualLine> lines)
+    {
+        var face = result?.Face;
         if (face?.actions == null)
             return;
 
@@ -3606,6 +3655,9 @@ public class CombatManager : MonoBehaviour
         }
 
         if (increase == null)
+            return;
+
+        if (!HasIncreaseOtherDieToDieFlyTargets(result.BatchGatherIndex, increase))
             return;
 
         var icon = GameIconCatalog.GetActionIcon(ActionVisualId.IncreaseOtherElements);
@@ -3623,57 +3675,25 @@ public class CombatManager : MonoBehaviour
         });
     }
 
-    /// <summary>One parked die-to-die action row per face (Reroll Other / Roll Again), not per action instance.</summary>
-    private static void TryAppendCollapsedParkedRerollLine(DieFaceSO face, List<RollOutcomeVisualLine> lines)
+    /// <summary>One parked die-to-die reroll-other row per keeper face when other dice will actually receive the flyout.</summary>
+    private void TryAppendCollapsedParkedRerollLine(FaceResult result, List<RollOutcomeVisualLine> lines)
     {
-        if (!TryResolveParkedDieToDieActionVisual(face, out var visualId))
+        if (!ShouldShowRerollOtherDiceFlyout(result))
             return;
 
-        var icon = GameIconCatalog.GetActionIcon(visualId);
+        var icon = GameIconCatalog.GetActionIcon(ActionVisualId.RerollOtherDice);
         if (icon == null)
             return;
 
         lines.Add(new RollOutcomeVisualLine
         {
-            RowKey = PoolRowKey.Custom(visualId.ToString()),
+            RowKey = PoolRowKey.Custom(ActionVisualId.RerollOtherDice.ToString()),
             Amount = 0,
             IconOverride = icon,
-            BackgroundOverride = GameIconCatalog.GetActionBackground(visualId),
+            BackgroundOverride = GameIconCatalog.GetActionBackground(ActionVisualId.RerollOtherDice),
             ParkUntilDieToDieReroll = true,
             IsVisualFlyoutOnly = true,
         });
-    }
-
-    private static bool TryResolveParkedDieToDieActionVisual(DieFaceSO face, out ActionVisualId visualId)
-    {
-        visualId = default;
-        if (face?.actions == null)
-            return false;
-
-        var hasRerollOther = false;
-        var hasTriggeringReroll = false;
-
-        foreach (var a in face.actions)
-        {
-            if (a is RerollOtherDiceAfterAllSettledAction)
-                hasRerollOther = true;
-            if (a is RerollDieAction reroll && reroll.Scope == RerollDieAction.RerollDieScope.RerollTriggeringDieOnly)
-                hasTriggeringReroll = true;
-        }
-
-        if (hasRerollOther)
-        {
-            visualId = ActionVisualId.RerollOtherDice;
-            return true;
-        }
-
-        if (hasTriggeringReroll)
-        {
-            visualId = ActionVisualId.RerollDie;
-            return true;
-        }
-
-        return false;
     }
 
     /// <summary>True when a deferred pool row applies an enemy-target status (e.g. enemy Burn) and so must be assigned to an enemy.</summary>
@@ -4146,6 +4166,7 @@ public class CombatManager : MonoBehaviour
         {
             face.Damage = 0;
             face.Armor = 0;
+            face.SelfDamage = 0;
             face.DamageAttackTimes = 0;
             face.PowerContributionThisResolve = 0;
             if (face.Actions != null)
@@ -4569,11 +4590,13 @@ public class CombatManager : MonoBehaviour
             switch (dieType)
             {
                 case DieType.Curse:
+                    ApplyRemainingTurnArmorBeforeSelfDamage();
                     _playerPoolSelfDamageAppliedViaStatusBar += amount;
                     player.TakeDamage(amount, PlayerDamageSource.CurseFace);
                     CheckDefeat();
                     return;
                 case DieType.Armor:
+                    _playerPoolArmorAppliedViaStatusBar += amount;
                     player.AddArmor(amount);
                     ProgressionEventBridge.NotifyDamageBlocked(amount);
                     return;
@@ -4720,6 +4743,8 @@ public class CombatManager : MonoBehaviour
         if (player == null || channeledFaces == null)
             return true;
 
+        ApplyRemainingTurnArmorBeforeSelfDamage();
+
         var total = 0;
         for (var i = 0; i < channeledFaces.Count; i++)
         {
@@ -4738,6 +4763,24 @@ public class CombatManager : MonoBehaviour
 
         player.TakeDamage(total, PlayerDamageSource.CurseFace);
         return !CheckDefeat();
+    }
+
+    /// <summary>
+    /// Self-damage must hit shield (armor) first. Armor rows may drain after curse in the element container layout,
+    /// or pool drain may be skipped — apply any turn armor not yet granted before curse resolves.
+    /// </summary>
+    void ApplyRemainingTurnArmorBeforeSelfDamage()
+    {
+        if (player == null)
+            return;
+
+        var pendingArmor = GetPendingDefense() - _playerPoolArmorAppliedViaStatusBar;
+        if (pendingArmor <= 0)
+            return;
+
+        _playerPoolArmorAppliedViaStatusBar += pendingArmor;
+        player.AddArmor(pendingArmor);
+        ProgressionEventBridge.NotifyDamageBlocked(pendingArmor);
     }
 
     private bool ApplyPendingPlayerAttackFromTurn(int pendingAttack)
@@ -5560,6 +5603,12 @@ public class CombatManager : MonoBehaviour
                 EnemyActionSO action = enemy.GetCurrentAction();
                 yield return enemy.CoPresentEnemyTurnActionIntro(action);
 
+                if (IsMultiEnemy && enemyTurnIntentSequence != null)
+                {
+                    enemyTurnIntentSequence.PresentActingEnemyIntent(enemy, action);
+                    yield return enemyTurnIntentSequence.CoWaitBeforeMultiEnemyIntentAction();
+                }
+
                 if (enemyTurnIntentSequence != null)
                     yield return enemyTurnIntentSequence.CoExecuteIntent(enemy, action, this);
                 else
@@ -5864,6 +5913,7 @@ public class CombatManager : MonoBehaviour
         turnEndActions.Clear();
         _playerPoolActionsAppliedViaStatusBar.Clear();
         _playerPoolSelfDamageAppliedViaStatusBar = 0;
+        _playerPoolArmorAppliedViaStatusBar = 0;
         overchargeBonus = 0;
         appliedMultiplier = 1;
         bustProtected = false;

@@ -89,6 +89,7 @@ public class RolledOutcomeToken : MonoBehaviour
             poolIcon.SetRowBackground(ResolveBackground(line));
             poolIcon.SetValue(line.Amount);
             poolIcon.SetPointerRaycastsEnabled(false);
+            poolIcon.PresentSourceBuffIcon(line.SourceBuffIcon);
         }
 
         EnsureDragSurface();
