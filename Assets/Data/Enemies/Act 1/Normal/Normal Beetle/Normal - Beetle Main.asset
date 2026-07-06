@@ -19,7 +19,7 @@ MonoBehaviour:
   spawnOnLoadAdds:
   - {fileID: 11400000, guid: cc38c9570f02ea248a367de9120f462e, type: 2}
   - {fileID: 11400000, guid: 767cb3f92a0f33841935552708dfd9c0, type: 2}
-  excludeFromFirstFight: 0
+  excludeFromFirstFight: 1
   maxHealth: 10
   startArmor: 0
   minGoldReward: 30

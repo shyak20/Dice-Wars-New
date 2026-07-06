@@ -62,7 +62,7 @@ See [Effects DESIGN.md](Assets/Scripts/Effects/DESIGN.md) for the full system de
 
 - Before writing code, outline: what will change, why, risks/assumptions
 - Prefer small, reversible changes
-- **After changing C# scripts**, confirm the project compiles (Unity Console or `ReadLints` on touched files) and fix any errors before finishing — do not leave CS errors behind
+- **Zero compile errors before finishing** — after any C# change, verify the project compiles with no CS errors (Unity Console, `ReadLints` on touched files, or a local build). If compilation fails, fix all errors before submitting your final answer; never hand off broken scripts
 - **No direct scene interaction** — create scripts and provide instructions for engine setup
 - **No one-off editor tools** — Do not add `MenuItem` / editor scripts whose main job is a single-use setup (one data asset, one scene UI layout, one prefab wire-up you only run once). Author content as ScriptableObjects under `Assets/Data/` (Inspector or duplicate an existing `.asset`). Build scene UI manually in the Editor and document setup steps for the user. Editor automation is only for **repeatable** workflows (e.g. rebuilding all loot tables from the project, batch-importing CSVs, auditing reports). If unsure, default to runtime scripts + manual Unity instructions, not a generator.
 

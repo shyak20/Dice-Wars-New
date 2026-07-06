@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -32,12 +33,20 @@ public class FacePickerView : MonoBehaviour
     [Header("Win-stage flow (optional)")]
     [SerializeField] private Button backButton;
 
+    [Header("Skip for coins (optional)")]
+    [SerializeField] private Button skipForCoinsButton;
+    [SerializeField] private TMP_Text skipCoinsAmountText;
+    [Tooltip("string.Format pattern shown when the picker opens and after skip; {0} = rolled coin amount.")]
+    [SerializeField] private string skipCoinsAmountFormat = "+{0} Coins";
+
     private readonly List<UIRewardSlot> _rewardSlots = new List<UIRewardSlot>();
 
     private Action<DieFaceSO> _onFacePicked;
     private Action<DieAssetSO, int, UIRewardSlot> _onReplaceFaceSlotPicked;
     private Action _onBack;
     private Action _onRewindToFacePick;
+    private Action _onSkipForCoins;
+    private int _skipCoinsPreviewAmount;
     private DieFaceSO _selectedRewardFace;
     private DieAssetSO _activeReplacementDie;
     private Coroutine _openSpreadRoutine;
@@ -77,7 +86,9 @@ public class FacePickerView : MonoBehaviour
         Action<DieFaceSO> onFacePicked,
         Action<DieAssetSO, int, UIRewardSlot> onReplaceFaceSlotPicked,
         Action onBack = null,
-        Action onRewindToFacePick = null)
+        Action onRewindToFacePick = null,
+        Action onSkipForCoins = null,
+        int skipCoinsPreviewAmount = 0)
     {
         if (options == null || options.Count == 0)
         {
@@ -89,19 +100,29 @@ public class FacePickerView : MonoBehaviour
         _onReplaceFaceSlotPicked = onReplaceFaceSlotPicked;
         _onBack = onBack;
         _onRewindToFacePick = onRewindToFacePick;
+        _onSkipForCoins = onSkipForCoins;
+        _skipCoinsPreviewAmount = skipCoinsPreviewAmount;
         _selectedRewardFace = null;
         _activeReplacementDie = null;
 
-        ConfigureNavButtons();
-        RebuildRewardSlots(options);
-        trayLayout.SetHoverTooltipsEnabled(true);
-        trayLayout.CollapseAllFaceReplaceImmediate();
-        RebuildDiceLayout();
-        trayLayout.StartPrewarmSpreadsForCurrentEntries();
-        if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
-        SetPhaseVisuals(phaseBActive: true);
-
         panel.SetActive(true);
+        SetPhaseVisuals(phaseBActive: true);
+        EnsurePickerSubviewActive(trayLayout);
+        EnsurePickerSubviewActive(skipCoinsAmountText);
+        PrepareSkipCoinsTextForShow();
+        ConfigureNavButtons();
+        ConfigureSkipForCoinsButton();
+        RebuildRewardSlots(options);
+        if (trayLayout != null)
+        {
+            trayLayout.SetHoverTooltipsEnabled(true);
+            trayLayout.CollapseAllFaceReplaceImmediate();
+            RebuildDiceLayout();
+            if (trayLayout.isActiveAndEnabled)
+                trayLayout.StartPrewarmSpreadsForCurrentEntries();
+        }
+
+        if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
     }
 
     public void Hide()
@@ -117,6 +138,90 @@ public class FacePickerView : MonoBehaviour
         trayLayout?.CollapseAllFaceReplaceImmediate();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
         SetAllPhaseObjects(false);
+        ClearSkipCoinsText();
+    }
+
+    static string FormatSkipCoinsAmount(int amount, string displayFormat)
+    {
+        if (string.IsNullOrEmpty(displayFormat))
+            return $"+{amount}";
+
+        try
+        {
+            return string.Format(displayFormat, amount);
+        }
+        catch (FormatException)
+        {
+            return amount.ToString();
+        }
+    }
+
+    void PrepareSkipCoinsTextForShow()
+    {
+        if (skipCoinsAmountText == null)
+            return;
+
+        EnsurePickerSubviewActive(skipCoinsAmountText);
+        if (_onSkipForCoins != null && _skipCoinsPreviewAmount > 0)
+            skipCoinsAmountText.text = FormatSkipCoinsAmount(_skipCoinsPreviewAmount, skipCoinsAmountFormat);
+        else
+            skipCoinsAmountText.text = string.Empty;
+    }
+
+    void ClearSkipCoinsText()
+    {
+        if (skipCoinsAmountText != null)
+            skipCoinsAmountText.text = string.Empty;
+    }
+
+    void EnsurePickerSubviewActive(Component target)
+    {
+        if (target == null)
+            return;
+
+        var stop = panel != null ? panel.transform : transform;
+        EnsureAncestorsActive(target.transform, stop);
+    }
+
+    static void EnsureAncestorsActive(Transform leaf, Transform stopInclusive)
+    {
+        if (leaf == null)
+            return;
+
+        var stack = new List<Transform>();
+        var t = leaf;
+        while (t != null)
+        {
+            stack.Add(t);
+            if (stopInclusive != null && t == stopInclusive)
+                break;
+            t = t.parent;
+        }
+
+        for (var i = stack.Count - 1; i >= 0; i--)
+            stack[i].gameObject.SetActive(true);
+    }
+
+    void ConfigureSkipForCoinsButton()
+    {
+        if (skipForCoinsButton == null)
+            return;
+
+        var show = _onSkipForCoins != null && _selectedRewardFace == null;
+        skipForCoinsButton.gameObject.SetActive(show);
+        skipForCoinsButton.interactable = show;
+        skipForCoinsButton.onClick.RemoveAllListeners();
+        if (show)
+            skipForCoinsButton.onClick.AddListener(OnSkipForCoinsClicked);
+    }
+
+    void OnSkipForCoinsClicked()
+    {
+        if (_selectedRewardFace != null || _onSkipForCoins == null)
+            return;
+
+        skipForCoinsButton.interactable = false;
+        _onSkipForCoins.Invoke();
     }
 
     private void RebuildRewardSlots(List<DieFaceSO> options)
@@ -189,6 +294,11 @@ public class FacePickerView : MonoBehaviour
         _activeReplacementDie = null;
         _onRewindToFacePick?.Invoke();
 
+        PrepareSkipCoinsTextForShow();
+        ConfigureSkipForCoinsButton();
+        if (backButton != null)
+            backButton.gameObject.SetActive(_onBack != null);
+
         trayLayout.CollapseAllFaceReplace(() =>
         {
             SetPhaseVisuals(phaseBActive: true);
@@ -218,6 +328,9 @@ public class FacePickerView : MonoBehaviour
 
         _selectedRewardFace = face;
         SetPhaseVisuals(phaseBActive: false);
+        if (skipForCoinsButton != null)
+            skipForCoinsButton.gameObject.SetActive(false);
+        ClearSkipCoinsText();
         trayLayout.SetHoverTooltipsEnabled(false);
         trayLayout.ClearPinnedDieTooltip();
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();

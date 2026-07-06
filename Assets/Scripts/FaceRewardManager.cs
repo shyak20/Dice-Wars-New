@@ -17,18 +17,42 @@ public class FaceRewardManager : MonoBehaviour
     [SerializeField] private FaceLootTableSO lootTable;
 
     [Header("Timing")]
-    [Tooltip("After a face swap, seconds to show the slot’s new-face preview before hiding the picker and firing OnFaceRewardCompleted. Also used after no-match close (no preview).")]
+    [Tooltip("After a face swap, seconds to show the slot’s new-face preview before hiding the picker and firing OnFaceRewardCompleted. Also used after no-match close (no preview). Skip-for-coins closes immediately.")]
     [SerializeField, Min(0f)] private float closeDelay = 2f;
+
+    [Header("Skip face reward for coins")]
+    [SerializeField, Min(0)] private int skipFaceRewardCoinsMin = 15;
+    [SerializeField, Min(0)] private int skipFaceRewardCoinsMax = 30;
+    [Tooltip("Turned on when the player presses Skip for coins. Assign a GameObject outside the Face Reward / Face Picker hierarchy so it stays visible after the picker closes.")]
+    [SerializeField] private GameObject skipCoinsPressedFeedback;
 
     private DieFaceSO chosenFace;
     private DieAssetSO chosenDie;
     /// <summary>Win-stage only: same 3 faces until the row is consumed or a new victory rebuilds rewards (survives Back to win screen).</summary>
     private List<DieFaceSO> _winStageFaceOfferCache;
+    private int _winStageSkipCoinsAmount;
+    private int _pendingSkipCoinsAmount;
 
     private void Awake()
     {
         if (facePickerView == null || lootTable == null)
             Debug.LogError("FaceRewardManager: Missing references (FacePicker, loot table).");
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (skipFaceRewardCoinsMin > skipFaceRewardCoinsMax)
+            skipFaceRewardCoinsMax = skipFaceRewardCoinsMin;
+    }
+#endif
+
+    void SetSkipCoinsPressedFeedbackActive(bool active)
+    {
+        if (skipCoinsPressedFeedback == null)
+            return;
+
+        skipCoinsPressedFeedback.SetActive(active);
     }
 
     public void StartFaceReward()
@@ -39,10 +63,19 @@ public class FaceRewardManager : MonoBehaviour
 
         if (gemRewardView != null) gemRewardView.Hide();
 
+        SetSkipCoinsPressedFeedbackActive(false);
+
         var preferredTypes = new HashSet<DieType>(
             PlayerDataContainer.Instance.RuntimeData.currentDeck.Select(d => d.dieType));
         var options = ProgressionLootRolls.RollFaces(lootTable, 3, preferredTypes);
-        facePickerView.Show(options, OnFaceChosen, OnReplacementSlotChosen, onRewindToFacePick: RewindFacePickProgress);
+        _pendingSkipCoinsAmount = RollSkipFaceRewardCoins();
+        facePickerView.Show(
+            options,
+            OnFaceChosen,
+            OnReplacementSlotChosen,
+            onRewindToFacePick: RewindFacePickProgress,
+            onSkipForCoins: OnSkipFaceRewardForCoins,
+            skipCoinsPreviewAmount: _pendingSkipCoinsAmount);
         gameObject.SetActive(true);
     }
 
@@ -61,6 +94,8 @@ public class FaceRewardManager : MonoBehaviour
         chosenDie = null;
 
         if (gemRewardView != null) gemRewardView.Hide();
+
+        SetSkipCoinsPressedFeedbackActive(false);
 
         if (lootTable == null || facePickerView == null || PlayerDataContainer.Instance == null)
         {
@@ -84,6 +119,14 @@ public class FaceRewardManager : MonoBehaviour
             }
 
             _winStageFaceOfferCache = options;
+            _winStageSkipCoinsAmount = RollSkipFaceRewardCoins();
+        }
+
+        _pendingSkipCoinsAmount = _winStageSkipCoinsAmount;
+        if (_pendingSkipCoinsAmount <= 0)
+        {
+            _winStageSkipCoinsAmount = RollSkipFaceRewardCoins();
+            _pendingSkipCoinsAmount = _winStageSkipCoinsAmount;
         }
 
         facePickerView.Show(
@@ -95,13 +138,54 @@ public class FaceRewardManager : MonoBehaviour
                 gameObject.SetActive(false);
                 onBackToWin?.Invoke();
             },
-            onRewindToFacePick: RewindFacePickProgress);
+            onRewindToFacePick: RewindFacePickProgress,
+            onSkipForCoins: OnSkipFaceRewardForCoins,
+            skipCoinsPreviewAmount: _pendingSkipCoinsAmount);
         gameObject.SetActive(true);
+    }
+
+    private void OnSkipFaceRewardForCoins()
+    {
+        chosenFace = null;
+        chosenDie = null;
+
+        var amount = _pendingSkipCoinsAmount;
+        if (amount <= 0)
+            amount = RollSkipFaceRewardCoins();
+
+        var economy = RunEconomyManager.TryGetRuntime();
+        if (economy == null)
+        {
+            Debug.LogError("FaceRewardManager.OnSkipFaceRewardForCoins: RunEconomyManager not found.");
+            return;
+        }
+
+        economy.GrantGold(amount, null);
+        SetSkipCoinsPressedFeedbackActive(true);
+        CloseAfterSkipForCoins();
+    }
+
+    private int RollSkipFaceRewardCoins()
+    {
+        var min = Mathf.Min(skipFaceRewardCoinsMin, skipFaceRewardCoinsMax);
+        var max = Mathf.Max(skipFaceRewardCoinsMin, skipFaceRewardCoinsMax);
+        return UnityEngine.Random.Range(min, max + 1);
+    }
+
+    private void CloseAfterSkipForCoins()
+    {
+        if (facePickerView != null)
+            facePickerView.Hide();
+
+        FaceRewardEvents.OnFaceRewardCompleted?.Invoke(null);
+        ReleaseWinStageFaceOfferCache();
+        gameObject.SetActive(false);
     }
 
     private void ReleaseWinStageFaceOfferCache()
     {
         _winStageFaceOfferCache = null;
+        _winStageSkipCoinsAmount = 0;
     }
 
     private void RewindFacePickProgress()

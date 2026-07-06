@@ -194,6 +194,8 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         StopPrewarmSpreads();
         if (_entries.Count == 0)
             return;
+        if (!isActiveAndEnabled)
+            return;
 
         var dice = new List<DieAssetSO>(_entries.Keys);
         _prewarmRoutine = StartCoroutine(PrewarmSpreadsRoutine(dice));

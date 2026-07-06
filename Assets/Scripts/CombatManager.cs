@@ -5571,6 +5571,9 @@ public class CombatManager : MonoBehaviour
 
         ChangeState(CombatState.Victory);
 
+        if (player != null)
+            player.StatusEffects.ClearAll(BuildStatusContext());
+
         VictoryRewardBuffer.PendingGold = 0;
         if (activeEnemy != null && activeEnemy.enemyData != null)
         {

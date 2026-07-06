@@ -188,7 +188,7 @@ MonoBehaviour:
     poolRowBackground: {fileID: 21300000, guid: 62ab88e201fd7e64e94355802a0aaf05, type: 3}
   - effect: {fileID: 11400000, guid: 0ab2cbdfca9ccea469da4cc020ccd600, type: 2}
     icon: {fileID: 21300000, guid: 35a0ea07af5521e4cbc8f135122e17f0, type: 3}
-    background: {fileID: 0}
+    background: {fileID: 21300000, guid: 266ea71b1d4289f4a991e7ca404f3429, type: 3}
     poolRowBackground: {fileID: 21300000, guid: 266ea71b1d4289f4a991e7ca404f3429, type: 3}
   enemyResistanceIcons:
   - resistanceElement: 1

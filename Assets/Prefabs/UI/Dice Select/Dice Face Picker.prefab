@@ -875,7 +875,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 47f7bbfff91fab640a5da50dc378bda7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::FacePickerView
   panel: {fileID: 2773276181435246370}
   slotContainer: {fileID: 6369665378424701123}
   rewardSlotPrefab: {fileID: 4976156703028391988, guid: 76d6fe32549b6d9469ec81894f939d25, type: 3}
@@ -886,6 +886,9 @@ MonoBehaviour:
   phaseCObjects:
   - {fileID: 5164253671056085457}
   backButton: {fileID: 7701113518418248530}
+  skipForCoinsButton: {fileID: 2714685944877644898}
+  skipCoinsAmountText: {fileID: 9208005315507729947}
+  skipCoinsAmountFormat: Skip <style=Coin>+{0}</style>
 --- !u!1 &3113125071131916322
 GameObject:
   m_ObjectHideFlags: 0
@@ -1417,6 +1420,7 @@ RectTransform:
   - {fileID: 8143987514159174808}
   - {fileID: 8314923503412451460}
   - {fileID: 7031375163077162476}
+  - {fileID: 3915754837913098279}
   - {fileID: 4843085252870780299}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1436,11 +1440,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 743bd67069e0e8340aa033fcc0e523cb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::FaceRewardManager
   facePickerView: {fileID: 2372300537678174789}
   gemRewardView: {fileID: 2801150351336724603}
   lootTable: {fileID: 11400000, guid: 256756cec1270e04997fe6dafd8e6769, type: 2}
   closeDelay: 1
+  skipFaceRewardCoinsMin: 10
+  skipFaceRewardCoinsMax: 20
+  skipCoinsPressedFeedback: {fileID: 0}
 --- !u!114 &2546813267241431538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1973,10 +1980,10 @@ RectTransform:
   - {fileID: 6535952378687642584}
   m_Father: {fileID: 4958121573637337303}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -828, y: -435}
-  m_SizeDelta: {x: 163.53, y: 55.14}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 132, y: 78.80002}
+  m_SizeDelta: {x: 163.53003, y: 67.19}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2966243511730705861
 CanvasRenderer:
@@ -4530,3 +4537,139 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7597361024290441622, guid: 5eb470c4bc2b4264983788ae11f13a57, type: 3}
   m_PrefabInstance: {fileID: 8940721153749569513}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &9083664180342454239
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4958121573637337303}
+    m_Modifications:
+    - target: {fileID: 128001285633819076, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_text
+      value: Continue
+      objectReference: {fileID: 0}
+    - target: {fileID: 128001285633819076, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_fontSize
+      value: 22
+      objectReference: {fileID: 0}
+    - target: {fileID: 2264819737587340221, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_Name
+      value: Skip Button
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 217.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 67.19
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.00004460473
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -188.39996
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 78.80002
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8891244581736939904, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+--- !u!114 &2714685944877644898 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6603165502161095613, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+  m_PrefabInstance: {fileID: 9083664180342454239}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!224 &3915754837913098279 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5212958584552534008, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+  m_PrefabInstance: {fileID: 9083664180342454239}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9208005315507729947 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 128001285633819076, guid: fc5b913495e7b2c4f9867a7464425ed4, type: 3}
+  m_PrefabInstance: {fileID: 9083664180342454239}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
