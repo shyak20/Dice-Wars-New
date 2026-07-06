@@ -29,17 +29,10 @@ MonoBehaviour:
   uiTooltipBackground: {fileID: 21300000, guid: ef2484216e99c0941b22ffaf9b054f28, type: 3}
   attackAllEnemies: 0
   actions:
-  - rid: 7100000000000000111
   - rid: 7100000000000000112
   references:
     version: 2
     RefIds:
-    - rid: 7100000000000000111
-      type: {class: DealPlayerDamageOnSubmitAction, ns: , asm: Assembly-CSharp}
-      data:
-        activateImmediately: 0
-        triggerImmediatelyOnDrop: 0
-        damage: 5
     - rid: 7100000000000000112
       type: {class: IncreaseCombatMaxPowerAction, ns: , asm: Assembly-CSharp}
       data:

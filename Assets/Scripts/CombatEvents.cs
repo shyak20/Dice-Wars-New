@@ -35,6 +35,8 @@ public struct RollOutcomeVisualLine
     public EnemyController PreAssignedEnemy;
     /// <summary>When true with <see cref="PreAssignedEnemy"/>, only updates the enemy pool — does not set <see cref="FaceResult.DamageTargetEnemy"/>.</summary>
     public bool IsRelicPoolExtraLine;
+    /// <summary>Self-damage / player-only deferred rows that must land on the shared player element container (never enemy drag tokens).</summary>
+    public bool FlyToPlayerElementContainer;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>
@@ -88,6 +90,15 @@ public static class CombatEvents
     public static Action<Dictionary<PoolRowKey, int>> OnStoredActionsPoolUpdated;
     /// <summary>Force stored-actions pool UI to match combat (bust, reset). Skipped per roll when flyouts drive the bar.</summary>
     public static Action<Dictionary<PoolRowKey, int>> OnStoredActionsPoolIconsFullResync;
+
+    /// <summary>
+    /// When true, listeners must not overwrite pool amount text — Perfect Cast jackpot owns staggered value reveals.
+    /// Set by <see cref="CombatManager"/> for the jackpot presentation window.
+    /// </summary>
+    public static bool DeferStoredActionsPoolIconFullResync { get; private set; }
+
+    public static void SetDeferStoredActionsPoolIconFullResync(bool defer) => DeferStoredActionsPoolIconFullResync = defer;
+
     /// <summary>3D die position + outcome lines; optional if no listener.</summary>
     public static Action<DiceRollVisualPayload> OnDiceRollVisualFeedback;
 

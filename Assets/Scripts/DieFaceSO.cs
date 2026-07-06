@@ -51,7 +51,7 @@ public class DieFaceSO : ScriptableObject
     public int damageAttackTimes = 1;
     [Min(0)]
     public int armor;  // New independent armor value
-    [Tooltip("Curse faces only: HP damage you take when this turn is submitted (shown in the stored-actions pool).")]
+    [Tooltip("HP damage you take when this turn is submitted (shown in the player element container flyout).")]
     [Min(0)]
     public int selfDamage;
 

@@ -96,7 +96,7 @@ public class TurnRegistry
             OnValueAccumulated?.Invoke(ElementType.Defense, result.Armor);
         }
 
-        if (result.Type == DieType.Curse && result.SelfDamage > 0)
+        if (result.SelfDamage > 0)
             OnValueAccumulated?.Invoke(ElementType.Curse, result.SelfDamage);
 
         if (result.Type != DieType.Damage && result.Type != DieType.Armor && result.Type != DieType.Curse && result.Value > 0)

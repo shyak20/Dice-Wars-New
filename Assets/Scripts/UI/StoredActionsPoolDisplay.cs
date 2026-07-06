@@ -118,6 +118,19 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         return icon != null ? icon.FlyTargetRect : null;
     }
 
+    /// <summary>
+    /// Fly target for player-only pool rows (self-damage, heal, etc.). Uses the row icon when already visible;
+    /// otherwise the icon container so the first increment-mode flyout still has a valid destination.
+    /// </summary>
+    public RectTransform GetPlayerElementPoolFlyTarget(PoolRowKey key)
+    {
+        var row = GetFlyTargetRect(key);
+        if (row != null && row.gameObject.activeInHierarchy)
+            return row;
+
+        return GetIconContainerRect();
+    }
+
     public Sprite GetPoolRowSprite(PoolRowKey key)
     {
         if (runtimeRowIcons.TryGetValue(key, out var rt) && rt != null)
@@ -210,6 +223,9 @@ public class StoredActionsPoolDisplay : MonoBehaviour
 
     private void ApplyFullPoolSync(Dictionary<PoolRowKey, int> pools)
     {
+        if (!standalonePerEnemyPool && CombatEvents.DeferStoredActionsPoolIconFullResync)
+            return;
+
         displayedPools.Clear();
         if (pools != null)
         {

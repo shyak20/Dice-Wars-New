@@ -42,8 +42,8 @@ public class FaceResult
 
     public int SelfDamage { get; set; }
 
-    /// <summary>Pool row total for curse self-hit (not multiplied by attack times).</summary>
-    public int TotalSelfDamageContribution => Type == DieType.Curse ? Mathf.Max(0, SelfDamage) : 0;
+    /// <summary>Pool row total for self-hit on the player (curse face value and/or <see cref="DealPlayerDamageOnSubmitAction"/>).</summary>
+    public int TotalSelfDamageContribution => Mathf.Max(0, SelfDamage);
 
     /// <summary>Set when this resolve is the next Fire face after <see cref="TurnRegistry.PendingNextFireRollDoubleEnemyBurn"/>; doubles enemy burn stacks applied from this face only.</summary>
     public bool DoubleEnemyBurnStacksThisResolve { get; set; }

@@ -11,14 +11,19 @@ public class DealPlayerDamageOnSubmitAction : GameActionWithIcon
 
     protected override ActionVisualId VisualKey => ActionVisualId.DealPlayerDamageOnSubmit;
 
-    public override void Execute(GameActionContext context)
+    /// <summary>Accumulates into <see cref="FaceResult.SelfDamage"/> when the face has no <see cref="DieFaceSO.selfDamage"/> value.</summary>
+    public void AppendPoolContributionIfAny(FaceResult result)
     {
-        if (context?.Player == null || damage <= 0)
+        if (ActivateImmediately || result == null || damage <= 0 || result.SelfDamage > 0)
             return;
 
-        context.Player.TakeDamage(damage, PlayerDamageSource.CurseFace);
+        result.SelfDamage = damage;
+    }
 
-        if (GameActionDebug.Enabled)
-            Debug.Log($"[DealPlayerDamageOnSubmit] Player took {damage} damage.");
+    public override void Execute(GameActionContext context)
+    {
+        // Applied once on submit via CombatManager.ApplyCurseSelfDamageFromChanneledFaces from FaceResult.SelfDamage.
+        if (GameActionDebug.Enabled && damage > 0)
+            Debug.Log($"[DealPlayerDamageOnSubmit] {damage} self damage resolved via FaceResult.SelfDamage on submit.");
     }
 }

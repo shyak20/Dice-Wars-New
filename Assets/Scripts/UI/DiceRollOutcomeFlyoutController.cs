@@ -738,7 +738,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
                 // Single living enemy: enemy-targeted attacks/debuffs fly into that enemy's element container (and assign to it),
                 // rather than the shared player pool. Falls back to the player pool when the enemy has no element container wired.
-                if (line.EnemyTargeted && payload?.SourceFace != null && TryResolveSoloFlyEnemy(out var soloEnemy))
+                if (!line.FlyToPlayerElementContainer &&
+                    line.EnemyTargeted && payload?.SourceFace != null && TryResolveSoloFlyEnemy(out var soloEnemy))
                 {
                     var soloTarget = ResolveEnemyFlyTargetRect(soloEnemy, line, out var soloIsEnemyOwnPool);
                     if (soloTarget == null ||
@@ -919,6 +920,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private bool ShouldDivertLineToToken(DiceRollVisualPayload payload, RollOutcomeVisualLine line)
     {
+        if (line.FlyToPlayerElementContainer)
+            return false;
         if (line.PreAssignedEnemy != null)
             return false;
         if (line.AttackAllEnemies)
@@ -1673,7 +1676,13 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                 return enemyStatusBarFlyTarget;
         }
 
-        return storedActionsPoolDisplay != null ? storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey) : null;
+        if (storedActionsPoolDisplay == null)
+            return null;
+
+        if (line.FlyToPlayerElementContainer || (!line.EnemyTargeted && !line.IsVisualFlyoutOnly))
+            return storedActionsPoolDisplay.GetPlayerElementPoolFlyTarget(line.RowKey);
+
+        return storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey);
     }
 
     private StatusEffectTarget? ResolveStatusTarget(RollOutcomeVisualLine line)

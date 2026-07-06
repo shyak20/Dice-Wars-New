@@ -1106,6 +1106,7 @@ public class CombatManager : MonoBehaviour
         rollsRemaining = maxRolls;
         currentBatchIsFirstRollOfTurn = false;
         CalculateMaxPower();
+        CombatEvents.SetDeferStoredActionsPoolIconFullResync(false);
         NotifyAllStoredActionsPoolUI();
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
 
@@ -2997,7 +2998,7 @@ public class CombatManager : MonoBehaviour
             Damage = face.type == DieType.Curse ? 0 : rolledDamage,
             DamageAttackTimes = face.type == DieType.Damage ? Mathf.Max(1, face.damageAttackTimes) : 1,
             Armor = face.type == DieType.Curse ? 0 : face.armor,
-            SelfDamage = face.type == DieType.Curse ? Mathf.Max(0, face.selfDamage) : 0,
+            SelfDamage = Mathf.Max(0, face.selfDamage),
         };
         if (face.actions != null)
         {
@@ -3213,7 +3214,8 @@ public class CombatManager : MonoBehaviour
             pendingRollVisualSequences = 0;
         }
 
-        if (pendingRollVisualSequences == 0 && currentState != CombatState.BustCheck)
+        if (pendingRollVisualSequences == 0 && currentState != CombatState.BustCheck &&
+            !CombatEvents.DeferStoredActionsPoolIconFullResync)
             CombatEvents.OnStoredActionsPoolIconsFullResync?.Invoke(BuildStoredActionsPool());
     }
 
@@ -3239,9 +3241,51 @@ public class CombatManager : MonoBehaviour
                 thorns.AppendPoolContributionIfAny(result, thorns.ActivateImmediately);
             if (a is HealAction heal)
                 heal.AppendPoolContributionIfAny(result);
+            if (a is DealPlayerDamageOnSubmitAction dealPlayerDamage)
+                dealPlayerDamage.AppendPoolContributionIfAny(result);
             if (a is StartNextTurnWithArmorAction startNextTurnArmor)
                 startNextTurnArmor.AppendPoolContributionIfAny(result);
         }
+
+        EnsureSelfDamageFromDeferredActions(result);
+    }
+
+    /// <summary>
+    /// Resolves deferred self-hit from <see cref="DealPlayerDamageOnSubmitAction"/> (and curse face value already on <see cref="FaceResult.SelfDamage"/>).
+    /// Called before flyout lines are built so self-damage always spawns a player-container fly piece.
+    /// </summary>
+    static void EnsureSelfDamageFromDeferredActions(FaceResult result)
+    {
+        if (result == null)
+            return;
+
+        if (result.SelfDamage > 0)
+            return;
+
+        var fromActions = SumDeferredDealPlayerDamage(result.Actions);
+        if (fromActions <= 0 && result.Face?.actions != null)
+            fromActions = SumDeferredDealPlayerDamage(result.Face.actions);
+
+        if (fromActions > 0)
+            result.SelfDamage = fromActions;
+    }
+
+    static int SumDeferredDealPlayerDamage(IReadOnlyList<IGameAction> actions)
+    {
+        if (actions == null || actions.Count == 0)
+            return 0;
+
+        var sum = 0;
+        for (var i = 0; i < actions.Count; i++)
+        {
+            var action = actions[i];
+            if (action == null || action.ActivateImmediately)
+                continue;
+            if (action is DealPlayerDamageOnSubmitAction deal && deal.Damage > 0)
+                sum += deal.Damage;
+        }
+
+        return sum;
     }
 
     /// <param name="fromRelicCombatStart">When true, the first player roll batch of the fight is skipped (watchers start from batch 2).</param>
@@ -3450,9 +3494,11 @@ public class CombatManager : MonoBehaviour
         bool kineticArmorThisRoll,
         bool includeParkedRerollLine)
     {
+        EnsureSelfDamageFromDeferredActions(result);
+
         var lines = new List<RollOutcomeVisualLine>();
 
-        void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false)
+        void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false, bool flyToPlayerElementContainer = false)
         {
             if (amt <= 0) return;
             var attackAll = result.AttackAllEnemies && enemyTargeted;
@@ -3462,7 +3508,11 @@ public class CombatManager : MonoBehaviour
                 Amount = amt,
                 IconOverride = icon,
                 EnemyTargeted = enemyTargeted,
-                AttackAllEnemies = attackAll
+                AttackAllEnemies = attackAll,
+                FlyToPlayerElementContainer = flyToPlayerElementContainer,
+                BackgroundOverride = flyToPlayerElementContainer
+                    ? GameIconCatalog.TryGetPoolRowBackground(key)
+                    : null
             });
         }
 
@@ -3489,7 +3539,12 @@ public class CombatManager : MonoBehaviour
         else
             AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted);
         AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor));
-        AddLine(PoolRowKey.FromDieType(DieType.Curse), result.TotalSelfDamageContribution, GameIconCatalog.GetElementIcon(DieType.Curse));
+        AddLine(
+            PoolRowKey.FromDieType(DieType.Curse),
+            result.TotalSelfDamageContribution,
+            GameIconCatalog.GetElementIcon(DieType.Curse),
+            enemyTargeted: false,
+            flyToPlayerElementContainer: true);
 
         if (result.ActionPoolContributions != null)
         {
@@ -3934,7 +3989,7 @@ public class CombatManager : MonoBehaviour
             {
                 face.Damage *= appliedMultiplier;
                 face.Armor *= appliedMultiplier;
-                if (face.Type == DieType.Curse)
+                if (face.SelfDamage > 0)
                     face.SelfDamage *= appliedMultiplier;
             }
 
@@ -3961,6 +4016,7 @@ public class CombatManager : MonoBehaviour
             var poolsAfter = SnapshotStoredActionsPool();
             if (CheckVictory())
             {
+                CombatEvents.SetDeferStoredActionsPoolIconFullResync(false);
                 NotifyAllStoredActionsPoolUI();
                 return;
             }
@@ -3968,7 +4024,10 @@ public class CombatManager : MonoBehaviour
             // Reorder: multiply + play the Perfect Cast sequence first, THEN wait for the player to attach the
             // rolled outcomes to enemies, THEN continue to the hit-fx fly (SubmitTurn).
             if (jackpotPresentation != null)
+            {
+                CombatEvents.SetDeferStoredActionsPoolIconFullResync(true);
                 StartCoroutine(CoJackpotAfterFlyoutsThenPresentation(jackpotMultiplier, poolsBefore, poolsAfter));
+            }
             else
             {
                 StartCoroutine(CoAfterRollVisualsThen(() =>
@@ -4520,7 +4579,7 @@ public class CombatManager : MonoBehaviour
         for (var i = 0; i < channeledFaces.Count; i++)
         {
             var f = channeledFaces[i];
-            if (f == null || f.Type != DieType.Curse)
+            if (f == null)
                 continue;
             total += Mathf.Max(0, f.SelfDamage);
         }
@@ -5218,11 +5277,18 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator CoFinishJackpotAfterPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
     {
-        // Unity does not reliably run a nested IEnumerator with "yield return routine()"; must use StartCoroutine.
-        yield return StartCoroutine(jackpotPresentation.Run(multiplier, poolsBefore, poolsAfter));
-        NotifyAllStoredActionsPoolUI();
-        // Perfect Cast reorder: only after the sequence does the player attach outcomes to enemies, then the hit-fx flies.
-        RunTargetAssignmentGate(SubmitTurn);
+        try
+        {
+            // Unity does not reliably run a nested IEnumerator with "yield return routine()"; must use StartCoroutine.
+            yield return StartCoroutine(jackpotPresentation.Run(multiplier, poolsBefore, poolsAfter));
+            NotifyAllStoredActionsPoolUI();
+            // Perfect Cast reorder: only after the sequence does the player attach outcomes to enemies, then the hit-fx flies.
+            RunTargetAssignmentGate(SubmitTurn);
+        }
+        finally
+        {
+            CombatEvents.SetDeferStoredActionsPoolIconFullResync(false);
+        }
     }
 
     private IEnumerator CoExecuteEnemyTurnIntentLegacy(EnemyActionSO action)
