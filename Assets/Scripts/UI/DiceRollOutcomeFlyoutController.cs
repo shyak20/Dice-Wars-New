@@ -717,6 +717,25 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                     continue;
                 }
 
+                if (line.PreAssignedEnemy != null && line.PreAssignedEnemy.IsAlive)
+                {
+                    var assignedTarget = ResolveEnemyFlyTargetRect(line.PreAssignedEnemy, line, out var assignedIsEnemyOwnPool);
+                    if (assignedTarget == null ||
+                        !UiRectCenterToParentLocal(assignedTarget, flyoutParent, out Vector2 assignedEnd))
+                    {
+                        Destroy(lineRects[i].gameObject);
+                        continue;
+                    }
+
+                    Vector2 assignedStart = stackRestAnchored[i];
+                    Vector2 assignedMid = (assignedStart + assignedEnd) * 0.5f + Vector2.up * arcHeightPixels;
+                    TryBeginDieDissolveForPayload(payload);
+                    flyCoroutines.Add(StartCoroutine(FlyLineToEnemyAssignRoutine(
+                        payload, lineRects[i], assignedStart, assignedMid, assignedEnd, line, line.PreAssignedEnemy,
+                        applyToSharedPool: !assignedIsEnemyOwnPool)));
+                    continue;
+                }
+
                 // Single living enemy: enemy-targeted attacks/debuffs fly into that enemy's element container (and assign to it),
                 // rather than the shared player pool. Falls back to the player pool when the enemy has no element container wired.
                 if (line.EnemyTargeted && payload?.SourceFace != null && TryResolveSoloFlyEnemy(out var soloEnemy))
@@ -900,6 +919,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
     private bool ShouldDivertLineToToken(DiceRollVisualPayload payload, RollOutcomeVisualLine line)
     {
+        if (line.PreAssignedEnemy != null)
+            return false;
         if (line.AttackAllEnemies)
             return false;
         if (payload?.SourceFace == null || !line.EnemyTargeted)

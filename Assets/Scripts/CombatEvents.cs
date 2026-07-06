@@ -31,6 +31,10 @@ public struct RollOutcomeVisualLine
     public bool IsSplitDamageHitLine;
     /// <summary>0-based hit index when <see cref="IsSplitDamageHitLine"/> is set.</summary>
     public int DamageHitIndex;
+    /// <summary>When set, flies to this enemy's element container without drag assignment (relic random-enemy bonus).</summary>
+    public EnemyController PreAssignedEnemy;
+    /// <summary>When true with <see cref="PreAssignedEnemy"/>, only updates the enemy pool — does not set <see cref="FaceResult.DamageTargetEnemy"/>.</summary>
+    public bool IsRelicPoolExtraLine;
 }
 
 /// <summary>Spawned when a die settles; flyouts target <see cref="StoredActionsPoolDisplay"/>.</summary>

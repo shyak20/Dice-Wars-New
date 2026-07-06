@@ -366,20 +366,84 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEn
 
     public override void Execute(GameActionContext ctx)
     {
-        if (ctx.TriggeringFace == null) return;
-        if (bonusType == RollBonusType.Burn)
-        {
-            if (ctx.RelicPhase != RelicPhases.AfterPowerChangedFromRoll) return;
-        }
-        else
-        {
-            if (ctx.RelicPhase != RelicPhases.ModifyFaceResult) return;
-        }
+        if (ctx?.TriggeringFace == null || ctx.CombatManager == null)
+            return;
 
         if (requiredFaceValues == null || requiredFaceValues.IsEmpty || amount == 0)
             return;
 
-        AddValueBasedOnRollAction.ExecuteSameRollBonus(ctx, requiredFaceValues, bonusType, amount, burnDefinition);
+        if (!requiredFaceValues.Matches(ctx.TriggeringFace.Value))
+            return;
+
+        switch (bonusType)
+        {
+            case RollBonusType.Armor:
+                if (ctx.RelicPhase != RelicPhases.ModifyFaceResult)
+                    return;
+                ctx.TriggeringFace.Armor += amount;
+                break;
+            case RollBonusType.Damage:
+                if (ctx.RelicPhase != RelicPhases.ModifyFaceResult)
+                    return;
+                TryAppendRandomEnemyPoolBonus(ctx, RollBonusType.Damage, null, amount);
+                break;
+            case RollBonusType.Burn:
+                if (ctx.RelicPhase != RelicPhases.AfterPowerChangedFromRoll)
+                    return;
+                if (burnDefinition == null)
+                {
+                    UnityEngine.Debug.LogError("RelicAddValueOnFaceListAction: assign burnDefinition when Bonus Type is Burn.");
+                    return;
+                }
+
+                TryAppendRandomEnemyPoolBonus(ctx, RollBonusType.Burn, burnDefinition, amount);
+                break;
+        }
+    }
+
+    static void TryAppendRandomEnemyPoolBonus(GameActionContext ctx, RollBonusType bonusType, BurnEffectSO burnDefinition, int amount)
+    {
+        var enemy = ctx.CombatManager.PickRandomLivingEnemy();
+        if (enemy == null)
+            return;
+
+        var face = ctx.TriggeringFace;
+        var stacks = amount;
+        PoolRowKey poolKey;
+        Sprite icon;
+        Sprite rowBackground = null;
+        StatusEffectSO deferredStatus = null;
+
+        switch (bonusType)
+        {
+            case RollBonusType.Damage:
+                poolKey = PoolRowKey.FromDieType(DieType.Damage);
+                icon = GameIconCatalog.GetElementIcon(DieType.Damage);
+                break;
+            case RollBonusType.Burn:
+                stacks = ApplyStatusEffectAction.ResolveApplyStacks(
+                    burnDefinition, amount, ctx, face);
+                if (stacks <= 0)
+                    return;
+
+                poolKey = PoolRowKey.Custom(burnDefinition.name);
+                icon = GameIconCatalog.GetStatusIcon(burnDefinition);
+                rowBackground = GameIconCatalog.TryGetPoolRowBackground(poolKey);
+                deferredStatus = burnDefinition;
+                break;
+            default:
+                return;
+        }
+
+        face.ActionPoolContributions.Add(new FacePoolExtraContribution
+        {
+            PoolKey = poolKey,
+            Amount = stacks,
+            Icon = icon,
+            PoolRowBackground = rowBackground,
+            PreAssignedEnemy = enemy,
+            DeferredEnemyStatusDefinition = deferredStatus
+        });
     }
 }
 

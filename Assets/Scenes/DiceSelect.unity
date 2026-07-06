@@ -7297,11 +7297,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: simulationSpeed
-      value: 0.6
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: UVModule.startFrame.scalar
-      value: 0.625
+      value: 0.9375
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: InitialModule.startSizeY.scalar
@@ -7740,11 +7740,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: simulationSpeed
-      value: 0.6
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: UVModule.startFrame.scalar
-      value: 0.625
+      value: 0.9375
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: InitialModule.startSizeY.scalar
@@ -13895,11 +13895,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: simulationSpeed
-      value: 0.6
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: UVModule.startFrame.scalar
-      value: 0.625
+      value: 0.9375
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: InitialModule.startSizeY.scalar
@@ -14130,6 +14130,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &1137911679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15512,11 +15519,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: simulationSpeed
-      value: 0.6
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: UVModule.startFrame.scalar
-      value: 0.625
+      value: 0.9375
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: InitialModule.startSizeY.scalar
@@ -28537,6 +28544,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &1510695957
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30999,11 +31013,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: simulationSpeed
-      value: 0.6
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: UVModule.startFrame.scalar
-      value: 0.625
+      value: 0.9375
       objectReference: {fileID: 0}
     - target: {fileID: 5742142787410987701, guid: bf8326b0769508d449e5e7f0fb1cd93d, type: 3}
       propertyPath: InitialModule.startSizeY.scalar
@@ -34573,6 +34587,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &1675593946400188570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34587,6 +34608,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &1675593947032503507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34601,6 +34629,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &1675593947994975915
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34615,6 +34650,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &1675593948159967223
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34629,6 +34671,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &1675593948279619897
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34643,6 +34692,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 0}
   dieData: {fileID: 0}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!4 &2244053129956844675
 Transform:
   m_ObjectHideFlags: 0
@@ -35453,6 +35509,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DieVisualizer
   meshRenderer: {fileID: 8782684420334980100}
   dieData: {fileID: 11400000, guid: 67dbaeb1290737340a509d4831d1fd1b, type: 2}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!1001 &8782684420499578952
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -35569,6 +35632,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DieVisualizer
   meshRenderer: {fileID: 8782684420499578955}
   dieData: {fileID: 11400000, guid: af5ae1f182387454bb002a3799780387, type: 2}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!1001 &8782684420673838632
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -35685,6 +35755,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DieVisualizer
   meshRenderer: {fileID: 8782684420673838635}
   dieData: {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
+  faceEffectIconRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!1001 &8782684421046052473
 PrefabInstance:
   m_ObjectHideFlags: 0

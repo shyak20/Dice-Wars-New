@@ -29,4 +29,8 @@ public struct FacePoolExtraContribution
     public bool VisualFlyoutOnly;
     /// <summary>When true with <see cref="VisualFlyoutOnly"/>, fly to the player status bar instead of the element pool.</summary>
     public bool FlyToPlayerStatusBar;
+    /// <summary>When set, this row is routed to that enemy's element container (e.g. relic random-enemy bonus) without changing the face's main damage target.</summary>
+    public EnemyController PreAssignedEnemy;
+    /// <summary>Deferred enemy status resolved at submit when <see cref="PoolSourceAction"/> is null (e.g. relic burn bonus).</summary>
+    public StatusEffectSO DeferredEnemyStatusDefinition;
 }

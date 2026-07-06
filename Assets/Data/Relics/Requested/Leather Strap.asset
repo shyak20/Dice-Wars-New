@@ -13,11 +13,12 @@ MonoBehaviour:
   m_Name: Leather Strap
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Leather Strap
-  description: Whenever you roll <style=Die1>1</style>,<style=Die2>2</style>,<style=Die3>3</style> add <style=Shield>+2</style>
+  description: Whenever you roll <style=Die1>1</style>,<style=Die2>2</style>,<style=Die3>3</style>
+    add <style=Shield>+1</style>
   rarity: 1
   icon: {fileID: 21300000, guid: 67fd17ef8db52e94b802bd31b8e63948, type: 3}
-  shopGoldPrice: 0
   barBenefitDisplayValue: 0
+  exclusiveHero: {fileID: 0}
   actions:
   - rid: 6494956586993451271
   references:
@@ -27,7 +28,9 @@ MonoBehaviour:
       type: {class: RelicAddValueOnFaceListAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 1
-        requiredFaceValues: 010000000200000003000000
+        legacyRequiredFaceValues: 
+        requiredFaceValues:
+          values: 010000000200000003000000
         bonusType: 0
-        amount: 2
+        amount: 1
         burnDefinition: {fileID: 0}

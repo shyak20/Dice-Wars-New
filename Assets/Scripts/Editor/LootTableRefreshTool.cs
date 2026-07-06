@@ -10,6 +10,9 @@ using UnityEngine;
 public static class LootTableRefreshTool
 {
     const string FacesLootTablePath = "Assets/Data/Faces/Faces Loot Table.asset";
+    const string CommonFacesLootTablePath = "Assets/Data/Faces/Common Faces Loot Table.asset";
+    const string RareFacesLootTablePath = "Assets/Data/Faces/Rare Faces Loot Table.asset";
+    const string LegendaryFacesLootTablePath = "Assets/Data/Faces/Legendary Faces Loot Table.asset";
     const string CursesLootTablePath = "Assets/Data/Faces/Curses/Curses Loot Table.asset";
     const string AllGemsLootTablePath = "Assets/Data/Gems/All Gems Loot Table.asset";
     const string Level1GemsLootTablePath = "Assets/Data/Gems/Level 1 Gems.asset";
@@ -20,7 +23,7 @@ public static class LootTableRefreshTool
     [MenuItem("DiceGame/Loot Tables/Refresh All From Project")]
     public static void RefreshAllFromProject()
     {
-        var (faces, curses) = RefreshFaceAndCurseLootTables();
+        var (faces, curses, common, rare, legendary) = RefreshFaceAndCurseLootTables();
         var allGems = RefreshAllGemsLootTable();
         var level1 = RefreshGemLootTableForLevel(1, Level1GemsLootTablePath);
         var level2 = RefreshGemLootTableForLevel(2, Level2GemsLootTablePath);
@@ -31,12 +34,13 @@ public static class LootTableRefreshTool
 
         Debug.Log(
             "LootTableRefreshTool: refreshed loot tables — " +
-            $"Faces={faces}, Curses={curses}, AllGems={allGems}, Level1Gems={level1}, Level2Gems={level2}, Level3Gems={level3}, Relics={relics}.");
+            $"Faces={faces}, CommonFaces={common}, RareFaces={rare}, LegendaryFaces={legendary}, Curses={curses}, " +
+            $"AllGems={allGems}, Level1Gems={level1}, Level2Gems={level2}, Level3Gems={level3}, Relics={relics}.");
     }
 
-    static (int faces, int curses) RefreshFaceAndCurseLootTables()
+    static (int faces, int curses, int common, int rare, int legendary) RefreshFaceAndCurseLootTables()
     {
-        var allFaces = FindAllAssets<DieFaceSO>();
+        var allFaces = FindAllFaceAssetsExcludingStartingFolders();
         var faces = new List<DieFaceSO>();
         var curses = new List<DieFaceSO>();
         for (var i = 0; i < allFaces.Count; i++)
@@ -53,12 +57,87 @@ public static class LootTableRefreshTool
         faceTable.allPossibleFaces = faces;
         EditorUtility.SetDirty(faceTable);
 
+        var rarityConfig = faceTable.rarityConfig;
+        var common = RefreshFaceLootTableForRarity(FaceRarity.Common, CommonFacesLootTablePath, faces, rarityConfig);
+        var rare = RefreshFaceLootTableForRarity(FaceRarity.Rare, RareFacesLootTablePath, faces, rarityConfig);
+        var legendary = RefreshFaceLootTableForRarity(FaceRarity.Legendary, LegendaryFacesLootTablePath, faces, rarityConfig);
+
         var curseTable = LoadOrCreateCurseLootTable();
         Undo.RecordObject(curseTable, "Refresh Curses Loot Table");
         curseTable.allPossibleCurses = curses;
         EditorUtility.SetDirty(curseTable);
 
-        return (faces.Count, curses.Count);
+        return (faces.Count, curses.Count, common, rare, legendary);
+    }
+
+    static int RefreshFaceLootTableForRarity(
+        FaceRarity rarity,
+        string assetPath,
+        List<DieFaceSO> sourceFaces,
+        RarityConfigSO rarityConfig)
+    {
+        var table = LoadOrCreateFaceLootTable(assetPath, $"{rarity} Faces Loot Table", rarityConfig);
+        var filtered = new List<DieFaceSO>();
+        for (var i = 0; i < sourceFaces.Count; i++)
+        {
+            var face = sourceFaces[i];
+            if (face != null && face.rarity == rarity)
+                filtered.Add(face);
+        }
+
+        Undo.RecordObject(table, $"Refresh {rarity} Faces Loot Table");
+        table.allPossibleFaces = filtered;
+        EditorUtility.SetDirty(table);
+        return filtered.Count;
+    }
+
+    static FaceLootTableSO LoadOrCreateFaceLootTable(string assetPath, string assetName, RarityConfigSO rarityConfig)
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<FaceLootTableSO>(assetPath);
+        if (existing != null)
+            return existing;
+
+        var created = ScriptableObject.CreateInstance<FaceLootTableSO>();
+        created.name = assetName;
+        created.rarityConfig = rarityConfig;
+        AssetDatabase.CreateAsset(created, assetPath);
+        return created;
+    }
+
+    /// <summary>Excludes faces authored under per-type Starting folders (e.g. Starting Base Physical).</summary>
+    static bool IsUnderStartingFaceFolder(string assetPath)
+    {
+        var parts = assetPath.Split('/');
+        for (var i = 0; i < parts.Length - 1; i++)
+        {
+            var segment = parts[i];
+            if (segment.IndexOf("Starting", StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+            // Defense typo folder: Stating Defense
+            if (segment.IndexOf("Stating", StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    static List<DieFaceSO> FindAllFaceAssetsExcludingStartingFolders()
+    {
+        var guids = AssetDatabase.FindAssets($"t:{nameof(DieFaceSO)}");
+        var results = new List<DieFaceSO>(guids.Length);
+        for (var i = 0; i < guids.Length; i++)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            if (IsUnderStartingFaceFolder(path))
+                continue;
+
+            var asset = AssetDatabase.LoadAssetAtPath<DieFaceSO>(path);
+            if (asset != null)
+                results.Add(asset);
+        }
+
+        results.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.Ordinal));
+        return results;
     }
 
     static CurseLootSO LoadOrCreateCurseLootTable()

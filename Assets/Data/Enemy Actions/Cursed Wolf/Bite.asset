@@ -28,7 +28,9 @@ MonoBehaviour:
   - rid: 6557384174812266576
   actionTooltips:
   - title: Bite
-    description: Deal {0} Damage, Heal amount of unblocked damage
+    description: 'Deal {0} Damage twice.
+
+      Heal amount of unblocked damage'
   references:
     version: 2
     RefIds:
@@ -38,4 +40,4 @@ MonoBehaviour:
         activateImmediately: 0
         triggerImmediatelyOnDrop: 0
         damage: 4
-        numberOfAttacks: 1
+        numberOfAttacks: 2

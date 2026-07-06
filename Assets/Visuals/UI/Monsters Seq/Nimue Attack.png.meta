@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 5c1a8d3f761329049bfbe1f54dc8e8cf
+guid: ae813cb8fb2d9d141b25d0d737129ede
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -69,7 +69,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -93,17 +93,30 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Nimue0_0
+      name: Nimue Attack_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 3136
-        width: 1176
-        height: 784
+        y: 3375
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,20 +125,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 33b6d7ccbb1afa041a0e5769f4294fb9
-      internalID: -1862756426
+      spriteID: b8d6ce65ab22174428ba62cf16ee97ad
+      internalID: -314269962
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_1
+      name: Nimue Attack_1
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 3136
-        width: 1176
-        height: 784
+        x: 844
+        y: 3375
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -134,20 +147,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1af8eaaedc0191a46860d32fd771f180
-      internalID: 1145432915
+      spriteID: 2843aedbf2258f6408e0456b8f069643
+      internalID: 1354476549
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_2
+      name: Nimue Attack_2
       rect:
         serializedVersion: 2
-        x: 2352
-        y: 3136
-        width: 1176
-        height: 784
+        x: 1688
+        y: 3375
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -156,20 +169,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 389982400b52f5147a53e4480469da50
-      internalID: -2053392036
+      spriteID: 8e107f576841fc94c8b31c38f91b0bc4
+      internalID: -2022410835
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_3
+      name: Nimue Attack_3
       rect:
         serializedVersion: 2
-        x: 0
-        y: 2352
-        width: 1176
-        height: 784
+        x: 2532
+        y: 3375
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -178,64 +191,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 081cd2b27b341c94591d137618e29d29
-      internalID: 531387079
+      spriteID: 6b7d605e458d03d4187f6b13e5bcd096
+      internalID: -2097591975
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_4
-      rect:
-        serializedVersion: 2
-        x: 1176
-        y: 2352
-        width: 1176
-        height: 784
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 76c28133c87aa194da139420ea25f530
-      internalID: 797238784
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Nimue0_5
-      rect:
-        serializedVersion: 2
-        x: 2352
-        y: 2352
-        width: 1176
-        height: 784
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f01e13f6fcb56ce488d76153b6ef65a9
-      internalID: 675970287
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Nimue0_6
+      name: Nimue Attack_4
       rect:
         serializedVersion: 2
         x: 0
-        y: 1568
-        width: 1176
-        height: 784
+        y: 2700
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -244,20 +213,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2fbed3f43d3524e43a800271b9c42fe4
-      internalID: 801197621
+      spriteID: 7e0bc0cba64f4a643a4838fec84460b1
+      internalID: -1489816662
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_7
+      name: Nimue Attack_5
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 1568
-        width: 1176
-        height: 784
+        x: 844
+        y: 2700
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -266,20 +235,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e8334d4ccd731954db2a7de5dee97528
-      internalID: 983876030
+      spriteID: 745bb2912cc4d9b489e13bed1146b917
+      internalID: 2099090920
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_8
+      name: Nimue Attack_6
       rect:
         serializedVersion: 2
-        x: 2352
-        y: 1568
-        width: 1176
-        height: 784
+        x: 1688
+        y: 2700
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -288,20 +257,42 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 45a6e49efc9b9154fa8d64264733aa2e
-      internalID: -2118751532
+      spriteID: 6216eaa70258d3649baf670b34d0e8d6
+      internalID: -791157440
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_9
+      name: Nimue Attack_7
+      rect:
+        serializedVersion: 2
+        x: 2532
+        y: 2700
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a99dd0f16481b46488bbe3799252169e
+      internalID: -1941696331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_8
       rect:
         serializedVersion: 2
         x: 0
-        y: 784
-        width: 1176
-        height: 784
+        y: 2025
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -310,20 +301,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 847f1b8d0e8ccb44383bc44ef0c59604
-      internalID: -1927751520
+      spriteID: c0b9717f1dafcfa42bc1e8b3a0396814
+      internalID: 514078357
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_10
+      name: Nimue Attack_9
       rect:
         serializedVersion: 2
-        x: 1176
-        y: 784
-        width: 1176
-        height: 784
+        x: 844
+        y: 2025
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -332,20 +323,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7eecdfa5dd8ac034d8d534a99e319c56
-      internalID: 715707566
+      spriteID: 949f878880fa4fe43857ba131fdd57a3
+      internalID: -1133593693
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_11
+      name: Nimue Attack_10
       rect:
         serializedVersion: 2
-        x: 2352
-        y: 784
-        width: 1176
-        height: 784
+        x: 1688
+        y: 2025
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -354,20 +345,218 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 441e25fad1172ff4886d009058834f3e
-      internalID: -991598660
+      spriteID: d06a1bc15e9fd4d498f43434a624c48c
+      internalID: 1919233083
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_12
+      name: Nimue Attack_11
+      rect:
+        serializedVersion: 2
+        x: 2532
+        y: 2025
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f297ac9c2fb719a4283c7de4d99a55b9
+      internalID: -1157451442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1350
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15b1673dc46568346b6d21e07a5ea24f
+      internalID: 106380424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_13
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 1350
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 941859971eac0c44eade6ddf01316983
+      internalID: 591503986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_14
+      rect:
+        serializedVersion: 2
+        x: 1688
+        y: 1350
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4934b02bce86f1244b20d303e4f65b78
+      internalID: 1821048450
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_15
+      rect:
+        serializedVersion: 2
+        x: 2532
+        y: 1350
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c67b4b3daf851b54bbd9f980ba0e3ba3
+      internalID: 816239066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 675
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3bf7f3d93790e9f43a198f937692cdde
+      internalID: -2070257364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_17
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 675
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e883e3cfccf68aa4abd719d7b77683a4
+      internalID: -1008322541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_18
+      rect:
+        serializedVersion: 2
+        x: 1688
+        y: 675
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d4da78280d78e964e99ffdfa4b1bdbaa
+      internalID: 784649995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_19
+      rect:
+        serializedVersion: 2
+        x: 2532
+        y: 675
+        width: 844
+        height: 675
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3013b565420455b4091ecc3f19e96d29
+      internalID: 1459707482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nimue Attack_20
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1176
-        height: 784
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -376,20 +565,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e957830ed552a634a9988538c46da4fe
-      internalID: 1654124813
+      spriteID: c5fa3ee1d8809064c862e7d043646bf0
+      internalID: -1417340519
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Nimue0_13
+      name: Nimue Attack_21
       rect:
         serializedVersion: 2
-        x: 1176
+        x: 844
         y: 0
-        width: 1176
-        height: 784
+        width: 844
+        height: 675
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -398,30 +587,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ccdab1f08ff20124cb1d43a172baa345
-      internalID: 1479151599
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Nimue0_14
-      rect:
-        serializedVersion: 2
-        x: 2352
-        y: 0
-        width: 1176
-        height: 784
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2d8918dbf54b54c45aab5973a70ab0ef
-      internalID: 989111358
+      spriteID: d99e1e28d1f712a44a5e7278a8c919b8
+      internalID: -898094214
       vertices: []
       indices: 
       edges: []
@@ -440,23 +607,30 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":5.0},"gridSpriteSize":{"x":1176.0,"y":784.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":4.0,"y":6.0},"gridSpriteSize":{"x":844.0,"y":675.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Nimue0_0: -1862756426
-      Nimue0_1: 1145432915
-      Nimue0_10: 715707566
-      Nimue0_11: -991598660
-      Nimue0_12: 1654124813
-      Nimue0_13: 1479151599
-      Nimue0_14: 989111358
-      Nimue0_2: -2053392036
-      Nimue0_3: 531387079
-      Nimue0_4: 797238784
-      Nimue0_5: 675970287
-      Nimue0_6: 801197621
-      Nimue0_7: 983876030
-      Nimue0_8: -2118751532
-      Nimue0_9: -1927751520
+      Nimue Attack_0: -314269962
+      Nimue Attack_1: 1354476549
+      Nimue Attack_10: 1919233083
+      Nimue Attack_11: -1157451442
+      Nimue Attack_12: 106380424
+      Nimue Attack_13: 591503986
+      Nimue Attack_14: 1821048450
+      Nimue Attack_15: 816239066
+      Nimue Attack_16: -2070257364
+      Nimue Attack_17: -1008322541
+      Nimue Attack_18: 784649995
+      Nimue Attack_19: 1459707482
+      Nimue Attack_2: -2022410835
+      Nimue Attack_20: -1417340519
+      Nimue Attack_21: -898094214
+      Nimue Attack_3: -2097591975
+      Nimue Attack_4: -1489816662
+      Nimue Attack_5: 2099090920
+      Nimue Attack_6: -791157440
+      Nimue Attack_7: -1941696331
+      Nimue Attack_8: 514078357
+      Nimue Attack_9: -1133593693
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

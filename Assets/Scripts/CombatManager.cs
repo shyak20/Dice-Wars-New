@@ -3514,7 +3514,9 @@ public class CombatManager : MonoBehaviour
                     SourceAction = enemyTargeted ? extra.PoolSourceAction : null,
                     ResolvesImmediatelyOnDrop = enemyTargeted &&
                                                 extra.PoolSourceAction != null &&
-                                                extra.PoolSourceAction.TriggerImmediatelyOnDrop
+                                                extra.PoolSourceAction.TriggerImmediatelyOnDrop,
+                    PreAssignedEnemy = extra.PreAssignedEnemy,
+                    IsRelicPoolExtraLine = extra.PreAssignedEnemy != null
                 });
             }
         }
@@ -3620,6 +3622,9 @@ public class CombatManager : MonoBehaviour
     /// <summary>True when a deferred pool row applies an enemy-target status (e.g. enemy Burn) and so must be assigned to an enemy.</summary>
     private static bool IsEnemyTargetedPoolContribution(FacePoolExtraContribution extra)
     {
+        if (extra.PreAssignedEnemy != null)
+            return true;
+
         return extra.PoolSourceAction != null &&
                extra.PoolSourceAction.StatusEffectDefinition != null &&
                extra.PoolSourceAction.StatusEffectDefinition.target == StatusEffectTarget.Enemy;
@@ -4413,8 +4418,40 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+    private void ApplyPreAssignedEnemyStatusContributions(bool beforePlayerPhysicalDamage)
+    {
+        foreach (var face in channeledFaces)
+        {
+            if (face?.ActionPoolContributions == null)
+                continue;
+
+            for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+            {
+                var c = face.ActionPoolContributions[i];
+                if (c.PreAssignedEnemy == null || c.DeferredEnemyStatusDefinition == null || c.Amount <= 0)
+                    continue;
+                if (c.VisualFlyoutOnly)
+                    continue;
+
+                var status = c.DeferredEnemyStatusDefinition;
+                if (status.ActivateBeforePlayerPhysicalDamage != beforePlayerPhysicalDamage)
+                    continue;
+
+                var enemy = c.PreAssignedEnemy.IsAlive ? c.PreAssignedEnemy : ResolvePrimaryTargetEnemy();
+                if (enemy == null)
+                    continue;
+
+                var ctx = BuildContext(face);
+                ctx.Enemy = enemy;
+                ApplyStatusEffectAction.ApplyFromContext(ctx, status, c.Amount);
+            }
+        }
+    }
+
     private void ExecuteDeferredTurnEndActionsForSubmitTurn(bool beforePlayerPhysicalDamage)
     {
+        ApplyPreAssignedEnemyStatusContributions(beforePlayerPhysicalDamage);
+
         foreach (var face in channeledFaces)
         {
             if (face.Actions == null || face.Actions.Count == 0) continue;
@@ -4584,6 +4621,30 @@ public class CombatManager : MonoBehaviour
             AddFaceElementDamageToTotals(face, target, fallback, TotalsFor, Store);
         }
 
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face?.ActionPoolContributions == null)
+                continue;
+
+            for (var c = 0; c < face.ActionPoolContributions.Count; c++)
+            {
+                var extra = face.ActionPoolContributions[c];
+                if (extra.PreAssignedEnemy == null || extra.Amount <= 0 || extra.VisualFlyoutOnly)
+                    continue;
+                if (!PoolRowKey.TryGetDieType(extra.PoolKey, out var dieType) || dieType != DieType.Damage)
+                    continue;
+
+                var bonusTarget = extra.PreAssignedEnemy.IsAlive ? extra.PreAssignedEnemy : fallback;
+                if (bonusTarget == null)
+                    continue;
+
+                var bonusTotals = TotalsFor(bonusTarget);
+                bonusTotals.Physical += extra.Amount;
+                Store(bonusTarget, bonusTotals);
+            }
+        }
+
         var grandPhysical = 0;
         var grandFire = 0;
         foreach (var kvp in perEnemy)
@@ -4684,6 +4745,15 @@ public class CombatManager : MonoBehaviour
     {
         if (face == null || enemy == null)
             return;
+
+        if (line.IsRelicPoolExtraLine)
+        {
+            var relicPool = enemy.AssignedElementPool;
+            if (relicPool != null)
+                relicPool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+            NotifyStoredActionsPoolUpdated();
+            return;
+        }
 
         if (sourceAction == null && face.AttackAllEnemies)
         {
@@ -5056,6 +5126,25 @@ public class CombatManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    /// <summary>Returns a uniformly random living enemy, or null when none are alive.</summary>
+    public EnemyController PickRandomLivingEnemy()
+    {
+        EnemyController pick = null;
+        var livingCount = 0;
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy == null || !enemy.IsAlive)
+                continue;
+
+            livingCount++;
+            if (UnityEngine.Random.Range(0, livingCount) == 0)
+                pick = enemy;
+        }
+
+        return pick;
     }
 
     /// <summary>The default enemy used for unassigned / fallback player damage: the Main Enemy when alive, otherwise the first living enemy.</summary>
