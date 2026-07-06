@@ -10,6 +10,12 @@ public class HealAction : GameActionWithIcon
 
     public int Amount => amount;
 
+    public PoolRowKey GetPoolRowKey()
+    {
+        var row = string.IsNullOrWhiteSpace(poolRowId) ? "Heal" : poolRowId.Trim();
+        return PoolRowKey.FromInspectorString(row);
+    }
+
     protected override ActionVisualId VisualKey => ActionVisualId.Heal;
 
     /// <summary>Filled when the face resolves so flyouts / element bar show pending heal for the turn.</summary>

@@ -46885,7 +46885,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  arcHeightPixels: 100
+  arcHeightPixels: 300
+  delayBetweenPlayerPoolDrainFlights: 0.1
   interactionSortingOrder: 32767
   useOverlayDuringDragInteraction: 1
 --- !u!223 &634037717

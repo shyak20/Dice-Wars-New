@@ -120,6 +120,8 @@ public class CombatManager : MonoBehaviour
 
     private List<FaceResult> channeledFaces = new List<FaceResult>();
     private List<Action<GameActionContext>> turnEndActions = new List<Action<GameActionContext>>();
+    private readonly HashSet<IGameAction> _playerPoolActionsAppliedViaStatusBar = new HashSet<IGameAction>();
+    private int _playerPoolSelfDamageAppliedViaStatusBar;
     private struct PrecisionChoiceEntry
     {
         public int Amount;
@@ -4284,13 +4286,8 @@ public class CombatManager : MonoBehaviour
 
         _afterPhysicalDeferredStatusPhaseCompleted = false;
         ChangeState(CombatState.TurnEnd);
-        var ctx = BuildContext();
 
         RelicActionRunner.RunPhase(this, RelicPhases.BeforeSubmitTurn);
-
-        ExecuteDeferredTurnEndActionsForSubmitTurn(beforePlayerPhysicalDamage: true);
-
-        DrainQueuedTurnEndActions(ctx);
 
         var impactedEnemies = CollectEnemiesWithPlayerTurnImpact();
         var mainEnemy = ResolvePrimaryTargetEnemy();
@@ -4362,15 +4359,30 @@ public class CombatManager : MonoBehaviour
         bool forceStartingVisibleScale,
         EnemyController mainEnemy)
     {
-        if (pendingDefense > 0 && player != null)
+        var prePhysicalReady = false;
+        var turnEndPoolDrainStarted = false;
+
+        void EnsureTurnEndPoolDrainStarted()
         {
-            player.AddArmor(pendingDefense);
-            ProgressionEventBridge.NotifyDamageBlocked(pendingDefense);
+            if (turnEndPoolDrainStarted)
+                return;
+            turnEndPoolDrainStarted = true;
+            StartCoroutine(CoMarkReadyAfter(
+                CoDrainPlayerPoolToStatusBarThenDeferredBeforePhysical(),
+                () => prePhysicalReady = true));
         }
 
         bool impactAnnounced = false;
         bool attackResolved = false;
+        bool physicalResolutionComplete = false;
         bool continueCombat = true;
+
+        IEnumerator CoRunPhysicalAfterDrain()
+        {
+            yield return new WaitUntil(() => prePhysicalReady);
+            continueCombat = RunPlayerPhysicalResolution(pendingAttack);
+            physicalResolutionComplete = true;
+        }
 
         void AnnounceOrbImpact()
         {
@@ -4397,7 +4409,7 @@ public class CombatManager : MonoBehaviour
                 AnnounceOrbImpact();
             if (attackResolved) return;
             attackResolved = true;
-            continueCombat = RunPlayerPhysicalResolution(pendingAttack);
+            StartCoroutine(CoRunPhysicalAfterDrain());
         }
 
         var duplicateTargets = BuildDuplicateOrbFlightTargets(flyMainOrb, duplicateOnlyFlight, impactedEnemies, mainEnemy);
@@ -4408,6 +4420,7 @@ public class CombatManager : MonoBehaviour
             var duplicateEnemies = new List<EnemyController>();
             if (TryBuildOrbFlightAnchors(duplicateTargets, duplicateAnchors, duplicateEnemies))
             {
+                EnsureTurnEndPoolDrainStarted();
                 yield return powerOrbVisual.CoDuplicateFlightsToAnchors(
                     duplicateAnchors,
                     forceStartingVisibleScale,
@@ -4419,6 +4432,7 @@ public class CombatManager : MonoBehaviour
             if (IsMultiEnemy && duplicateTargets.Count > 0)
                 BeginDuplicateOrbFlightsToTargets(duplicateTargets, forceStartingVisibleScale);
 
+            EnsureTurnEndPoolDrainStarted();
             IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
                 orbAnchor, allowZeroCombatPower, forceStartingVisibleScale, OnOrbImpact);
             while (flight.MoveNext())
@@ -4441,8 +4455,11 @@ public class CombatManager : MonoBehaviour
                 AnnounceSupportOrbImpact();
                 if (attackResolved) return;
                 attackResolved = true;
-                continueCombat = RunPlayerPhysicalResolution(pendingAttack);
+                StartCoroutine(CoRunPhysicalAfterDrain());
             }
+
+            yield return CoDrainPlayerPoolToStatusBarThenDeferredBeforePhysical();
+            prePhysicalReady = true;
 
             IEnumerator flight = powerOrbVisual.RunFlightToWorldAnchor(
                 orbAnchor, allowZeroCombatPower, forceStartingVisibleScale, OnSupportOrbImpact);
@@ -4451,10 +4468,32 @@ public class CombatManager : MonoBehaviour
         }
 
         if (!attackResolved)
-            OnOrbImpact();
+        {
+            EnsureTurnEndPoolDrainStarted();
+            if (!duplicateOnlyFlight)
+                AnnounceOrbImpact();
+            attackResolved = true;
+            yield return StartCoroutine(CoRunPhysicalAfterDrain());
+        }
+        else
+        {
+            yield return new WaitUntil(() => physicalResolutionComplete);
+        }
+
         if (!continueCombat) yield break;
 
         yield return StartCoroutine(CoResolveEnemyOpeningAndStartEnemyTurn());
+    }
+
+    private static IEnumerator CoMarkReadyAfter(IEnumerator routine, Action onReady)
+    {
+        if (routine != null)
+        {
+            while (routine.MoveNext())
+                yield return routine.Current;
+        }
+
+        onReady?.Invoke();
     }
 
     /// <summary>Physical damage + thorns when applicable, then deferred / queued status applies that must run after that damage.</summary>
@@ -4507,6 +4546,111 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+    private IEnumerator CoDrainPlayerPoolToStatusBarThenDeferredBeforePhysical()
+    {
+        if (diceRollOutcomeFlyout != null)
+            yield return diceRollOutcomeFlyout.CoDrainPlayerElementPoolToStatusBar(ApplyPlayerPoolRowAtStatusBar);
+
+        ExecuteDeferredTurnEndActionsForSubmitTurn(beforePlayerPhysicalDamage: true);
+        DrainQueuedTurnEndActions(BuildContext());
+    }
+
+    /// <summary>
+    /// Applies one player Element Container row when its fly piece reaches the player status bar.
+    /// Deferred actions already applied here are skipped on submit.
+    /// </summary>
+    public void ApplyPlayerPoolRowAtStatusBar(PoolRowKey key, int amount)
+    {
+        if (amount <= 0 || player == null)
+            return;
+
+        if (PoolRowKey.TryGetDieType(key, out var dieType))
+        {
+            switch (dieType)
+            {
+                case DieType.Curse:
+                    _playerPoolSelfDamageAppliedViaStatusBar += amount;
+                    player.TakeDamage(amount, PlayerDamageSource.CurseFace);
+                    CheckDefeat();
+                    return;
+                case DieType.Armor:
+                    player.AddArmor(amount);
+                    ProgressionEventBridge.NotifyDamageBlocked(amount);
+                    return;
+            }
+        }
+
+        foreach (var face in channeledFaces)
+        {
+            if (face == null)
+                continue;
+
+            if (face.ActionPoolContributions != null)
+            {
+                for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+                {
+                    var c = face.ActionPoolContributions[i];
+                    if (c.Amount <= 0 || c.VisualFlyoutOnly || IsEnemyTargetedPoolContribution(c))
+                        continue;
+                    if (!c.PoolKey.Equals(key))
+                        continue;
+
+                    if (c.PoolSourceAction != null)
+                        TryExecuteDeferredPlayerPoolAction(face, c.PoolSourceAction);
+                    if (c.MaxHpPoolSource != null)
+                        TryExecuteDeferredPlayerPoolAction(face, c.MaxHpPoolSource);
+                }
+            }
+
+            if (face.Actions == null)
+                continue;
+
+            foreach (var action in face.Actions)
+            {
+                if (action == null || action.ActivateImmediately || action is FaceResolveModifierBase)
+                    continue;
+                if (!DeferredActionMatchesPoolRow(action, key))
+                    continue;
+                TryExecuteDeferredPlayerPoolAction(face, action);
+            }
+        }
+    }
+
+    static bool DeferredActionMatchesPoolRow(IGameAction action, PoolRowKey key)
+    {
+        return action switch
+        {
+            HealAction heal => heal.GetPoolRowKey().Equals(key),
+            ThornsAction thorns => thorns.GetPoolRowKey().Equals(key),
+            StartNextTurnWithArmorAction nextArmor => nextArmor.GetPoolRowKey().Equals(key),
+            _ => false
+        };
+    }
+
+    void TryExecuteDeferredPlayerPoolAction(FaceResult face, IGameAction action)
+    {
+        if (action == null || _playerPoolActionsAppliedViaStatusBar.Contains(action))
+            return;
+
+        if (action is ApplyStatusEffectAction apply)
+        {
+            if (apply.StatusEffectDefinition == null)
+                return;
+            if (!apply.StatusEffectDefinition.ActivateBeforePlayerPhysicalDamage)
+                return;
+        }
+        else if (action is not HealAction and not ThornsAction and not StartNextTurnWithArmorAction and not MaxHpAction
+                 and not DealPlayerDamageOnSubmitAction)
+        {
+            return;
+        }
+
+        _playerPoolActionsAppliedViaStatusBar.Add(action);
+        var faceCtx = BuildContext(face);
+        faceCtx.PendingApplyStackOverrides = BuildPendingApplyStackOverrides(face);
+        ExecuteActionForFaceTargets(face, action, faceCtx, ctx => action.Execute(ctx));
+    }
+
     private void ExecuteDeferredTurnEndActionsForSubmitTurn(bool beforePlayerPhysicalDamage)
     {
         ApplyPreAssignedEnemyStatusContributions(beforePlayerPhysicalDamage);
@@ -4521,6 +4665,7 @@ public class CombatManager : MonoBehaviour
                 if (a is FaceResolveModifierBase) continue;
                 if (a is AddPowerAction) continue;
                 if (a == null) continue;
+                if (_playerPoolActionsAppliedViaStatusBar.Contains(a)) continue;
                 if (a.ActivateImmediately) continue;
 
                 if (a is ApplyStatusEffectAction apply)
@@ -4584,6 +4729,10 @@ public class CombatManager : MonoBehaviour
             total += Mathf.Max(0, f.SelfDamage);
         }
 
+        if (total <= 0)
+            return true;
+
+        total = Mathf.Max(0, total - _playerPoolSelfDamageAppliedViaStatusBar);
         if (total <= 0)
             return true;
 
@@ -5258,11 +5407,7 @@ public class CombatManager : MonoBehaviour
 
     private IEnumerator CoApplyPlayerTurnCombatResults(int pendingAttack, int pendingDefense)
     {
-        if (pendingDefense > 0 && player != null)
-        {
-            player.AddArmor(pendingDefense);
-            ProgressionEventBridge.NotifyDamageBlocked(pendingDefense);
-        }
+        yield return CoDrainPlayerPoolToStatusBarThenDeferredBeforePhysical();
 
         if (!RunPlayerPhysicalResolution(pendingAttack)) yield break;
 
@@ -5717,6 +5862,8 @@ public class CombatManager : MonoBehaviour
         _pendingDieSourceByIndex = null;
         ClearPostSubmitTriggeringRerollState();
         turnEndActions.Clear();
+        _playerPoolActionsAppliedViaStatusBar.Clear();
+        _playerPoolSelfDamageAppliedViaStatusBar = 0;
         overchargeBonus = 0;
         appliedMultiplier = 1;
         bustProtected = false;

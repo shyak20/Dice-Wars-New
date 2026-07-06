@@ -18,6 +18,8 @@ public class ThornsAction : GameActionWithIcon
 
     protected override ActionVisualId VisualKey => ActionVisualId.Thorns;
 
+    public PoolRowKey GetPoolRowKey() => ResolvePoolRowKey();
+
     PoolRowKey ResolvePoolRowKey()
     {
         if (!string.IsNullOrWhiteSpace(poolRowKeyOverride))

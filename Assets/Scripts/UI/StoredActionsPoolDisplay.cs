@@ -147,6 +147,20 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         return GameIconCatalog.TryGetPoolRowBackground(key);
     }
 
+    /// <summary>True when at least one row icon is visible in this layout.</summary>
+    public bool HasVisibleRows() => GetVisiblePoolIconsTopToBottom().Count > 0;
+
+    /// <summary>Removes one row from the layout when it begins flying to the player status bar.</summary>
+    public void ConsumeDisplayedRow(PoolRowKey key)
+    {
+        if (displayedPools == null)
+            return;
+
+        displayedPools[key] = 0;
+        RefreshRow(key, 0);
+        ReorderPoolIcons();
+    }
+
     public void ApplyPoolDelta(PoolRowKey key, int delta, Sprite lineIconOverride = null, Sprite lineRowBackgroundOverride = null)
     {
         if (delta == 0) return;

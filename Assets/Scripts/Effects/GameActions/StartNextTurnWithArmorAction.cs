@@ -17,6 +17,12 @@ public class StartNextTurnWithArmorAction : GameActionWithIcon
 
     public int ArmorAmount => armorAmount;
 
+    public PoolRowKey GetPoolRowKey()
+    {
+        var row = string.IsNullOrWhiteSpace(poolRowId) ? "Armor" : poolRowId.Trim();
+        return PoolRowKey.FromInspectorString(row);
+    }
+
     protected override ActionVisualId VisualKey => ActionVisualId.StartNextTurnWithArmor;
 
     public void AppendPoolContributionIfAny(FaceResult result)

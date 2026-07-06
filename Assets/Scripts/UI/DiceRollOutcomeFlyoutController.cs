@@ -74,6 +74,10 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [SerializeField] private AnimationCurve flyEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField] private float arcHeightPixels = 96f;
 
+    [Header("Turn end — player pool → status bar")]
+    [Tooltip("On turn submit, while the power orb flies to the enemy, each player Element Container row flies to the player status bar with this delay between launches.")]
+    [SerializeField, Min(0f)] private float delayBetweenPlayerPoolDrainFlights = 0.08f;
+
     [Header("Drag interaction priority")]
     [Tooltip("Sorting order applied while drag tokens are on screen so this canvas wins raycasts over enemy UI.")]
     [SerializeField] private int interactionSortingOrder = 32767;
@@ -122,7 +126,114 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     readonly Dictionary<int, ParkedIncreaseOtherFlyoutEntry> _parkedIncreaseOtherByBatchGatherIndex =
         new Dictionary<int, ParkedIncreaseOtherFlyoutEntry>();
 
+    struct PlayerPoolDrainSnapshot
+    {
+        public PoolRowKey Key;
+        public int Amount;
+        public Vector2 StartLocal;
+        public Sprite Icon;
+        public Sprite Background;
+    }
+
     public void ClearActiveFlyoutLineRegistry() => _activeFlyoutLinesByBatchRow.Clear();
+
+    /// <summary>
+    /// On turn submit: flies every visible player Element Container row to the player status bar on a curve,
+    /// staggered by <see cref="delayBetweenPlayerPoolDrainFlights"/>. Invokes <paramref name="onRowLanded"/> when each arrives.
+    /// </summary>
+    public IEnumerator CoDrainPlayerElementPoolToStatusBar(System.Action<PoolRowKey, int> onRowLanded)
+    {
+        if (storedActionsPoolDisplay == null || flyoutParent == null || flyoutPoolIconPrefab == null)
+            yield break;
+        if (!storedActionsPoolDisplay.UsesFlyoutIncrementMode || !storedActionsPoolDisplay.HasVisibleRows())
+            yield break;
+        if (playerStatusBarFlyTarget == null)
+        {
+            Debug.LogError(
+                $"DiceRollOutcomeFlyoutController on '{name}': cannot drain player Element Container — assign playerStatusBarFlyTarget (or wire playerStatusBarUI).",
+                this);
+            yield break;
+        }
+
+        if (!UiRectCenterToParentLocal(playerStatusBarFlyTarget, flyoutParent, out var endLocal))
+            yield break;
+
+        var icons = storedActionsPoolDisplay.GetVisiblePoolIconsTopToBottom();
+        var snapshots = new List<PlayerPoolDrainSnapshot>(icons.Count);
+        for (var i = 0; i < icons.Count; i++)
+        {
+            var icon = icons[i];
+            if (icon == null)
+                continue;
+
+            var key = icon.RowKey;
+            var amount = storedActionsPoolDisplay.GetDisplayedAmount(key);
+            if (amount <= 0)
+                continue;
+
+            if (!UiRectCenterToParentLocal(icon.FlyTargetRect, flyoutParent, out var startLocal))
+                continue;
+
+            snapshots.Add(new PlayerPoolDrainSnapshot
+            {
+                Key = key,
+                Amount = amount,
+                StartLocal = startLocal,
+                Icon = icon.RowSprite ?? storedActionsPoolDisplay.GetPoolRowSprite(key),
+                Background = storedActionsPoolDisplay.GetPoolRowBackground(key)
+            });
+        }
+
+        if (snapshots.Count == 0)
+            yield break;
+
+        BeginFreezeStatusBar(StatusEffectTarget.Player);
+        try
+        {
+            var flyRoutines = new List<Coroutine>(snapshots.Count);
+            for (var i = 0; i < snapshots.Count; i++)
+            {
+                if (i > 0 && delayBetweenPlayerPoolDrainFlights > 0f)
+                    yield return new WaitForSeconds(delayBetweenPlayerPoolDrainFlights);
+
+                var snap = snapshots[i];
+                storedActionsPoolDisplay.ConsumeDisplayedRow(snap.Key);
+                flyRoutines.Add(StartCoroutine(CoFlyPlayerPoolRowToStatusBar(snap, endLocal, onRowLanded)));
+            }
+
+            foreach (var routine in flyRoutines)
+            {
+                if (routine != null)
+                    yield return routine;
+            }
+        }
+        finally
+        {
+            EndFreezeStatusBar(StatusEffectTarget.Player);
+        }
+    }
+
+    IEnumerator CoFlyPlayerPoolRowToStatusBar(
+        PlayerPoolDrainSnapshot snap,
+        Vector2 endLocal,
+        System.Action<PoolRowKey, int> onRowLanded)
+    {
+        var inst = Instantiate(flyoutPoolIconPrefab, flyoutParent);
+        var rt = inst.transform as RectTransform;
+        if (rt == null)
+        {
+            Destroy(inst.gameObject);
+            yield break;
+        }
+
+        rt.localScale = Vector3.one;
+        inst.SetupForDiceRollFlyout(snap.Key, snap.Icon, snap.Amount, snap.Background);
+
+        var start = snap.StartLocal;
+        var mid = (start + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
+        yield return FlyLineRoutine(rt, start, mid, endLocal, default, applyPoolDeltaOnLanding: false);
+        onRowLanded?.Invoke(snap.Key, snap.Amount);
+    }
 
     void ClearParkedIncreaseOtherFlyouts()
     {
