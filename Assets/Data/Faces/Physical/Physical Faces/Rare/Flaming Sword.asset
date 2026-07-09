@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Harness <style=Damage>3</style>
   descriptionLines:
   - Deal <style=Attack>3</style>
-  - Apply <style=Burn>3</style>
+  - Apply <style=Burn>1</style>
   value: 3
   type: 0
   faceMaterial: {fileID: 2100000, guid: fb29d41133af9d349b01767b95db51d5, type: 2}
@@ -39,4 +39,4 @@ MonoBehaviour:
         activateImmediately: 0
         triggerImmediatelyOnDrop: 0
         statusEffect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
-        stacks: 3
+        stacks: 1

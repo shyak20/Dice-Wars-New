@@ -309,6 +309,36 @@ public class PlayerStatus : MonoBehaviour
             CombatEvents.OnPlayerHealthDepleted?.Invoke();
     }
 
+    /// <summary>Damage that bypasses armor and reduces HP directly (e.g. poison).</summary>
+    public void TakeTrueDamage(int damage, Vector3? floatingDamageNumberWorldOverride = null)
+    {
+        if (damage <= 0)
+            return;
+
+        var hpBefore = currentHealth;
+        currentHealth -= damage;
+        currentHealth = Mathf.Max(0, currentHealth);
+        UnityEngine.Debug.Log($"<color=red>Player took {damage} true damage (armor ignored)!</color>");
+
+        var hpLost = hpBefore - currentHealth;
+        if (hpLost > 0)
+            ProgressionEventBridge.NotifyHpLost(hpLost);
+
+        UpdateUI();
+
+        var w = floatingDamageNumberWorldOverride ?? GetDamageNumberWorldPosition();
+        CombatEvents.OnPlayerDamageNumber?.Invoke(damage, w);
+
+        if (physicalHitFeedback != null)
+            physicalHitFeedback.OnPlayerDamaged(damage, hpLost, maxHealth);
+
+        if (hpBefore != currentHealth)
+            CaptureRunVitalityIfMapRun();
+
+        if (currentHealth <= 0)
+            CombatEvents.OnPlayerHealthDepleted?.Invoke();
+    }
+
     void CaptureRunVitalityIfMapRun()
     {
         if (RunManager.Instance == null || !RunManager.Instance.UseMapBasedRun)

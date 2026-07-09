@@ -5928,7 +5928,7 @@ public class CombatManager : MonoBehaviour
         _gemBatchRerollIndicesInFlight.Clear();
         _gemExtraRollGrantsThisTurnByDie.Clear();
         var statusCtx = BuildStatusContext();
-        // Enemy-applied player debuffs (Burn, Poison) tick before armor is cleared for the new turn.
+        // Enemy-applied player debuffs tick before armor is cleared (Burn respects armor; Poison does not).
         player.StatusEffects.TickTurnStartBeforePlayerArmorReset(statusCtx);
         if (CheckDefeat())
             return;

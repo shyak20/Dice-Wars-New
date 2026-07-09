@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Harness <style=Damage>1</style> \nHarness <style=Strength>+1</style>
   descriptionLines:
   - Deal <style=Attack>2</style>
-  - Apply <style=Vulnerable>1 Vulnerable</style>
+  - Apply <style=Vulnerable>2 Vulnerable</style>
   value: 2
   type: 0
   faceMaterial: {fileID: 2100000, guid: 52b940e1549b9774ebc0a8ab346d6eab, type: 2}
@@ -36,7 +36,7 @@ MonoBehaviour:
     - rid: 6494956392264499314
       type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
       data:
-        activateImmediately: 0
+        activateImmediately: 1
         triggerImmediatelyOnDrop: 0
         statusEffect: {fileID: 11400000, guid: c1d7c22239e0b6447a991d852bd36739, type: 2}
-        stacks: 1
+        stacks: 2

@@ -22,7 +22,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ca52f81afbd086c4db4ec44aab92f085, type: 2}
   - {fileID: 11400000, guid: 0a2c3c0c7cfaaf747be8100c4d379169, type: 2}
   possibleUnknownEvents:
-  - {fileID: 11400000, guid: 36f47a17946b21348bafc9139d94e649, type: 2}
   - {fileID: 11400000, guid: 4b24dd24c786da2469b623658b51ead7, type: 2}
   - {fileID: 11400000, guid: cc0f0df617309e447ba2da7aa34b5e3a, type: 2}
   - {fileID: 11400000, guid: 15a428d791eb36d4080540424627f3fb, type: 2}

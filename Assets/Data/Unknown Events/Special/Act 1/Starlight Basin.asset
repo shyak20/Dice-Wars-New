@@ -17,7 +17,7 @@ MonoBehaviour:
     yet been curdled by Merlin\u2019s corruption. It smells of ozone and fresh rain.
     As you submerge your wounds, the jagged tears in your physical form knit back
     together."
-  eventArt: {fileID: 0}
+  eventArt: {fileID: 21300000, guid: 43dac593fc3463f48a4492b024b48d02, type: 3}
   visibilityConditions: []
   excludeFromDrawIfCompletedThisRun: 0
   choices:
@@ -25,12 +25,14 @@ MonoBehaviour:
     enabledWhen:
     - rid: 6434882266773586166
     registerEventCompletedOnPick: 1
+    showOutcomeResultScreen: 0
     outcome:
       rid: 6434882266773586167
-  - label: Add 10 Max Health
+  - label: Add <style=Max HP>+5 Max HP</style>
     enabledWhen:
     - rid: 6434882266773586168
     registerEventCompletedOnPick: 1
+    showOutcomeResultScreen: 0
     outcome:
       rid: 6434882266773586169
   triggersCombat: 0
@@ -53,4 +55,4 @@ MonoBehaviour:
     - rid: 6434882266773586169
       type: {class: UnknownMapEventOutcomeApplyRunMaxHpIncreaseAndHeal, ns: , asm: Assembly-CSharp}
       data:
-        amount: 10
+        amount: 5
