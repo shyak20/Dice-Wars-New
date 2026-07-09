@@ -21,6 +21,7 @@ MonoBehaviour:
     healing, Morgana learned to shape fire into shields, blades, and burning sigils
     that could erase curses from the world."
   metaSaveId: 
+  mapPlayerIcon: {fileID: 21300000, guid: f486a5e5953d5c54c949253bffe8e047, type: 3}
   currentDeck:
   - {fileID: 11400000, guid: 42cf02e06fdb45743bedc9a934113a5b, type: 2}
   - {fileID: 11400000, guid: af5ae1f182387454bb002a3799780387, type: 2}

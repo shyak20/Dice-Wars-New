@@ -456,7 +456,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: -13.999886}
-  m_SizeDelta: {x: 117, y: 110}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &60331221
 MonoBehaviour:
@@ -810,7 +810,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 0/5
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}
@@ -820,7 +820,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -987,7 +987,7 @@ MonoBehaviour:
   rankProgressSlider: {fileID: 1522307923}
   rankProgressText: {fileID: 1596284345}
   rankNameText: {fileID: 73020459}
-  rankProgressTextFormat: '{0}/{1} Completed'
+  rankProgressTextFormat: 
 --- !u!1 &146505760
 GameObject:
   m_ObjectHideFlags: 0
@@ -1448,7 +1448,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &219642499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15831,11 +15831,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2468907938220476972, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2468907938220476972, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4414695764610952053, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -16250,7 +16250,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 6, y: 0}
-  m_SizeDelta: {x: 143.11, y: 52}
+  m_SizeDelta: {x: 0, y: 52}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1165224644
 MonoBehaviour:
@@ -33430,7 +33430,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Special Event (TBD)
+  m_text: 'Special Event '
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
@@ -34056,7 +34056,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 871, y: 56}
+  m_AnchoredPosition: {x: 871, y: 11}
   m_SizeDelta: {x: 524.21783, y: 293.1065}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &2042434859

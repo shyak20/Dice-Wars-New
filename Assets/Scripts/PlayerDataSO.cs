@@ -25,6 +25,7 @@ public class PlayerDataSO : ScriptableObject
     public Sprite RightHandImage => rightHandImage;
     public string Description => description ?? string.Empty;
     public string MetaSaveId => string.IsNullOrWhiteSpace(metaSaveId) ? name : metaSaveId.Trim();
+    public Sprite MapPlayerIcon => mapPlayerIcon;
 
     [Tooltip("Base starting dice for this character (authored on the asset). Extra dice from progression Add Starting Die rewards are stored in PlayerPrefs per character, not here.")]
     public List<DieAssetSO> currentDeck = new List<DieAssetSO>();
@@ -40,6 +41,8 @@ public class PlayerDataSO : ScriptableObject
     [Min(1)] public int baseMaxPower = 12;
 
     [Header("Map")]
+    [Tooltip("Pawn sprite on the map grid (UIMapGridView player marker). When unset, MapPresentationSO.playerMarkerIcon is used.")]
+    [SerializeField] private Sprite mapPlayerIcon;
     [Tooltip("Moves allowed per map before corruption / overflow damage (see MapMovementManager).")]
     [Min(1)] public int moveLimit = 8;
 

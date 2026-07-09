@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Spawns a tile UI per cell and drives a separate player marker (sprite from <see cref="MapPresentationSO"/>).</summary>
+/// <summary>Spawns a tile UI per cell and drives a separate player marker (sprite from active <see cref="PlayerDataSO.MapPlayerIcon"/>, else <see cref="MapPresentationSO"/>).</summary>
 public class UIMapGridView : MonoBehaviour
 {
     static readonly AnimationCurve LinearMoveProgressCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -469,9 +469,17 @@ public class UIMapGridView : MonoBehaviour
     {
         if (playerMarkerImage == null)
             return;
-        var sp = _presentation != null ? _presentation.playerMarkerIcon : null;
+        var sp = ResolvePlayerMarkerSprite();
         playerMarkerImage.sprite = sp;
         playerMarkerImage.enabled = sp != null;
+    }
+
+    Sprite ResolvePlayerMarkerSprite()
+    {
+        var playerData = PlayerDataContainer.Instance != null ? PlayerDataContainer.Instance.RuntimeData : null;
+        if (playerData != null && playerData.MapPlayerIcon != null)
+            return playerData.MapPlayerIcon;
+        return _presentation != null ? _presentation.playerMarkerIcon : null;
     }
 
     private Vector2 GetCellCenterAnchoredInMarkerParent(Vector2Int cell)

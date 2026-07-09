@@ -19,7 +19,7 @@ public class MapPresentationSO : ScriptableObject
     public Sprite treasureIcon;
 
     [Header("Player marker (map UI)")]
-    [Tooltip("Sprite for the pawn that moves between tile centers (separate from each tile’s event icon).")]
+    [Tooltip("Fallback pawn sprite when the active PlayerDataSO has no Map Player Icon.")]
     public Sprite playerMarkerIcon;
 
     public Sprite GetEventIcon(MapEventType eventType, bool isStart, bool isBossEnd)
