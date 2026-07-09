@@ -179,6 +179,8 @@ public class CombatUIController : MonoBehaviour
 
     private void Update()
     {
+        HandleFightKeyboardShortcuts();
+
         if (dieTooltipPanel == null || !dieTooltipPanel.activeSelf) return;
         if (!Input.GetMouseButtonDown(0)) return;
         if (ClickShouldKeepTooltipOpen()) return;
@@ -186,6 +188,85 @@ public class CombatUIController : MonoBehaviour
         pinnedTooltipDie = null;
         hoveredTooltipDie = null;
         HideDieTooltip();
+    }
+
+    /// <summary>Number keys 1–9 toggle tray dice (deck order); Space rolls; Enter ends turn.</summary>
+    void HandleFightKeyboardShortcuts()
+    {
+        if (!AreRollControlsVisible() || _rerollSelectionActive)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            TryRollFromKeyboard();
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            TryEndTurnFromKeyboard();
+            return;
+        }
+
+        for (var i = 0; i < 9; i++)
+        {
+            if (!WasNumberKeyPressed(i))
+                continue;
+
+            TryToggleTrayDieByIndex(i);
+            break;
+        }
+    }
+
+    static bool WasNumberKeyPressed(int index)
+    {
+        if (index < 0 || index > 8)
+            return false;
+
+        var digit = KeyCode.Alpha1 + index;
+        var keypad = KeyCode.Keypad1 + index;
+        return Input.GetKeyDown(digit) || Input.GetKeyDown(keypad);
+    }
+
+    void TryToggleTrayDieByIndex(int index)
+    {
+        var trayDice = GetTrayDiceInDisplayOrder();
+        if (index < 0 || index >= trayDice.Count)
+            return;
+
+        ToggleSelection(trayDice[index]);
+    }
+
+    void TryRollFromKeyboard()
+    {
+        if (rollButton == null || !rollButton.interactable)
+            return;
+
+        CombatEvents.OnRollCommand?.Invoke();
+    }
+
+    void TryEndTurnFromKeyboard()
+    {
+        if (endTurnButton == null || !endTurnButton.interactable)
+            return;
+
+        CombatEvents.OnEndTurnPressed?.Invoke();
+    }
+
+    List<DieAssetSO> GetTrayDiceInDisplayOrder()
+    {
+        var result = new List<DieAssetSO>();
+        var deck = PlayerDataContainer.Instance?.RuntimeData?.currentDeck;
+        if (deck == null)
+            return result;
+
+        foreach (var die in deck)
+        {
+            if (die != null && diceButtons.ContainsKey(die))
+                result.Add(die);
+        }
+
+        return result;
     }
 
     /// <summary>Selected tray dice used for pre-roll Perfect Cast / Cast Overload odds on the Roll button.</summary>
