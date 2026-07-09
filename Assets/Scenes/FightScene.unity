@@ -29966,6 +29966,7 @@ MonoBehaviour:
   enemyTurnIntroFadeOutSeconds: 1
   enemyTurnIntentSequence: {fileID: 1956466326}
   delaySecondsBetweenPhysicalAndEachEnemyStatusTick: 1
+  playerTurnStartArmorClearDelaySeconds: 1
   playerStatusBar: {fileID: 1880349202053095173}
   enemyStatusBar: {fileID: 1793733565}
   testStartingFaces: {fileID: 0}
@@ -47130,6 +47131,43 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 649180006}
   m_CullTransparentMesh: 1
+--- !u!1 &650891495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 650891496}
+  m_Layer: 0
+  m_Name: Hit Effects
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &650891496
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 650891495}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1067698247}
+  - {fileID: 1928476989}
+  m_Father: {fileID: 1896576053}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &654168417
 GameObject:
   m_ObjectHideFlags: 0
@@ -83156,12 +83194,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1067698246}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1896576053}
+  m_Father: {fileID: 650891496}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -83181,7 +83219,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.33962262, g: 0, b: 0, a: 0.53333336}
+  m_Color: {r: 0.6037736, g: 0.014239941, b: 0.014239941, a: 0.627451}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -83855,6 +83893,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1088388566}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1095915795 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4845508174859930861, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
+  m_PrefabInstance: {fileID: 2463767363618923911}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1111724283
 GameObject:
   m_ObjectHideFlags: 0
@@ -134175,7 +134218,7 @@ RectTransform:
   - {fileID: 1593172594}
   - {fileID: 1071086013}
   - {fileID: 484564939}
-  - {fileID: 1067698247}
+  - {fileID: 650891496}
   - {fileID: 7613276264664916397}
   - {fileID: 1001816083}
   m_Father: {fileID: 0}
@@ -134609,6 +134652,81 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1926663408}
   m_CullTransparentMesh: 1
+--- !u!1 &1928476986
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1928476989}
+  - component: {fileID: 1928476988}
+  - component: {fileID: 1928476987}
+  m_Layer: 0
+  m_Name: Poison Flash Effect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1928476987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1928476986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.02603261, g: 0.4245283, b: 0, a: 0.627451}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 6739feba965771148bd34dcff1e95df4, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1928476988
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1928476986}
+  m_CullTransparentMesh: 1
+--- !u!224 &1928476989
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1928476986}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 650891496}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1937124988
 GameObject:
   m_ObjectHideFlags: 0
@@ -153820,9 +153938,21 @@ PrefabInstance:
       value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 7150587224425812316, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
+      propertyPath: poisonHitEffectRoot
+      value: 
+      objectReference: {fileID: 1095915795}
+    - target: {fileID: 7150587224425812316, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
       propertyPath: 'hitFlashRoots.Array.data[0]'
       value: 
       objectReference: {fileID: 1067698246}
+    - target: {fileID: 7150587224425812316, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
+      propertyPath: poisonHitFlashRoots.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7150587224425812316, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
+      propertyPath: 'poisonHitFlashRoots.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1928476986}
     - target: {fileID: 7290321484411598953, guid: 831f475c9cdf8df4dbb7852928444f1e, type: 3}
       propertyPath: m_Name
       value: Player Stats

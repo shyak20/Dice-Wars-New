@@ -63,6 +63,10 @@ public class CombatManager : MonoBehaviour
     [Tooltip("After physical damage (+ thorns) to the enemy, wait this long before the first turn-start status damage tick (e.g. burn). Also waits this long between each subsequent status tick when multiple effects use OnTurnStart. Stack decay still runs once after all ticks, same as instant TickTurnStart.")]
     [SerializeField, Min(0f)] private float delaySecondsBetweenPhysicalAndEachEnemyStatusTick = 0f;
 
+    [Header("Player turn start")]
+    [Tooltip("After turn-start player debuff damage (Burn, Poison, etc.) resolves, wait this long before clearing leftover armor or applying next-turn armor.")]
+    [SerializeField, Min(0f)] private float playerTurnStartArmorClearDelaySeconds = 0.5f;
+
     [Header("Status Effect UI")]
     [SerializeField] private StatusEffectBarUI playerStatusBar;
     [SerializeField] private StatusEffectBarUI enemyStatusBar;
@@ -114,6 +118,7 @@ public class CombatManager : MonoBehaviour
     private int _playerArmorAtNextTurnStart;
     private bool bustProtected;
     private bool _warnedMissingEnemyIntentSequence;
+    private Coroutine _playerTurnStartRoutine;
     private bool _skipPowerOrbFlightForNextSubmitTurn;
     private bool kineticShieldActive;
     private int kineticShieldBonus;
@@ -5933,11 +5938,30 @@ public class CombatManager : MonoBehaviour
         if (CheckDefeat())
             return;
 
+        if (_playerTurnStartRoutine != null)
+        {
+            StopCoroutine(_playerTurnStartRoutine);
+            _playerTurnStartRoutine = null;
+        }
+
+        _playerTurnStartRoutine = StartCoroutine(CoFinishPlayerTurnStart(statusCtx));
+    }
+
+    IEnumerator CoFinishPlayerTurnStart(StatusEffectContext statusCtx)
+    {
+        if (playerTurnStartArmorClearDelaySeconds > 0f)
+            yield return new WaitForSeconds(playerTurnStartArmorClearDelaySeconds);
+
+        _playerTurnStartRoutine = null;
+
+        if (CheckDefeat())
+            yield break;
+
         ApplyPlayerTurnStartArmor();
         // Player turn starts here (Next Turn Armor, etc.).
         player.StatusEffects.TickTurnStart(statusCtx);
         if (CheckDefeat())
-            return;
+            yield break;
 
         NotifyAllStoredActionsPoolUI();
         CombatEvents.OnPowerChanged?.Invoke(0, maxPower);

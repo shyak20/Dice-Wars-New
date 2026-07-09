@@ -427,8 +427,8 @@ public class StatusEffectManager : MonoBehaviour
     /// <summary>
     /// Player debuffs that deal turn-start damage tick here while last turn's armor is still up.
     /// Burn uses <see cref="PlayerStatus.TakeDamage"/> (armor absorbs). Poison uses
-    /// <see cref="PlayerStatus.TakeTrueDamage"/> (armor ignored).
-    /// Call before <see cref="PlayerStatus.ResetArmor"/> in <see cref="CombatManager.ResetTurn"/>.
+    /// <see cref="PlayerStatus.TakeTrueDamage"/> (armor ignored). Leftover armor is cleared after
+    /// <see cref="CombatManager"/> player-turn-start delay via <see cref="PlayerStatus.ResetArmor"/>.
     /// </summary>
     public void TickTurnStartBeforePlayerArmorReset(StatusEffectContext ctx)
         => TickTurnStartCore(ctx, TicksDamageBeforePlayerArmorReset);

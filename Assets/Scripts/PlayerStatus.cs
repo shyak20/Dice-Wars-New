@@ -330,7 +330,7 @@ public class PlayerStatus : MonoBehaviour
         CombatEvents.OnPlayerDamageNumber?.Invoke(damage, w);
 
         if (physicalHitFeedback != null)
-            physicalHitFeedback.OnPlayerDamaged(damage, hpLost, maxHealth);
+            physicalHitFeedback.OnPlayerPoisonDamaged(damage, hpLost, maxHealth);
 
         if (hpBefore != currentHealth)
             CaptureRunVitalityIfMapRun();

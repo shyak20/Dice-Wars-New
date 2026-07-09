@@ -19,6 +19,14 @@ public abstract class DamageHitFeedbackBase : MonoBehaviour
     [SerializeField] protected List<GameObject> hitFlashRoots = new List<GameObject>();
     [SerializeField, Min(0.02f)] private float hitFlashDuration = 0.18f;
 
+    [Header("Poison hit VFX")]
+    [Tooltip("Optional. Same behavior as Hit Effect Root, used when the player takes poison (true) damage.")]
+    [SerializeField] private GameObject poisonHitEffectRoot;
+
+    [Header("Poison hit flash")]
+    [Tooltip("Optional. Same behavior as Hit Flash roots, used when the player takes poison (true) damage.")]
+    [SerializeField] protected List<GameObject> poisonHitFlashRoots = new List<GameObject>();
+
     [Header("Camera shake (scaled by hit severity)")]
     [Tooltip("Severity = HP lost / max HP, or if armor absorbed all damage, incoming damage / max HP (each clamped 0–1).")]
     [SerializeField] private AnimationCurve damageRatioToShakeBlend = AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -29,13 +37,19 @@ public abstract class DamageHitFeedbackBase : MonoBehaviour
 
     private Coroutine _hitEffectRoutine;
     private Coroutine _flashRoutine;
+    private Coroutine _poisonHitEffectRoutine;
+    private Coroutine _poisonFlashRoutine;
 
     protected virtual void Awake()
     {
         if (hitEffectRoot != null)
             hitEffectRoot.SetActive(false);
-        if (HasHitFlashTargets())
-            SetHitFlashActive(false);
+        if (poisonHitEffectRoot != null)
+            poisonHitEffectRoot.SetActive(false);
+        if (HasHitFlashTargets(hitFlashRoots))
+            SetHitFlashActive(hitFlashRoots, false);
+        if (HasHitFlashTargets(poisonHitFlashRoots))
+            SetHitFlashActive(poisonHitFlashRoots, false);
     }
 
     private void Reset()
@@ -53,7 +67,46 @@ public abstract class DamageHitFeedbackBase : MonoBehaviour
     }
 #endif
 
-    protected void PlayHit(int grossDamage, int hpLost, int maxHp)
+    protected void PlayHit(int grossDamage, int hpLost, int maxHp) =>
+        PlayHitInternal(
+            grossDamage,
+            hpLost,
+            maxHp,
+            hitEffectRoot,
+            hitEffectDuration,
+            hitFlashRoots,
+            hitFlashDuration,
+            () => _hitEffectRoutine,
+            routine => _hitEffectRoutine = routine,
+            () => _flashRoutine,
+            routine => _flashRoutine = routine);
+
+    protected void PlayPoisonHit(int grossDamage, int hpLost, int maxHp) =>
+        PlayHitInternal(
+            grossDamage,
+            hpLost,
+            maxHp,
+            poisonHitEffectRoot,
+            hitEffectDuration,
+            poisonHitFlashRoots,
+            hitFlashDuration,
+            () => _poisonHitEffectRoutine,
+            routine => _poisonHitEffectRoutine = routine,
+            () => _poisonFlashRoutine,
+            routine => _poisonFlashRoutine = routine);
+
+    void PlayHitInternal(
+        int grossDamage,
+        int hpLost,
+        int maxHp,
+        GameObject effectRoot,
+        float effectDuration,
+        List<GameObject> flashRoots,
+        float flashDuration,
+        Func<Coroutine> getEffectRoutine,
+        Action<Coroutine> setEffectRoutine,
+        Func<Coroutine> getFlashRoutine,
+        Action<Coroutine> setFlashRoutine)
     {
         if (!isActiveAndEnabled || grossDamage <= 0)
             return;
@@ -68,56 +121,59 @@ public abstract class DamageHitFeedbackBase : MonoBehaviour
 
         CameraShake.ShakeActive(shakeDur, shakeMag);
 
-        if (hitEffectRoot != null)
+        if (effectRoot != null)
         {
-            if (_hitEffectRoutine != null)
-                StopCoroutine(_hitEffectRoutine);
-            hitEffectRoot.SetActive(true);
-            _hitEffectRoutine = StartCoroutine(CoTurnOffAfterDuration(hitEffectRoot, hitEffectDuration, () => _hitEffectRoutine = null));
+            var effectRoutine = getEffectRoutine();
+            if (effectRoutine != null)
+                StopCoroutine(effectRoutine);
+            effectRoot.SetActive(true);
+            setEffectRoutine(StartCoroutine(CoTurnOffAfterDuration(effectRoot, effectDuration, () => setEffectRoutine(null))));
         }
 
-        if (HasHitFlashTargets())
-        {
-            if (_flashRoutine != null)
-                StopCoroutine(_flashRoutine);
-            SetHitFlashActive(true);
-            _flashRoutine = StartCoroutine(CoTurnOffHitFlash());
-        }
+        if (!HasHitFlashTargets(flashRoots))
+            return;
+
+        var flashRoutine = getFlashRoutine();
+        if (flashRoutine != null)
+            StopCoroutine(flashRoutine);
+        SetHitFlashActive(flashRoots, true);
+        setFlashRoutine(StartCoroutine(CoTurnOffHitFlash(flashRoots, flashDuration, () => setFlashRoutine(null))));
     }
 
-    private bool HasHitFlashTargets()
+    static bool HasHitFlashTargets(List<GameObject> roots)
     {
-        if (hitFlashRoots == null || hitFlashRoots.Count == 0)
+        if (roots == null || roots.Count == 0)
             return false;
 
-        for (var i = 0; i < hitFlashRoots.Count; i++)
+        for (var i = 0; i < roots.Count; i++)
         {
-            if (hitFlashRoots[i] != null)
+            if (roots[i] != null)
                 return true;
         }
 
         return false;
     }
 
-    private void SetHitFlashActive(bool active)
+    static void SetHitFlashActive(List<GameObject> roots, bool active)
     {
-        if (hitFlashRoots == null)
+        if (roots == null)
             return;
 
-        for (var i = 0; i < hitFlashRoots.Count; i++)
+        for (var i = 0; i < roots.Count; i++)
         {
-            var root = hitFlashRoots[i];
+            var root = roots[i];
             if (root == null)
-                throw new InvalidOperationException($"DamageHitFeedbackBase on '{name}': hit flash root index {i} is null.");
+                throw new InvalidOperationException($"DamageHitFeedbackBase: hit flash root index {i} is null.");
             root.SetActive(active);
         }
     }
 
-    private IEnumerator CoTurnOffHitFlash()
+    static IEnumerator CoTurnOffHitFlash(List<GameObject> flashRoots, float duration, Action onComplete)
     {
-        yield return new WaitForSeconds(hitFlashDuration);
-        SetHitFlashActive(false);
-        _flashRoutine = null;
+        yield return new WaitForSeconds(duration);
+        if (HasHitFlashTargets(flashRoots))
+            SetHitFlashActive(flashRoots, false);
+        onComplete?.Invoke();
     }
 
     private static IEnumerator CoTurnOffAfterDuration(GameObject root, float duration, Action onComplete)
@@ -143,10 +199,26 @@ public abstract class DamageHitFeedbackBase : MonoBehaviour
             _flashRoutine = null;
         }
 
+        if (_poisonHitEffectRoutine != null)
+        {
+            StopCoroutine(_poisonHitEffectRoutine);
+            _poisonHitEffectRoutine = null;
+        }
+
+        if (_poisonFlashRoutine != null)
+        {
+            StopCoroutine(_poisonFlashRoutine);
+            _poisonFlashRoutine = null;
+        }
+
         if (hitEffectRoot != null)
             hitEffectRoot.SetActive(false);
-        if (HasHitFlashTargets())
-            SetHitFlashActive(false);
+        if (poisonHitEffectRoot != null)
+            poisonHitEffectRoot.SetActive(false);
+        if (HasHitFlashTargets(hitFlashRoots))
+            SetHitFlashActive(hitFlashRoots, false);
+        if (HasHitFlashTargets(poisonHitFlashRoots))
+            SetHitFlashActive(poisonHitFlashRoots, false);
     }
 
     private void OnDisable()
