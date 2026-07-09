@@ -142,6 +142,13 @@ namespace Enemies
 
         private IEnumerator RunStepWithOptionalPulse(Step step, EnemyActionSO action, CombatManager combat, EnemyController enemy)
         {
+            if (step.Kind == StepKind.GameAction &&
+                combat.TryGetPlayerDebuffFlyoutForIntent(action, step.GameActionListIndex, out _))
+            {
+                yield return RunPlayerDebuffGameActionStep(step, action, combat, enemy);
+                yield break;
+            }
+
             void ApplyStep()
             {
                 switch (step.Kind)
@@ -168,6 +175,22 @@ namespace Enemies
             }
             else
                 ApplyStep();
+        }
+
+        private IEnumerator RunPlayerDebuffGameActionStep(Step step, EnemyActionSO action, CombatManager combat, EnemyController enemy)
+        {
+            RectTransform flySource = null;
+            if (actionUI != null && actionUI.TryGetSegment(step.SegmentIndex, out var segment))
+            {
+                flySource = segment.IconRect;
+                yield return StartCoroutine(segment.CoPerformScalePulseWithPeakCallback(
+                    performStepPulseScale,
+                    pulseRiseSeconds,
+                    pulsePeakHoldSeconds,
+                    null));
+            }
+
+            yield return combat.CoExecuteEnemyIntentGameActionAtIndex(action, step.GameActionListIndex, enemy, flySource);
         }
 
         private static List<Step> BuildSteps(EnemyActionSO action)

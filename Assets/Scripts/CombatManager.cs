@@ -3945,6 +3945,117 @@ public class CombatManager : MonoBehaviour
         gameAction.Execute(actionCtx);
     }
 
+    public readonly struct EnemyPlayerDebuffFlyoutPayload
+    {
+        public readonly Sprite Icon;
+        public readonly Sprite Background;
+        public readonly int Stacks;
+
+        public EnemyPlayerDebuffFlyoutPayload(Sprite icon, Sprite background, int stacks)
+        {
+            Icon = icon;
+            Background = background;
+            Stacks = stacks;
+        }
+    }
+
+    public bool TryGetPlayerDebuffFlyoutForIntent(EnemyActionSO action, int actionListIndex, out EnemyPlayerDebuffFlyoutPayload payload)
+    {
+        payload = default;
+        if (action?.actions == null || actionListIndex < 0 || actionListIndex >= action.actions.Count)
+            return false;
+
+        return TryGetPlayerDebuffFlyoutForGameAction(action.actions[actionListIndex], out payload);
+    }
+
+    public bool TryGetPlayerDebuffFlyoutForGameAction(IGameAction gameAction, out EnemyPlayerDebuffFlyoutPayload payload)
+    {
+        payload = default;
+        if (gameAction is not ApplyStatusEffectAction apply)
+            return false;
+
+        var definition = apply.StatusEffectDefinition;
+        if (definition == null || definition.target != StatusEffectTarget.Player)
+            return false;
+
+        if (definition.type != StatusEffectType.Debuff && definition is not BurnEffectSO)
+            return false;
+
+        if (apply.ConfiguredStacks <= 0)
+            return false;
+
+        payload = new EnemyPlayerDebuffFlyoutPayload(
+            apply.ResolveStatusIcon() ?? GameActionIconUtility.GetDisplayIcon(apply),
+            GameIconCatalog.GetIntentActionBackground(apply),
+            apply.ConfiguredStacks);
+        return true;
+    }
+
+    /// <summary>
+    /// Resolves a player-debuff game action during the enemy turn: flies the status icon to the player bar,
+    /// applies stacks on arrival, then returns so the intent sequence can continue.
+    /// </summary>
+    public IEnumerator CoExecuteEnemyIntentGameActionAtIndex(
+        EnemyActionSO action,
+        int actionListIndex,
+        EnemyController actingEnemy,
+        RectTransform flySourceRect)
+    {
+        if (action?.actions == null || actionListIndex < 0 || actionListIndex >= action.actions.Count || player == null)
+            yield break;
+
+        var gameAction = action.actions[actionListIndex];
+        if (gameAction == null || gameAction is FaceResolveModifierBase)
+            yield break;
+
+        var actionCtx = BuildEnemyActionContext(action, actingEnemy);
+
+        if (!TryGetPlayerDebuffFlyoutForGameAction(gameAction, out var flyout))
+        {
+            gameAction.Execute(actionCtx);
+            yield break;
+        }
+
+        if (diceRollOutcomeFlyout == null)
+        {
+            gameAction.Execute(actionCtx);
+            yield break;
+        }
+
+        var applied = false;
+        void ApplyOnArrival()
+        {
+            if (applied)
+                return;
+            applied = true;
+            gameAction.Execute(actionCtx);
+        }
+
+        if (flySourceRect != null)
+        {
+            yield return diceRollOutcomeFlyout.CoFlyEnemyDebuffToPlayerStatusBar(
+                flyout.Icon,
+                flyout.Background,
+                flyout.Stacks,
+                flySourceRect,
+                ApplyOnArrival);
+            yield break;
+        }
+
+        if (actingEnemy != null)
+        {
+            yield return diceRollOutcomeFlyout.CoFlyEnemyDebuffToPlayerStatusBarFromWorld(
+                flyout.Icon,
+                flyout.Background,
+                flyout.Stacks,
+                actingEnemy.GetPowerOrbHitAnchor().position,
+                ApplyOnArrival);
+            yield break;
+        }
+
+        ApplyOnArrival();
+    }
+
     public bool EvaluateEnemyTurnCombatEnded()
     {
         if (CheckVictory()) return true;
@@ -5484,26 +5595,27 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private IEnumerator CoExecuteEnemyTurnIntentLegacy(EnemyActionSO action)
+    private IEnumerator CoExecuteEnemyTurnIntentLegacy(EnemyActionSO action, EnemyController actingEnemy)
     {
         if (action.damage > 0)
         {
             for (var i = 0; i < action.numberOfAttacks; i++)
             {
-                ApplySingleEnemyPhysicalHitFromIntent(action);
+                ApplySingleEnemyPhysicalHitFromIntent(action, actingEnemy);
                 if (CheckVictory()) yield break;
                 if (CheckDefeat()) yield break;
                 if (action.numberOfAttacks > 1) yield return new WaitForSeconds(0.4f);
             }
         }
 
-        ApplyEnemyArmorFromIntent(action);
+        ApplyEnemyArmorFromIntent(action, actingEnemy);
 
         if (action.actions != null && action.actions.Count > 0 && player != null)
         {
-            var actionCtx = BuildEnemyActionContext(action);
-            foreach (var gameAction in action.actions)
+            var actionCtx = BuildEnemyActionContext(action, actingEnemy);
+            for (var i = 0; i < action.actions.Count; i++)
             {
+                var gameAction = action.actions[i];
                 if (gameAction == null) continue;
                 if (gameAction is FaceResolveModifierBase) continue;
 
@@ -5519,6 +5631,12 @@ public class CombatManager : MonoBehaviour
                             yield return new WaitForSeconds(0.4f);
                     }
 
+                    continue;
+                }
+
+                if (TryGetPlayerDebuffFlyoutForGameAction(gameAction, out _))
+                {
+                    yield return CoExecuteEnemyIntentGameActionAtIndex(action, i, actingEnemy, null);
                     continue;
                 }
 
@@ -5626,7 +5744,7 @@ public class CombatManager : MonoBehaviour
                             this);
                     }
 
-                    yield return CoExecuteEnemyTurnIntentLegacy(action);
+                    yield return CoExecuteEnemyTurnIntentLegacy(action, enemy);
                 }
 
                 yield return enemy.CoPresentEnemyTurnActionOutro();

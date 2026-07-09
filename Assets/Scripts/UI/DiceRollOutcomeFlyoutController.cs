@@ -214,6 +214,100 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Enemy turn: flies a debuff icon from an intent row into the player status bar along a curve,
+    /// then invokes <paramref name="onArrived"/> (typically applies the status stacks).
+    /// </summary>
+    public IEnumerator CoFlyEnemyDebuffToPlayerStatusBar(
+        Sprite icon,
+        Sprite background,
+        int stacks,
+        RectTransform sourceRect,
+        System.Action onArrived)
+    {
+        ResolvePlayerStatusBarFlyTarget();
+        if (!TryResolveEnemyDebuffFlyEndpoints(sourceRect, null, out var startLocal, out var endLocal))
+        {
+            onArrived?.Invoke();
+            yield break;
+        }
+
+        yield return CoFlyEnemyDebuffAlongCurve(icon, background, stacks, startLocal, endLocal, onArrived);
+    }
+
+    /// <summary>Enemy turn fallback when no intent segment rect is available (uses a world anchor on the acting enemy).</summary>
+    public IEnumerator CoFlyEnemyDebuffToPlayerStatusBarFromWorld(
+        Sprite icon,
+        Sprite background,
+        int stacks,
+        Vector3 worldSource,
+        System.Action onArrived)
+    {
+        ResolvePlayerStatusBarFlyTarget();
+        if (!TryResolveEnemyDebuffFlyEndpoints(null, worldSource, out var startLocal, out var endLocal))
+        {
+            onArrived?.Invoke();
+            yield break;
+        }
+
+        yield return CoFlyEnemyDebuffAlongCurve(icon, background, stacks, startLocal, endLocal, onArrived);
+    }
+
+    private bool TryResolveEnemyDebuffFlyEndpoints(
+        RectTransform sourceRect,
+        Vector3? worldSource,
+        out Vector2 startLocal,
+        out Vector2 endLocal)
+    {
+        startLocal = default;
+        endLocal = default;
+        if (flyoutParent == null || flyoutPoolIconPrefab == null || playerStatusBarFlyTarget == null)
+            return false;
+
+        var hasStart = false;
+        if (sourceRect != null)
+            hasStart = UiRectCenterToParentLocal(sourceRect, flyoutParent, out startLocal);
+        else if (worldSource.HasValue)
+            hasStart = WorldPointToParentLocal(worldSource.Value, flyoutParent, out startLocal);
+
+        if (!hasStart)
+            return false;
+
+        return UiRectCenterToParentLocal(playerStatusBarFlyTarget, flyoutParent, out endLocal);
+    }
+
+    private IEnumerator CoFlyEnemyDebuffAlongCurve(
+        Sprite icon,
+        Sprite background,
+        int stacks,
+        Vector2 startLocal,
+        Vector2 endLocal,
+        System.Action onArrived)
+    {
+        BeginFreezeStatusBar(StatusEffectTarget.Player);
+        try
+        {
+            var inst = Instantiate(flyoutPoolIconPrefab, flyoutParent);
+            var rt = inst.transform as RectTransform;
+            if (rt == null)
+            {
+                Destroy(inst.gameObject);
+                onArrived?.Invoke();
+                yield break;
+            }
+
+            rt.localScale = Vector3.one;
+            inst.SetupForDiceRollFlyout(PoolRowKey.Custom("enemy-player-debuff"), icon, stacks, background);
+            var mid = (startLocal + endLocal) * 0.5f + Vector2.up * arcHeightPixels;
+            yield return FlyLineRoutine(rt, startLocal, mid, endLocal, default, applyPoolDeltaOnLanding: false);
+            onArrived?.Invoke();
+        }
+        finally
+        {
+            EndFreezeStatusBar(StatusEffectTarget.Player);
+        }
+    }
+
     IEnumerator CoFlyPlayerPoolRowToStatusBar(
         PlayerPoolDrainSnapshot snap,
         Vector2 endLocal,

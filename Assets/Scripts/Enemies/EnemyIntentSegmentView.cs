@@ -21,6 +21,10 @@ namespace Enemies
 
         static Sprite _hoverRaycastSprite;
 
+        /// <summary>Intent icon rect — used as the start anchor for debuff flyouts to the player status bar.</summary>
+        public RectTransform IconRect =>
+            iconImage != null ? iconImage.rectTransform : transform as RectTransform;
+
         void Awake() => _pulseBaseLocalScale = transform.localScale;
 
         /// <summary>
