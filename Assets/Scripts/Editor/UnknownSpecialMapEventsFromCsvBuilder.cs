@@ -27,7 +27,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             EmbeddedCsv);
 
         var curse = Load<DieFaceSO>("Assets/Data/Faces/Curses/Curse Test.asset");
-        var strRelic = Load<RelicSO>("Assets/Data/Relics/Requested/Mystic Cube.asset");
+        var relicPool = Load<RelicLootTableSO>("Assets/Data/Relics/All Relics Loot Table.asset");
         var statueArt = Load<Sprite>("Assets/Visuals/UI/Unknown Event Assets/Statue.png");
         var atkBase = Load<DieFaceSO>("Assets/Data/Faces/Physical/Base Physical/2 - Attack Base.asset");
         var defBase = Load<DieFaceSO>("Assets/Data/Faces/Defense/Stating Defense/1 - Defense Base.asset");
@@ -69,7 +69,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         created.Add(Save("UE_CatalystOfSacrifice", BuildCatalystOfSacrifice()));
         created.Add(Save("UE_ScouredObelisk", BuildScouredObelisk(atkBase, defBase, fireBase)));
         created.Add(Save("UE_ArcanistsPolishingWheel", BuildPolishingWheel(gemPairs)));
-        created.Add(Save("UE_MerlinsMonument", BuildMerlinsMonument(strRelic, curse, statueArt)));
+        created.Add(Save("UE_MerlinsMonument", BuildMerlinsMonument(relicPool, curse, statueArt)));
 
         foreach (var ev in created)
         {
@@ -456,7 +456,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         return ev;
     }
 
-    static UnknownMapEventSO BuildMerlinsMonument(RelicSO relic, DieFaceSO curse, Sprite art)
+    static UnknownMapEventSO BuildMerlinsMonument(RelicLootTableSO relicPool, DieFaceSO curse, Sprite art)
     {
         var ev = ScriptableObject.CreateInstance<UnknownMapEventSO>();
         ev.displayName = "Merlin’s Monument";
@@ -467,7 +467,7 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         {
             branches = new List<UnknownMapEventRandomBranchSlot>
             {
-                new UnknownMapEventRandomBranchSlot { weight = 50, outcome = new UnknownMapEventOutcomeAddRunRelic { relic = relic } },
+                new UnknownMapEventRandomBranchSlot { weight = 50, outcome = new UnknownMapEventOutcomeAddRunRelic { relicLootTable = relicPool } },
                 new UnknownMapEventRandomBranchSlot
                 {
                     weight = 50,
@@ -480,7 +480,8 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             Row(
                 "[Risk] Try to break the statue - 50% find an Artifact, 50% gain a Face Curse to a random die",
                 new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() },
-                branch),
+                branch,
+                showOutcomeResultScreen: true),
             Row("Spit on the Statue and move on", new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionAlwaysTrue() }, new UnknownMapEventOutcomeNoOp()),
         };
         return ev;
@@ -498,13 +499,18 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
         composite.steps.Add(new UnknownMapEventOutcomeOpenUnknownMapEvent { nextEvent = to });
     }
 
-    static UnknownMapEventOptionEntry Row(string label, List<UnknownMapEventConditionBase> when, UnknownMapEventOutcomeBase outcome)
+    static UnknownMapEventOptionEntry Row(
+        string label,
+        List<UnknownMapEventConditionBase> when,
+        UnknownMapEventOutcomeBase outcome,
+        bool showOutcomeResultScreen = false)
     {
         return new UnknownMapEventOptionEntry
         {
             label = label,
             enabledWhen = when,
             registerEventCompletedOnPick = true,
+            showOutcomeResultScreen = showOutcomeResultScreen,
             outcome = outcome,
         };
     }

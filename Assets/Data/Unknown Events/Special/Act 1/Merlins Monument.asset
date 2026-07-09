@@ -24,12 +24,14 @@ MonoBehaviour:
     enabledWhen:
     - rid: 6434882266773586187
     registerEventCompletedOnPick: 1
+    showOutcomeResultScreen: 1
     outcome:
       rid: 6434882266773586188
   - label: Spit on the Statue and move on
     enabledWhen:
     - rid: 6434882266773586189
     registerEventCompletedOnPick: 1
+    showOutcomeResultScreen: 0
     outcome:
       rid: 6434882266773586190
   triggersCombat: 0
@@ -70,7 +72,7 @@ MonoBehaviour:
     - rid: 6434882266773586193
       type: {class: UnknownMapEventOutcomeAddRunRelic, ns: , asm: Assembly-CSharp}
       data:
-        relic: {fileID: 11400000, guid: fb3db4253ac093a49a1b7136b9cc03ac, type: 2}
+        relicLootTable: {fileID: 11400000, guid: 7804ec17c318ac8418982d1921cd8392, type: 2}
     - rid: 6434882266773586194
       type: {class: UnknownMapEventOutcomeAddCurseFaceToRandomDie, ns: , asm: Assembly-CSharp}
       data:

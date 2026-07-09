@@ -104,8 +104,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             dieTooltipSlotContainer.gameObject.SetActive(true);
         if (dieTooltipGemIconContainer != null)
             dieTooltipGemIconContainer.gameObject.SetActive(true);
-        if (facesInteractable)
-            SetDecorativeRaycastBlocking(false);
+        SetDecorativeRaycastBlocking(false);
         DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
@@ -252,6 +251,26 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         HideFaceHoverTooltip();
         HideStatusHoverTooltip();
         HideFaceReplacementRuleError();
+    }
+
+    /// <summary>True when the pointer is over the active die tooltip panel (used to avoid hover flicker on parent dice).</summary>
+    public bool IsPointerOverDieTooltipPanel()
+    {
+        if (dieTooltipPanel == null || !dieTooltipPanel.activeSelf || EventSystem.current == null)
+            return false;
+
+        var panelTransform = dieTooltipPanel.transform;
+        var ped = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(ped, results);
+        for (var i = 0; i < results.Count; i++)
+        {
+            var hit = results[i].gameObject.transform;
+            if (hit == panelTransform || hit.IsChildOf(panelTransform))
+                return true;
+        }
+
+        return false;
     }
 
     public void ShowFaceReplacementRuleError()

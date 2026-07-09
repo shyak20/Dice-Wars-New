@@ -12,7 +12,8 @@ public readonly struct UnknownMapEventOutcomeContext
         Vector2Int playerCell,
         int movesTaken,
         DieAssetSO chosenDie = null,
-        IUnknownMapEventOutcomeHost host = null)
+        IUnknownMapEventOutcomeHost host = null,
+        UnknownMapEventOutcomeResultRecorder resultRecorder = null)
     {
         Evaluation = evaluation;
         SourceEvent = sourceEvent;
@@ -21,6 +22,7 @@ public readonly struct UnknownMapEventOutcomeContext
         MovesTaken = movesTaken;
         ChosenDie = chosenDie;
         Host = host;
+        ResultRecorder = resultRecorder;
     }
 
     public UnknownMapEventEvaluationContext Evaluation { get; }
@@ -30,9 +32,10 @@ public readonly struct UnknownMapEventOutcomeContext
     public int MovesTaken { get; }
     public DieAssetSO ChosenDie { get; }
     internal IUnknownMapEventOutcomeHost Host { get; }
+    public UnknownMapEventOutcomeResultRecorder ResultRecorder { get; }
 
     public UnknownMapEventOutcomeContext WithChosenDie(DieAssetSO die) =>
-        new UnknownMapEventOutcomeContext(Evaluation, SourceEvent, CombatGrid, PlayerCell, MovesTaken, die, Host);
+        new UnknownMapEventOutcomeContext(Evaluation, SourceEvent, CombatGrid, PlayerCell, MovesTaken, die, Host, ResultRecorder);
 }
 
 /// <summary>Map panel hook for outcomes that chain into another unknown event without closing the UI.</summary>
@@ -502,12 +505,30 @@ public sealed class UnknownMapEventOutcomeAddCurseFaceToRandomDie : UnknownMapEv
             return;
         }
 
+        if (TryAddToRandomDie(curseFace, out var affectedDie, out var slot, out var deckIndex))
+            ctx.ResultRecorder?.SetCurseFaceAdded(affectedDie, curseFace, slot, deckIndex);
+    }
+
+    /// <summary>Places <paramref name="curseFace"/> on a random valid deck die slot.</summary>
+    public static bool TryAddToRandomDie(
+        DieFaceSO curseFace,
+        out DieAssetSO affectedDie,
+        out int slotIndex,
+        out int deckIndex)
+    {
+        affectedDie = null;
+        slotIndex = -1;
+        deckIndex = -1;
+
+        if (curseFace == null)
+            return false;
+
         var pdc = PlayerDataContainer.Instance;
         var data = pdc?.RuntimeData;
         if (data?.currentDeck == null)
         {
             Debug.LogError("UnknownMapEventOutcomeAddCurseFaceToRandomDie: no runtime deck.");
-            return;
+            return false;
         }
 
         var indices = new List<int>();
@@ -520,7 +541,7 @@ public sealed class UnknownMapEventOutcomeAddCurseFaceToRandomDie : UnknownMapEv
         if (indices.Count == 0)
         {
             Debug.LogWarning("UnknownMapEventOutcomeAddCurseFaceToRandomDie: deck empty.");
-            return;
+            return false;
         }
 
         UnknownMapEventOutcomeShuffle.ShuffleInPlace(indices);
@@ -541,11 +562,15 @@ public sealed class UnknownMapEventOutcomeAddCurseFaceToRandomDie : UnknownMapEv
                     continue;
                 die.SwapFace(slot, curseFace);
                 PlayerDataContainer.NotifyRuntimeDeckChanged();
-                return;
+                affectedDie = die;
+                slotIndex = slot;
+                deckIndex = dieIdx;
+                return true;
             }
         }
 
         Debug.LogWarning("UnknownMapEventOutcomeAddCurseFaceToRandomDie: no valid face slot found.");
+        return false;
     }
 }
 
@@ -980,17 +1005,27 @@ public sealed class UnknownMapEventOutcomeUpgradeRandomSocketedGemFromTable : Un
 [Serializable]
 public sealed class UnknownMapEventOutcomeAddRunRelic : UnknownMapEventOutcomeBase
 {
-    public RelicSO relic;
+    [Tooltip("Weighted relic pool (same as shop/treasure). One random unowned relic is granted.")]
+    public RelicLootTableSO relicLootTable;
 
     public override void Execute(UnknownMapEventOutcomeContext ctx)
     {
-        if (relic == null)
+        if (relicLootTable == null)
         {
-            Debug.LogError("UnknownMapEventOutcomeAddRunRelic: relic is null.");
+            Debug.LogError("UnknownMapEventOutcomeAddRunRelic: assign relicLootTable.");
             return;
         }
 
+        var rolled = ProgressionLootRolls.RollRelics(relicLootTable, 1);
+        if (rolled == null || rolled.Count == 0 || rolled[0] == null)
+        {
+            Debug.LogWarning("UnknownMapEventOutcomeAddRunRelic: relic pool roll returned nothing (empty pool or all owned).");
+            return;
+        }
+
+        var relic = rolled[0];
         RunManager.Instance?.AddRunRelic(relic);
+        ctx.ResultRecorder?.SetRelicGranted(relic);
     }
 }
 

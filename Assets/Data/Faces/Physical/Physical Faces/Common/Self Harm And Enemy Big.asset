@@ -15,7 +15,7 @@ MonoBehaviour:
   title: Self Harm and Enemy Big
   description: Harness <style=Damage>3</style>
   descriptionLines:
-  - Deal <style=Attack>10</style> to the enemy
+  - Deal <style=Attack>6</style> to the enemy
   - Deal <style=Attack>3</style> to yourself
   value: 3
   type: 0

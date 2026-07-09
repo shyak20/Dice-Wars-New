@@ -23,6 +23,8 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
     [Tooltip("Prefab root must include UnknownMapEventChoiceRowView (Button + TMP label). One instance per visible choice.")]
     [SerializeField] private GameObject optionRowPrefab;
     [SerializeField] private MapUnknownEventDieChoicePopupView dieChoicePopup;
+    [Tooltip("Optional. Shown when an option has Show Outcome Result Screen and the outcome reports a result.")]
+    [SerializeField] private MapUnknownEventOutcomeResultView outcomeResultView;
     [Tooltip("Plays Unknown Appear Anim on open. Options are snapped to the end state so choice buttons are clickable immediately.")]
     [SerializeField] private Animator panelOpenAnimator;
     [Tooltip("CanvasGroup on the options list (animated alpha in Unknown Appear Anim). Auto-resolved from Option Choices Layout Group when empty.")]
@@ -61,6 +63,11 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
         if (dieChoicePopup == null)
             Debug.LogWarning(
                 "MapUnknownEventPanel: assign Die Choice Popup for options that require picking a die.",
+                this);
+
+        if (outcomeResultView == null)
+            Debug.LogWarning(
+                "MapUnknownEventPanel: assign Outcome Result View to show relic/curse results on options with Show Outcome Result Screen.",
                 this);
 
         if (optionChoicesLayoutGroup != null && optionChoicesLayoutGroup.transform is not RectTransform)
@@ -425,9 +432,48 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
             return;
         }
 
-        ExecuteOptionOutcome(ev, entry, chosenDie: null);
+        var recorder = ExecuteOptionOutcome(ev, entry, chosenDie: null);
+        OnOptionChosenSyncFinish(entry, recorder);
+    }
+
+    IEnumerator CoPresentOutcomeResultIfNeeded(UnknownMapEventOptionEntry entry, UnknownMapEventOutcomeResultRecorder recorder)
+    {
+        if (entry == null || !entry.showOutcomeResultScreen || recorder == null || !recorder.HasResult)
+            yield break;
+
+        if (outcomeResultView == null)
+        {
+            Debug.LogError(
+                "MapUnknownEventPanel: option requests outcome result screen but Outcome Result View is not assigned.",
+                this);
+            yield break;
+        }
+
+        var payload = recorder.ConsumeResult();
+        var eventArt = _currentEvent != null ? _currentEvent.eventArt : null;
+        var done = false;
+        outcomeResultView.Show(payload, eventArt, () => done = true);
+        yield return new WaitUntil(() => done);
+    }
+
+    IEnumerator CoFinishOptionFlow(UnknownMapEventOptionEntry entry, UnknownMapEventOutcomeResultRecorder recorder)
+    {
+        yield return CoPresentOutcomeResultIfNeeded(entry, recorder);
+        TryConsumePendingChainedEvent();
         if (!_openedChainedEventThisOutcome)
             Hide();
+    }
+
+    void OnOptionChosenSyncFinish(UnknownMapEventOptionEntry entry, UnknownMapEventOutcomeResultRecorder recorder)
+    {
+        if (entry != null && entry.showOutcomeResultScreen && recorder != null && recorder.HasResult)
+            StartCoroutine(CoFinishOptionFlow(entry, recorder));
+        else
+        {
+            TryConsumePendingChainedEvent();
+            if (!_openedChainedEventThisOutcome)
+                Hide();
+        }
     }
 
     public void RequestOpenChainedEvent(UnknownMapEventSO nextEvent)
@@ -572,16 +618,13 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
             dieChoicePopup?.Hide();
             if (entry.registerEventCompletedOnPick)
                 RunManager.Instance.RegisterUnknownMapEventCompleted(ev.ResolvedEventId);
-            TryConsumePendingChainedEvent();
-            if (!_openedChainedEventThisOutcome)
-                Hide();
+            OnOptionChosenSyncFinish(entry, null);
             yield break;
         }
 
-        ExecuteOptionOutcome(ev, entry, die);
+        var recorder = ExecuteOptionOutcome(ev, entry, die);
         dieChoicePopup?.Hide();
-        if (!_openedChainedEventThisOutcome)
-            Hide();
+        OnOptionChosenSyncFinish(entry, recorder);
     }
 
     IEnumerator CoRunAfterDieChoiceSteps(
@@ -691,11 +734,12 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
         TryConsumePendingChainedEvent();
     }
 
-    private void ExecuteOptionOutcome(UnknownMapEventSO ev, UnknownMapEventOptionEntry entry, DieAssetSO chosenDie)
+    private UnknownMapEventOutcomeResultRecorder ExecuteOptionOutcome(UnknownMapEventSO ev, UnknownMapEventOptionEntry entry, DieAssetSO chosenDie)
     {
         _openedChainedEventThisOutcome = false;
         _pendingChainedEvent = null;
 
+        var recorder = new UnknownMapEventOutcomeResultRecorder();
         var evalCtx = new UnknownMapEventEvaluationContext(
             RunManager.Instance,
             _pendingGrid,
@@ -708,7 +752,8 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
             _pendingPlayerCell,
             _pendingMovesTaken,
             chosenDie,
-            host: this);
+            host: this,
+            resultRecorder: recorder);
 
         if (entry.outcome != null)
             entry.outcome.Execute(outcomeCtx);
@@ -716,7 +761,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
         if (entry.registerEventCompletedOnPick)
             RunManager.Instance.RegisterUnknownMapEventCompleted(ev.ResolvedEventId);
 
-        TryConsumePendingChainedEvent();
+        return recorder;
     }
 
     private void ClearOptionRows()
@@ -760,6 +805,7 @@ public sealed class MapUnknownEventPanel : MonoBehaviour, IUnknownMapEventOutcom
         _pendingChainedEvent = null;
         _openedChainedEventThisOutcome = false;
         dieChoicePopup?.Hide();
+        outcomeResultView?.HideImmediate();
         ClearOptionRows();
         if (root != null)
             root.SetActive(false);

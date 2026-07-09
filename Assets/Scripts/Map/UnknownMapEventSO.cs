@@ -133,6 +133,9 @@ public class UnknownMapEventOptionEntry
     [Tooltip("If true, picking this option registers the parent event’s completion key (ResolvedEventId) after outcomes run.")]
     public bool registerEventCompletedOnPick = true;
 
+    [Tooltip("When true and the outcome reports a result, show the outcome result screen before closing the panel.")]
+    public bool showOutcomeResultScreen;
+
     [SerializeReference]
     [Tooltip("Effects when this option is chosen (gold, combat, composite, …).")]
     public UnknownMapEventOutcomeBase outcome;

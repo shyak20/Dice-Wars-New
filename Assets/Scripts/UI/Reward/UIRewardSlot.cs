@@ -31,29 +31,51 @@ public class UIRewardSlot : MonoBehaviour
     [Tooltip("Shown after the player replaces this face; assign a child Image or set New Face Preview Image.")]
     [SerializeField] private GameObject newFacePickedRevealRoot;
     [SerializeField] private Image newFacePickedPreviewImage;
+    [Header("Curse face highlight")]
+    [Tooltip("Animator on the face-replace overlay (defaults to Animator on New Face Picked Reveal Root).")]
+    [SerializeField] private Animator curseStateAnimator;
+    [SerializeField] private string curseAnimatorBoolParameter = "Curse";
 
     private bool _hoverRevealEnabled = true;
     private DieFaceSO _face;
+    private int _curseAnimatorBoolHash;
     public DieFaceSO Face => _face;
 
     private void Awake()
     {
         if (button == null)
             Debug.LogError($"UIRewardSlot on '{gameObject.name}': assign button.");
+
+        CacheCurseAnimatorBoolHash();
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate() => CacheCurseAnimatorBoolHash();
+#endif
+
+    void CacheCurseAnimatorBoolHash()
+    {
+        _curseAnimatorBoolHash = string.IsNullOrWhiteSpace(curseAnimatorBoolParameter)
+            ? 0
+            : Animator.StringToHash(curseAnimatorBoolParameter.Trim());
     }
 
     public void Bind(DieFaceSO face, System.Action<DieFaceSO> onPicked)
     {
         _face = face;
 
-        if (face == null) return;
+        if (face == null)
+        {
+            ApplyCurseAnimatorState(null, manageRevealRootVisibility: true);
+            return;
+        }
 
         if (nameText != null) nameText.text = face.Title;
         if (descriptionText != null) descriptionText.text = face.Description;
         if (valueText != null) valueText.text = face.value.ToString();
         ApplyRarityText(face.rarity);
 
-        var faceSprite = face.uiIcon;
+        var faceSprite = ResolveFaceUiIcon(face);
         var elementSprite = GameIconCatalog.GetElementIcon(face.type);
         if (iconImage != null)
         {
@@ -75,7 +97,6 @@ public class UIRewardSlot : MonoBehaviour
         _hoverRevealEnabled = true;
         if (hoverRevealObject != null)
             hoverRevealObject.SetActive(false);
-        HideNewFacePickedPreview();
 
         if (button != null)
         {
@@ -83,6 +104,8 @@ public class UIRewardSlot : MonoBehaviour
             if (onPicked != null)
                 button.onClick.AddListener(() => onPicked.Invoke(_face));
         }
+
+        ApplyCurseAnimatorState(face, manageRevealRootVisibility: true);
     }
 
     /// <summary>
@@ -94,30 +117,110 @@ public class UIRewardSlot : MonoBehaviour
         if (newFacePickedRevealRoot == null || newFace == null)
             return;
 
-        var img = newFacePickedPreviewImage;
-        if (img == null)
-            img = newFacePickedRevealRoot.GetComponentInChildren<Image>(true);
-        if (img != null)
-        {
-            var s = newFace.uiIcon;
-            img.sprite = s;
-            img.enabled = s != null;
-        }
-
+        ApplyNewFacePreviewImage(newFace);
         newFacePickedRevealRoot.SetActive(true);
 
-        var animator = newFacePickedRevealRoot.GetComponent<Animator>();
+        var animator = ResolveCurseAnimator();
         if (animator != null && animator.runtimeAnimatorController != null)
         {
             animator.Rebind();
             animator.Update(0f);
         }
+
+        UpdateCurseAnimatorBool(newFace.type == DieType.Curse);
     }
 
     public void HideNewFacePickedPreview()
     {
+        HideNewFacePickedPreviewWithoutRecurse();
+    }
+
+    void ApplyCurseAnimatorState(DieFaceSO face, bool manageRevealRootVisibility)
+    {
+        var isCurse = face != null && face.type == DieType.Curse;
+
+        if (manageRevealRootVisibility)
+        {
+            if (isCurse && newFacePickedRevealRoot != null)
+            {
+                ApplyNewFacePreviewImage(face);
+                newFacePickedRevealRoot.SetActive(true);
+            }
+            else if (!isCurse)
+                HideNewFacePickedPreviewWithoutRecurse();
+        }
+
+        UpdateCurseAnimatorBool(isCurse);
+    }
+
+    void ApplyNewFacePreviewImage(DieFaceSO face)
+    {
+        if (face == null || newFacePickedRevealRoot == null)
+            return;
+
+        var img = newFacePickedPreviewImage;
+        if (img == null)
+            img = newFacePickedRevealRoot.GetComponentInChildren<Image>(true);
+        if (img == null)
+        {
+            Debug.LogError($"UIRewardSlot on '{gameObject.name}': no preview Image under newFacePickedRevealRoot.", this);
+            return;
+        }
+
+        var sprite = ResolveFaceUiIcon(face);
+        img.sprite = sprite;
+        img.enabled = sprite != null;
+        img.gameObject.SetActive(true);
+    }
+
+    static Sprite ResolveFaceUiIcon(DieFaceSO face)
+    {
+        if (face == null)
+            return null;
+
+        if (face.uiIcon != null)
+            return face.uiIcon;
+
+        return GameIconCatalog.GetElementIcon(face.type);
+    }
+
+    void UpdateCurseAnimatorBool(bool isCurse)
+    {
+        var animator = ResolveCurseAnimator();
+        if (animator == null || animator.runtimeAnimatorController == null || _curseAnimatorBoolHash == 0)
+            return;
+
+        if (isCurse)
+        {
+            animator.Rebind();
+            animator.Update(0f);
+        }
+
+        animator.SetBool(_curseAnimatorBoolHash, isCurse);
+        animator.Update(0f);
+    }
+
+    void HideNewFacePickedPreviewWithoutRecurse()
+    {
         if (newFacePickedRevealRoot != null)
             newFacePickedRevealRoot.SetActive(false);
+
+        var animator = ResolveCurseAnimator();
+        if (animator == null || animator.runtimeAnimatorController == null || _curseAnimatorBoolHash == 0)
+            return;
+
+        animator.SetBool(_curseAnimatorBoolHash, false);
+    }
+
+    Animator ResolveCurseAnimator()
+    {
+        if (curseStateAnimator != null)
+            return curseStateAnimator;
+
+        if (newFacePickedRevealRoot != null)
+            return newFacePickedRevealRoot.GetComponent<Animator>();
+
+        return GetComponentInChildren<Animator>(true);
     }
 
     /// <summary>For preview-only slots; swap overlay disables the reward button.</summary>
