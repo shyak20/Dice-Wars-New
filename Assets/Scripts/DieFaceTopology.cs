@@ -27,20 +27,49 @@ public static class DieFaceTopology
     /// <summary>Face index whose outward normal best aligns with world up (settled top face).</summary>
     public static int FindTopFaceIndex(Transform dieTransform)
     {
-        var bestDot = -1f;
-        var closestIndex = 0;
+        TryFindTopFaceIndex(dieTransform, out var faceIndex, out _);
+        return faceIndex;
+    }
+
+    /// <summary>
+    /// Face index whose outward normal best aligns with world up, plus alignment score
+    /// (1 = flat face up, ~0.71 = edge, ~0.58 = vertex on a cube).
+    /// </summary>
+    public static bool TryFindTopFaceIndex(Transform dieTransform, out int faceIndex, out float upDot)
+    {
+        faceIndex = 0;
+        upDot = -1f;
+        if (dieTransform == null)
+            return false;
+
         for (var i = 0; i < FaceCount; i++)
         {
             var worldFaceDir = dieTransform.TransformDirection(LocalFaceDirections[i]);
             var dot = Vector3.Dot(worldFaceDir, Vector3.up);
-            if (dot > bestDot)
+            if (dot > upDot)
             {
-                bestDot = dot;
-                closestIndex = i;
+                upDot = dot;
+                faceIndex = i;
             }
         }
 
-        return closestIndex;
+        return true;
+    }
+
+    /// <summary>Rotation that aligns <paramref name="faceIndex"/>'s outward normal with world up.</summary>
+    public static bool TryGetRotationSnapToFaceUp(Transform dieTransform, int faceIndex, out Quaternion snappedRotation)
+    {
+        snappedRotation = dieTransform != null ? dieTransform.rotation : Quaternion.identity;
+        if (dieTransform == null || faceIndex < 0 || faceIndex >= FaceCount)
+            return false;
+
+        var worldFaceDir = dieTransform.TransformDirection(LocalFaceDirections[faceIndex]);
+        if (worldFaceDir.sqrMagnitude < 1e-8f)
+            return false;
+
+        var align = Quaternion.FromToRotation(worldFaceDir, Vector3.up);
+        snappedRotation = align * dieTransform.rotation;
+        return true;
     }
 
     public static Vector3 GetFaceWorldNormal(Transform dieTransform, int faceIndex) =>

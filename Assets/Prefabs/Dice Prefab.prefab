@@ -337,7 +337,7 @@ Rigidbody:
   serializedVersion: 5
   m_Mass: 100
   m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_AngularDamping: 0.35
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -389,6 +389,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   velocityThreshold: 0.05
   settleTime: 1.5
+  minUpDot: 0.88
+  maxSettleSeconds: 10
+  maxNudgeAttempts: 4
+  nudgeCooldownSeconds: 0.35
+  nudgeTorque: 3
+  nudgeImpulse: 0.8
 --- !u!114 &1675593947625841633
 MonoBehaviour:
   m_ObjectHideFlags: 0
