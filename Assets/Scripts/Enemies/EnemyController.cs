@@ -295,7 +295,11 @@ public class EnemyController : MonoBehaviour
             EvaluatePendingPhaseTransitionTrigger();
 
         if (amount > 0)
+        {
             CombatEvents.OnEnemyDamagePresentation?.Invoke(amount, GetDamageNumberWorldPosition(), this, presentationKind);
+            if (presentationKind == EnemyDamagePresentationKind.Burn)
+                ProgressionEventBridge.NotifyFireDamageDealt(amount);
+        }
     }
 
     public void HandlePlayerFaceResolved(FaceResult resolvedFace, CombatManager combatManager)

@@ -19,14 +19,37 @@ public static class DieFaceGameIconOnlyTooltipText
 
         var effectNames = new List<string>();
         var descriptions = new List<string>();
-        var seenStatuses = new HashSet<StatusEffectSO>();
-        var seenActionVisualIds = new HashSet<ActionVisualId>();
+        var seenActionKeys = new HashSet<string>();
+        var seenTitleParts = new HashSet<string>();
+        var seenDescriptionParts = new HashSet<string>();
+
+        void TryAddTitle(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            var trimmed = text.Trim();
+            if (!seenTitleParts.Add(trimmed))
+                return;
+
+            effectNames.Add(trimmed);
+        }
+
+        void TryAddDescription(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            var trimmed = text.Trim();
+            if (!seenDescriptionParts.Add(trimmed))
+                return;
+
+            descriptions.Add(trimmed);
+        }
 
         void TryAppendActionVisual(ActionVisualId id)
         {
             if (id == ActionVisualId.None)
-                return;
-            if (!seenActionVisualIds.Add(id))
                 return;
             if (!GameIconCatalog.TryGetActionTooltip(id, out var catalogTitle, out var catalogDesc))
                 return;
@@ -39,27 +62,41 @@ public static class DieFaceGameIconOnlyTooltipText
             if (namePart == null)
                 namePart = id.ToString();
 
-            effectNames.Add(namePart);
+            TryAddTitle(namePart);
             if (descPart != null)
-                descriptions.Add(descPart);
+                TryAddDescription(descPart);
         }
 
         for (var i = 0; i < face.actions.Count; i++)
         {
             var action = face.actions[i];
+            if (action == null)
+                continue;
+
+            if (!seenActionKeys.Add(GetActionDedupKey(action)))
+                continue;
+
             if (action is ApplyStatusEffectAction apply)
             {
                 var def = apply.StatusEffectDefinition;
-                if (def == null || !seenStatuses.Add(def))
-                    continue;
-                if (GameIconCatalog.GetStatusIcon(def) == null)
+                if (def == null || GameIconCatalog.GetStatusIcon(def) == null)
                     continue;
 
                 var effectName = string.IsNullOrWhiteSpace(def.effectName) ? def.name : def.effectName;
-                if (!string.IsNullOrWhiteSpace(effectName))
-                    effectNames.Add(effectName.Trim());
-                if (!string.IsNullOrWhiteSpace(def.description))
-                    descriptions.Add(def.description.Trim());
+                TryAddTitle(effectName);
+                TryAddDescription(def.description);
+                continue;
+            }
+
+            if (action is ApplyBenefitToMainEnemyAction benefit && benefit.IsStatusOnlyBenefit)
+            {
+                var def = benefit.StatusEffectDefinition;
+                if (def == null || GameIconCatalog.GetStatusIcon(def) == null)
+                    continue;
+
+                var effectName = string.IsNullOrWhiteSpace(def.effectName) ? def.name : def.effectName;
+                TryAddTitle(effectName);
+                TryAddDescription(def.description);
                 continue;
             }
 
@@ -79,5 +116,28 @@ public static class DieFaceGameIconOnlyTooltipText
         title = effectNames.Count > 0 ? string.Join(" · ", effectNames) : "Effect";
         description = descriptions.Count > 0 ? string.Join("\n\n", descriptions) : string.Empty;
         return true;
+    }
+
+    static string GetActionDedupKey(IGameAction action)
+    {
+        if (action is ApplyStatusEffectAction apply && apply.StatusEffectDefinition != null)
+            return $"status:{apply.StatusEffectDefinition.GetInstanceID()}";
+
+        if (action is ApplyBenefitToMainEnemyAction benefit && benefit.IsStatusOnlyBenefit && benefit.StatusEffectDefinition != null)
+            return $"status:{benefit.StatusEffectDefinition.GetInstanceID()}";
+
+        if (action is GameActionWithIcon gai)
+        {
+            var id = gai.GetActionVisualId();
+            return id != ActionVisualId.None ? $"visual:{id}" : $"type:{action.GetType().FullName}";
+        }
+
+        if (action is FaceResolveModifierWithIcon mod)
+        {
+            var id = mod.GetActionVisualId();
+            return id != ActionVisualId.None ? $"visual:{id}" : $"type:{action.GetType().FullName}";
+        }
+
+        return $"type:{action.GetType().FullName}";
     }
 }

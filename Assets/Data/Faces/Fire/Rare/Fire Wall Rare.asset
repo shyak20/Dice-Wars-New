@@ -12,22 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d3e2fec81aa754d9f4c18ece574afa, type: 3}
   m_Name: Fire Wall Rare
   m_EditorClassIdentifier: 
-  title: Basic Fire 3
+  title: Fire Wall Rare
   description: Harness <style=Damage>3</style> \nHarness <style=Burn>3</style>
   descriptionLines:
-  - Gain <style=Shield>shield</style> equal to 100% of enemy <style=Burn>burn</style>
+  - Apply <style=Burn>2</style>
+  - Gain <style=Shield>shield</style> equal to <style=Bold>50%</style> of enemy <style=Burn>burn</style>
     stacks
-  value: 4
+  value: 2
   type: 2
-  faceMaterial: {fileID: 2100000, guid: e1be335986f1bca4f8e6be4b12db220e, type: 2}
+  faceMaterial: {fileID: 2100000, guid: 85da8354f0e172c43982ac4165902fe4, type: 2}
   rarity: 1
   damage: 0
   damageAttackTimes: 1
   armor: 0
   selfDamage: 0
-  uiIcon: {fileID: 21300000, guid: 7a5b73e4b11a85142be39c5163f40f8a, type: 3}
+  uiIcon: {fileID: 21300000, guid: 353a162b16d64094f8ba43448b14b06c, type: 3}
   uiTooltipBackground: {fileID: 21300000, guid: 2163a60d8b5b18e4889e5b66c507eb20, type: 3}
+  attackAllEnemies: 0
   actions:
+  - rid: 8217493867759403134
   - rid: 6494956586993451218
   references:
     version: 2
@@ -36,4 +39,12 @@ MonoBehaviour:
       type: {class: ArmorFromEnemyBurnStacksAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 0
-        armorPercentOfBurnStacks: 100
+        triggerImmediatelyOnDrop: 0
+        armorPercentOfBurnStacks: 50
+    - rid: 8217493867759403134
+      type: {class: ApplyStatusEffectAction, ns: , asm: Assembly-CSharp}
+      data:
+        activateImmediately: 0
+        triggerImmediatelyOnDrop: 0
+        statusEffect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
+        stacks: 2

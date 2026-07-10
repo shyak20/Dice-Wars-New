@@ -39,5 +39,5 @@ MonoBehaviour:
       data:
         activateImmediately: 0
         triggerImmediatelyOnDrop: 0
-        damage: 4
+        damage: 3
         numberOfAttacks: 2

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Adds pending armor equal to (total enemy <see cref="BurnEffectSO"/> stacks) × (percent / 100), floored.
+/// Adds pending armor equal to (total <see cref="BurnEffectSO"/> stacks on all living enemies) × (percent / 100), floored.
 /// </summary>
 [Serializable]
 public class ArmorFromEnemyBurnStacksAction : GameActionWithIcon
@@ -20,14 +20,7 @@ public class ArmorFromEnemyBurnStacksAction : GameActionWithIcon
         if (context?.CombatManager == null || armorPercentOfBurnStacks <= 0)
             return;
 
-        var enemy = context.Enemy;
-        if (enemy == null)
-        {
-            Debug.LogError("ArmorFromEnemyBurnStacksAction: no enemy on context.");
-            return;
-        }
-
-        var stacks = SumEnemyBurnStacks(enemy);
+        var stacks = SumAllEnemyBurnStacks(context.CombatManager);
         if (stacks <= 0)
             return;
 
@@ -38,7 +31,25 @@ public class ArmorFromEnemyBurnStacksAction : GameActionWithIcon
         context.CombatManager.AddBonusArmorFromAction(armor);
 
         if (GameActionDebug.Enabled)
-            Debug.Log($"[ArmorFromEnemyBurnStacks] +{armor} bonus armor ({armorPercentOfBurnStacks}% of {stacks} burn stacks).");
+            Debug.Log($"[ArmorFromEnemyBurnStacks] +{armor} bonus armor ({armorPercentOfBurnStacks}% of {stacks} burn stacks across all enemies).");
+    }
+
+    static int SumAllEnemyBurnStacks(CombatManager combat)
+    {
+        var enemies = combat.ActiveEnemies;
+        if (enemies == null)
+            return 0;
+
+        var sum = 0;
+        for (var i = 0; i < enemies.Count; i++)
+        {
+            var enemy = enemies[i];
+            if (enemy == null || !enemy.IsAlive)
+                continue;
+            sum += SumEnemyBurnStacks(enemy);
+        }
+
+        return sum;
     }
 
     static int SumEnemyBurnStacks(EnemyController enemy)
