@@ -69,9 +69,24 @@ public sealed class HoverTooltipManager : MonoBehaviour
     [Tooltip("Anchor-local offset when the trigger passes isAbove=true (replaces the caller offset, not added to it). Still adds Hover Tooltip Screen Offset.")]
     [SerializeField] private Vector2 hoverAboveTooltipScreenOffset;
 
+    [Header("Placement & sorting")]
+    [Tooltip("Sorting order of the runtime tooltip canvases. Keep above every scene canvas so tooltips always render front-most.")]
+    [SerializeField] private int tooltipSortingOrder = 10000;
+
+    [Tooltip("Gap (canvas units) between the hovered element and the closest tooltip stacked on it (first tooltip of the face cluster, or the explain tooltip under face action options).")]
+    [SerializeField, Min(0f)] private float anchorTooltipGap = 8f;
+
+    [Tooltip("Gap (canvas units) between stacked tooltips (main tooltip to status tooltip, and status to status).")]
+    [SerializeField, Min(0f)] private float secondaryTooltipGap = 8f;
+
+    [Tooltip("Padding from screen edges (pixels) when shifting tooltips left/right to stay on screen.")]
+    [SerializeField, Min(0f)] private float screenEdgePadding = 16f;
+
     HoverTooltipPanelUI _panel;
+    readonly List<HoverTooltipPanelUI> _secondaryPanels = new List<HoverTooltipPanelUI>();
     HoverTrialRewardsTooltipPanelUI _trialRewardsPanel;
     Canvas _panelParentCanvas;
+    readonly List<TooltipContent> _secondaryEntriesScratch = new List<TooltipContent>();
 
     /// <summary>True when a prefab is assigned so <see cref="HoverTooltipTargetUI"/> can present tooltips.</summary>
     public bool HasValidPrefab => panelPrefab != null;
@@ -150,6 +165,13 @@ public sealed class HoverTooltipManager : MonoBehaviour
             _panel = null;
         }
 
+        for (var i = 0; i < _secondaryPanels.Count; i++)
+        {
+            if (_secondaryPanels[i] != null)
+                Destroy(_secondaryPanels[i].gameObject);
+        }
+        _secondaryPanels.Clear();
+
         if (_trialRewardsPanel != null)
         {
             Destroy(_trialRewardsPanel.gameObject);
@@ -159,62 +181,32 @@ public sealed class HoverTooltipManager : MonoBehaviour
         _panelParentCanvas = null;
     }
 
-    /// <summary>Resolves title, body, and optional panel background from supported <see cref="ScriptableObject"/> types.</summary>
-    public static bool TryGetTooltipContent(ScriptableObject source, out string title, out string description, out Sprite tooltipBackground)
-    {
-        title = string.Empty;
-        description = string.Empty;
-        tooltipBackground = null;
-        if (source == null)
-            return false;
-
-        switch (source)
-        {
-            case GemSO gem:
-                title = gem.DisplayLabel;
-                description = gem.description ?? string.Empty;
-                return true;
-            case RelicSO relic:
-                title = string.IsNullOrEmpty(relic.title) ? relic.name : relic.title;
-                description = relic.description ?? string.Empty;
-                return true;
-            case DieFaceSO face:
-                if (!DieFaceGameIconOnlyTooltipText.TryBuild(face, out title, out description))
-                    return false;
-                tooltipBackground = face.uiTooltipBackground;
-                return true;
-            case DieAssetSO die:
-                title = string.IsNullOrEmpty(die.dieName) ? die.name : die.dieName;
-                description = $"Type: {die.dieType}";
-                tooltipBackground = die.uiTooltipBackground;
-                return true;
-            case StatusEffectSO status:
-                title = string.IsNullOrEmpty(status.effectName) ? status.name : status.effectName;
-                description = status.description ?? string.Empty;
-                return true;
-            case PlayerTrialSO:
-                return false;
-            default:
-                title = source.name;
-                description = string.Empty;
-                return true;
-        }
-    }
-
-    /// <summary>Show using data resolved from <paramref name="source"/> (same positioning rules as <see cref="Show"/>).</summary>
+    /// <summary>
+    /// Show using data resolved from <paramref name="source"/> via <see cref="TooltipContentResolver"/>
+    /// (main content plus stacked secondary status/effect explanations).
+    /// </summary>
     public void ShowForScriptableObject(
         RectTransform anchor,
         Vector2 screenPixelOffset,
         ScriptableObject source,
-        bool isAbove = false)
+        bool isAbove = false,
+        bool includeFaceHeader = false)
     {
-        if (!TryGetTooltipContent(source, out var t, out var d, out var bg))
+        _secondaryEntriesScratch.Clear();
+        if (!TooltipContentResolver.TryResolve(source, out var main, _secondaryEntriesScratch, includeFaceHeader))
             return;
-        Show(anchor, screenPixelOffset, t, d, bg, isAbove);
+        if (main.IsEmpty && _secondaryEntriesScratch.Count == 0)
+            return;
+
+        // When the face header is shown, the face tooltip sits directly above the hovered face and the
+        // status/effect explanations stack upward on top of it (face at the bottom, statuses above).
+        Show(anchor, screenPixelOffset, main.Title, main.Description, main.Background, isAbove, _secondaryEntriesScratch,
+            faceHeaderLayout: includeFaceHeader);
     }
 
     /// <summary>
-    /// Shows the shared panel aligned to <paramref name="anchor"/>.
+    /// Shows the shared panel aligned to <paramref name="anchor"/>. Secondary status explanations are derived
+    /// from status style tags in the copy (see <see cref="StatusStyleTagScanner"/>).
     /// When <paramref name="isAbove"/> is true, uses <see cref="hoverAboveTooltipScreenOffset"/> instead of <paramref name="screenPixelOffset"/>.
     /// Offsets are in the tooltip parent canvas's local space (reference-resolution units), not raw screen pixels.
     /// </summary>
@@ -226,6 +218,28 @@ public sealed class HoverTooltipManager : MonoBehaviour
         Sprite tooltipBackground = null,
         bool isAbove = false)
     {
+        _secondaryEntriesScratch.Clear();
+        TooltipContentResolver.AppendSecondaryForText(title, description, _secondaryEntriesScratch);
+        Show(anchor, screenPixelOffset, title, description, tooltipBackground, isAbove, _secondaryEntriesScratch);
+    }
+
+    /// <summary>
+    /// Shows the shared panel aligned to <paramref name="anchor"/> plus one stacked panel per secondary entry.
+    /// Position is set once per call (triggers show on pointer-enter and never follow the anchor afterward).
+    /// When <paramref name="faceHeaderLayout"/> is true the main tooltip is placed directly above the hovered
+    /// element and the secondary panels stack upward on top of it. All panels render on a front-most
+    /// override-sorting canvas, stay in front of 3D geometry, and are shifted left/right to stay on screen.
+    /// </summary>
+    public void Show(
+        RectTransform anchor,
+        Vector2 screenPixelOffset,
+        string title,
+        string description,
+        Sprite tooltipBackground,
+        bool isAbove,
+        IReadOnlyList<TooltipContent> secondaryEntries,
+        bool faceHeaderLayout = false)
+    {
         if (panelPrefab == null || anchor == null)
             return;
 
@@ -236,8 +250,126 @@ public sealed class HoverTooltipManager : MonoBehaviour
         _trialRewardsPanel?.Hide();
         EnsurePanelUnderCanvas(targetCanvas);
 
-        _panel.Show(title, description, tooltipBackground);
-        _panel.AlignToRectWithScreenOffset(anchor, ResolveScreenOffset(screenPixelOffset, isAbove));
+        // Some sources (e.g. face-picker cards that already show name/description) suppress the main tooltip
+        // and only present the secondary status/effect explanation, positioned relative to the hovered element.
+        var mainSuppressed = string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(description);
+
+        if (faceHeaderLayout && !mainSuppressed)
+        {
+            // Face tooltip on top of the cluster: statuses stack just above the hovered face (in list order,
+            // top-to-bottom), then the face tooltip is placed above all of them. The gap between the hovered
+            // face and the closest tooltip is anchorTooltipGap; gaps within the stack use secondaryTooltipGap.
+            var topStatus = ShowSecondaryPanels(targetCanvas, secondaryEntries, anchor, stackAbove: true,
+                gapFromReference: anchorTooltipGap, reverseOrder: true);
+            var faceReference = topStatus != null ? topStatus : anchor;
+            var faceGap = topStatus != null ? secondaryTooltipGap : anchorTooltipGap;
+            PlacePanelAbove(_panel, faceReference, faceGap, tooltipSortingOrder + 1 + (secondaryEntries?.Count ?? 0),
+                title, description, tooltipBackground);
+            return;
+        }
+
+        RectTransform stackReference;
+        bool stackSecondaryAbove;
+        float stackGapFromReference;
+        if (mainSuppressed)
+        {
+            _panel.Hide();
+            stackReference = anchor;
+            stackGapFromReference = anchorTooltipGap;
+            // No main tooltip: place the explanation on whichever side keeps it on screen (under the element by default).
+            stackSecondaryAbove = HoverTooltipLayoutUtility.GetRectScreenCenterY(anchor) < Screen.height * 0.5f;
+        }
+        else
+        {
+            _panel.Show(title, description, tooltipBackground);
+            ApplyFrontMostSorting(_panel.PanelRect, tooltipSortingOrder);
+            HoverTooltipLayoutUtility.ForceRebuildLayout(_panel.PanelRect);
+            Canvas.ForceUpdateCanvases();
+            _panel.AlignToRectWithScreenOffset(anchor, ResolveScreenOffset(screenPixelOffset, isAbove));
+            HoverTooltipLayoutUtility.ClampRectInsideScreenHorizontally(_panel.PanelRect, screenEdgePadding);
+            stackReference = _panel.PanelRect;
+            stackGapFromReference = secondaryTooltipGap;
+            stackSecondaryAbove = HoverTooltipLayoutUtility.GetRectScreenCenterY(_panel.PanelRect) < Screen.height * 0.5f;
+        }
+
+        ShowSecondaryPanels(targetCanvas, secondaryEntries, stackReference, stackSecondaryAbove, stackGapFromReference);
+    }
+
+    /// <summary>Shows and positions a panel directly above <paramref name="reference"/>, front-most and on-screen.</summary>
+    void PlacePanelAbove(
+        HoverTooltipPanelUI panel,
+        RectTransform reference,
+        float gap,
+        int sortingOrder,
+        string title,
+        string description,
+        Sprite background)
+    {
+        panel.Show(title, description, background);
+        ApplyFrontMostSorting(panel.PanelRect, sortingOrder);
+        HoverTooltipLayoutUtility.ForceRebuildLayout(panel.PanelRect);
+        // Freshly instantiated panels (first hover) need a canvas flush before their world rect is valid.
+        Canvas.ForceUpdateCanvases();
+        HoverTooltipLayoutUtility.StackPanelAboveOrBelowRect(panel.PanelRect, reference, gap, above: true);
+        HoverTooltipLayoutUtility.ClampRectInsideScreenHorizontally(panel.PanelRect, screenEdgePadding);
+    }
+
+    /// <summary>
+    /// Shows one stacked panel per secondary entry, each after the previous away from <paramref name="stackReference"/>.
+    /// The first panel uses <paramref name="gapFromReference"/>; the rest use <see cref="secondaryTooltipGap"/>.
+    /// Returns the last (furthest) panel's rect, or null when there are no entries. With <paramref name="reverseOrder"/>
+    /// the entries are laid out so the list reads in order along the stack direction.
+    /// </summary>
+    RectTransform ShowSecondaryPanels(
+        Canvas targetCanvas,
+        IReadOnlyList<TooltipContent> secondaryEntries,
+        RectTransform stackReference,
+        bool stackAbove,
+        float gapFromReference,
+        bool reverseOrder = false)
+    {
+        var count = secondaryEntries?.Count ?? 0;
+        EnsureSecondaryPanelCount(targetCanvas, count);
+
+        for (var i = count; i < _secondaryPanels.Count; i++)
+            _secondaryPanels[i].Hide();
+
+        if (count == 0 || stackReference == null)
+            return null;
+
+        // Each entry gets its own tooltip box, stacked one after another away from the reference
+        // (e.g. two statuses appear one on top of the other).
+        var previous = stackReference;
+        for (var k = 0; k < count; k++)
+        {
+            var entryIndex = reverseOrder ? count - 1 - k : k;
+            var panel = _secondaryPanels[k];
+            var entry = secondaryEntries[entryIndex];
+            panel.Show(entry.Title, entry.Description, entry.Background);
+            ApplyFrontMostSorting(panel.PanelRect, tooltipSortingOrder + 1 + k);
+            HoverTooltipLayoutUtility.ForceRebuildLayout(panel.PanelRect);
+            // Freshly instantiated panels (first hover) need a canvas flush before their world rect is valid.
+            Canvas.ForceUpdateCanvases();
+            var gap = k == 0 ? gapFromReference : secondaryTooltipGap;
+            HoverTooltipLayoutUtility.StackPanelAboveOrBelowRect(panel.PanelRect, previous, gap, stackAbove);
+            HoverTooltipLayoutUtility.ClampRectInsideScreenHorizontally(panel.PanelRect, screenEdgePadding);
+            previous = panel.PanelRect;
+        }
+
+        return previous;
+    }
+
+    /// <summary>Puts the panel on its own nested canvas with override sorting so it renders above every scene canvas.</summary>
+    static void ApplyFrontMostSorting(RectTransform panelRect, int sortingOrder)
+    {
+        if (panelRect == null)
+            return;
+
+        var canvas = panelRect.GetComponent<Canvas>();
+        if (canvas == null)
+            canvas = panelRect.gameObject.AddComponent<Canvas>();
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = sortingOrder;
     }
 
     Vector2 ResolveScreenOffset(Vector2 callerScreenOffset, bool isAbove) =>
@@ -261,19 +393,31 @@ public sealed class HoverTooltipManager : MonoBehaviour
             return;
 
         EnsureTrialRewardsPanelUnderCanvas(targetCanvas);
+        HideSecondaryPanels();
         _panel?.Hide();
 
         if (ResolveProgressionRewardVisualCatalog() == null)
             return;
 
         _trialRewardsPanel.Show(trial, state, ResolveProgressionRewardVisualCatalog());
+        ApplyFrontMostSorting(_trialRewardsPanel.PanelRect, tooltipSortingOrder);
+        HoverTooltipLayoutUtility.ForceRebuildLayout(_trialRewardsPanel.PanelRect);
+        Canvas.ForceUpdateCanvases();
         _trialRewardsPanel.AlignToRectWithScreenOffset(anchor, ResolveTrialRewardsScreenOffset(screenPixelOffset, isAbove));
+        HoverTooltipLayoutUtility.ClampRectInsideScreenHorizontally(_trialRewardsPanel.PanelRect, screenEdgePadding);
     }
 
     public void Hide()
     {
         _panel?.Hide();
+        HideSecondaryPanels();
         _trialRewardsPanel?.Hide();
+    }
+
+    void HideSecondaryPanels()
+    {
+        for (var i = 0; i < _secondaryPanels.Count; i++)
+            _secondaryPanels[i]?.Hide();
     }
 
     GameIconIndexSO ResolveIconIndex() =>
@@ -303,7 +447,20 @@ public sealed class HoverTooltipManager : MonoBehaviour
 
         _panel = Instantiate(panelPrefab, canvas.transform);
         _panel.name = $"{panelPrefab.name} (Runtime)";
+        EnsureAlwaysInFront(_panel.PanelRect);
         _panelParentCanvas = canvas;
+    }
+
+    /// <summary>Instantiates enough stacked secondary panels (same prefab) for <paramref name="count"/> entries.</summary>
+    void EnsureSecondaryPanelCount(Canvas canvas, int count)
+    {
+        while (_secondaryPanels.Count < count)
+        {
+            var panel = Instantiate(panelPrefab, canvas.transform);
+            panel.name = $"{panelPrefab.name} (Runtime Secondary {_secondaryPanels.Count})";
+            EnsureAlwaysInFront(panel.PanelRect);
+            _secondaryPanels.Add(panel);
+        }
     }
 
     void EnsureTrialRewardsPanelUnderCanvas(Canvas canvas)
@@ -316,6 +473,16 @@ public sealed class HoverTooltipManager : MonoBehaviour
 
         _trialRewardsPanel = Instantiate(trialRewardsPanelPrefab, canvas.transform);
         _trialRewardsPanel.name = $"{trialRewardsPanelPrefab.name} (Runtime)";
+        EnsureAlwaysInFront(_trialRewardsPanel.PanelRect);
         _panelParentCanvas = canvas;
+    }
+
+    /// <summary>Adds the LateUpdate depth maintainer so the panel keeps rendering in front of 3D geometry.</summary>
+    static void EnsureAlwaysInFront(RectTransform panelRect)
+    {
+        if (panelRect == null)
+            return;
+        if (panelRect.GetComponent<TooltipAlwaysInFront>() == null)
+            panelRect.gameObject.AddComponent<TooltipAlwaysInFront>();
     }
 }

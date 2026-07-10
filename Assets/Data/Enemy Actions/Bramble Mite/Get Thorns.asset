@@ -27,9 +27,9 @@ MonoBehaviour:
   actions:
   - rid: 6494956272364552442
   actionTooltips:
-  - title: Thorns
-    description: Gain <style=Attack>2</style> Thorns. When hit by a physical attack,
-      deal <style=Attack>1</style> damage per stack.
+  - title: <style=Thorns>Thorns</style>
+    description: "Gain <style=Thorns>2</style>. \nWhen hit by a physical attack,
+      deal <style=Attack>1</style> damage per stack."
   references:
     version: 2
     RefIds:

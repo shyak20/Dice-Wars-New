@@ -13,13 +13,26 @@ public class HoverTooltipPanelUI : MonoBehaviour
     [Tooltip("Optional. When set, Show applies a per-tooltip sprite passed into Show().")]
     [SerializeField] private Image tooltipBackgroundImage;
 
+    /// <summary>
+    /// True after an explicit <see cref="Show"/>. The panel object may be saved inactive in its prefab, in which
+    /// case Awake runs lazily inside the first Show's SetActive(true); without this flag that deferred Awake
+    /// would call Hide and wipe the very first tooltip.
+    /// </summary>
+    private bool _shown;
+
     private void Awake()
     {
         if (panelRoot == null)
             panelRoot = gameObject;
         EnsurePanelDoesNotBlockRaycasts();
-        Hide();
+        if (!_shown)
+            Hide();
     }
+
+    /// <summary>Active visual root (position/size target for placement, clamping, and sorting).</summary>
+    public RectTransform PanelRect => Root.transform as RectTransform;
+
+    GameObject Root => panelRoot != null ? panelRoot : gameObject;
 
     public void Show(string title, string description, Sprite tooltipBackground = null)
     {
@@ -31,7 +44,8 @@ public class HoverTooltipPanelUI : MonoBehaviour
             tooltipBackgroundImage.enabled = tooltipBackground != null;
         }
 
-        if (panelRoot != null) panelRoot.SetActive(true);
+        _shown = true;
+        Root.SetActive(true);
     }
 
     /// <summary>Aligns panel pivot world X to the reference rect center (preserves Y/Z).</summary>

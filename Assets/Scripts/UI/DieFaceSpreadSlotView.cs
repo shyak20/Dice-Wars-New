@@ -22,16 +22,17 @@ public sealed class DieFaceSpreadSlotView : MonoBehaviour
             throw new InvalidOperationException($"DieFaceSpreadSlotView on '{name}': faceIndex must be 0–5.");
     }
 
-    public void Bind(DieFaceSO face, Action<int, UIRewardSlot> onClicked, DieTooltipOverlayUI faceHoverOverlay = null)
+    public void Bind(DieFaceSO face, Action<int, UIRewardSlot> onClicked)
     {
         rewardSlot.Bind(face, _ =>
         {
             onClicked?.Invoke(faceIndex, rewardSlot);
         });
         rewardSlot.SetHoverRevealEnabled(true);
-        rewardSlot.SetExternalStatusHoverTooltipEnabled(false);
-        if (faceHoverOverlay != null && face != null)
-            faceHoverOverlay.RegisterFaceSlotHover(rewardSlot, face);
+        // Face hover tooltips come from the shared HoverTooltipTargetUI wired in UIRewardSlot.Bind.
+        rewardSlot.EnsureStandaloneHoverReveal();
+        // Face-replace slots only show the icon, so include the face name/description in the tooltip.
+        rewardSlot.SetFaceTooltipIncludesHeader(true);
         // Keep raycasts enabled so face hover tooltips work even on non-replaceable slots.
         rewardSlot.SetInteractable(true);
     }

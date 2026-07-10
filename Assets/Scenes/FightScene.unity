@@ -1103,17 +1103,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 79693670}
   m_CullTransparentMesh: 1
---- !u!114 &83159041 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3837168567888109445, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-  m_PrefabInstance: {fileID: 5825326993799036463}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &91293227
 GameObject:
   m_ObjectHideFlags: 0
@@ -3231,11 +3220,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2346410979138233432, guid: 6d4e2515b9b45d34494baff6c0a90fd4, type: 3}
   m_PrefabInstance: {fileID: 119731342}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &126273967 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 900655249610876945, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-  m_PrefabInstance: {fileID: 5825326993799036463}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &138030813
 GameObject:
   m_ObjectHideFlags: 0
@@ -4000,11 +3984,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 205129130}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!224 &207024428 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 1006805908997535250, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-  m_PrefabInstance: {fileID: 5825326993799036463}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &209536167
 GameObject:
   m_ObjectHideFlags: 0
@@ -19812,17 +19791,6 @@ MonoBehaviour:
   verticalSpacing: 0
   verticalBuildDirection: 0
   horizontalRowAlignment: 1
---- !u!114 &391875690 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2918801044177511005, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-  m_PrefabInstance: {fileID: 5825326993799036463}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &394143919
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30022,20 +29990,7 @@ MonoBehaviour:
   powerSlider: {fileID: 0}
   powerText: {fileID: 1124645196}
   poolText: {fileID: 0}
-  dieTooltipPanel: {fileID: 4976156704444324175}
-  dieTooltipSlotContainer: {fileID: 1431985551}
-  dieTooltipSlotPrefab: {fileID: 1861012277056834169, guid: 99be60c0d755ab64d984a414d7de98a6, type: 3}
-  dieTooltipGemIconContainer: {fileID: 207024428}
-  dieTooltipGemSlotPrefab: {fileID: 5177005623330662494, guid: 1ca8c433acb88594a8afd68227cc6a96, type: 3}
-  faceHoverTooltipPanel: {fileID: 126273967}
-  faceHoverTitleText: {fileID: 391875690}
-  faceHoverDescriptionText: {fileID: 83159041}
-  statusHoverTooltipPanel: {fileID: 0}
-  statusHoverTitleText: {fileID: 0}
-  statusHoverDescriptionText: {fileID: 0}
-  dieTooltipOverlay: {fileID: 0}
-  dieTooltipTypeBackground: {fileID: 0}
-  faceHoverTypeBackground: {fileID: 0}
+  dieTooltipOverlay: {fileID: 5825326993799036464}
 --- !u!114 &430063146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30136,6 +30091,10 @@ MonoBehaviour:
   hoverTooltipScreenOffset: {x: 30, y: -60}
   trialRewardsTooltipScreenOffset: {x: 0, y: 0}
   hoverAboveTooltipScreenOffset: {x: -20, y: 210}
+  tooltipSortingOrder: 10000
+  anchorTooltipGap: 15
+  secondaryTooltipGap: 8
+  screenEdgePadding: 16
 --- !u!1 &432293861
 GameObject:
   m_ObjectHideFlags: 0
@@ -94759,11 +94718,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1423827265}
   m_CullTransparentMesh: 1
---- !u!224 &1431985551 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 6977198460049744234, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-  m_PrefabInstance: {fileID: 5825326993799036463}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1450787359
 GameObject:
   m_ObjectHideFlags: 0
@@ -158903,11 +158857,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132148197319506}
   m_Mesh: {fileID: 5461320835613783329, guid: bef8dfbd1e55cc844b392ec0dc05156f, type: 3}
---- !u!1 &4976156704444324175 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6722824502667875733, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-  m_PrefabInstance: {fileID: 5825326993799036463}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5076885281990918193
 GameObject:
   m_ObjectHideFlags: 0
@@ -158958,10 +158907,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -225
       objectReference: {fileID: 0}
-    - target: {fileID: 900655249610876945, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 935983283854341416, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -158985,10 +158930,6 @@ PrefabInstance:
     - target: {fileID: 935983283854341416, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -30
-      objectReference: {fileID: 0}
-    - target: {fileID: 1006805908997535250, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 15.599998
       objectReference: {fileID: 0}
     - target: {fileID: 1439178024441304285, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchorMax.y
@@ -159062,30 +159003,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -30
       objectReference: {fileID: 0}
-    - target: {fileID: 3837168567888109445, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_text
-      value: 'dsasdasdsadasdas
-
-        asdsadasd
-
-'
-      objectReference: {fileID: 0}
-    - target: {fileID: 3837168567888109445, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_fontSize
-      value: 18
-      objectReference: {fileID: 0}
-    - target: {fileID: 3837168567888109445, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_lineSpacing
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3837168567888109445, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_fontSizeBase
-      value: 18
-      objectReference: {fileID: 0}
-    - target: {fileID: 3837168567888109445, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_sharedMaterial
-      value: 
-      objectReference: {fileID: 2100000, guid: 8b356e0a6a86d1d46bc11a735ea25739, type: 2}
     - target: {fileID: 5563483162476460602, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -159270,18 +159187,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -225
       objectReference: {fileID: 0}
-    - target: {fileID: 8400004721796679978, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8450614186425937284, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 3.1661987
-      objectReference: {fileID: 0}
-    - target: {fileID: 8450614186425937284, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -22.43
-      objectReference: {fileID: 0}
     - target: {fileID: 8571559483247581591, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -159335,6 +159240,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
+--- !u!114 &5825326993799036464 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1305952305218117720, guid: 0dfd33c4e8de0d24e80c5c96903872cd, type: 3}
+  m_PrefabInstance: {fileID: 5825326993799036463}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56c0c2f34ff77e5459abbb81f0ad7720, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DieTooltipOverlayUI
 --- !u!1001 &5926639694565366491
 PrefabInstance:
   m_ObjectHideFlags: 0

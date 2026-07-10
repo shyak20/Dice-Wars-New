@@ -15,10 +15,10 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
     private ScriptableObject _scriptableSource;
     private PlayerTrialSO _trialSource;
     private TrialSaveData _trialState;
-    private bool _isPointerInside;
     private bool _warnedMissingManager;
+    private bool _includeFaceHeaderTooltip;
 
-    /// <summary>When set, hover uses <see cref="HoverTooltipManager.TryGetTooltipContent"/> instead of manual title/description.</summary>
+    /// <summary>When set, hover uses <see cref="TooltipContentResolver"/> instead of manual title/description.</summary>
     public void SetScriptableSource(ScriptableObject source)
     {
         _scriptableSource = source;
@@ -48,30 +48,20 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
 
     public void SetIsAbove(bool above) => isAbove = above;
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        _isPointerInside = true;
-        ShowTooltip();
-    }
+    /// <summary>
+    /// When true and the source is a <see cref="DieFaceSO"/>, the face name/description is shown as the main tooltip
+    /// (with the status/effect explanation stacked under it). Use where the hovered element does not already show them
+    /// (Die Tooltip grid, face-replace screen).
+    /// </summary>
+    public void SetFaceHeaderTooltipEnabled(bool enabled) => _includeFaceHeaderTooltip = enabled;
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        _isPointerInside = false;
-        HoverTooltipManager.HideAllTooltipPanels();
-    }
+    // Position is set once when the pointer enters and never updated afterwards, so the tooltip stays anchored
+    // where it first appeared and does not drift if the hovered element moves or the pointer nudges over it.
+    public void OnPointerEnter(PointerEventData eventData) => ShowTooltip();
 
-    private void OnDisable()
-    {
-        _isPointerInside = false;
-        HoverTooltipManager.HideAllTooltipPanels();
-    }
+    public void OnPointerExit(PointerEventData eventData) => HoverTooltipManager.HideAllTooltipPanels();
 
-    private void Update()
-    {
-        if (!_isPointerInside)
-            return;
-        ShowTooltip();
-    }
+    private void OnDisable() => HoverTooltipManager.HideAllTooltipPanels();
 
     private void ShowTooltip()
     {
@@ -106,11 +96,7 @@ public class HoverTooltipTargetUI : MonoBehaviour, IPointerEnterHandler, IPointe
 
         if (_scriptableSource != null)
         {
-            if (!HoverTooltipManager.TryGetTooltipContent(_scriptableSource, out var t, out var d, out var bg))
-                return;
-            if (string.IsNullOrWhiteSpace(t) && string.IsNullOrWhiteSpace(d))
-                return;
-            mgr.Show(anchor, tooltipScreenOffset, t, d, bg, isAbove);
+            mgr.ShowForScriptableObject(anchor, tooltipScreenOffset, _scriptableSource, isAbove, _includeFaceHeaderTooltip);
             return;
         }
 

@@ -17,13 +17,24 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
 
     readonly List<TrialRewardRowElementUI> _spawnedRows = new List<TrialRewardRowElementUI>();
 
+    /// <summary>
+    /// True after an explicit <see cref="Show"/>. If the panel object is saved inactive in its prefab, Awake runs
+    /// lazily inside the first Show's SetActive(true); without this flag that deferred Awake would call Hide and
+    /// wipe the very first tooltip.
+    /// </summary>
+    bool _shown;
+
     void Awake()
     {
         if (panelRoot == null)
             panelRoot = gameObject;
         EnsurePanelDoesNotBlockRaycasts();
-        Hide();
+        if (!_shown)
+            Hide();
     }
+
+    /// <summary>Active visual root (position/size target for placement, clamping, and sorting).</summary>
+    public RectTransform PanelRect => panelRoot != null ? panelRoot.transform as RectTransform : null;
 
     public void Show(
         PlayerTrialSO trial,
@@ -45,8 +56,10 @@ public sealed class HoverTrialRewardsTooltipPanelUI : MonoBehaviour
 
         RebuildRewardRows(trial, catalog, additionalRewards);
 
-        if (panelRoot != null)
-            panelRoot.SetActive(true);
+        _shown = true;
+        if (panelRoot == null)
+            panelRoot = gameObject;
+        panelRoot.SetActive(true);
     }
 
     void RebuildRewardRows(

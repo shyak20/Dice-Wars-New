@@ -193,7 +193,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7593566475361359409
 RectTransform:
   m_ObjectHideFlags: 0
@@ -497,7 +497,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8400004721796679978
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1432,14 +1432,7 @@ MonoBehaviour:
   resizeFaceGridContainerToFitCells: 0
   dieTooltipGemIconContainer: {fileID: 1006805908997535250}
   dieTooltipGemSlotPrefab: {fileID: 5177005623330662494, guid: 1ca8c433acb88594a8afd68227cc6a96, type: 3}
-  faceHoverTooltipPanel: {fileID: 900655249610876945}
-  faceHoverTitleText: {fileID: 2918801044177511005}
-  faceHoverDescriptionText: {fileID: 3837168567888109445}
   dieTooltipTypeBackground: {fileID: 9133628754808889175}
-  faceHoverTypeBackground: {fileID: 5399083301790879868}
-  statusHoverTooltipPanel: {fileID: 2823468766590328917}
-  statusHoverTitleText: {fileID: 1670352220116675764}
-  statusHoverDescriptionText: {fileID: 3372058831788710580}
   faceReplacementRuleErrorObject: {fileID: 6783108887969255045}
   faceReplacementRuleErrorText: {fileID: 951100386831286252}
   faceReplacementRuleErrorShakeTarget: {fileID: 0}

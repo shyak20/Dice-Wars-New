@@ -46,10 +46,7 @@ public sealed class RunRelicSlotView : MonoBehaviour
         if (iconImage == null)
             return;
 
-        StripLegacyRelicTooltips(gameObject);
         var go = iconImage.gameObject;
-        StripLegacyRelicTooltips(go);
-
         if (_cachedHoverTarget == null || _cachedHoverTarget.gameObject != go)
             _cachedHoverTarget = go.GetComponent<HoverTooltipTargetUI>() ?? go.AddComponent<HoverTooltipTargetUI>();
 
@@ -59,16 +56,5 @@ public sealed class RunRelicSlotView : MonoBehaviour
 
         _cachedHoverTarget.SetTooltipScreenOffset(offset);
         _cachedHoverTarget.SetScriptableSource(relic);
-    }
-
-    static void StripLegacyRelicTooltips(GameObject target)
-    {
-        if (target == null)
-            return;
-        foreach (var legacy in target.GetComponents<RelicTooltipTrigger>())
-        {
-            if (legacy != null)
-                Destroy(legacy);
-        }
     }
 }

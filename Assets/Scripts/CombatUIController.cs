@@ -33,25 +33,8 @@ public class CombatUIController : MonoBehaviour
     public TMP_Text poolText;
 
     [Header("Die Tooltip (Fight Scene)")]
-    [SerializeField] private GameObject dieTooltipPanel;
-    [SerializeField] private Transform dieTooltipSlotContainer;
-    [SerializeField] private GameObject dieTooltipSlotPrefab; // Should use UIRewardSlot prefab.
-    [Header("Gem slots in die tooltip (optional)")]
-    [SerializeField] private Transform dieTooltipGemIconContainer;
-    [SerializeField] private DieTooltipGemSlotView dieTooltipGemSlotPrefab;
-    [SerializeField] private GameObject faceHoverTooltipPanel;
-    [SerializeField] private TMP_Text faceHoverTitleText;
-    [SerializeField] private TMP_Text faceHoverDescriptionText;
-
-    [Header("Status hover (face has Apply Status action)")]
-    [SerializeField] private GameObject statusHoverTooltipPanel;
-    [SerializeField] private TMP_Text statusHoverTitleText;
-    [SerializeField] private TMP_Text statusHoverDescriptionText;
-    [Header("Generic Tooltip Presenter (preferred)")]
+    [Tooltip("Presents the die tooltip (face grid + gem sockets). Face/gem hover text goes through HoverTooltipManager.")]
     [SerializeField] private DieTooltipOverlayUI dieTooltipOverlay;
-    [Header("Legacy die tooltip type backgrounds (when overlay is null)")]
-    [SerializeField] private Image dieTooltipTypeBackground;
-    [SerializeField] private Image faceHoverTypeBackground;
 
     private Dictionary<DieAssetSO, DiceTrayButtonView> diceButtonViews = new Dictionary<DieAssetSO, DiceTrayButtonView>();
     private Dictionary<DieAssetSO, Button> diceButtons = new Dictionary<DieAssetSO, Button>();
@@ -114,9 +97,9 @@ public class CombatUIController : MonoBehaviour
 
     private void Start()
     {
+        if (dieTooltipOverlay == null)
+            Debug.LogError("CombatUIController: assign dieTooltipOverlay (DieTooltipOverlayUI) — the legacy embedded die tooltip panels were removed.", this);
         HideDieTooltip();
-        HideFaceHoverTooltip();
-        HideStatusHoverTooltip();
         if (rollButton != null)
         {
             rollButton.onClick.AddListener(() => CombatEvents.OnRollCommand?.Invoke());
@@ -181,7 +164,7 @@ public class CombatUIController : MonoBehaviour
     {
         HandleFightKeyboardShortcuts();
 
-        if (dieTooltipPanel == null || !dieTooltipPanel.activeSelf) return;
+        if (tooltipShownForDie == null) return;
         if (!Input.GetMouseButtonDown(0)) return;
         if (ClickShouldKeepTooltipOpen()) return;
 
@@ -444,225 +427,25 @@ public class CombatUIController : MonoBehaviour
 
     private void ShowDieTooltip(DieAssetSO die)
     {
-        if (dieTooltipOverlay != null)
-        {
-            tooltipShownForDie = die;
-            dieTooltipOverlay.ShowDie(die, false);
-            return;
-        }
-
-        if (dieTooltipPanel == null || dieTooltipSlotContainer == null || dieTooltipSlotPrefab == null || die == null)
+        if (dieTooltipOverlay == null || die == null)
             return;
 
         tooltipShownForDie = die;
-        dieTooltipPanel.SetActive(true);
-        DieTooltipBackgrounds.ApplyDieTooltip(dieTooltipTypeBackground, die);
-        HideFaceHoverTooltip();
-        HideStatusHoverTooltip();
-
-        foreach (Transform child in dieTooltipSlotContainer)
-            Destroy(child.gameObject);
-
-        if (die.faces == null || die.faces.Length == 0) return;
-        var grid = DieTooltipOverlayUI.DefaultFaceGridLayout;
-        for (var i = 0; i < grid.Length; i++)
-        {
-            var faceIndex = grid[i];
-            if (faceIndex < 0 || faceIndex >= die.faces.Length)
-            {
-                CreateTooltipSpacer();
-                continue;
-            }
-
-            var face = die.faces[faceIndex];
-            if (face == null)
-            {
-                CreateTooltipSpacer();
-                continue;
-            }
-
-            var go = Instantiate(dieTooltipSlotPrefab, dieTooltipSlotContainer);
-            var slot = go.GetComponent<UIRewardSlot>();
-            if (slot == null)
-            {
-                Debug.LogError("CombatUIController: dieTooltipSlotPrefab must include UIRewardSlot.");
-                Destroy(go);
-                continue;
-            }
-
-            slot.Bind(face, null);
-            slot.SetInteractable(false);
-            RegisterFaceHover(slot, face);
-        }
-
-        RebuildTooltipGemIcons(die);
-    }
-
-    private void RebuildTooltipGemIcons(DieAssetSO die)
-    {
-        if (dieTooltipGemIconContainer == null || dieTooltipGemSlotPrefab == null || die == null)
-            return;
-
-        foreach (Transform child in dieTooltipGemIconContainer)
-            Destroy(child.gameObject);
-
-        for (var i = 0; i < DieAssetSO.GemSocketCount; i++)
-        {
-            var gem = die.GetSocketedGemAt(i);
-            var view = Instantiate(dieTooltipGemSlotPrefab, dieTooltipGemIconContainer);
-            view.Bind(gem);
-            view.transform.localScale = Vector3.one;
-            RegisterGemHover(view, gem);
-        }
-    }
-
-    private void CreateTooltipSpacer()
-    {
-        var spacer = new GameObject("Empty", typeof(RectTransform), typeof(LayoutElement));
-        spacer.transform.SetParent(dieTooltipSlotContainer, false);
-
-        var slotRect = dieTooltipSlotPrefab.transform as RectTransform;
-        var spacerRect = spacer.transform as RectTransform;
-        var layout = spacer.GetComponent<LayoutElement>();
-
-        if (layout != null && slotRect != null)
-        {
-            var w = slotRect.rect.width;
-            var h = slotRect.rect.height;
-            if (w > 0f) layout.preferredWidth = w;
-            if (h > 0f) layout.preferredHeight = h;
-        }
-
-        if (spacerRect != null)
-            spacerRect.localScale = Vector3.one;
+        dieTooltipOverlay.ShowDie(die, false);
     }
 
     private void HideDieTooltip()
     {
-        if (dieTooltipOverlay != null)
-        {
-            tooltipShownForDie = null;
-            dieTooltipOverlay.Hide();
-            return;
-        }
-
         tooltipShownForDie = null;
-        if (dieTooltipPanel != null)
-            dieTooltipPanel.SetActive(false);
-        DieTooltipBackgrounds.Clear(dieTooltipTypeBackground);
-        HideFaceHoverTooltip();
-        HideStatusHoverTooltip();
-    }
-
-    private void RegisterGemHover(DieTooltipGemSlotView slotView, GemSO gem)
-    {
-        if (slotView == null || gem == null) return;
-
-        var go = slotView.GetHoverTarget();
-        if (go == null) return;
-
-        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
-
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => ShowGemHoverTooltip(gem));
-        et.triggers.Add(enter);
-
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ => HideFaceHoverTooltip());
-        et.triggers.Add(exit);
-    }
-
-    private void ShowGemHoverTooltip(GemSO gem)
-    {
-        if (faceHoverTooltipPanel == null) return;
-        DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
-        if (faceHoverTitleText != null)
-            faceHoverTitleText.text = gem != null ? gem.DisplayLabel : "";
-        if (faceHoverDescriptionText != null)
-            faceHoverDescriptionText.text = gem != null ? gem.description : "";
-        faceHoverTooltipPanel.SetActive(true);
-        HideStatusHoverTooltip();
-    }
-
-    private void RegisterFaceHover(UIRewardSlot slot, DieFaceSO face)
-    {
-        if (slot == null || face == null) return;
-
-        var go = slot.GetHoverTarget();
-        if (go == null) return;
-
-        var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
-        et.triggers.Clear();
-
-        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enter.callback.AddListener(_ => ShowFaceHoverTooltip(face));
-
-        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-        exit.callback.AddListener(_ =>
-        {
-            HideFaceHoverTooltip();
-            HideStatusHoverTooltip();
-        });
-
-        slot.AppendHoverRevealListeners(enter, exit);
-        et.triggers.Add(enter);
-        et.triggers.Add(exit);
-    }
-
-    private void ShowFaceHoverTooltip(DieFaceSO face)
-    {
-        if (face != null)
-            DieTooltipBackgrounds.ApplyFaceTooltip(faceHoverTypeBackground, face);
-        else
-            DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
-
-        if (faceHoverTooltipPanel != null)
-        {
-            if (faceHoverTitleText != null) faceHoverTitleText.text = face != null ? face.Title : "";
-            if (faceHoverDescriptionText != null)
-                faceHoverDescriptionText.text = face != null
-                    ? face.GetDescription(DieFaceDescriptionContext.FromCombat(combatManager))
-                    : "";
-            faceHoverTooltipPanel.SetActive(true);
-        }
-
-        UIRewardSlot.BuildEffectTooltip(face, out var effectTitle, out var effectDescription);
-        if (!string.IsNullOrWhiteSpace(effectTitle) || !string.IsNullOrWhiteSpace(effectDescription))
-            ShowStatusHoverTooltip(effectTitle, effectDescription);
-        else
-            HideStatusHoverTooltip();
-    }
-
-    private void HideFaceHoverTooltip()
-    {
-        if (faceHoverTitleText != null) faceHoverTitleText.text = "";
-        if (faceHoverDescriptionText != null) faceHoverDescriptionText.text = "";
-        DieTooltipBackgrounds.Clear(faceHoverTypeBackground);
-        if (faceHoverTooltipPanel != null) faceHoverTooltipPanel.SetActive(false);
-    }
-
-    private void ShowStatusHoverTooltip(string title, string description)
-    {
-        if (statusHoverTooltipPanel == null)
-            return;
-
-        if (statusHoverTitleText != null)
-            statusHoverTitleText.text = title ?? string.Empty;
-        if (statusHoverDescriptionText != null)
-            statusHoverDescriptionText.text = description ?? string.Empty;
-
-        statusHoverTooltipPanel.SetActive(true);
-    }
-
-    private void HideStatusHoverTooltip()
-    {
-        if (statusHoverTitleText != null) statusHoverTitleText.text = "";
-        if (statusHoverDescriptionText != null) statusHoverDescriptionText.text = "";
-        if (statusHoverTooltipPanel != null) statusHoverTooltipPanel.SetActive(false);
+        if (dieTooltipOverlay != null)
+            dieTooltipOverlay.Hide();
     }
 
     private bool ClickShouldKeepTooltipOpen()
     {
+        if (dieTooltipOverlay != null && dieTooltipOverlay.IsPointerOverDieTooltipPanel())
+            return true;
+
         if (EventSystem.current == null) return false;
 
         var pointer = new PointerEventData(EventSystem.current)
@@ -674,16 +457,11 @@ public class CombatUIController : MonoBehaviour
         EventSystem.current.RaycastAll(pointer, hits);
         if (hits.Count == 0) return false; // Clicked non-UI world area.
 
-        var tooltipTransform = dieTooltipPanel != null ? dieTooltipPanel.transform : null;
-        var statusTooltipTransform = statusHoverTooltipPanel != null ? statusHoverTooltipPanel.transform : null;
         var trayTransform = diceButtonContainer;
-
         for (var i = 0; i < hits.Count; i++)
         {
             var hitTransform = hits[i].gameObject != null ? hits[i].gameObject.transform : null;
             if (hitTransform == null) continue;
-            if (tooltipTransform != null && hitTransform.IsChildOf(tooltipTransform)) return true;
-            if (statusTooltipTransform != null && hitTransform.IsChildOf(statusTooltipTransform)) return true;
             if (trayTransform != null && hitTransform.IsChildOf(trayTransform)) return true;
         }
 

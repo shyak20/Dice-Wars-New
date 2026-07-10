@@ -9,7 +9,7 @@ public static class EnemyIntentSegments
         public readonly Sprite Icon;
         public readonly Sprite Background;
         public readonly string ValueText;
-        /// <summary>When set, hover uses <see cref="HoverTooltipManager.TryGetTooltipContent"/> (status definition).</summary>
+        /// <summary>When set, hover uses <see cref="TooltipContentResolver"/> (status definition).</summary>
         public readonly StatusEffectSO TooltipStatusEffect;
         public readonly string TooltipTitle;
         public readonly string TooltipDescription;

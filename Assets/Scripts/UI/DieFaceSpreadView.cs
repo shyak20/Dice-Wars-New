@@ -109,8 +109,7 @@ public sealed class DieFaceSpreadView : MonoBehaviour
 
                     var oldFace = face;
                     onSlotClicked?.Invoke(idx, oldFace, rewardSlot);
-                },
-                tooltipOverlay);
+                });
         }
     }
 

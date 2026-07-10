@@ -247,6 +247,17 @@ public class GameIconIndexSO : ScriptableObject
         return _statusLookup.TryGetValue(effect, out var s) ? s : null;
     }
 
+    /// <summary>All status effects registered in this index (used by tooltip style-tag scanning).</summary>
+    public void CollectRegisteredStatusEffects(List<StatusEffectSO> results)
+    {
+        if (results == null) return;
+        foreach (var e in statusEffectIcons)
+        {
+            if (e.effect != null && !results.Contains(e.effect))
+                results.Add(e.effect);
+        }
+    }
+
     /// <summary>Background frame for status-driven UI (enemy intent rows, pool rows).</summary>
     public Sprite GetStatusBackground(StatusEffectSO effect)
     {

@@ -25,6 +25,12 @@ public static class GameIconCatalog
     public static Sprite GetStatusIcon(StatusEffectSO effect) =>
         _active != null ? _active.GetStatusIcon(effect) : null;
 
+    public static void CollectRegisteredStatusEffects(System.Collections.Generic.List<StatusEffectSO> results)
+    {
+        if (_active != null)
+            _active.CollectRegisteredStatusEffects(results);
+    }
+
     public static Sprite GetStatusBackground(StatusEffectSO effect) =>
         _active != null ? _active.GetStatusBackground(effect) : null;
 

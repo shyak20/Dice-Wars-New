@@ -37,6 +37,8 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private string curseAnimatorBoolParameter = "Curse";
 
     private bool _hoverRevealEnabled = true;
+    private bool _standaloneHoverRevealWired;
+    private bool _faceTooltipIncludesHeader;
     private DieFaceSO _face;
     private int _curseAnimatorBoolHash;
     public DieFaceSO Face => _face;
@@ -240,21 +242,6 @@ public class UIRewardSlot : MonoBehaviour
             hoverRevealObject.SetActive(false);
     }
 
-    /// <summary>
-    /// <see cref="DieTooltipOverlayUI"/> drives status copy via its own panel; disable the standalone
-    /// <see cref="HoverTooltipTargetUI"/> so it does not compete with overlay <see cref="EventTrigger"/> hovers.
-    /// </summary>
-    public void SetExternalStatusHoverTooltipEnabled(bool enabled)
-    {
-        var hoverGo = GetHoverTarget();
-        if (hoverGo == null) return;
-        var t = statusHoverTooltipTarget;
-        if (t == null || t.gameObject != hoverGo)
-            t = hoverGo.GetComponent<HoverTooltipTargetUI>();
-        if (t != null)
-            t.enabled = enabled;
-    }
-
     private void ApplyHoverRevealPointerEnter()
     {
         if (!_hoverRevealEnabled || hoverRevealObject == null) return;
@@ -287,13 +274,16 @@ public class UIRewardSlot : MonoBehaviour
     }
 
     /// <summary>
-    /// When nothing else wires pointer hover on this slot (reward picker, shop face row), registers self-contained enter/exit.
+    /// When nothing else wires pointer hover on this slot (reward picker, shop face row, die tooltip grid), registers
+    /// self-contained enter/exit. Safe to call on rebind — listeners are only added once per slot.
     /// Do not use together with external <c>EventTrigger.triggers.Clear()</c> on the same button unless you also call <see cref="AppendHoverRevealListeners"/>.
     /// </summary>
     public void EnsureStandaloneHoverReveal()
     {
         if (hoverRevealObject == null || button == null) return;
         hoverRevealObject.SetActive(false);
+        if (_standaloneHoverRevealWired) return;
+        _standaloneHoverRevealWired = true;
         var go = button.gameObject;
         var et = go.GetComponent<EventTrigger>() ?? go.AddComponent<EventTrigger>();
         var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
@@ -326,24 +316,27 @@ public class UIRewardSlot : MonoBehaviour
         var hoverGo = GetHoverTarget();
         if (hoverGo == null) return;
 
-        // Always bind status hover to the actual raycast target (button). A serialized reference on
+        // Always bind the hover target to the actual raycast target (button). A serialized reference on
         // another child object will never receive pointer enter/exit for this slot.
         var target = statusHoverTooltipTarget;
         if (target == null || target.gameObject != hoverGo)
             target = hoverGo.GetComponent<HoverTooltipTargetUI>() ?? hoverGo.AddComponent<HoverTooltipTargetUI>();
         statusHoverTooltipTarget = target;
 
-        BuildEffectTooltip(face, out var title, out var description);
-        target.SetContent(title, description);
+        // The shared manager resolves face content (main tooltip + stacked status/effect explanations).
+        target.SetScriptableSource(face);
+        target.SetFaceHeaderTooltipEnabled(_faceTooltipIncludesHeader);
     }
 
-    /// <summary>Shared by reward slots and <see cref="DieTooltipOverlayUI"/> status line (ApplyStatus, Heal, etc.).</summary>
-    public static void BuildEffectTooltip(DieFaceSO face, out string title, out string description)
+    /// <summary>
+    /// When true, hovering this slot's face shows the face name/description tooltip (with the status/effect
+    /// explanation stacked under it). Enable where the slot icon does not already show name/description
+    /// (Die Tooltip grid, face-replace screen). Face-picker cards leave this false.
+    /// </summary>
+    public void SetFaceTooltipIncludesHeader(bool includesHeader)
     {
-        if (!DieFaceGameIconOnlyTooltipText.TryBuild(face, out title, out description))
-        {
-            title = string.Empty;
-            description = string.Empty;
-        }
+        _faceTooltipIncludesHeader = includesHeader;
+        if (statusHoverTooltipTarget != null)
+            statusHoverTooltipTarget.SetFaceHeaderTooltipEnabled(includesHeader);
     }
 }
