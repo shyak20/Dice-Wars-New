@@ -31,9 +31,9 @@ public struct RollOutcomeVisualLine
     public bool IsSplitDamageHitLine;
     /// <summary>0-based hit index when <see cref="IsSplitDamageHitLine"/> is set.</summary>
     public int DamageHitIndex;
-    /// <summary>When set, flies to this enemy's element container without drag assignment (relic random-enemy bonus).</summary>
+    /// <summary>When set, flies to this enemy's element container without drag assignment (already bound / legacy pre-assign).</summary>
     public EnemyController PreAssignedEnemy;
-    /// <summary>When true with <see cref="PreAssignedEnemy"/>, only updates the enemy pool — does not set <see cref="FaceResult.DamageTargetEnemy"/>.</summary>
+    /// <summary>Enemy-targeted pool extra (e.g. relic face-list damage): assigning updates that enemy's pool without changing the face's main damage target.</summary>
     public bool IsRelicPoolExtraLine;
     /// <summary>Self-damage / player-only deferred rows that must land on the shared player element container (never enemy drag tokens).</summary>
     public bool FlyToPlayerElementContainer;

@@ -14,6 +14,23 @@ public class ApplyStatusEffectAction : GameActionWithIcon
     public Sprite ResolveStatusIcon() =>
         GameIconCatalog.GetStatusIcon(statusEffect);
 
+    /// <summary>Builds a deferred enemy-status action for runtime pool extras (e.g. relic face-list burn).</summary>
+    public static ApplyStatusEffectAction CreateRuntime(StatusEffectSO effect, int stackCount)
+    {
+        if (effect == null || stackCount <= 0)
+            return null;
+
+        var action = new ApplyStatusEffectAction();
+        action.ConfigureForRuntime(effect, stackCount);
+        return action;
+    }
+
+    void ConfigureForRuntime(StatusEffectSO effect, int stackCount)
+    {
+        statusEffect = effect;
+        stacks = stackCount;
+    }
+
     static PoolRowKey ResolvePoolRowKey(StatusEffectSO effect) =>
         effect != null ? PoolRowKey.Custom(effect.name) : PoolRowKey.Custom("Status");
 

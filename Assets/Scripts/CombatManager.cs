@@ -3608,7 +3608,7 @@ public class CombatManager : MonoBehaviour
                                                 extra.PoolSourceAction != null &&
                                                 extra.PoolSourceAction.TriggerImmediatelyOnDrop,
                     PreAssignedEnemy = extra.PreAssignedEnemy,
-                    IsRelicPoolExtraLine = extra.PreAssignedEnemy != null,
+                    IsRelicPoolExtraLine = extra.PreAssignedEnemy != null || extra.RequiresEnemyAssignment,
                     SourceBuffIcon = extra.SourceBuffIcon
                 });
             }
@@ -3721,10 +3721,17 @@ public class CombatManager : MonoBehaviour
         });
     }
 
-    /// <summary>True when a deferred pool row applies an enemy-target status (e.g. enemy Burn) and so must be assigned to an enemy.</summary>
+    /// <summary>True when a deferred pool row must be assigned to an enemy (enemy status, or player-assignable damage extras).</summary>
     private static bool IsEnemyTargetedPoolContribution(FacePoolExtraContribution extra)
     {
+        if (extra.RequiresEnemyAssignment)
+            return true;
+
         if (extra.PreAssignedEnemy != null)
+            return true;
+
+        if (extra.DeferredEnemyStatusDefinition != null &&
+            extra.DeferredEnemyStatusDefinition.target == StatusEffectTarget.Enemy)
             return true;
 
         return extra.PoolSourceAction != null &&
@@ -5137,6 +5144,7 @@ public class CombatManager : MonoBehaviour
 
         if (line.IsRelicPoolExtraLine)
         {
+            BindAssignablePoolExtraToEnemy(face, line, enemy);
             var relicPool = enemy.AssignedElementPool;
             if (relicPool != null)
                 relicPool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
@@ -5210,6 +5218,69 @@ public class CombatManager : MonoBehaviour
                     apply.StatusEffectDefinition.target == StatusEffectTarget.Enemy &&
                     face.GetActionTarget(a) == null)
                     face.SetActionTarget(a, enemy);
+            }
+
+            BindUnassignedPoolExtrasToEnemy(face, enemy);
+        }
+    }
+
+    /// <summary>Records the chosen enemy on a player-assignable pool extra so submit deals that bonus to them.</summary>
+    static void BindAssignablePoolExtraToEnemy(FaceResult face, RollOutcomeVisualLine line, EnemyController enemy)
+    {
+        if (face?.ActionPoolContributions == null || enemy == null)
+            return;
+
+        for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+        {
+            var c = face.ActionPoolContributions[i];
+            if (!c.RequiresEnemyAssignment || c.PreAssignedEnemy != null)
+                continue;
+            if (!c.PoolKey.Equals(line.RowKey))
+                continue;
+            if (c.Amount != line.Amount)
+                continue;
+
+            c.PreAssignedEnemy = enemy;
+            face.ActionPoolContributions[i] = c;
+            return;
+        }
+
+        // Amount may have been scaled (Perfect Strike); match first unbound row with the same key.
+        for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+        {
+            var c = face.ActionPoolContributions[i];
+            if (!c.RequiresEnemyAssignment || c.PreAssignedEnemy != null)
+                continue;
+            if (!c.PoolKey.Equals(line.RowKey))
+                continue;
+
+            c.PreAssignedEnemy = enemy;
+            face.ActionPoolContributions[i] = c;
+            return;
+        }
+    }
+
+    static void BindUnassignedPoolExtrasToEnemy(FaceResult face, EnemyController enemy)
+    {
+        if (face?.ActionPoolContributions == null || enemy == null)
+            return;
+
+        for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+        {
+            var c = face.ActionPoolContributions[i];
+            if (!c.RequiresEnemyAssignment || c.PreAssignedEnemy != null || c.Amount <= 0)
+                continue;
+
+            c.PreAssignedEnemy = enemy;
+            face.ActionPoolContributions[i] = c;
+
+            var pool = enemy.AssignedElementPool;
+            if (pool != null)
+            {
+                var rowBg = c.PoolRowBackground != null
+                    ? c.PoolRowBackground
+                    : GameIconCatalog.TryGetPoolRowBackground(c.PoolKey);
+                pool.ApplyPoolDelta(c.PoolKey, c.Amount, c.Icon, rowBg);
             }
         }
     }
@@ -5504,6 +5575,15 @@ public class CombatManager : MonoBehaviour
     {
         if (face.HasEnemyDamagePiece)
             return true;
+
+        if (face.ActionPoolContributions != null)
+        {
+            for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+            {
+                if (IsEnemyTargetedPoolContribution(face.ActionPoolContributions[i]))
+                    return true;
+            }
+        }
 
         if (face.Actions == null)
             return false;

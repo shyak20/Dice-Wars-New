@@ -395,7 +395,7 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEn
             case RollBonusType.Damage:
                 if (ctx.RelicPhase != RelicPhases.ModifyFaceResult)
                     return;
-                TryAppendRandomEnemyPoolBonus(ctx, RollBonusType.Damage, null, amount);
+                TryAppendAssignableEnemyPoolBonus(ctx, RollBonusType.Damage, null, amount);
                 break;
             case RollBonusType.Burn:
                 if (ctx.RelicPhase != RelicPhases.AfterPowerChangedFromRoll)
@@ -406,54 +406,62 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEn
                     return;
                 }
 
-                TryAppendRandomEnemyPoolBonus(ctx, RollBonusType.Burn, burnDefinition, amount);
+                TryAppendAssignableEnemyPoolBonus(ctx, RollBonusType.Burn, burnDefinition, amount);
                 break;
         }
     }
 
-    static void TryAppendRandomEnemyPoolBonus(GameActionContext ctx, RollBonusType bonusType, BurnEffectSO burnDefinition, int amount)
+    /// <summary>
+    /// Adds an enemy-targeted pool extra the player can drag onto an enemy (solo fights auto-assign).
+    /// Damage stays a separate assignable piece; burn is wired through a runtime <see cref="ApplyStatusEffectAction"/>.
+    /// </summary>
+    static void TryAppendAssignableEnemyPoolBonus(
+        GameActionContext ctx,
+        RollBonusType bonusType,
+        BurnEffectSO burnDefinition,
+        int amount)
     {
-        var enemy = ctx.CombatManager.PickRandomLivingEnemy();
-        if (enemy == null)
-            return;
-
         var face = ctx.TriggeringFace;
-        var stacks = amount;
-        PoolRowKey poolKey;
-        Sprite icon;
-        Sprite rowBackground = null;
-        StatusEffectSO deferredStatus = null;
+        if (face == null || amount == 0)
+            return;
 
         switch (bonusType)
         {
             case RollBonusType.Damage:
-                poolKey = PoolRowKey.FromDieType(DieType.Damage);
-                icon = GameIconCatalog.GetElementIcon(DieType.Damage);
+            {
+                face.ActionPoolContributions.Add(RollBuffSourceIcon.WithRelic(new FacePoolExtraContribution
+                {
+                    PoolKey = PoolRowKey.FromDieType(DieType.Damage),
+                    Amount = amount,
+                    Icon = GameIconCatalog.GetElementIcon(DieType.Damage),
+                    RequiresEnemyAssignment = true
+                }, ctx.SourceRelic));
                 break;
+            }
             case RollBonusType.Burn:
-                stacks = ApplyStatusEffectAction.ResolveApplyStacks(
+            {
+                var stacks = ApplyStatusEffectAction.ResolveApplyStacks(
                     burnDefinition, amount, ctx, face);
                 if (stacks <= 0)
                     return;
 
-                poolKey = PoolRowKey.Custom(burnDefinition.name);
-                icon = GameIconCatalog.GetStatusIcon(burnDefinition);
-                rowBackground = GameIconCatalog.TryGetPoolRowBackground(poolKey);
-                deferredStatus = burnDefinition;
-                break;
-            default:
-                return;
-        }
+                var apply = ApplyStatusEffectAction.CreateRuntime(burnDefinition, stacks);
+                if (apply == null)
+                    return;
 
-        face.ActionPoolContributions.Add(RollBuffSourceIcon.WithRelic(new FacePoolExtraContribution
-        {
-            PoolKey = poolKey,
-            Amount = stacks,
-            Icon = icon,
-            PoolRowBackground = rowBackground,
-            PreAssignedEnemy = enemy,
-            DeferredEnemyStatusDefinition = deferredStatus
-        }, ctx.SourceRelic));
+                face.Actions.Add(apply);
+                var poolKey = PoolRowKey.Custom(burnDefinition.name);
+                face.ActionPoolContributions.Add(RollBuffSourceIcon.WithRelic(new FacePoolExtraContribution
+                {
+                    PoolKey = poolKey,
+                    Amount = stacks,
+                    Icon = GameIconCatalog.GetStatusIcon(burnDefinition),
+                    PoolRowBackground = GameIconCatalog.TryGetPoolRowBackground(poolKey),
+                    PoolSourceAction = apply
+                }, ctx.SourceRelic));
+                break;
+            }
+        }
     }
 }
 

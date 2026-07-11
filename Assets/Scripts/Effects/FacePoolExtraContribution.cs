@@ -29,9 +29,14 @@ public struct FacePoolExtraContribution
     public bool VisualFlyoutOnly;
     /// <summary>When true with <see cref="VisualFlyoutOnly"/>, fly to the player status bar instead of the element pool.</summary>
     public bool FlyToPlayerStatusBar;
-    /// <summary>When set, this row is routed to that enemy's element container (e.g. relic random-enemy bonus) without changing the face's main damage target.</summary>
+    /// <summary>When set, this row is routed to that enemy's element container (e.g. after the player assigns a relic bonus, or legacy pre-assign).</summary>
     public EnemyController PreAssignedEnemy;
-    /// <summary>Deferred enemy status resolved at submit when <see cref="PoolSourceAction"/> is null (e.g. relic burn bonus).</summary>
+    /// <summary>
+    /// When true, this enemy-targeted pool extra has no fixed enemy yet — the player drags it onto an enemy
+    /// (or solo fights auto-assign). On assign, <see cref="PreAssignedEnemy"/> is set and submit resolves against that enemy.
+    /// </summary>
+    public bool RequiresEnemyAssignment;
+    /// <summary>Deferred enemy status resolved at submit when <see cref="PoolSourceAction"/> is null (e.g. legacy relic burn bonus).</summary>
     public StatusEffectSO DeferredEnemyStatusDefinition;
     /// <summary>When set, the element-value flyout shows this relic/gem icon briefly (see <see cref="StoredActionsPoolIcon"/>).</summary>
     public Sprite SourceBuffIcon;
