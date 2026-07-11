@@ -18,7 +18,7 @@ MonoBehaviour:
   enemyRank: 0
   spawnOnLoadAdds: []
   excludeFromFirstFight: 1
-  maxHealth: 10
+  maxHealth: 12
   startArmor: 0
   minGoldReward: 30
   maxGoldReward: 50

@@ -130,8 +130,14 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         if (faceRewardManager != null)
             faceRewardManager.OnWinStageRewardsLayoutRebuilt();
 
-        foreach (Transform c in rewardsLayout)
-            Destroy(c.gameObject);
+        // Remove only previously spawned reward rows. Keep any other children already in the layout
+        // (headers, decorations, or other authored elements).
+        for (var i = rewardsLayout.childCount - 1; i >= 0; i--)
+        {
+            var child = rewardsLayout.GetChild(i);
+            if (child != null && child.GetComponent<RunRewardOfferRow>() != null)
+                Destroy(child.gameObject);
+        }
 
         _faceRewardRowPending = false;
 

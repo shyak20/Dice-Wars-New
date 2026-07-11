@@ -19,7 +19,7 @@ MonoBehaviour:
   armorTooltipDescription: 
   legacyActionDescription: 
   icon: {fileID: 21300000, guid: edcfefc5b76fb4d4ea44a7de2a3392ea, type: 3}
-  damage: 3
+  damage: 4
   numberOfAttacks: 1
   armor: 0
   actionAnimatorTriggerName: Attack1
