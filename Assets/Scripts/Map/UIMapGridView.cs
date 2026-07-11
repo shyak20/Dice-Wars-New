@@ -141,6 +141,10 @@ public class UIMapGridView : MonoBehaviour
         var isStart = _manager.IsStart(cell);
         var isBoss = _manager.IsBoss(cell);
         view.Setup(cell, tile, isStart, isBoss, _manager, _presentation);
+        // Setup uses PlayerGridPosition for standing tint; during multi-step moves that can be an intermediate
+        // cell. Re-apply from the animation standing override so only the intended tile keeps the player color.
+        if (_standingVisualCellOverride.HasValue)
+            RefreshPlayerStandingVisuals();
     }
 
     public void RefreshAllTileExits()
@@ -175,7 +179,8 @@ public class UIMapGridView : MonoBehaviour
     }
 
     /// <summary>
-    /// While the pawn animates along <paramref name="path"/>, updates the standing-tile visual to the cell the marker has reached.
+    /// While the pawn animates along a path, overrides which cell uses the standing (player-tint) visual.
+    /// Multi-step moves keep this on the start cell until the final segment begins, then set it to the destination.
     /// </summary>
     public void SetMoveAnimationStandingCell(Vector2Int cell) => _standingVisualCellOverride = cell;
 
@@ -310,8 +315,11 @@ public class UIMapGridView : MonoBehaviour
                 {
                     _deferBackgroundColorLerpUntilFinalSegment = false;
                     _deferDestinationSelectedVisualUntilFinalSegment = false;
-                    _tileStateSelectedCellOverride = path[path.Count - 1];
-                    BeginMoveEndBackgroundColorTransitionsForMove(path[path.Count - 1]);
+                    var destination = path[path.Count - 1];
+                    // Standing tint moves to the destination only as the final segment begins (leaving the prior tile).
+                    _tileStateSelectedCellOverride = destination;
+                    _standingVisualCellOverride = destination;
+                    BeginMoveEndBackgroundColorTransitionsForMove(destination);
                     RefreshPlayerStandingVisuals();
                 }
             }

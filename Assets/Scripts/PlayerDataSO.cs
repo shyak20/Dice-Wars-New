@@ -30,6 +30,9 @@ public class PlayerDataSO : ScriptableObject
     [Tooltip("Base starting dice for this character (authored on the asset). Extra dice from progression Add Starting Die rewards are stored in PlayerPrefs per character, not here.")]
     public List<DieAssetSO> currentDeck = new List<DieAssetSO>();
 
+    [Tooltip("Relics this character starts each run with (authored here and/or granted by ProgressionStartingRelicReward).")]
+    public List<RelicSO> startingRelics = new List<RelicSO>();
+
     [Header("Vitality")]
     [Tooltip("Starting and default max HP for a new run (before relics/shrines). Applied to PlayerStatus when combat initializes.")]
     [Min(1)] public int startingMaxHealth = 100;

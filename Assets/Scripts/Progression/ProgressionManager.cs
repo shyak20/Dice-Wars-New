@@ -385,12 +385,37 @@ public sealed class ProgressionManager : MonoBehaviour
 
     public int GetStartingGoldForNewRun() => GetStartingGoldModifier();
 
-    /// <summary>Relics equipped when a new run begins (rank-up / trial <see cref="ProgressionStartingRelicReward"/>).</summary>
+    /// <summary>
+    /// Relics equipped when a new run begins: authored / granted entries on
+    /// <see cref="PlayerDataSO.startingRelics"/>, plus any
+    /// <see cref="ProgressionStartingRelicReward"/> still discoverable from completed progression
+    /// (so grants persist across sessions even if the character asset was not saved).
+    /// </summary>
     public IReadOnlyList<RelicSO> GetStartingRelicsForNewRun()
     {
         var relics = new List<RelicSO>();
+        AppendUniqueRelics(_activeTemplate != null ? _activeTemplate.startingRelics : null, relics);
+
+        var runtime = PlayerDataContainer.Instance?.RuntimeData;
+        if (runtime != null)
+            AppendUniqueRelics(runtime.startingRelics, relics);
+
         ProgressionRunModifiers.CollectStartingRelics(Catalog, _save, relics);
         return relics;
+    }
+
+    static void AppendUniqueRelics(IReadOnlyList<RelicSO> source, List<RelicSO> into)
+    {
+        if (source == null || into == null)
+            return;
+
+        for (var i = 0; i < source.Count; i++)
+        {
+            var relic = source[i];
+            if (relic == null || into.Contains(relic))
+                continue;
+            into.Add(relic);
+        }
     }
 
     void SyncGrantedStartingDiceFromSave()

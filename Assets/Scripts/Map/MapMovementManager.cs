@@ -398,7 +398,10 @@ public sealed class MapMovementManager : MonoBehaviour
             var isFinal = pathIndex == animationPath.Length - 1;
             ApplySingleMoveStep(animationPath[pathIndex], isFinal);
             InvalidateReachableMoveTargetCache();
-            mapView?.SetMoveAnimationStandingCell(animationPath[pathIndex]);
+            // Intermediate steps must not take the standing (player-tint) visual — only the destination does,
+            // with its color lerp starting when the pawn leaves the tile before the target.
+            if (isFinal)
+                mapView?.SetMoveAnimationStandingCell(animationPath[pathIndex]);
             mapView?.RefreshPlayerStandingVisuals();
         }
 
