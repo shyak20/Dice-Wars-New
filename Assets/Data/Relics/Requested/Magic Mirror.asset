@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Magic Mirror
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Magic Mirror
-  description: Whenever you roll <style=Die4> - deal <style=Attack>+4</style>
+  description: Whenever you roll <style=Die4> - deal <style=Attack>+2</style>
   rarity: 0
   icon: {fileID: 21300000, guid: 61cb55674b771df44a65db62cfb853b1, type: 3}
   barBenefitDisplayValue: 0
@@ -29,7 +29,7 @@ MonoBehaviour:
         activateImmediately: 1
         legacyRequiredFaceValues: 
         requiredFaceValues:
-          values: 04000000
+          values: 0400000002000000
         bonusType: 1
-        amount: 4
+        amount: 2
         burnDefinition: {fileID: 0}

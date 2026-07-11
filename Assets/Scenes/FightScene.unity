@@ -30268,8 +30268,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   jackpotPresentationRoot: {fileID: 1354844266}
   storedActionsPoolDisplay: {fileID: 2110974188}
-  jackpotContainerMoveTarget: {fileID: 1805570746}
-  containerMoveDuration: 0.6
+  elementYMovement: 30
+  elementScaleAmount: 1
+  containerMoveDuration: 0.4
   containerMoveCurve:
     serializedVersion: 2
     m_Curve:
@@ -30289,12 +30290,12 @@ MonoBehaviour:
       outSlope: -0
       tangentMode: 0
       weightedMode: 3
-      inWeight: 0.59611654
+      inWeight: 0.8
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  containerReturnDuration: 0.6
+  containerReturnDuration: 0.4
   containerReturnCurve:
     serializedVersion: 2
     m_Curve:
@@ -30310,16 +30311,15 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: -0
-      outSlope: -0
+      inSlope: -0.008924204
+      outSlope: -0.008924204
       tangentMode: 0
       weightedMode: 3
-      inWeight: 0.59611654
+      inWeight: 0.7339806
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  restoreContainerLocalPositionAfter: 1
   delayBeforeFirstJackpotReveal: 0.2
   staggerDelayBetweenRows: 0.1
   secondsAfterAllPoolValuesUpdatedBeforeEndSequence: 0.1
