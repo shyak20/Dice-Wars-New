@@ -81,7 +81,7 @@ public static class TooltipContentResolver
         StatusScratch.Clear();
         StatusStyleTagScanner.AppendStatusesMentionedIn(title, StatusScratch);
         StatusStyleTagScanner.AppendStatusesMentionedIn(description, StatusScratch);
-        AppendStatusEntries(StatusScratch, secondaryResults, excluded: null);
+        AppendStatusEntries(StatusScratch, secondaryResults, excluded: null, mainTitle: title);
     }
 
     /// <summary>Joins entries into one block: titles with " · ", descriptions with blank lines.</summary>
@@ -171,10 +171,14 @@ public static class TooltipContentResolver
         StatusScratch.Clear();
         StatusStyleTagScanner.AppendStatusesMentionedIn(main.Title, StatusScratch);
         StatusStyleTagScanner.AppendStatusesMentionedIn(main.Description, StatusScratch);
-        AppendStatusEntries(StatusScratch, secondaryResults, excluded);
+        AppendStatusEntries(StatusScratch, secondaryResults, excluded, main.Title);
     }
 
-    static void AppendStatusEntries(List<StatusEffectSO> statuses, List<TooltipContent> secondaryResults, StatusEffectSO excluded)
+    static void AppendStatusEntries(
+        List<StatusEffectSO> statuses,
+        List<TooltipContent> secondaryResults,
+        StatusEffectSO excluded,
+        string mainTitle = null)
     {
         for (var i = 0; i < statuses.Count; i++)
         {
@@ -183,6 +187,8 @@ public static class TooltipContentResolver
                 continue;
 
             var title = string.IsNullOrEmpty(status.effectName) ? status.name : status.effectName;
+            if (TitlesMatchIgnoringRichText(title, mainTitle))
+                continue;
             if (ContainsEntryWithTitle(secondaryResults, title))
                 continue;
 
@@ -195,14 +201,22 @@ public static class TooltipContentResolver
         if (string.IsNullOrWhiteSpace(title))
             return false;
 
-        var trimmed = title.Trim();
         for (var i = 0; i < entries.Count; i++)
         {
-            if (string.Equals(entries[i].Title, trimmed, StringComparison.OrdinalIgnoreCase))
+            if (TitlesMatchIgnoringRichText(entries[i].Title, title))
                 return true;
         }
 
         return false;
+    }
+
+    static bool TitlesMatchIgnoringRichText(string a, string b)
+    {
+        var plainA = StatusStyleTagScanner.StripRichTextPublic(a);
+        var plainB = StatusStyleTagScanner.StripRichTextPublic(b);
+        if (plainA.Length == 0 || plainB.Length == 0)
+            return false;
+        return string.Equals(plainA, plainB, StringComparison.OrdinalIgnoreCase);
     }
 
     static void CollectStatus(StatusEffectSO status, List<StatusEffectSO> results)

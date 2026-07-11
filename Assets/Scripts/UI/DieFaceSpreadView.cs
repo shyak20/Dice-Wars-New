@@ -103,7 +103,7 @@ public sealed class DieFaceSpreadView : MonoBehaviour
                 {
                     if (slotAllowed != null && !slotAllowed(idx))
                     {
-                        tooltipOverlay?.ShowFaceReplacementRuleError();
+                        tooltipOverlay?.ShowFaceReplacementRuleError(die, idx);
                         return;
                     }
 

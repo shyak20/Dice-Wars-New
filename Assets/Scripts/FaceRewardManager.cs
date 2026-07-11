@@ -211,7 +211,7 @@ public class FaceRewardManager : MonoBehaviour
             return;
         if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slotIndex, chosenFace))
         {
-            facePickerView?.NotifyFaceReplacementRuleError();
+            facePickerView?.NotifyFaceReplacementRuleError(die, slotIndex);
             return;
         }
 

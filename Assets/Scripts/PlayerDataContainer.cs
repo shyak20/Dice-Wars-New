@@ -40,6 +40,22 @@ public class PlayerDataContainer : MonoBehaviour
     }
 
     /// <summary>
+    /// Rebuilds <see cref="RuntimeData"/> from <see cref="ActiveCharacterTemplate"/> so mid-run face swaps
+    /// (curses, shop/reward replacements), gems, and acquired dice do not persist into the next run.
+    /// </summary>
+    public void ResetRuntimeDeckToCharacterDefaults()
+    {
+        var profile = ActiveCharacterTemplate != null ? ActiveCharacterTemplate : sourcePlayerData;
+        if (profile == null)
+        {
+            Debug.LogError("PlayerDataContainer.ResetRuntimeDeckToCharacterDefaults: no character template to restore.");
+            return;
+        }
+
+        ApplyCharacterProfile(profile);
+    }
+
+    /// <summary>
     /// Clones a character profile (deck + combat settings) into <see cref="RuntimeData"/> for the run.
     /// </summary>
     public void ApplyCharacterProfile(PlayerDataSO profile)

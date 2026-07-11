@@ -3,8 +3,9 @@ using UnityEngine;
 /// <summary>
 /// Enforces per-die caps on how many faces may share the same <see cref="DieFaceSO.value"/>,
 /// from the current act's <see cref="MapActDefinitionSO.maxSameNumericValueFacesPerDie"/>.
-/// <see cref="DieType.Curse"/> faces are excluded from this count so curse slots stay replaceable when
-/// their numeric <c>value</c> overlaps other faces (the cap still applies to non-curse faces only).
+/// <see cref="DieType.Curse"/> faces are excluded from this count (their numeric value must not block other faces).
+/// Curse slots themselves are locked against replacement unless <paramref name="allowReplacingCurse"/> is set
+/// (map curse-clear outcomes only).
 /// </summary>
 public static class SameValueFaceCapUtility
 {
@@ -21,11 +22,17 @@ public static class SameValueFaceCapUtility
     static bool FaceCountsTowardSameValueCap(DieFaceSO face, int targetValue) =>
         face != null && face.type != DieType.Curse && face.value == targetValue;
 
-    public static bool CanReplaceFaceWithoutViolatingCap(DieAssetSO die, int slotIndex, DieFaceSO newFace)
+    public static bool CanReplaceFaceWithoutViolatingCap(
+        DieAssetSO die,
+        int slotIndex,
+        DieFaceSO newFace,
+        bool allowReplacingCurse = false)
     {
         if (die == null || newFace == null)
             return false;
         if (die.faces == null || slotIndex < 0 || slotIndex >= die.faces.Length)
+            return false;
+        if (!allowReplacingCurse && die.HasLockedCurseFaceAt(slotIndex))
             return false;
 
         var max = GetMaxSameNumericValueFacesPerDie();
@@ -48,8 +55,6 @@ public static class SameValueFaceCapUtility
     {
         if (die == null || newFace == null || !die.CanAttachFace(newFace))
             return false;
-        if (GetMaxSameNumericValueFacesPerDie() >= int.MaxValue)
-            return true;
         for (var i = 0; i < die.faces.Length; i++)
         {
             if (CanReplaceFaceWithoutViolatingCap(die, i, newFace))

@@ -177,7 +177,7 @@ MonoBehaviour:
   - effect: {fileID: 11400000, guid: 36a967d8f94b7684c9ba6c18b9928e25, type: 2}
     icon: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
     background: {fileID: 0}
-    poolRowBackground: {fileID: 0}
+    poolRowBackground: {fileID: 21300000, guid: 8a04e3900d4d5b043a6f270663d2d18d, type: 3}
   - effect: {fileID: 11400000, guid: c100a975ed88ecf478b21b6af88461fc, type: 2}
     icon: {fileID: 21300000, guid: 64f0f54c1740bdf44a7b5bbfccf8eeca, type: 3}
     background: {fileID: 0}

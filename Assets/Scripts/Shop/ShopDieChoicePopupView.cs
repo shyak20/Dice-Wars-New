@@ -207,7 +207,8 @@ public class ShopDieChoicePopupView : MonoBehaviour
         onClosed?.Invoke();
     }
 
-    public void NotifyFaceReplacementRuleError() => trayLayout?.NotifyFaceReplacementRuleError();
+    public void NotifyFaceReplacementRuleError(DieAssetSO die = null, int slotIndex = -1) =>
+        trayLayout?.NotifyFaceReplacementRuleError(die, slotIndex);
 
     void Cancel()
     {

@@ -260,7 +260,10 @@ public class RunManager : MonoBehaviour
         ResetGlobalTimeScaleToOne();
     }
 
-    /// <summary>Clears run HP, gold, relics, and map session so the next <see cref="StartRun"/> uses defaults.</summary>
+    /// <summary>
+    /// Clears run HP, gold, relics, map session, and rebuilds the runtime deck from the character template
+    /// so curse / swapped faces do not carry into the next run.
+    /// </summary>
     public void AbandonActiveRun()
     {
         _useMapBasedRun = false;
@@ -281,6 +284,9 @@ public class RunManager : MonoBehaviour
             var bonus = ProgressionManager.TryGetRuntime()?.GetStartingGoldForNewRun() ?? 0;
             RunEconomyManager.Instance.ResetEconomyForNewRunWithProgressionBonus(bonus);
         }
+
+        if (PlayerDataContainer.Instance != null)
+            PlayerDataContainer.Instance.ResetRuntimeDeckToCharacterDefaults();
 
         ApplyProgressionStartingRelics();
         ClearMapFightShopPreloadState();
@@ -564,7 +570,7 @@ public class RunManager : MonoBehaviour
         PersistentMusicPlaylist.Instance?.TryBeginCrossfadeForSceneNamed(mapSceneName);
     }
 
-    /// <summary>Returns to main menu and clears run HP, gold, and map progress.</summary>
+    /// <summary>Returns to main menu and clears run HP, gold, map progress, and runtime deck mutations.</summary>
     public void LoadMainMenuScene()
     {
         AbandonActiveRun();
@@ -1408,14 +1414,31 @@ public class RunManager : MonoBehaviour
     {
         if (amount <= 0)
             return;
+        if (mapRunPermanentStrengthDefinition == null)
+        {
+            Debug.LogError(
+                "RunManager.AddRunPermanentStrengthStacks: mapRunPermanentStrengthDefinition is not assigned — " +
+                "Fossilized D6 / map Strength bonuses cannot apply at combat start.",
+                this);
+        }
+
         _runPermanentStrengthStacksFromSpecialEvents += amount;
     }
 
     /// <summary>Called from <see cref="CombatManager"/> after relic CombatStart so map-granted Strength persists every fight.</summary>
     public void TryApplyPermanentStrengthStacksAtCombatStart(CombatManager combat, PlayerStatus player, EnemyController enemy)
     {
-        if (combat == null || player == null || _runPermanentStrengthStacksFromSpecialEvents <= 0 || mapRunPermanentStrengthDefinition == null)
+        if (combat == null || player == null || _runPermanentStrengthStacksFromSpecialEvents <= 0)
             return;
+        if (mapRunPermanentStrengthDefinition == null)
+        {
+            Debug.LogError(
+                "RunManager.TryApplyPermanentStrengthStacksAtCombatStart: mapRunPermanentStrengthDefinition is not assigned " +
+                $"but {_runPermanentStrengthStacksFromSpecialEvents} permanent Strength stack(s) are pending.",
+                this);
+            return;
+        }
+
         var ctx = new StatusEffectContext
         {
             CombatManager = combat,

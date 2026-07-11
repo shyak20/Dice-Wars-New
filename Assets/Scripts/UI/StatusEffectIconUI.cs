@@ -73,10 +73,10 @@ public class StatusEffectIconUI : MonoBehaviour
             iconImage.raycastTarget = false;
         }
 
-        var title = string.IsNullOrWhiteSpace(effect.Definition.effectName)
-            ? effect.Definition.name
-            : effect.Definition.effectName;
-        ApplyTooltipContent(title, effect.Definition.description);
+        // Use the status asset path so secondary panels exclude this same buff (style tags in its
+        // name/description would otherwise stack a duplicate explanation tooltip).
+        if (hoverTooltipTarget != null)
+            hoverTooltipTarget.SetScriptableSource(effect.Definition);
         UpdateStacks(effect.Stacks);
     }
 

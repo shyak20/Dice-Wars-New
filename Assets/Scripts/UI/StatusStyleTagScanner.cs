@@ -64,4 +64,7 @@ public static class StatusStyleTagScanner
 
     static string StripRichText(string text) =>
         string.IsNullOrEmpty(text) ? string.Empty : RichTextTagRegex.Replace(text, string.Empty).Trim();
+
+    /// <summary>Strips TMP/HTML-like tags for title comparisons (dedupe across rich-text and plain labels).</summary>
+    public static string StripRichTextPublic(string text) => StripRichText(text);
 }

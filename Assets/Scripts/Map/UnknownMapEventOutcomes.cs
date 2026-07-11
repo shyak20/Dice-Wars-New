@@ -810,9 +810,9 @@ public sealed class UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseFo
 
             if (!rep.MatchesDie(die))
                 continue;
-            if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep))
+            if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep, allowReplacingCurse: true))
                 continue;
-            die.SwapFace(slot, rep);
+            die.SwapFace(slot, rep, allowReplacingCurse: true);
             PlayerDataContainer.NotifyRuntimeDeckChanged();
             return;
         }
@@ -856,7 +856,14 @@ public sealed class UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseFo
             return false;
         }
 
-        return UnknownMapEventOutcomeAddCurseFaceToChosenDie.TrySwapFaceAtSlot(die, slot, rep);
+        if (!rep.MatchesDie(die))
+            return false;
+        if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep, allowReplacingCurse: true))
+            return false;
+
+        die.SwapFace(slot, rep, allowReplacingCurse: true);
+        PlayerDataContainer.NotifyRuntimeDeckChanged();
+        return true;
     }
 
     public static bool IsCurseSlot(DieAssetSO die, int slot)
@@ -874,7 +881,7 @@ public sealed class UnknownMapEventOutcomeReplaceFirstCurseOnChosenDieWithBaseFo
 
         var rep = ReplacementFor(die);
         return rep != null && rep.MatchesDie(die)
-            && SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep);
+            && SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep, allowReplacingCurse: true);
     }
 
     DieFaceSO ReplacementFor(DieAssetSO die)
@@ -926,9 +933,9 @@ public sealed class UnknownMapEventOutcomeReplaceFirstCurseFaceWith : UnknownMap
                     continue;
                 if (!replacement.MatchesDie(die))
                     continue;
-                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, replacement))
+                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, replacement, allowReplacingCurse: true))
                     continue;
-                die.SwapFace(slot, replacement);
+                die.SwapFace(slot, replacement, allowReplacingCurse: true);
                 PlayerDataContainer.NotifyRuntimeDeckChanged();
                 return;
             }
@@ -1068,9 +1075,9 @@ public sealed class UnknownMapEventOutcomeReplaceFirstCurseWithBaseForDieLine : 
 
                 if (!rep.MatchesDie(die))
                     continue;
-                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep))
+                if (!SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, slot, rep, allowReplacingCurse: true))
                     continue;
-                die.SwapFace(slot, rep);
+                die.SwapFace(slot, rep, allowReplacingCurse: true);
                 PlayerDataContainer.NotifyRuntimeDeckChanged();
                 return;
             }

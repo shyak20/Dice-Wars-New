@@ -18,10 +18,10 @@ MonoBehaviour:
   uiTooltipBackground: {fileID: 21300000, guid: 1086363c2a90d07439f392d72ef1197e, type: 3}
   faceSpreadViewPrefab: {fileID: 5564980560420252043, guid: e7b1fc219e94e274ebfbfe2140670a4b, type: 3}
   faces:
-  - {fileID: 11400000, guid: a1697007c5d7a8c49afab141432387a1, type: 2}
-  - {fileID: 11400000, guid: a1697007c5d7a8c49afab141432387a1, type: 2}
-  - {fileID: 11400000, guid: 888278d52d5a160428cec01e0ece4324, type: 2}
-  - {fileID: 11400000, guid: 888278d52d5a160428cec01e0ece4324, type: 2}
+  - {fileID: 11400000, guid: c4d8e9f0a1b2436587a9b0c1d2e3f4a5, type: 2}
+  - {fileID: 11400000, guid: c4d8e9f0a1b2436587a9b0c1d2e3f4a5, type: 2}
+  - {fileID: 11400000, guid: c4d8e9f0a1b2436587a9b0c1d2e3f4a5, type: 2}
+  - {fileID: 11400000, guid: c4d8e9f0a1b2436587a9b0c1d2e3f4a5, type: 2}
   - {fileID: 11400000, guid: 888278d52d5a160428cec01e0ece4324, type: 2}
   - {fileID: 11400000, guid: 888278d52d5a160428cec01e0ece4324, type: 2}
   socketedGems:

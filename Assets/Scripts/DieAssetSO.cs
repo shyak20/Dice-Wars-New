@@ -125,10 +125,20 @@ public class DieAssetSO : ScriptableObject
         return face.MatchesDie(this);
     }
 
+    /// <summary>True when the slot holds a curse face — player rewards/shop cannot overwrite it.</summary>
+    public bool HasLockedCurseFaceAt(int index)
+    {
+        if (faces == null || index < 0 || index >= faces.Length)
+            return false;
+        var face = faces[index];
+        return face != null && face.type == DieType.Curse;
+    }
+
     /// <summary>Replaces one face and returns the previous face (for scrap / undo).</summary>
+    /// <param name="allowReplacingCurse">When false (default), refuses to overwrite a curse slot. Map curse-clear outcomes pass true.</param>
     /// <exception cref="ArgumentOutOfRangeException">Index not 0–5.</exception>
-    /// <exception cref="InvalidOperationException">New face element does not match this die.</exception>
-    public DieFaceSO SwapFace(int index, DieFaceSO newFace)
+    /// <exception cref="InvalidOperationException">New face element does not match this die, or slot is a locked curse.</exception>
+    public DieFaceSO SwapFace(int index, DieFaceSO newFace, bool allowReplacingCurse = false)
     {
         if (faces == null || faces.Length < 6)
             throw new InvalidOperationException($"Die '{dieName}' must have at least 6 face slots.");
@@ -139,6 +149,8 @@ public class DieAssetSO : ScriptableObject
 
         if (index < 0 || index >= 6)
             throw new ArgumentOutOfRangeException(nameof(index), index, "Face index must be 0–5.");
+        if (!allowReplacingCurse && HasLockedCurseFaceAt(index))
+            throw new InvalidOperationException($"Cannot replace curse face on die '{dieName}' slot {index}.");
         if (newFace != null && !CanAttachFace(newFace))
             throw new InvalidOperationException($"Cannot attach face '{newFace.name}' to die '{dieName}' — element mismatch.");
 

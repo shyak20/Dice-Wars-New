@@ -1435,6 +1435,7 @@ MonoBehaviour:
   dieTooltipTypeBackground: {fileID: 9133628754808889175}
   faceReplacementRuleErrorObject: {fileID: 6783108887969255045}
   faceReplacementRuleErrorText: {fileID: 951100386831286252}
+  curseFaceReplacementErrorMessage: Curse faces cannot be replaced.
   faceReplacementRuleErrorShakeTarget: {fileID: 0}
   replacementErrorShakeDuration: 0.32
   replacementErrorShakeMaxHorizontalOffset: 14

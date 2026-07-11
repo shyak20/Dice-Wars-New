@@ -308,7 +308,8 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         ClearSpreadSelectionState();
     }
 
-    public void NotifyFaceReplacementRuleError() => dieTooltipOverlay?.ShowFaceReplacementRuleError();
+    public void NotifyFaceReplacementRuleError(DieAssetSO die = null, int slotIndex = -1) =>
+        dieTooltipOverlay?.ShowFaceReplacementRuleError(die, slotIndex);
 
     public void SetAllSpreadSlotsInteractable(bool interactable)
     {

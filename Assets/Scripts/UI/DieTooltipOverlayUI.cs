@@ -41,6 +41,8 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
     [SerializeField] private GameObject faceReplacementRuleErrorObject;
     [Tooltip("Message shown on the error object. Use {0} where the act’s max same numeric value faces per die should appear (see MapActDefinitionSO.maxSameNumericValueFacesPerDie).")]
     [SerializeField] private TMP_Text faceReplacementRuleErrorText;
+    [Tooltip("Shown instead of the same-value cap message when the clicked slot is a locked curse face.")]
+    [SerializeField] private string curseFaceReplacementErrorMessage = "Curse faces cannot be replaced.";
     [Tooltip("If set, this rect is shaken; otherwise the error GameObject’s RectTransform is used.")]
     [SerializeField] private RectTransform faceReplacementRuleErrorShakeTarget;
     [SerializeField, Min(0.05f)] private float replacementErrorShakeDuration = 0.32f;
@@ -137,7 +139,7 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
                 {
                     if (replacementSlotAllowed != null && !replacementSlotAllowed.Invoke(capturedIndex))
                     {
-                        ShowFaceReplacementRuleError();
+                        ShowFaceReplacementRuleError(die, capturedIndex);
                         return;
                     }
 
@@ -255,13 +257,18 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
         return false;
     }
 
-    public void ShowFaceReplacementRuleError()
+    /// <summary>
+    /// Shows the face-replacement error shake. When <paramref name="die"/>/<paramref name="slotIndex"/> point at a
+    /// locked curse face, uses <see cref="curseFaceReplacementErrorMessage"/>; otherwise the same-value cap template.
+    /// </summary>
+    public void ShowFaceReplacementRuleError(DieAssetSO die = null, int slotIndex = -1)
     {
         if (faceReplacementRuleErrorObject == null)
             return;
 
         EnsureFaceHoverHostVisible();
-        ApplyFaceReplacementRuleErrorText();
+        var curseLocked = die != null && die.HasLockedCurseFaceAt(slotIndex);
+        ApplyFaceReplacementRuleErrorText(curseLocked);
 
         EnsureReplacementErrorShakeRect();
         StopReplacementErrorShake(resetPosition: true);
@@ -281,10 +288,18 @@ public sealed class DieTooltipOverlayUI : MonoBehaviour
             faceReplacementRuleErrorObject.SetActive(false);
     }
 
-    void ApplyFaceReplacementRuleErrorText()
+    void ApplyFaceReplacementRuleErrorText(bool curseSlotLocked)
     {
         if (faceReplacementRuleErrorText == null)
             return;
+
+        if (curseSlotLocked)
+        {
+            faceReplacementRuleErrorText.text = string.IsNullOrWhiteSpace(curseFaceReplacementErrorMessage)
+                ? "Curse faces cannot be replaced."
+                : curseFaceReplacementErrorMessage;
+            return;
+        }
 
         var template = _faceReplacementRuleErrorTextTemplate;
         if (string.IsNullOrEmpty(template))

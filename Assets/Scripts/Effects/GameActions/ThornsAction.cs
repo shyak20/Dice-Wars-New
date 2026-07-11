@@ -38,7 +38,9 @@ public class ThornsAction : GameActionWithIcon
         {
             PoolKey = ResolvePoolRowKey(),
             Amount = amount,
-            Icon = ResolveActionIcon()
+            Icon = ResolveActionIcon(),
+            PoolRowBackground = GameIconCatalog.GetStatusBackground(thornsDefinition),
+            PerfectStrikeScales = true
         });
     }
 
@@ -56,13 +58,19 @@ public class ThornsAction : GameActionWithIcon
             return;
         }
 
+        var stacks = context.SourceEnemyAction != null
+            ? amount
+            : context.CombatManager.ResolveThornsPoolGrant(this);
+        if (stacks <= 0)
+            return;
+
         var manager = thornsDefinition.target == StatusEffectTarget.Player
             ? context.Player.StatusEffects
             : context.Enemy.StatusEffects;
 
-        manager.ApplyStatus(thornsDefinition, amount, context.CombatManager.BuildStatusContextForEffects());
+        manager.ApplyStatus(thornsDefinition, stacks, context.CombatManager.BuildStatusContextForEffects());
 
         if (GameActionDebug.Enabled)
-            Debug.Log($"[ThornsAction] Applied {amount} Thorns stack(s) to {thornsDefinition.target}");
+            Debug.Log($"[ThornsAction] Applied {stacks} Thorns stack(s) to {thornsDefinition.target}");
     }
 }

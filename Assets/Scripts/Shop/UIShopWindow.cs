@@ -250,7 +250,7 @@ public class UIShopWindow : MonoBehaviour
         {
             if (die == null || !SameValueFaceCapUtility.CanReplaceFaceWithoutViolatingCap(die, idx, o.Face))
             {
-                dieChoicePopup?.NotifyFaceReplacementRuleError();
+                dieChoicePopup?.NotifyFaceReplacementRuleError(die, idx);
                 return false;
             }
 

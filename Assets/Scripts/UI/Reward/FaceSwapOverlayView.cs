@@ -56,8 +56,9 @@ public class FaceSwapOverlayView : MonoBehaviour
         {
             if (slotSlots[i] == null) continue;
             var idx = i;
-            slotSlots[i].Bind(die.faces[i], _ => OnSlotClicked(idx));
-            slotSlots[i].SetInteractable(true);
+            var lockedCurse = die.HasLockedCurseFaceAt(idx);
+            slotSlots[i].Bind(die.faces[i], lockedCurse ? null : _ => OnSlotClicked(idx));
+            slotSlots[i].SetInteractable(!lockedCurse);
             RegisterHover(slotSlots[i], idx);
         }
 
@@ -113,6 +114,9 @@ public class FaceSwapOverlayView : MonoBehaviour
 
     private void OnSlotClicked(int slotIndex)
     {
+        if (_die != null && _die.HasLockedCurseFaceAt(slotIndex))
+            return;
+
         DisableInteraction();
 
         try
