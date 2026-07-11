@@ -4,9 +4,12 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>
-/// Perfect-strike: moves the player pool container toward a target, then after <see cref="containerMoveDuration"/> enables
-/// every scene <see cref="StoredActionsPoolIcon"/> jackpot UI (top-to-bottom) on a delay, waits until value texts update,
-/// then fires EndSequence, waits for the exit clip, animates the pool container home, then applies totals.
+/// Perfect-strike presentation order:
+/// 1) Move the player Element Container upward
+/// 2) Play multiply / jackpot animation on Element Values
+/// 3) Change each amount to its post-multiply value
+/// 4) Return the player Element Container home
+/// 5) Continue the exit sequence
 /// </summary>
 public class JackpotPresentationController : MonoBehaviour
 {
@@ -25,32 +28,32 @@ public class JackpotPresentationController : MonoBehaviour
 
     [SerializeField] private AnimationCurve containerMoveCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-    [Tooltip("After the exit-clip wait, tween the pool container back to its saved local position (unscaled). 0 = snap.")]
+    [Tooltip("After player Element Values have updated, tween the pool container back to its saved local position (unscaled). 0 = snap.")]
     [SerializeField] private float containerReturnDuration = 0.35f;
 
     [SerializeField] private AnimationCurve containerReturnCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-    [Tooltip("If true, pool container returns to its pre-presentation local position after the exit wait.")]
+    [Tooltip("If true, pool container returns to its pre-presentation local position after values update.")]
     [SerializeField] private bool restoreContainerLocalPositionAfter = true;
 
     [Header("Per-row jackpot reveal")]
     [Tooltip("Extra realtime wait after Container Move Duration (and any pool container tween) before the first row's jackpot object is enabled.")]
     [SerializeField] private float delayBeforeFirstJackpotReveal;
 
-    [Tooltip("Realtime delay between each following row, top to bottom.")]
+    [Tooltip("Realtime delay between each following row, top to bottom (when each row's jackpot presentation starts).")]
     [SerializeField] private float staggerDelayBetweenRows = 0.08f;
-
-    [Tooltip(
-        "Per row: after this row's jackpot is shown (animation starts), wait this long (realtime), then the value text updates to the multiplied total with a background scale pulse on StoredActionsPoolIcon.")]
-    [SerializeField] private float valueRevealDelayAfterRowJackpotStart = 0.35f;
 
     [Header("After value text updates")]
     [Tooltip(
-        "Realtime pause after every visible pool row that receives a post-multiply value has updated its amount text, before EndSequence runs.")]
+        "Realtime pause after every visible player Element Value has updated its amount text, before the container returns home.")]
     [SerializeField] private float secondsAfterAllPoolValuesUpdatedBeforeEndSequence = 0.35f;
 
+    [Tooltip(
+        "Extra realtime delay after all Element Value numbers have already updated, before the player Element Container returns home. Does not delay individual number reveals.")]
+    [SerializeField] private float delayBeforeContainerReturn;
+
     [Header("Exit animation (optional)")]
-    [Tooltip("Animator on the Perfect Strike screen (or root). Receives EndSequence after the pause above.")]
+    [Tooltip("Animator on the Perfect Strike screen (or root). Receives EndSequence after the container returns home.")]
     [SerializeField] private Animator perfectStrikeScreenAnimator;
 
     [SerializeField] private string endSequenceTriggerParameter = "EndSequence";
@@ -69,6 +72,8 @@ public class JackpotPresentationController : MonoBehaviour
         if (jackpotPresentationRoot != null)
             jackpotPresentationRoot.SetActive(true);
 
+        // Capture flyout-deposited totals before Prepare overwrites snapshot keys — used when poolsAfter omits a row.
+        var displayedBeforePrepare = storedActionsPoolDisplay.CopyDisplayedPools();
         storedActionsPoolDisplay.PrepareJackpotPresentation(poolsBefore);
 
         var container = storedActionsPoolDisplay.GetIconContainerRect();
@@ -96,45 +101,103 @@ public class JackpotPresentationController : MonoBehaviour
         if (delayBeforeFirstJackpotReveal > 0f)
             yield return new WaitForSecondsRealtime(delayBeforeFirstJackpotReveal);
 
-        var icons = CollectActiveSceneIconsTopToBottom();
-        for (var i = 0; i < icons.Count; i++)
+        var scheduledValueReveals = new List<StoredActionsPoolIcon>();
+        var scheduledPlayerReveals = new List<StoredActionsPoolIcon>();
+        var playerElementRows = storedActionsPoolDisplay.GetVisiblePoolIconsTopToBottom();
+        var playerElementSet = new HashSet<StoredActionsPoolIcon>(playerElementRows);
+        poolsAfter = EnrichPoolsAfterFromVisiblePlayerRows(
+            poolsAfter,
+            poolsBefore,
+            displayedBeforePrepare,
+            storedActionsPoolDisplay,
+            playerElementRows,
+            multiplier);
+
+        // Arm every Element Value (staggered badge start). Each icon immediately runs its own scale-up pulse and
+        // writes the post-multiply number when that scale-up starts — independently of the others.
+
+        // 1) Player Element Values (these gate the container return).
+        for (var i = 0; i < playerElementRows.Count; i++)
         {
             if (i > 0 && staggerDelayBetweenRows > 0f)
                 yield return new WaitForSecondsRealtime(staggerDelayBetweenRows);
 
-            var icon = icons[i];
+            var icon = playerElementRows[i];
             icon.ShowJackpotMultiplierBadge(multiplier);
-            if (icon.ShouldScheduleJackpotValueReveal &&
-                TryGetPostMultiplyValue(icon, poolsAfter, out var postMultiply))
+
+            if (!TryGetPostMultiplyValue(
+                    icon,
+                    storedActionsPoolDisplay,
+                    poolsAfter,
+                    poolsBefore,
+                    displayedBeforePrepare,
+                    multiplier,
+                    out var postMultiply))
             {
-                icon.ScheduleJackpotPostMultiplyValueReveal(postMultiply, valueRevealDelayAfterRowJackpotStart, this);
+                Debug.LogError(
+                    $"JackpotPresentationController: player element row '{icon.RowKey.StableId}' has no post-Perfect-Cast value. " +
+                    "Cannot arm the mid-sequence value reveal.",
+                    icon);
+                continue;
             }
+
+            var amountKey = icon.RowKey;
+            if (storedActionsPoolDisplay.TryGetRowAmount(icon, out var mapKey, out _))
+                amountKey = mapKey;
+            storedActionsPoolDisplay.SetDisplayedAmountWithoutRefresh(amountKey, postMultiply);
+            icon.ArmJackpotPostMultiplyValueReveal(postMultiply, storedActionsPoolDisplay);
+            scheduledValueReveals.Add(icon);
+            scheduledPlayerReveals.Add(icon);
         }
 
-        while (AnyJackpotValueRevealStillPending(icons))
+        // 2) Enemy pools / tokens / other flyout icons — armed the same way, do not gate the container return.
+        var icons = CollectActiveSceneIconsTopToBottom();
+        var nonPlayerStaggerIndex = 0;
+        for (var i = 0; i < icons.Count; i++)
+        {
+            var icon = icons[i];
+            if (playerElementSet.Contains(icon))
+                continue;
+
+            if (nonPlayerStaggerIndex > 0 && staggerDelayBetweenRows > 0f)
+                yield return new WaitForSecondsRealtime(staggerDelayBetweenRows);
+            nonPlayerStaggerIndex++;
+
+            icon.ShowJackpotMultiplierBadge(multiplier);
+            if (!TryGetPostMultiplyValue(
+                    icon,
+                    null,
+                    poolsAfter,
+                    poolsBefore,
+                    null,
+                    multiplier,
+                    out var postMultiply))
+                continue;
+
+            var owningDisplay = icon.GetComponentInParent<StoredActionsPoolDisplay>();
+            if (owningDisplay != null && owningDisplay.TryGetRowAmount(icon, out var enemyMapKey, out _))
+                owningDisplay.SetDisplayedAmountWithoutRefresh(enemyMapKey, postMultiply);
+            else if (owningDisplay != null && owningDisplay.IsStandalonePerEnemyPool)
+                owningDisplay.SetDisplayedAmountWithoutRefresh(icon.RowKey, postMultiply);
+
+            var runner = owningDisplay != null ? (MonoBehaviour)owningDisplay : this;
+            icon.ArmJackpotPostMultiplyValueReveal(postMultiply, runner);
+            scheduledValueReveals.Add(icon);
+        }
+
+        // Wait until every armed Element Value has written its number at scale-up.
+        while (!AllScheduledValuesUpdated(scheduledPlayerReveals) || AnyJackpotValueRevealStillPending(scheduledValueReveals))
             yield return null;
 
         var pauseAfterValues = Mathf.Max(0f, secondsAfterAllPoolValuesUpdatedBeforeEndSequence);
         if (pauseAfterValues > 0f)
             yield return new WaitForSecondsRealtime(pauseAfterValues);
 
-        if (perfectStrikeScreenAnimator != null)
-        {
-            if (string.IsNullOrEmpty(endSequenceTriggerParameter))
-            {
-                Debug.LogError(
-                    $"JackpotPresentationController on '{gameObject.name}': perfectStrikeScreenAnimator is set but endSequenceTriggerParameter is empty.");
-            }
-            else
-            {
-                perfectStrikeScreenAnimator.SetTrigger(endSequenceTriggerParameter);
-            }
-        }
+        var returnDelay = Mathf.Max(0f, delayBeforeContainerReturn);
+        if (returnDelay > 0f)
+            yield return new WaitForSecondsRealtime(returnDelay);
 
-        var wait = Mathf.Max(0f, holdSeconds);
-        if (wait > 0f)
-            yield return new WaitForSecondsRealtime(wait);
-
+        // 3) Return home only after values are updated (and any manual return delay).
         if (restoreContainerLocalPositionAfter && container != null)
         {
             var backDur = Mathf.Max(0f, containerReturnDuration);
@@ -154,8 +217,43 @@ public class JackpotPresentationController : MonoBehaviour
 
         storedActionsPoolDisplay.FinishJackpotPresentation(poolsAfter);
 
+        // 4) Continue the exit sequence after the container is home.
+        if (perfectStrikeScreenAnimator != null)
+        {
+            if (string.IsNullOrEmpty(endSequenceTriggerParameter))
+            {
+                Debug.LogError(
+                    $"JackpotPresentationController on '{gameObject.name}': perfectStrikeScreenAnimator is set but endSequenceTriggerParameter is empty.");
+            }
+            else
+            {
+                perfectStrikeScreenAnimator.SetTrigger(endSequenceTriggerParameter);
+            }
+        }
+
+        var wait = Mathf.Max(0f, holdSeconds);
+        if (wait > 0f)
+            yield return new WaitForSecondsRealtime(wait);
+
         if (jackpotPresentationRoot != null)
             jackpotPresentationRoot.SetActive(false);
+    }
+
+    static bool AllScheduledValuesUpdated(IReadOnlyList<StoredActionsPoolIcon> icons)
+    {
+        if (icons == null || icons.Count == 0)
+            return true;
+
+        for (var i = 0; i < icons.Count; i++)
+        {
+            var icon = icons[i];
+            if (icon == null)
+                continue;
+            if (!icon.JackpotPostMultiplyValueTextApplied)
+                return false;
+        }
+
+        return true;
     }
 
     static List<StoredActionsPoolIcon> CollectActiveSceneIconsTopToBottom()
@@ -173,33 +271,132 @@ public class JackpotPresentationController : MonoBehaviour
         return active;
     }
 
+    /// <summary>
+    /// Ensures every visible player Element Value has a post-multiply entry for arming / FinishJackpotPresentation.
+    /// Flyout deposits and hierarchy quirks can leave rows on screen that are missing from BuildStoredActionsPool snapshots.
+    /// </summary>
+    static Dictionary<PoolRowKey, int> EnrichPoolsAfterFromVisiblePlayerRows(
+        Dictionary<PoolRowKey, int> poolsAfter,
+        Dictionary<PoolRowKey, int> poolsBefore,
+        Dictionary<PoolRowKey, int> displayedBeforePrepare,
+        StoredActionsPoolDisplay playerDisplay,
+        IReadOnlyList<StoredActionsPoolIcon> playerRows,
+        int multiplier)
+    {
+        var result = poolsAfter != null
+            ? new Dictionary<PoolRowKey, int>(poolsAfter)
+            : new Dictionary<PoolRowKey, int>();
+
+        if (playerRows == null)
+            return result;
+
+        for (var i = 0; i < playerRows.Count; i++)
+        {
+            var icon = playerRows[i];
+            if (icon == null)
+                continue;
+            if (result.TryGetValue(icon.RowKey, out var existing) && existing > 0)
+                continue;
+            if (!TryGetPostMultiplyValue(
+                    icon,
+                    playerDisplay,
+                    poolsAfter,
+                    poolsBefore,
+                    displayedBeforePrepare,
+                    multiplier,
+                    out var post) || post <= 0)
+                continue;
+            result[icon.RowKey] = post;
+            if (playerDisplay != null && playerDisplay.TryGetRowAmount(icon, out var mapKey, out _) && !mapKey.Equals(icon.RowKey))
+                result[mapKey] = post;
+        }
+
+        return result;
+    }
+
     static bool TryGetPostMultiplyValue(
         StoredActionsPoolIcon icon,
+        StoredActionsPoolDisplay preferredDisplay,
         Dictionary<PoolRowKey, int> poolsAfter,
+        Dictionary<PoolRowKey, int> poolsBefore,
+        Dictionary<PoolRowKey, int> displayedBeforePrepare,
+        int multiplier,
         out int value)
     {
         value = 0;
         if (icon == null)
             return false;
 
-        if (poolsAfter != null && poolsAfter.TryGetValue(icon.RowKey, out value))
-            return value > 0;
+        var display = preferredDisplay != null
+            ? preferredDisplay
+            : icon.GetComponentInParent<StoredActionsPoolDisplay>();
 
-        var display = icon.GetComponentInParent<StoredActionsPoolDisplay>();
+        PoolRowKey rowKey = icon.RowKey;
+        var displayedAmount = 0;
+        // Element Value prefabs also carry RolledOutcomeToken for drag chips. Pool-managed rows must use the
+        // display / snapshot amounts — token.Line is only valid after Configure on a pending assign token.
+        var isPoolManaged = false;
+        if (display != null && display.TryGetRowAmount(icon, out var mapKey, out displayedAmount))
+        {
+            isPoolManaged = true;
+            rowKey = mapKey;
+        }
+        else if (display != null)
+            displayedAmount = display.GetDisplayedAmount(rowKey);
+
+        if (!isPoolManaged)
+        {
+            var token = icon.GetComponentInParent<RolledOutcomeToken>();
+            if (token != null && token.OwnsPoolIcon(icon))
+            {
+                value = token.Line.Amount;
+                return value > 0;
+            }
+        }
+
         if (display != null && display.IsStandalonePerEnemyPool)
         {
-            value = display.GetDisplayedAmount(icon.RowKey);
-            return value > 0;
+            // CombatManager.ScaleEnemyElementPoolsForPerfectCast runs after flyouts and before this presentation,
+            // so GetDisplayedAmount is already the post-multiply total while the visible text is still pre-multiply.
+            value = displayedAmount > 0 ? displayedAmount : display.GetDisplayedAmount(rowKey);
+            if (value > 0)
+                return true;
+            // Fall through — do not fail closed when the standalone dict is briefly empty.
         }
 
-        var token = icon.GetComponentInParent<RolledOutcomeToken>();
-        if (token != null)
+        if (poolsAfter != null)
         {
-            value = token.Line.Amount;
-            return value > 0;
+            if (poolsAfter.TryGetValue(rowKey, out value) && value > 0)
+                return true;
+            if (!rowKey.Equals(icon.RowKey) && poolsAfter.TryGetValue(icon.RowKey, out value) && value > 0)
+                return true;
         }
 
-        return false;
+        var preMultiply = displayedAmount;
+        if (preMultiply <= 0 && displayedBeforePrepare != null)
+        {
+            if (displayedBeforePrepare.TryGetValue(rowKey, out var fromPre) && fromPre > 0)
+                preMultiply = fromPre;
+            else if (displayedBeforePrepare.TryGetValue(icon.RowKey, out fromPre) && fromPre > 0)
+                preMultiply = fromPre;
+        }
+
+        if (preMultiply <= 0 && poolsBefore != null)
+        {
+            if (poolsBefore.TryGetValue(rowKey, out var before) && before > 0)
+                preMultiply = before;
+            else if (poolsBefore.TryGetValue(icon.RowKey, out before) && before > 0)
+                preMultiply = before;
+        }
+
+        if (preMultiply <= 0)
+            icon.TryGetVisibleAmountText(out preMultiply);
+
+        if (preMultiply <= 0)
+            return false;
+
+        value = multiplier > 1 ? preMultiply * multiplier : preMultiply;
+        return value > 0;
     }
 
     static IEnumerable TweenContainerLocalUnscaled(
@@ -242,7 +439,7 @@ public class JackpotPresentationController : MonoBehaviour
                 continue;
             if (icon.IsJackpotValueRevealInProgress)
                 return true;
-            if (!icon.JackpotPostMultiplyValueTextApplied && !icon.ShouldScheduleJackpotValueReveal)
+            if (!icon.JackpotPostMultiplyValueTextApplied)
                 return true;
         }
 

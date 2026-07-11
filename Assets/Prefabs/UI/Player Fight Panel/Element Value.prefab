@@ -2264,6 +2264,7 @@ MonoBehaviour:
   jackpotMultiplierTextFormat: <size=70%>x</size>{0}
   bustDestroyRoot: {fileID: 6102197186023502521}
   valueAmountBackgroundRoot: {fileID: 5997970860646032216}
+  delayBeforeJackpotValueRevealScale: 0.7
   jackpotValueRevealBgScaleMultiplier: 1.2
   jackpotValueRevealScaleUpDuration: 0.3
   jackpotValueRevealScaleDownDuration: 0.3

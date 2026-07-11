@@ -37,6 +37,12 @@ public struct RollOutcomeVisualLine
     public bool IsRelicPoolExtraLine;
     /// <summary>Self-damage / player-only deferred rows that must land on the shared player element container (never enemy drag tokens).</summary>
     public bool FlyToPlayerElementContainer;
+    /// <summary>
+    /// True when this row's amount is multiplied by Perfect Cast (face damage/armor/self, or a strike-scaled pool
+    /// contribution). Enemy-pool deposits and drag tokens scale their displayed/assigned amount by this so the shown
+    /// number matches the damage/status actually resolved. Mirrors <see cref="CombatManager"/>'s strike-scale rule.
+    /// </summary>
+    public bool PerfectStrikeScales;
     /// <summary>Relic or gem that granted this row; shown briefly on the element-value flyout.</summary>
     public Sprite SourceBuffIcon;
 }

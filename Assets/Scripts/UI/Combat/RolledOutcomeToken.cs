@@ -58,6 +58,9 @@ public class RolledOutcomeToken : MonoBehaviour
     /// <summary>The single pool row deposited into the chosen enemy's element layout when assigned (non-immediate).</summary>
     public RollOutcomeVisualLine Line => _line;
 
+    /// <summary>True when <paramref name="icon"/> is this token's visual row (not a pool icon nested elsewhere under the token).</summary>
+    public bool OwnsPoolIcon(StoredActionsPoolIcon icon) => poolIcon != null && poolIcon == icon;
+
     /// <summary>True when this piece resolves the instant it is dropped (Trigger Immediately).</summary>
     public bool ResolvesImmediatelyOnDrop { get; private set; }
 
@@ -145,18 +148,6 @@ public class RolledOutcomeToken : MonoBehaviour
     {
         if (multiplier <= 1) return;
         _line.Amount *= multiplier;
-    }
-
-    /// <summary>Perfect Cast: scale this piece's amount and play the ×N reveal on the icon.</summary>
-    public void ApplyPerfectStrikeMultiply(int multiplier, float valueRevealDelay)
-    {
-        if (multiplier <= 1) return;
-        _line.Amount *= multiplier;
-        if (poolIcon != null)
-        {
-            poolIcon.ShowJackpotMultiplierBadge(multiplier);
-            poolIcon.ScheduleJackpotPostMultiplyValueReveal(_line.Amount, valueRevealDelay);
-        }
     }
 
     /// <summary>Cast Overload (bust): play the destroy visual before the controller removes this token.</summary>

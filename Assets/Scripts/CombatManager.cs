@@ -3533,7 +3533,7 @@ public class CombatManager : MonoBehaviour
 
         var lines = new List<RollOutcomeVisualLine>();
 
-        void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false, bool flyToPlayerElementContainer = false, Sprite sourceBuffIcon = null)
+        void AddLine(PoolRowKey key, int amt, Sprite icon, bool enemyTargeted = false, bool flyToPlayerElementContainer = false, Sprite sourceBuffIcon = null, bool perfectStrikeScales = false)
         {
             if (amt <= 0) return;
             var attackAll = result.AttackAllEnemies && enemyTargeted;
@@ -3548,7 +3548,8 @@ public class CombatManager : MonoBehaviour
                 BackgroundOverride = flyToPlayerElementContainer
                     ? GameIconCatalog.TryGetPoolRowBackground(key)
                     : null,
-                SourceBuffIcon = sourceBuffIcon
+                SourceBuffIcon = sourceBuffIcon,
+                PerfectStrikeScales = perfectStrikeScales
             });
         }
 
@@ -3572,18 +3573,20 @@ public class CombatManager : MonoBehaviour
                     IsSplitDamageHitLine = true,
                     DamageHitIndex = hit,
                     SourceBuffIcon = faceBuffSourceIcon,
+                    PerfectStrikeScales = true,
                 });
             }
         }
         else
-            AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted, sourceBuffIcon: faceBuffSourceIcon);
-        AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor), sourceBuffIcon: faceBuffSourceIcon);
+            AddLine(PoolRowKey.FromDieType(DieType.Damage), result.TotalDamageContribution, GameIconCatalog.GetElementIcon(DieType.Damage), damageIsEnemyTargeted, sourceBuffIcon: faceBuffSourceIcon, perfectStrikeScales: true);
+        AddLine(PoolRowKey.FromDieType(DieType.Armor), result.Armor, GameIconCatalog.GetElementIcon(DieType.Armor), sourceBuffIcon: faceBuffSourceIcon, perfectStrikeScales: true);
         AddLine(
             PoolRowKey.FromDieType(DieType.Curse),
             result.TotalSelfDamageContribution,
             GameIconCatalog.GetElementIcon(DieType.Curse),
             enemyTargeted: false,
-            flyToPlayerElementContainer: true);
+            flyToPlayerElementContainer: true,
+            perfectStrikeScales: true);
 
         if (result.ActionPoolContributions != null)
         {
@@ -3611,7 +3614,10 @@ public class CombatManager : MonoBehaviour
                                                 extra.PoolSourceAction.TriggerImmediatelyOnDrop,
                     PreAssignedEnemy = extra.PreAssignedEnemy,
                     IsRelicPoolExtraLine = extra.PreAssignedEnemy != null || extra.RequiresEnemyAssignment,
-                    SourceBuffIcon = extra.SourceBuffIcon
+                    SourceBuffIcon = extra.SourceBuffIcon,
+                    // Mirror MultiplyPendingStrikeScaledPoolContributions so the shown amount matches the resolved one.
+                    PerfectStrikeScales = !extra.VisualFlyoutOnly &&
+                                          (extra.PoolSourceAction != null || extra.MaxHpPoolSource != null || extra.PerfectStrikeScales)
                 });
             }
         }
@@ -4140,6 +4146,35 @@ public class CombatManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Scales every active enemy Element Value total by <see cref="appliedMultiplier"/>.
+    /// When <paramref name="refreshIcons"/> is false, only the stored totals change — Perfect Cast reveal owns the text update.
+    /// </summary>
+    private void ScaleEnemyElementPoolsForPerfectCast(bool refreshIcons)
+    {
+        if (appliedMultiplier <= 1) return;
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy != null && enemy.AssignedElementPool != null)
+                enemy.AssignedElementPool.MultiplyAllDisplayed(appliedMultiplier, refreshIcons);
+        }
+    }
+
+    /// <summary>
+    /// Repaints every active enemy's element pool from its stored (Perfect-Cast-scaled) totals. Called after the
+    /// Perfect Cast sequence so the shown amount always matches the multiplied value, independent of the per-icon reveal.
+    /// </summary>
+    private void RefreshEnemyElementPoolsFromDisplayed()
+    {
+        for (var i = 0; i < _activeEnemies.Count; i++)
+        {
+            var enemy = _activeEnemies[i];
+            if (enemy != null && enemy.AssignedElementPool != null)
+                enemy.AssignedElementPool.RefreshDisplayedRows();
+        }
+    }
+
     private void CheckBustStatus()
     {
         if (QualifiesForPerfectCast())
@@ -4166,14 +4201,13 @@ public class CombatManager : MonoBehaviour
             bonusDamageFromActions *= appliedMultiplier;
             bonusArmorFromActions *= appliedMultiplier;
 
-            // Multi-enemy: scale every on-board enemy element layout + the still-unassigned drag tokens.
+            // Status Perfect Strike ticks happen immediately. Enemy Element Value *UI* totals are scaled later —
+            // after flyouts land — so their amount text stays pre-multiply until the Perfect Cast reveal.
             for (var i = 0; i < _activeEnemies.Count; i++)
             {
                 var enemy = _activeEnemies[i];
                 if (enemy == null) continue;
                 enemy.StatusEffects.TickPerfectStrike(BuildStatusContext(enemy));
-                if (enemy.AssignedElementPool != null)
-                    enemy.AssignedElementPool.MultiplyAllDisplayed(appliedMultiplier, refreshIcons: false);
             }
 
             if (targetAssignment != null)
@@ -4183,6 +4217,7 @@ public class CombatManager : MonoBehaviour
             var poolsAfter = SnapshotStoredActionsPool();
             if (CheckVictory())
             {
+                ScaleEnemyElementPoolsForPerfectCast(refreshIcons: true);
                 CombatEvents.SetDeferStoredActionsPoolIconFullResync(false);
                 NotifyAllStoredActionsPoolUI();
                 return;
@@ -4199,6 +4234,8 @@ public class CombatManager : MonoBehaviour
             {
                 StartCoroutine(CoAfterRollVisualsThen(() =>
                 {
+                    // No jackpot presentation — scale enemy Element Values and paint them immediately.
+                    ScaleEnemyElementPoolsForPerfectCast(refreshIcons: true);
                     NotifyAllStoredActionsPoolUI();
                     RunTargetAssignmentGate(SubmitTurn);
                 }));
@@ -5165,17 +5202,32 @@ public class CombatManager : MonoBehaviour
     /// per-action target. Accumulates under that enemy's element layout, or resolves instantly when the piece is Trigger-Immediately.
     /// </summary>
     public void AssignRolledOutcomePieceToEnemy(FaceResult face, ApplyStatusEffectAction sourceAction, EnemyController enemy,
-        RollOutcomeVisualLine line, bool resolveImmediately)
+        RollOutcomeVisualLine line, bool resolveImmediately, bool pieceAmountAlreadyPerfectScaled = false)
     {
         if (face == null || enemy == null)
             return;
+
+        // Flyout lines snapshot their amount before Perfect Cast multiplies the FaceResult. Normally the deposit into
+        // the enemy pool is scaled here so the UI matches resolved damage/status. During the Perfect Cast jackpot
+        // window, however, deposits stay pre-multiply so Element Values do not jump before the reveal animation;
+        // ScaleEnemyElementPoolsForPerfectCast runs after flyouts and the reveal writes the new text.
+        // Drag tokens already had their amount multiplied (MultiplyPendingTokenAmounts) before assignment, so they
+        // pass pieceAmountAlreadyPerfectScaled.
+        var depositAmount = line.Amount;
+        if (!pieceAmountAlreadyPerfectScaled
+            && line.PerfectStrikeScales
+            && appliedMultiplier > 1
+            && !CombatEvents.DeferStoredActionsPoolIconFullResync)
+        {
+            depositAmount = line.Amount * appliedMultiplier;
+        }
 
         if (line.IsRelicPoolExtraLine)
         {
             BindAssignablePoolExtraToEnemy(face, line, enemy);
             var relicPool = enemy.AssignedElementPool;
             if (relicPool != null)
-                relicPool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+                relicPool.ApplyPoolDelta(line.RowKey, depositAmount, line.IconOverride, line.BackgroundOverride);
             NotifyStoredActionsPoolUpdated();
             return;
         }
@@ -5184,7 +5236,7 @@ public class CombatManager : MonoBehaviour
         {
             var allTargetPool = enemy.AssignedElementPool;
             if (allTargetPool != null)
-                allTargetPool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+                allTargetPool.ApplyPoolDelta(line.RowKey, depositAmount, line.IconOverride, line.BackgroundOverride);
             NotifyStoredActionsPoolUpdated();
             return;
         }
@@ -5208,7 +5260,7 @@ public class CombatManager : MonoBehaviour
 
         var pool = enemy.AssignedElementPool;
         if (pool != null)
-            pool.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
+            pool.ApplyPoolDelta(line.RowKey, depositAmount, line.IconOverride, line.BackgroundOverride);
 
         NotifyStoredActionsPoolUpdated();
     }
@@ -5302,14 +5354,8 @@ public class CombatManager : MonoBehaviour
             c.PreAssignedEnemy = enemy;
             face.ActionPoolContributions[i] = c;
 
-            var pool = enemy.AssignedElementPool;
-            if (pool != null)
-            {
-                var rowBg = c.PoolRowBackground != null
-                    ? c.PoolRowBackground
-                    : GameIconCatalog.TryGetPoolRowBackground(c.PoolKey);
-                pool.ApplyPoolDelta(c.PoolKey, c.Amount, c.Icon, rowBg);
-            }
+            // Do not ApplyPoolDelta here — solo/auto flyouts and drag tokens already deposited into the enemy
+            // Element Value when they assigned. Depositing again double-counts relic/dice Damage extras.
         }
     }
 
@@ -5706,6 +5752,19 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CoJackpotAfterFlyoutsThenPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
     {
         yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
+        // Scale enemy Element Value totals only after flyouts have deposited their pre-multiply amounts, and without
+        // refreshing icon text — JackpotPresentationController owns the visible multiply reveal.
+        ScaleEnemyElementPoolsForPerfectCast(refreshIcons: false);
+        // Merge a live post-flyout snapshot into poolsAfter — do not replace, or rows present only in the
+        // original snapshot (or only on the display) can disappear and break the Perfect Cast value reveal.
+        var poolsAfterLive = SnapshotStoredActionsPool();
+        if (poolsAfterLive != null)
+        {
+            if (poolsAfter == null)
+                poolsAfter = new Dictionary<PoolRowKey, int>();
+            foreach (var kvp in poolsAfterLive)
+                poolsAfter[kvp.Key] = kvp.Value;
+        }
         yield return StartCoroutine(CoFinishJackpotAfterPresentation(multiplier, poolsBefore, poolsAfter));
     }
 
@@ -5715,6 +5774,13 @@ public class CombatManager : MonoBehaviour
         {
             // Unity does not reliably run a nested IEnumerator with "yield return routine()"; must use StartCoroutine.
             yield return StartCoroutine(jackpotPresentation.Run(multiplier, poolsBefore, poolsAfter));
+            // Clear defer before the post-jackpot UI sync so NotifyAllStoredActionsPoolUI is not swallowed.
+            // Amount text should already match post-multiply from each icon's Element Value Perfect Cast reveal;
+            // this resync only keeps listeners / internal totals aligned.
+            CombatEvents.SetDeferStoredActionsPoolIconFullResync(false);
+            // MultiplyAllDisplayed scaled each per-enemy pool's totals with refreshIcons:false, delegating the text
+            // repaint to the jackpot reveal. Guarantee the scaled amount is shown even if a per-icon reveal was skipped.
+            RefreshEnemyElementPoolsFromDisplayed();
             NotifyAllStoredActionsPoolUI();
             // Perfect Cast reorder: only after the sequence does the player attach outcomes to enemies, then the hit-fx flies.
             RunTargetAssignmentGate(SubmitTurn);

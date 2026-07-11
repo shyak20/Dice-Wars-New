@@ -19821,11 +19821,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 47285378001912492, guid: 731b17a9e8fb90547b6c62b290e55b4f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 101
+      value: 367
       objectReference: {fileID: 0}
     - target: {fileID: 47285378001912492, guid: 731b17a9e8fb90547b6c62b290e55b4f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0
+      value: 0.00003902914
       objectReference: {fileID: 0}
     - target: {fileID: 47285378001912492, guid: 731b17a9e8fb90547b6c62b290e55b4f, type: 3}
       propertyPath: m_LocalRotation.w
@@ -30322,8 +30322,8 @@ MonoBehaviour:
   restoreContainerLocalPositionAfter: 1
   delayBeforeFirstJackpotReveal: 0.2
   staggerDelayBetweenRows: 0.1
-  valueRevealDelayAfterRowJackpotStart: 0.5
   secondsAfterAllPoolValuesUpdatedBeforeEndSequence: 0.1
+  delayBeforeContainerReturn: 0
   perfectStrikeScreenAnimator: {fileID: 1354844268}
   endSequenceTriggerParameter: EndSequence
   holdSeconds: 0.5
@@ -126950,11 +126950,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4237335641143774609, guid: c3bdb14ee1929914ebe8f6abe393a3c7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 103
+      value: 369
       objectReference: {fileID: 0}
     - target: {fileID: 4237335641143774609, guid: c3bdb14ee1929914ebe8f6abe393a3c7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4237335641143774609, guid: c3bdb14ee1929914ebe8f6abe393a3c7, type: 3}
       propertyPath: m_LocalRotation.w

@@ -28,6 +28,9 @@ public class StoredActionsPoolIcon : MonoBehaviour
     [Tooltip("Background behind the amount text — scaled up, then the multiplied value is shown, then scale returns.")]
     [SerializeField] private Transform valueAmountBackgroundRoot;
 
+    [Tooltip("Realtime delay after the jackpot badge is shown before this Element Value starts its amount scale-up and number update.")]
+    [SerializeField, Min(0f)] private float delayBeforeJackpotValueRevealScale;
+
     [Tooltip("Uniform scale factor applied to the background at the peak of the pulse (e.g. 1.2).")]
     [SerializeField] private float jackpotValueRevealBgScaleMultiplier = 1.2f;
 
@@ -58,6 +61,8 @@ public class StoredActionsPoolIcon : MonoBehaviour
     private MonoBehaviour _valueRevealCoroutineRunner;
     private bool _jackpotPostMultiplyRevealInProgress;
     private bool _jackpotPostMultiplyValueTextApplied;
+    private int _valueRevealSiblingIndex = -1;
+    private bool _valueRevealHierarchyMoved;
     private readonly Dictionary<Transform, bool> _defaultChildActiveStates = new Dictionary<Transform, bool>();
 
     /// <summary>Every icon ever created and not yet destroyed (player pool, enemy pools, drag tokens, flyout rows). Maintained at Awake/OnDestroy so scene-wide presentations never search.</summary>
@@ -71,9 +76,6 @@ public class StoredActionsPoolIcon : MonoBehaviour
 
     /// <summary>True once this row's post-multiply value has been written to the amount text during the jackpot sequence.</summary>
     public bool JackpotPostMultiplyValueTextApplied => _jackpotPostMultiplyValueTextApplied;
-
-    /// <summary>True when jackpot value reveal is already running or finished (e.g. drag tokens prepared before the jackpot sequence).</summary>
-    public bool ShouldScheduleJackpotValueReveal => !_jackpotPostMultiplyRevealInProgress && !_jackpotPostMultiplyValueTextApplied;
 
     public bool IsJackpotValueRevealInProgress => _jackpotPostMultiplyRevealInProgress;
 
@@ -216,55 +218,177 @@ public class StoredActionsPoolIcon : MonoBehaviour
     }
 
     /// <summary>
-    /// After <paramref name="delayAfterJackpotStart"/> (from when the row's jackpot was shown), scales the value
-    /// background up, sets the post-multiply amount, then scales the background back down. Uses unscaled time.
+    /// Starts this Element Value's Perfect Cast value reveal: after <see cref="delayBeforeJackpotValueRevealScale"/>,
+    /// brings the amount above the jackpot overlay, scales it up, writes the post-multiply number as that scale-up
+    /// begins, then scales back down.
     /// </summary>
-    /// <param name="coroutineRunner">
-    /// Host for <see cref="MonoBehaviour.StartCoroutine"/> when this icon is not <see cref="GameObject.activeInHierarchy"/>
-    /// (Unity cannot start coroutines on inactive objects). Pass the active presentation driver, e.g. <see cref="JackpotPresentationController"/>.
-    /// </param>
-    public void ScheduleJackpotPostMultiplyValueReveal(int newValue, float delayAfterJackpotStart, MonoBehaviour coroutineRunner = null)
+    public void ArmJackpotPostMultiplyValueReveal(int newValue, MonoBehaviour coroutineRunner = null)
     {
-        var runner = coroutineRunner;
-        if (runner == null || !runner.gameObject.activeInHierarchy)
-        {
-            if (gameObject.activeInHierarchy)
-                runner = this;
-            else
-                runner = GetComponentInParent<StoredActionsPoolDisplay>();
-        }
+        StopValueRevealCoroutine();
+        _jackpotPostMultiplyRevealInProgress = true;
+        _jackpotPostMultiplyValueTextApplied = false;
 
-        if (runner == null || !runner.gameObject.activeInHierarchy)
+        // Always host on this icon when possible so the reveal cannot die with another object's active state.
+        var runner = gameObject.activeInHierarchy
+            ? this
+            : ResolveRevealCoroutineRunner(coroutineRunner);
+        if (runner == null)
         {
             Debug.LogError(
-                $"StoredActionsPoolIcon on '{name}': cannot start jackpot value reveal — no active coroutine host (assign {nameof(coroutineRunner)} or activate this hierarchy). Applying value immediately.",
+                $"StoredActionsPoolIcon on '{name}': cannot start jackpot value reveal — no active coroutine host. Applying value immediately.",
                 this);
-            _jackpotPostMultiplyRevealInProgress = false;
-            _jackpotPostMultiplyValueTextApplied = true;
             SetValueUnchecked(newValue);
+            _jackpotPostMultiplyValueTextApplied = true;
+            _jackpotPostMultiplyRevealInProgress = false;
             return;
         }
 
-        if (_valueRevealCoroutine != null && _valueRevealCoroutineRunner != null)
-            _valueRevealCoroutineRunner.StopCoroutine(_valueRevealCoroutine);
-        _jackpotPostMultiplyRevealInProgress = true;
-        _jackpotPostMultiplyValueTextApplied = false;
         _valueRevealCoroutineRunner = runner;
-        _valueRevealCoroutine = runner.StartCoroutine(CoJackpotPostMultiplyValueReveal(newValue, delayAfterJackpotStart));
+        _valueRevealCoroutine = runner.StartCoroutine(CoPlayJackpotValueRevealPulse(newValue));
     }
 
     public void CancelJackpotValueReveal()
     {
         _jackpotPostMultiplyRevealInProgress = false;
         _jackpotPostMultiplyValueTextApplied = false;
-        if (_valueRevealCoroutine != null && _valueRevealCoroutineRunner != null)
+        StopValueRevealCoroutine();
+        RestoreValueBackgroundScale();
+        RestoreValueRevealSiblingOrder();
+    }
+
+    /// <summary>Parses the currently shown amount text (supports optional leading '+' and simple TMP tags).</summary>
+    public bool TryGetVisibleAmountText(out int amount)
+    {
+        amount = 0;
+        if (valueText == null)
+            return false;
+        var raw = valueText.text;
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        raw = raw.Trim();
+        if (raw.IndexOf('<') >= 0)
         {
-            _valueRevealCoroutineRunner.StopCoroutine(_valueRevealCoroutine);
-            _valueRevealCoroutine = null;
-            _valueRevealCoroutineRunner = null;
+            var stripped = new System.Text.StringBuilder(raw.Length);
+            var inTag = false;
+            for (var i = 0; i < raw.Length; i++)
+            {
+                var c = raw[i];
+                if (c == '<')
+                {
+                    inTag = true;
+                    continue;
+                }
+
+                if (c == '>')
+                {
+                    inTag = false;
+                    continue;
+                }
+
+                if (!inTag)
+                    stripped.Append(c);
+            }
+
+            raw = stripped.ToString().Trim();
         }
 
-        RestoreValueBackgroundScale();
+        if (raw.Length > 0 && raw[0] == '+')
+            raw = raw.Substring(1);
+        return int.TryParse(raw, out amount) && amount > 0;
+    }
+
+    MonoBehaviour ResolveRevealCoroutineRunner(MonoBehaviour preferred)
+    {
+        if (preferred != null && preferred.gameObject.activeInHierarchy)
+            return preferred;
+        if (gameObject.activeInHierarchy)
+            return this;
+        return GetComponentInParent<StoredActionsPoolDisplay>();
+    }
+
+    void StopValueRevealCoroutine()
+    {
+        if (_valueRevealCoroutine != null && _valueRevealCoroutineRunner != null)
+            _valueRevealCoroutineRunner.StopCoroutine(_valueRevealCoroutine);
+        _valueRevealCoroutine = null;
+        _valueRevealCoroutineRunner = null;
+    }
+
+    void BringValueRevealAboveJackpotOverlay()
+    {
+        var revealRoot = valueAmountBackgroundRoot != null
+            ? valueAmountBackgroundRoot
+            : valueText != null ? valueText.transform : null;
+        if (revealRoot == null || revealRoot.parent == null)
+            return;
+
+        _valueRevealSiblingIndex = revealRoot.GetSiblingIndex();
+        _valueRevealHierarchyMoved = true;
+        // Jackpot badge is a later sibling and draws on top of Text BG — lift the amount for the reveal.
+        revealRoot.SetAsLastSibling();
+    }
+
+    void RestoreValueRevealSiblingOrder()
+    {
+        if (!_valueRevealHierarchyMoved)
+            return;
+
+        var revealRoot = valueAmountBackgroundRoot != null
+            ? valueAmountBackgroundRoot
+            : valueText != null ? valueText.transform : null;
+        if (revealRoot != null && revealRoot.parent != null && _valueRevealSiblingIndex >= 0)
+            revealRoot.SetSiblingIndex(Mathf.Min(_valueRevealSiblingIndex, revealRoot.parent.childCount - 1));
+
+        _valueRevealHierarchyMoved = false;
+        _valueRevealSiblingIndex = -1;
+    }
+
+    private IEnumerator CoPlayJackpotValueRevealPulse(int newValue)
+    {
+        var delay = Mathf.Max(0f, delayBeforeJackpotValueRevealScale);
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
+
+        BringValueRevealAboveJackpotOverlay();
+
+        var bg = valueAmountBackgroundRoot;
+        var peakMult = jackpotValueRevealBgScaleMultiplier;
+        var up = Mathf.Max(0.0001f, jackpotValueRevealScaleUpDuration);
+        var down = Mathf.Max(0.0001f, jackpotValueRevealScaleDownDuration);
+        var doPulse = bg != null && peakMult > 1f + 1e-5f;
+
+        // Number updates when the jackpot value reveal scale-up starts (not at sequence teardown).
+        SetValueUnchecked(newValue);
+        _jackpotPostMultiplyValueTextApplied = true;
+
+        if (doPulse)
+        {
+            var peakScale = _valueBgBaseScale * peakMult;
+            for (var t = 0f; t < up; t += Time.unscaledDeltaTime)
+            {
+                var u = Mathf.Clamp01(t / up);
+                bg.localScale = Vector3.LerpUnclamped(_valueBgBaseScale, peakScale, u);
+                yield return null;
+            }
+
+            bg.localScale = peakScale;
+
+            var from = bg.localScale;
+            for (var t = 0f; t < down; t += Time.unscaledDeltaTime)
+            {
+                var u = Mathf.Clamp01(t / down);
+                bg.localScale = Vector3.LerpUnclamped(from, _valueBgBaseScale, u);
+                yield return null;
+            }
+
+            bg.localScale = _valueBgBaseScale;
+        }
+
+        RestoreValueRevealSiblingOrder();
+        _jackpotPostMultiplyRevealInProgress = false;
+        _valueRevealCoroutine = null;
+        _valueRevealCoroutineRunner = null;
     }
 
     private void Awake()
@@ -298,7 +422,8 @@ public class StoredActionsPoolIcon : MonoBehaviour
 
     private void OnDisable()
     {
-        CancelJackpotValueReveal();
+        // Do not CancelJackpotValueReveal here — enabling the jackpot badge / animator hierarchy can briefly
+        // toggle children and would abort an in-flight scale-up value reveal.
         CancelFlyoutValueChangePulse();
         HideSourceBuffIconImmediate();
     }
@@ -351,6 +476,11 @@ public class StoredActionsPoolIcon : MonoBehaviour
 
     public void ResetToIdleVisualState()
     {
+        // Mid Perfect Cast: RefreshRow / runtime icon events must not abort the scale-up value reveal.
+        if (_jackpotPostMultiplyRevealInProgress)
+            return;
+
+        CancelJackpotValueReveal();
         RestoreDefaultChildVisualStates();
         HideJackpotMultiplierBadge();
         if (bustDestroyRoot != null)
@@ -360,10 +490,15 @@ public class StoredActionsPoolIcon : MonoBehaviour
     private void CaptureDefaultChildActiveStates()
     {
         _defaultChildActiveStates.Clear();
+        var jackpotTransform = jackpotMultiplierRoot != null ? jackpotMultiplierRoot.transform : null;
+        var bustTransform = bustDestroyRoot != null ? bustDestroyRoot.transform : null;
         for (var i = 0; i < transform.childCount; i++)
         {
             var child = transform.GetChild(i);
             if (child == null) continue;
+            // Presentation overlays are toggled explicitly — do not bake them into idle restore state.
+            if (child == jackpotTransform || child == bustTransform)
+                continue;
             _defaultChildActiveStates[child] = child.gameObject.activeSelf;
         }
     }
@@ -380,54 +515,11 @@ public class StoredActionsPoolIcon : MonoBehaviour
         }
     }
 
-    private IEnumerator CoJackpotPostMultiplyValueReveal(int newValue, float delayAfterJackpotStart)
-    {
-        if (delayAfterJackpotStart > 0f)
-            yield return new WaitForSecondsRealtime(delayAfterJackpotStart);
-
-        var bg = valueAmountBackgroundRoot;
-        var peakMult = jackpotValueRevealBgScaleMultiplier;
-        var up = Mathf.Max(0.0001f, jackpotValueRevealScaleUpDuration);
-        var down = Mathf.Max(0.0001f, jackpotValueRevealScaleDownDuration);
-
-        if (bg != null && peakMult > 1f + 1e-5f)
-        {
-            var peakScale = _valueBgBaseScale * peakMult;
-            for (var t = 0f; t < up; t += Time.unscaledDeltaTime)
-            {
-                var u = Mathf.Clamp01(t / up);
-                bg.localScale = Vector3.LerpUnclamped(_valueBgBaseScale, peakScale, u);
-                yield return null;
-            }
-
-            bg.localScale = peakScale;
-        }
-
-        SetValueUnchecked(newValue);
-        _jackpotPostMultiplyValueTextApplied = true;
-
-        if (bg != null && peakMult > 1f + 1e-5f)
-        {
-            var from = bg.localScale;
-            for (var t = 0f; t < down; t += Time.unscaledDeltaTime)
-            {
-                var u = Mathf.Clamp01(t / down);
-                bg.localScale = Vector3.LerpUnclamped(from, _valueBgBaseScale, u);
-                yield return null;
-            }
-
-            bg.localScale = _valueBgBaseScale;
-        }
-
-        _jackpotPostMultiplyRevealInProgress = false;
-        _valueRevealCoroutine = null;
-        _valueRevealCoroutineRunner = null;
-    }
-
     private void SetValueUnchecked(int value)
     {
         if (valueText == null) return;
         valueText.text = value.ToString();
+        valueText.ForceMeshUpdate(true);
     }
 
     private void RestoreValueBackgroundScale()

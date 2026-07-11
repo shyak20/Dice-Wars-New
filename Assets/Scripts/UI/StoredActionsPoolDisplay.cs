@@ -203,6 +203,68 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     public int GetDisplayedAmount(PoolRowKey key) =>
         displayedPools != null && displayedPools.TryGetValue(key, out var v) ? v : 0;
 
+    /// <summary>
+    /// Resolves the iconMap key and best-known amount for a row icon. Prefer this over
+    /// <see cref="StoredActionsPoolIcon.RowKey"/> alone — Configure can drift from the map key.
+    /// Returns true when the icon belongs to this display (amount may still be 0).
+    /// </summary>
+    public bool TryGetRowAmount(StoredActionsPoolIcon icon, out PoolRowKey key, out int amount)
+    {
+        key = default;
+        amount = 0;
+        if (icon == null || iconMap == null)
+            return false;
+
+        foreach (var kvp in iconMap)
+        {
+            if (kvp.Value != icon)
+                continue;
+
+            key = kvp.Key;
+            if (displayedPools != null && displayedPools.TryGetValue(key, out var stored) && stored > 0)
+                amount = stored;
+            else if (icon.TryGetVisibleAmountText(out var shown) && shown > 0)
+                amount = shown;
+            return true;
+        }
+
+        key = icon.RowKey;
+        if (displayedPools != null && displayedPools.TryGetValue(key, out var byRowKey) && byRowKey > 0)
+        {
+            amount = byRowKey;
+            return true;
+        }
+
+        if (icon.TryGetVisibleAmountText(out amount) && amount > 0)
+            return true;
+
+        return false;
+    }
+
+    /// <summary>Shallow copy of current displayed totals (pre-PrepareJackpot flyout state, etc.).</summary>
+    public Dictionary<PoolRowKey, int> CopyDisplayedPools()
+    {
+        var copy = new Dictionary<PoolRowKey, int>();
+        if (displayedPools == null)
+            return copy;
+        foreach (var kvp in displayedPools)
+            copy[kvp.Key] = kvp.Value;
+        return copy;
+    }
+
+    /// <summary>
+    /// Repaints every row's amount text from the stored totals. Used after Perfect Cast, where
+    /// <see cref="MultiplyAllDisplayed"/> scales the totals with <c>refreshIcons:false</c> and the jackpot reveal
+    /// animates the text — this guarantees the final value is shown even if a per-icon reveal was skipped.
+    /// </summary>
+    public void RefreshDisplayedRows()
+    {
+        if (displayedPools == null) return;
+        foreach (var key in displayedPools.Keys.ToList())
+            RefreshRow(key, displayedPools[key]);
+        ReorderPoolIcons();
+    }
+
     /// <summary>True when at least one pool row is visible (amount ≥ 1). Used to decide multi-enemy power-orb duplicate flights.</summary>
     public bool HasAnyDisplayedElements()
     {
@@ -235,9 +297,17 @@ public class StoredActionsPoolDisplay : MonoBehaviour
             ReorderPoolIcons();
     }
 
-    private void ApplyFullPoolSync(Dictionary<PoolRowKey, int> pools)
+    private void ApplyFullPoolSync(Dictionary<PoolRowKey, int> pools) =>
+        ApplyFullPoolSync(pools, force: false);
+
+    /// <param name="force">
+    /// When true, apply even while <see cref="CombatEvents.DeferStoredActionsPoolIconFullResync"/> is set.
+    /// Required for <see cref="FinishJackpotPresentation"/> — that call is the intentional end-of-jackpot write
+    /// of post-multiply totals, and must not be swallowed by the defer gate meant only for mid-sequence events.
+    /// </param>
+    private void ApplyFullPoolSync(Dictionary<PoolRowKey, int> pools, bool force)
     {
-        if (!standalonePerEnemyPool && CombatEvents.DeferStoredActionsPoolIconFullResync)
+        if (!force && !standalonePerEnemyPool && CombatEvents.DeferStoredActionsPoolIconFullResync)
             return;
 
         displayedPools.Clear();
@@ -303,13 +373,36 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     {
         if (valuesBefore == null || iconMap == null) return;
 
+        // Keep any flyout-only row amounts that are not in the combat snapshot (VisualFlyoutOnly deposits, etc.).
+        // Snapshot keys overwrite so the visible pre-multiply totals match BuildStoredActionsPool.
         foreach (var kvp in valuesBefore)
             displayedPools[kvp.Key] = kvp.Value;
 
         foreach (var kvp in iconMap)
+        {
+            // Clear any prior Perfect Cast reveal flags so this sequence can schedule value updates again.
+            if (kvp.Value != null)
+                kvp.Value.CancelJackpotValueReveal();
             RefreshIcon(kvp.Key);
+        }
 
         ReorderPoolIcons();
+    }
+
+    /// <summary>
+    /// Writes a row's stored total without refreshing icon text. Used when the jackpot value reveal owns the
+    /// visible amount update so FinishJackpotPresentation can keep internals aligned without a late SetValue.
+    /// </summary>
+    public void SetDisplayedAmountWithoutRefresh(PoolRowKey key, int amount)
+    {
+        if (displayedPools == null) return;
+        if (amount < 1)
+        {
+            displayedPools.Remove(key);
+            return;
+        }
+
+        displayedPools[key] = amount;
     }
 
     public RectTransform GetIconContainerRect() => iconContainer;
@@ -348,7 +441,41 @@ public class StoredActionsPoolDisplay : MonoBehaviour
     {
         StoredActionsPoolIcon.HideAllJackpotPresentationsInScene();
 
-        if (valuesAfter != null)
-            ApplyFullPoolSync(valuesAfter);
+        if (valuesAfter == null)
+            return;
+
+        // Keep internal totals on the post-multiply amounts. Do not RefreshRow here — that SetValue would
+        // visually update amounts when the container returns home. Visible updates belong to
+        // ArmJackpotPostMultiplyValueReveal (scale-up on each Element Value).
+        displayedPools.Clear();
+        foreach (var kvp in valuesAfter)
+            displayedPools[kvp.Key] = kvp.Value;
+
+        var keys = new HashSet<PoolRowKey>(iconMap.Keys);
+        foreach (var k in displayedPools.Keys)
+            keys.Add(k);
+
+        foreach (var key in keys)
+        {
+            var amount = displayedPools.TryGetValue(key, out var v) ? v : 0;
+            var icon = GetOrCreateIcon(key);
+            if (icon == null)
+                continue;
+
+            if (amount < 1)
+            {
+                runtimeRowIcons.Remove(key);
+                displayedPools.Remove(key);
+                icon.gameObject.SetActive(false);
+                continue;
+            }
+
+            icon.gameObject.SetActive(true);
+            // Fallback only if a mid-sequence reveal never armed / wrote (should be rare after pool-vs-token fix).
+            if (!icon.JackpotPostMultiplyValueTextApplied)
+                icon.SetValue(amount);
+        }
+
+        ReorderPoolIcons();
     }
 }

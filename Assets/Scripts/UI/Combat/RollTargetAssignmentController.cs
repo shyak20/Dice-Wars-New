@@ -196,7 +196,8 @@ public class RollTargetAssignmentController : MonoBehaviour
         if (!_pendingTokens.Contains(token))
             return;
 
-        combat.AssignRolledOutcomePieceToEnemy(token.Face, token.SourceAction, enemy, token.Line, token.ResolvesImmediatelyOnDrop);
+        combat.AssignRolledOutcomePieceToEnemy(token.Face, token.SourceAction, enemy, token.Line, token.ResolvesImmediatelyOnDrop,
+            pieceAmountAlreadyPerfectScaled: true);
 
         _pendingTokens.Remove(token);
         Destroy(token.gameObject);
@@ -236,6 +237,9 @@ public class RollTargetAssignmentController : MonoBehaviour
         foreach (var token in _pendingTokens)
         {
             if (token == null) continue;
+            // Only scale pieces whose resolved amount is multiplied by Perfect Cast, so the displayed token
+            // matches the damage/status actually dealt (non-scaling debuffs keep their base amount).
+            if (!token.Line.PerfectStrikeScales) continue;
             token.MultiplyAmountOnly(multiplier);
         }
     }

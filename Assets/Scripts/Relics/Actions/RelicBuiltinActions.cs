@@ -434,7 +434,10 @@ public sealed class RelicAddValueOnFaceListAction : RelicGameActionBase, UnityEn
                     PoolKey = PoolRowKey.FromDieType(DieType.Damage),
                     Amount = amount,
                     Icon = GameIconCatalog.GetElementIcon(DieType.Damage),
-                    RequiresEnemyAssignment = true
+                    RequiresEnemyAssignment = true,
+                    // Bonus damage benefits from Perfect Cast like the face's own damage, and matches the
+                    // multiplied amount shown on the drag token / enemy pool (see CombatManager scaling).
+                    PerfectStrikeScales = true
                 }, ctx.SourceRelic));
                 break;
             }

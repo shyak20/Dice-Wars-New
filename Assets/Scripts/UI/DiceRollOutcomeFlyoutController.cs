@@ -107,10 +107,21 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     {
         public StoredActionsPoolIcon Icon;
         public int Amount;
+        public string RowStableId;
+        public int DamageHitIndex;
+        /// <summary>
+        /// Primary face channel (main damage/armor/etc.). Increase Other bumps these only —
+        /// relic/assignable extras that share the same <see cref="PoolRowKey"/> must keep their own amounts.
+        /// </summary>
+        public bool AcceptsElementBonus;
     }
 
-    readonly Dictionary<(int BatchGatherIndex, string RowStableId, int DamageHitIndex), ActiveFlyoutLineEntry> _activeFlyoutLinesByBatchRow =
-        new Dictionary<(int, string, int), ActiveFlyoutLineEntry>();
+    /// <summary>
+    /// Keyed by batch + fly-line index (not row key). Multiple Damage rows from one face (base damage + relic bonus)
+    /// must not share a slot or they overwrite each other and deposit the wrong totals.
+    /// </summary>
+    readonly Dictionary<(int BatchGatherIndex, int FlyLineIndex), ActiveFlyoutLineEntry> _activeFlyoutLinesByBatchRow =
+        new Dictionary<(int, int), ActiveFlyoutLineEntry>();
 
     readonly Dictionary<int, RectTransform> _inFlightDieToDieActionIconByTargetBatch =
         new Dictionary<int, RectTransform>();
@@ -443,10 +454,13 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         var any = false;
         if (face != null && face.UsesSplitDamageHits && PoolRowKey.TryGetDieType(rowKey, out var dieType) && dieType == DieType.Damage)
         {
-            var keysToUpdate = new List<(int BatchGatherIndex, string RowStableId, int DamageHitIndex)>();
+            var keysToUpdate = new List<(int BatchGatherIndex, int FlyLineIndex)>();
             foreach (var kvp in _activeFlyoutLinesByBatchRow)
             {
-                if (kvp.Key.BatchGatherIndex != batchGatherIndex || kvp.Key.RowStableId != rowKey.StableId || kvp.Key.DamageHitIndex < 0)
+                if (kvp.Key.BatchGatherIndex != batchGatherIndex
+                    || kvp.Value.RowStableId != rowKey.StableId
+                    || kvp.Value.DamageHitIndex < 0
+                    || !kvp.Value.AcceptsElementBonus)
                     continue;
 
                 keysToUpdate.Add(kvp.Key);
@@ -465,13 +479,22 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         }
         else
         {
-            var key = (batchGatherIndex, rowKey.StableId, -1);
-            if (_activeFlyoutLinesByBatchRow.TryGetValue(key, out var entry) && entry.Icon != null)
+            // Only primary face-channel rows accept Increase Other / similar bonuses. Relic Damage extras share the
+            // same PoolRowKey and must not absorb that bonus (that was depositing e.g. 12+2+4 as 20).
+            foreach (var kvp in _activeFlyoutLinesByBatchRow)
             {
+                if (kvp.Key.BatchGatherIndex != batchGatherIndex
+                    || kvp.Value.RowStableId != rowKey.StableId
+                    || !kvp.Value.AcceptsElementBonus
+                    || kvp.Value.Icon == null)
+                    continue;
+
+                var entry = kvp.Value;
                 entry.Amount += bonusDelta;
                 entry.Icon.SetFlyoutAmountWithPulse(entry.Amount);
-                _activeFlyoutLinesByBatchRow[key] = entry;
+                _activeFlyoutLinesByBatchRow[kvp.Key] = entry;
                 any = true;
+                break;
             }
         }
 
@@ -485,26 +508,36 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         return any;
     }
 
-    public bool TryGetActiveFlyoutAmount(int batchGatherIndex, PoolRowKey rowKey, int damageHitIndex, out int amount)
+    public bool TryGetActiveFlyoutAmount(int batchGatherIndex, int flyLineIndex, out int amount)
     {
         amount = 0;
-        if (batchGatherIndex < 0)
+        if (batchGatherIndex < 0 || flyLineIndex < 0)
             return false;
 
         return _activeFlyoutLinesByBatchRow.TryGetValue(
-            (batchGatherIndex, rowKey.StableId, damageHitIndex),
+            (batchGatherIndex, flyLineIndex),
             out var entry) && (amount = entry.Amount) > 0;
     }
 
-    void RegisterActiveFlyoutLine(int batchGatherIndex, PoolRowKey rowKey, int damageHitIndex, StoredActionsPoolIcon icon, int amount)
+    void RegisterActiveFlyoutLine(
+        int batchGatherIndex,
+        int flyLineIndex,
+        PoolRowKey rowKey,
+        int damageHitIndex,
+        StoredActionsPoolIcon icon,
+        int amount,
+        bool acceptsElementBonus)
     {
-        if (batchGatherIndex < 0 || icon == null || amount <= 0)
+        if (batchGatherIndex < 0 || flyLineIndex < 0 || icon == null || amount <= 0)
             return;
 
-        _activeFlyoutLinesByBatchRow[(batchGatherIndex, rowKey.StableId, damageHitIndex)] = new ActiveFlyoutLineEntry
+        _activeFlyoutLinesByBatchRow[(batchGatherIndex, flyLineIndex)] = new ActiveFlyoutLineEntry
         {
             Icon = icon,
             Amount = amount,
+            RowStableId = rowKey.StableId,
+            DamageHitIndex = damageHitIndex,
+            AcceptsElementBonus = acceptsElementBonus,
         };
     }
 
@@ -513,10 +546,10 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (batchGatherIndex < 0)
             return;
 
-        var removeKeys = new List<(int, string, int)>();
+        var removeKeys = new List<(int, int)>();
         foreach (var kvp in _activeFlyoutLinesByBatchRow)
         {
-            if (kvp.Key.Item1 == batchGatherIndex)
+            if (kvp.Key.BatchGatherIndex == batchGatherIndex)
                 removeKeys.Add(kvp.Key);
         }
 
@@ -831,12 +864,17 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
                         && !line.RemoveOnIncreaseOtherLaunch
                         && line.Amount > 0
                         && payload.SourceFace != null)
+                    {
+                        var flyLineIndex = flyLines.Count;
                         RegisterActiveFlyoutLine(
                             payload.SourceFace.BatchGatherIndex,
+                            flyLineIndex,
                             line.RowKey,
                             line.IsSplitDamageHitLine ? line.DamageHitIndex : -1,
                             icon,
-                            line.Amount);
+                            line.Amount,
+                            acceptsElementBonus: !line.IsRelicPoolExtraLine && !line.IsVisualFlyoutOnly);
+                    }
 
                     Vector3 spawnBaseLocalScale = rt.localScale;
                     Vector2 basePos = stackOriginFlyoutLocal + Vector2.up * (lineIndex * lineSpacing);
@@ -908,8 +946,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             for (var syncIndex = 0; syncIndex < flyLines.Count; syncIndex++)
             {
                 var syncedLine = flyLines[syncIndex];
-                var flyoutHitIndex = syncedLine.IsSplitDamageHitLine ? syncedLine.DamageHitIndex : -1;
-                if (TryGetActiveFlyoutAmount(batchGatherIndex, syncedLine.RowKey, flyoutHitIndex, out var syncedAmount))
+                if (TryGetActiveFlyoutAmount(batchGatherIndex, syncIndex, out var syncedAmount))
                 {
                     syncedLine.Amount = syncedAmount;
                     flyLines[syncIndex] = syncedLine;
