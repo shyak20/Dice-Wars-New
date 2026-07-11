@@ -2205,7 +2205,11 @@ public class CombatManager : MonoBehaviour
 
     void ApplyPostBatchFaceEffects(int startInclusive, int endExclusive)
     {
-        var perfectCast = currentPower == maxPower;
+        // Snapshot roll outcome before any post-batch power edits so gates match this roll's perfect/bust result.
+        var perfectCast = QualifiesForPerfectCast();
+        var busted = currentPower > maxPower;
+        var canIncreaseCombatMaxPower = !perfectCast && !busted;
+
         for (var i = startInclusive; i < endExclusive; i++)
         {
             if (i < 0 || i >= channeledFaces.Count) continue;
@@ -2214,16 +2218,28 @@ public class CombatManager : MonoBehaviour
 
             foreach (var a in fr.Actions)
             {
-                if (a is not ReducePowerUnlessPerfectCastAfterBatchAction reduce || perfectCast)
-                    continue;
+                if (a is ReducePowerUnlessPerfectCastAfterBatchAction reduce && !perfectCast)
+                {
+                    var amount = reduce.PowerReduction;
+                    if (amount <= 0)
+                        continue;
 
-                var amount = reduce.PowerReduction;
-                if (amount <= 0)
+                    currentPower = Mathf.Max(0, currentPower - amount);
+                    if (GameActionDebug.Enabled)
+                        Debug.Log($"[ReducePowerUnlessPerfectCast] Power reduced by {amount} (no perfect cast). New power: {currentPower}/{maxPower}");
                     continue;
+                }
 
-                currentPower = Mathf.Max(0, currentPower - amount);
-                if (GameActionDebug.Enabled)
-                    Debug.Log($"[ReducePowerUnlessPerfectCast] Power reduced by {amount} (no perfect cast). New power: {currentPower}/{maxPower}");
+                if (a is IncreaseCombatMaxPowerAction increaseMax && canIncreaseCombatMaxPower)
+                {
+                    var amount = increaseMax.Amount;
+                    if (amount <= 0)
+                        continue;
+
+                    AddCombatMaxPowerBonus(amount);
+                    if (GameActionDebug.Enabled)
+                        Debug.Log($"[IncreaseCombatMaxPower] +{amount} max power this combat (no perfect cast, no bust).");
+                }
             }
         }
 
@@ -3117,6 +3133,8 @@ public class CombatManager : MonoBehaviour
                 if (a is RerollDieAction) continue;
                 if (a is RerollOtherDiceAfterAllSettledAction) continue;
                 if (a is AddPowerAction) continue;
+                if (a is IncreaseCombatMaxPowerAction) continue;
+                if (a is ReducePowerUnlessPerfectCastAfterBatchAction) continue;
                 if (a is ApplyStatusEffectAction applyLate &&
                     applyLate.StatusEffectDefinition != null &&
                     !applyLate.StatusEffectDefinition.ActivateBeforePlayerPhysicalDamage)
@@ -3467,6 +3485,8 @@ public class CombatManager : MonoBehaviour
             if (a is RerollDieAction) continue;
             if (a is RerollOtherDiceAfterAllSettledAction) continue;
             if (a is AddPowerAction) continue;
+            if (a is IncreaseCombatMaxPowerAction) continue;
+            if (a is ReducePowerUnlessPerfectCastAfterBatchAction) continue;
             if (a == null) continue;
             if (!a.ActivateImmediately) return true;
         }
@@ -4803,6 +4823,8 @@ public class CombatManager : MonoBehaviour
             {
                 if (a is FaceResolveModifierBase) continue;
                 if (a is AddPowerAction) continue;
+                if (a is IncreaseCombatMaxPowerAction) continue;
+                if (a is ReducePowerUnlessPerfectCastAfterBatchAction) continue;
                 if (a == null) continue;
                 if (_playerPoolActionsAppliedViaStatusBar.Contains(a)) continue;
                 if (a.ActivateImmediately) continue;

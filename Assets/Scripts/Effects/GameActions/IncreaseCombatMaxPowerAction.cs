@@ -1,7 +1,11 @@
 using System;
 using UnityEngine;
 
-/// <summary>Immediately raises max power for the rest of this combat.</summary>
+/// <summary>
+/// Marker: after the roll batch is gathered, if this roll did not Perfect Cast and did not Bust,
+/// raise max cast power for the rest of this combat. Handled in <see cref="CombatManager"/>
+/// (same timing as <see cref="ReducePowerUnlessPerfectCastAfterBatchAction"/>).
+/// </summary>
 [Serializable]
 public class IncreaseCombatMaxPowerAction : GameActionWithIcon
 {
@@ -13,12 +17,6 @@ public class IncreaseCombatMaxPowerAction : GameActionWithIcon
 
     public override void Execute(GameActionContext context)
     {
-        if (context?.CombatManager == null || amount <= 0)
-            return;
-
-        context.CombatManager.AddCombatMaxPowerBonus(amount);
-
-        if (GameActionDebug.Enabled)
-            Debug.Log($"[IncreaseCombatMaxPower] +{amount} max power this combat.");
+        // Applied in CombatManager.ApplyPostBatchFaceEffects after perfect/bust eligibility is known.
     }
 }
