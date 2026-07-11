@@ -16,7 +16,8 @@ MonoBehaviour:
   description: Harness <style=Damage>5</style>
   descriptionLines:
   - Deal <style=Attack>5</style> to yourself and the enemy
-  - Increase your Max Cast Power by 2 this combat
+  - If you did not reach perfect cast this roll - increase your Max Cast Power by
+    1 this combat
   value: 5
   type: 0
   faceMaterial: {fileID: 2100000, guid: f35ae15ee7e93c149b27a0d43069dfd5, type: 2}
@@ -38,4 +39,4 @@ MonoBehaviour:
       data:
         activateImmediately: 1
         triggerImmediatelyOnDrop: 0
-        amount: 2
+        amount: 1
