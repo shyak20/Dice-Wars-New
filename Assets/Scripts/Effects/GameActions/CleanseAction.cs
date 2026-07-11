@@ -6,9 +6,34 @@ public class CleanseAction : GameActionWithIcon
 {
     [SerializeField] private int stacks = 1;
 
+    [Tooltip("Element pool row id (same id merges across dice).")]
+    [SerializeField] private string poolRowId = "Cleanse";
+
     public int CleanseStacks => stacks;
 
+    public PoolRowKey GetPoolRowKey()
+    {
+        var row = string.IsNullOrWhiteSpace(poolRowId) ? "Cleanse" : poolRowId.Trim();
+        return PoolRowKey.FromInspectorString(row);
+    }
+
     protected override ActionVisualId VisualKey => ActionVisualId.Cleanse;
+
+    /// <summary>Filled when the face resolves so flyouts / element bar show pending cleanse for the turn.</summary>
+    public void AppendPoolContributionIfAny(FaceResult result)
+    {
+        if (result == null || stacks <= 0)
+            return;
+
+        result.ActionPoolContributions.Add(new FacePoolExtraContribution
+        {
+            PoolKey = GetPoolRowKey(),
+            Amount = stacks,
+            Icon = ResolveActionIcon(),
+            PoolRowBackground = GameIconCatalog.GetActionBackground(GetActionVisualId()),
+            PerfectStrikeScales = true
+        });
+    }
 
     public override void Execute(GameActionContext context)
     {
@@ -16,7 +41,7 @@ public class CleanseAction : GameActionWithIcon
             return;
 
         var cleanseStacks = stacks;
-        var fromEnemyAction = context != null && context.SourceEnemyAction != null;
+        var fromEnemyAction = context.SourceEnemyAction != null;
 
         if (fromEnemyAction)
         {
@@ -42,7 +67,10 @@ public class CleanseAction : GameActionWithIcon
 
         context.CombatManager.QueueTurnEndAction(ctx =>
         {
-            var finalStacks = cleanseStacks * ctx.CombatManager.GetAppliedMultiplier();
+            var finalStacks = ctx.CombatManager.ResolveCleansePoolGrant(this);
+            if (finalStacks <= 0)
+                return;
+
             var statusCtx = new StatusEffectContext
             {
                 CombatManager = ctx.CombatManager,

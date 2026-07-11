@@ -3267,6 +3267,8 @@ public class CombatManager : MonoBehaviour
                 thorns.AppendPoolContributionIfAny(result, thorns.ActivateImmediately);
             if (a is HealAction heal)
                 heal.AppendPoolContributionIfAny(result);
+            if (a is CleanseAction cleanse)
+                cleanse.AppendPoolContributionIfAny(result);
             if (a is DealPlayerDamageOnSubmitAction dealPlayerDamage)
                 dealPlayerDamage.AppendPoolContributionIfAny(result);
             if (a is StartNextTurnWithArmorAction startNextTurnArmor)
@@ -4379,6 +4381,31 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+    /// <summary>Final cleanse stacks for a face action after pool lines may have been scaled by Perfect Strike.</summary>
+    public int ResolveCleansePoolGrant(CleanseAction action)
+    {
+        if (action == null || channeledFaces == null)
+            return 0;
+
+        foreach (var face in channeledFaces)
+        {
+            if (face?.ActionPoolContributions == null || face.Actions == null)
+                continue;
+            if (!face.Actions.Contains(action))
+                continue;
+
+            var key = action.GetPoolRowKey();
+            foreach (var c in face.ActionPoolContributions)
+            {
+                if (!c.PoolKey.Equals(key) || c.Amount <= 0)
+                    continue;
+                return Mathf.Max(0, c.Amount);
+            }
+        }
+
+        return Mathf.Max(0, action.CleanseStacks * Mathf.Max(1, appliedMultiplier));
+    }
+
     /// <summary>Final +max HP grant for a face action after pool lines may have been scaled by jackpot.</summary>
     public int ResolveMaxHpPoolGrant(MaxHpAction action)
     {
@@ -4787,6 +4814,7 @@ public class CombatManager : MonoBehaviour
         return action switch
         {
             HealAction heal => heal.GetPoolRowKey().Equals(key),
+            CleanseAction cleanse => cleanse.GetPoolRowKey().Equals(key),
             ThornsAction thorns => thorns.GetPoolRowKey().Equals(key),
             StartNextTurnWithArmorAction nextArmor => nextArmor.GetPoolRowKey().Equals(key),
             _ => false
@@ -4805,8 +4833,8 @@ public class CombatManager : MonoBehaviour
             if (!apply.StatusEffectDefinition.ActivateBeforePlayerPhysicalDamage)
                 return;
         }
-        else if (action is not HealAction and not ThornsAction and not StartNextTurnWithArmorAction and not MaxHpAction
-                 and not DealPlayerDamageOnSubmitAction)
+        else if (action is not HealAction and not CleanseAction and not ThornsAction and not StartNextTurnWithArmorAction
+                 and not MaxHpAction and not DealPlayerDamageOnSubmitAction)
         {
             return;
         }
