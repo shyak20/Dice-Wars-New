@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FaceLootTableSO
   rarityConfig: {fileID: 11400000, guid: 5cc7f86d596871f409d01b2530a907f1, type: 2}
   allPossibleFaces:
+  - {fileID: 11400000, guid: 96e515b3dc0d8634fa3c120ce7767f9c, type: 2}
   - {fileID: 11400000, guid: 744ea448e4888f4408a3758b9b6001e5, type: 2}
   - {fileID: 11400000, guid: 5766ac6d0032fac40b70b783778e9f37, type: 2}
   - {fileID: 11400000, guid: 08455eb9ad41f48448d46e75c4ce07cc, type: 2}
@@ -25,6 +26,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 22f51c0b0687321469875f4a45c8955f, type: 2}
   - {fileID: 11400000, guid: 0db113427bc33494c92af32500888709, type: 2}
   - {fileID: 11400000, guid: cc99aa2994014854d81d8b585d1daf78, type: 2}
+  - {fileID: 11400000, guid: 28b61a9e373006e44bd54cf91ae4df80, type: 2}
   - {fileID: 11400000, guid: 888278d52d5a160428cec01e0ece4324, type: 2}
   - {fileID: 11400000, guid: 4863a4e5ecf0fc8449e6264b8f364dd8, type: 2}
   - {fileID: 11400000, guid: 83377a71033be8a42925b23921587891, type: 2}

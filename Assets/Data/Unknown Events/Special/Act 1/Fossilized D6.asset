@@ -52,8 +52,9 @@ MonoBehaviour:
       data:
         dieType: 0
     - rid: 6434882266773586131
-      type: {class: UnknownMapEventOutcomeComposite, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeAfterDieChoice, ns: , asm: Assembly-CSharp}
       data:
+        dieFilter: 0
         steps:
         - rid: 6434882266773586136
         - rid: 6434882266773586137
@@ -74,7 +75,7 @@ MonoBehaviour:
       type: {class: UnknownMapEventOutcomeNoOp, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 6434882266773586136
-      type: {class: UnknownMapEventOutcomeAddCurseFaceToRandomDie, ns: , asm: Assembly-CSharp}
+      type: {class: UnknownMapEventOutcomeAddCurseFaceToChosenDie, ns: , asm: Assembly-CSharp}
       data:
         curseFace: {fileID: 11400000, guid: 0c48e346faacf154fba2364657dc462a, type: 2}
     - rid: 6434882266773586137

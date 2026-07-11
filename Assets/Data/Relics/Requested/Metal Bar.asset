@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Metal Bar
   m_EditorClassIdentifier: Assembly-CSharp::RelicSO
   title: Metal Bar
-  description: All <style=Shield>Armor</style> result give <style=Shield>+2</style> to their outcome for every <style=Shield>Armor</style> Dice you
-    have.
+  description: All <style=Shield>Armor</style> result give <style=Shield>+1</style>
+    to their outcome for every <style=Shield>Armor</style> Dice you have.
   rarity: 1
   icon: {fileID: 21300000, guid: 3b43907db56462e4599b283fcf3715d9, type: 3}
-  shopGoldPrice: 0
   barBenefitDisplayValue: 0
+  exclusiveHero: {fileID: 0}
   actions:
   - rid: 6494956586993451278
   references:
@@ -28,4 +28,4 @@ MonoBehaviour:
       type: {class: RelicArmorBonusPerArmorDieAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 1
-        bonusArmorPerArmorDie: 2
+        bonusArmorPerArmorDie: 1

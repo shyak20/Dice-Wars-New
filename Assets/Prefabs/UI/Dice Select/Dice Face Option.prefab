@@ -1786,6 +1786,9 @@ MonoBehaviour:
   statusHoverTooltipTarget: {fileID: 0}
   newFacePickedRevealRoot: {fileID: 5583740946858333443}
   newFacePickedPreviewImage: {fileID: 8166466155913520006}
+  curseStateAnimator: {fileID: 0}
+  curseAnimatorBoolParameter: Curse
+  curseSettledStateName: Face Replace to Curse Anim
 --- !u!1 &2180600091826465948
 GameObject:
   m_ObjectHideFlags: 0
@@ -6579,7 +6582,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3481255927062778178
 RectTransform:
   m_ObjectHideFlags: 0

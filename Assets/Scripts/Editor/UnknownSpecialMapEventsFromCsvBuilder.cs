@@ -216,11 +216,12 @@ public static class UnknownSpecialMapEventsFromCsvBuilder
             Row(
                 "[Cost: Add 1 Curse] Gain +2 Strength permanently (for the entire run).",
                 new List<UnknownMapEventConditionBase> { new UnknownMapEventConditionHasDieOfType { dieType = DieType.Damage } },
-                new UnknownMapEventOutcomeComposite
+                new UnknownMapEventOutcomeAfterDieChoice
                 {
+                    dieFilter = UnknownMapEventDieChoiceFilter.AnyDeckDie,
                     steps = new List<UnknownMapEventOutcomeBase>
                     {
-                        new UnknownMapEventOutcomeAddCurseFaceToRandomDie { curseFace = curse },
+                        new UnknownMapEventOutcomeAddCurseFaceToChosenDie { curseFace = curse },
                         new UnknownMapEventOutcomeAddRunPermanentStrengthStacks { stacks = 2 },
                     },
                 }),

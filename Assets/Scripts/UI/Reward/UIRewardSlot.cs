@@ -68,7 +68,7 @@ public class UIRewardSlot : MonoBehaviour
 
         if (face == null)
         {
-            ApplyCurseAnimatorState(null, manageRevealRootVisibility: true);
+            HideNewFacePickedPreviewWithoutRecurse();
             return;
         }
 
@@ -107,12 +107,14 @@ public class UIRewardSlot : MonoBehaviour
                 button.onClick.AddListener(() => onPicked.Invoke(_face));
         }
 
-        ApplyCurseAnimatorState(face, manageRevealRootVisibility: true);
+        // Reveal root + curse appear are only for newly picked faces (ShowNewFacePickedPreview), not Bind.
+        HideNewFacePickedPreviewWithoutRecurse();
     }
 
     /// <summary>
     /// After a successful face replacement, shows <see cref="newFacePickedRevealRoot"/> and the new face art
     /// (uses <see cref="newFacePickedPreviewImage"/> or the first <see cref="Image"/> under the reveal root).
+    /// Plays the curse appear animation when the new face is a curse.
     /// </summary>
     public void ShowNewFacePickedPreview(DieFaceSO newFace)
     {
@@ -121,38 +123,12 @@ public class UIRewardSlot : MonoBehaviour
 
         ApplyNewFacePreviewImage(newFace);
         newFacePickedRevealRoot.SetActive(true);
-
-        var animator = ResolveCurseAnimator();
-        if (animator != null && animator.runtimeAnimatorController != null)
-        {
-            animator.Rebind();
-            animator.Update(0f);
-        }
-
-        UpdateCurseAnimatorBool(newFace.type == DieType.Curse);
+        PlayCurseAppearAnimator(newFace.type == DieType.Curse);
     }
 
     public void HideNewFacePickedPreview()
     {
         HideNewFacePickedPreviewWithoutRecurse();
-    }
-
-    void ApplyCurseAnimatorState(DieFaceSO face, bool manageRevealRootVisibility)
-    {
-        var isCurse = face != null && face.type == DieType.Curse;
-
-        if (manageRevealRootVisibility)
-        {
-            if (isCurse && newFacePickedRevealRoot != null)
-            {
-                ApplyNewFacePreviewImage(face);
-                newFacePickedRevealRoot.SetActive(true);
-            }
-            else if (!isCurse)
-                HideNewFacePickedPreviewWithoutRecurse();
-        }
-
-        UpdateCurseAnimatorBool(isCurse);
     }
 
     void ApplyNewFacePreviewImage(DieFaceSO face)
@@ -186,18 +162,17 @@ public class UIRewardSlot : MonoBehaviour
         return GameIconCatalog.GetElementIcon(face.type);
     }
 
-    void UpdateCurseAnimatorBool(bool isCurse)
+    void PlayCurseAppearAnimator(bool isCurse)
     {
         var animator = ResolveCurseAnimator();
         if (animator == null || animator.runtimeAnimatorController == null || _curseAnimatorBoolHash == 0)
             return;
 
-        if (isCurse)
-        {
-            animator.Rebind();
-            animator.Update(0f);
-        }
+        if (!animator.enabled)
+            animator.enabled = true;
 
+        animator.Rebind();
+        animator.Update(0f);
         animator.SetBool(_curseAnimatorBoolHash, isCurse);
         animator.Update(0f);
     }
