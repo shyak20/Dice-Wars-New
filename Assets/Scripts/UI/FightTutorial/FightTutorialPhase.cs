@@ -16,19 +16,24 @@ public sealed class FightTutorialPhase
     [Tooltip("When this phase becomes next in the list, wait for this before showing it.")]
     public FightTutorialTrigger activateWhen = FightTutorialTrigger.Immediate;
 
+    [Tooltip("Seconds to wait after Activate When fires before enabling Phase Root (and the rest of the phase UI). 0 = immediate.")]
+    [Min(0f)]
+    public float phaseRootEnableDelaySeconds;
+
     [Tooltip("What finishes this phase and moves on (or ends the tutorial).")]
     public FightTutorialTrigger completeWhen = FightTutorialTrigger.AdvanceButton;
 
-    [Tooltip("Required when Complete When is Advance Button (or when Allow Button Skip is on).")]
-    public Button advanceButton;
+    [Tooltip("Any of these buttons finish the phase when Complete When is Advance Button (or Allow Button Skip is on).")]
+    public List<Button> advanceButtons = new List<Button>();
 
-    [Tooltip("If Complete When is a combat trigger, also finish when the advance button is clicked.")]
+    [Tooltip("If Complete When is a combat trigger, also finish when any advance button is clicked.")]
     public bool allowButtonSkip;
 
     [Tooltip(
-        "When true, enables the flow's interaction blocker so the player must use the tutorial control. " +
-        "Turn off for phases that wait on Select Die / Roll so the player can interact with the fight UI.")]
-    public bool blockPlayerInput = true;
+        "When true, turns on the Tutorial Controller Interaction Blocker for this phase (blocks fight UI). " +
+        "Turn off for phases that wait on Select Die / Roll so the player can interact.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("blockPlayerInput")]
+    public bool enableInteractionBlocker = true;
 
     [Tooltip("Enabled when this phase starts; disabled when the phase ends.")]
     public List<GameObject> objectsToEnable = new List<GameObject>();
@@ -37,6 +42,19 @@ public sealed class FightTutorialPhase
         "UI objects temporarily reparented under the tutorial Screen Space Overlay so they draw above all Camera canvases. " +
         "Restored when the phase ends. Prefer the visual root of the control (e.g. whole HP cluster).")]
     public List<FightTutorialSortingTarget> sortingTargets = new List<FightTutorialSortingTarget>();
+
+    public bool HasAdvanceButtons()
+    {
+        if (advanceButtons == null || advanceButtons.Count == 0)
+            return false;
+        for (var i = 0; i < advanceButtons.Count; i++)
+        {
+            if (advanceButtons[i] != null)
+                return true;
+        }
+
+        return false;
+    }
 
     public void Validate(string ownerName, int index)
     {
@@ -50,8 +68,17 @@ public sealed class FightTutorialPhase
         if (completeWhen == FightTutorialTrigger.None || completeWhen == FightTutorialTrigger.Immediate)
             Debug.LogError($"{ownerName}: {label} — completeWhen cannot be {completeWhen}.");
 
-        if ((completeWhen == FightTutorialTrigger.AdvanceButton || allowButtonSkip) && advanceButton == null)
-            Debug.LogError($"{ownerName}: {label} — assign advanceButton for button completion.");
+        if ((completeWhen == FightTutorialTrigger.AdvanceButton || allowButtonSkip) && !HasAdvanceButtons())
+            Debug.LogError($"{ownerName}: {label} — assign at least one advanceButtons entry for button completion.");
+
+        if (advanceButtons != null)
+        {
+            for (var i = 0; i < advanceButtons.Count; i++)
+            {
+                if (advanceButtons[i] == null)
+                    Debug.LogError($"{ownerName}: {label} advanceButtons[{i}] — assign Button.");
+            }
+        }
 
         if (objectsToEnable != null)
         {

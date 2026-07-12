@@ -360,6 +360,7 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
             winStagePanel.SetActive(true);
 
         EnableObjectsForVictoryScreen();
+        CombatEvents.OnVictoryScreenAppeared?.Invoke();
     }
 
     private void DisableObjectsForVictoryScreen()

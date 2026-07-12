@@ -33,4 +33,10 @@ public enum FightTutorialTrigger
     /// Use to show a phase after results are on the pool / board, not when Roll is pressed.
     /// </summary>
     RollResultsResolved = 7,
+
+    /// <summary>
+    /// Victory / win-stage panel was shown (<see cref="CombatEvents.OnVictoryScreenAppeared"/>).
+    /// Fires when the UI appears, after any post-victory delay — not at the moment victory is declared.
+    /// </summary>
+    VictoryScreenAppear = 8,
 }

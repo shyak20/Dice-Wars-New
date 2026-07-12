@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,7 +18,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     [Tooltip("Whole tutorial root — disabled when the last phase completes.")]
     [SerializeField] private GameObject rootTutorial;
 
-    [Tooltip("Optional full-screen blocker (dim Image). Enabled only while the active phase has blockPlayerInput.")]
+    [Tooltip("Optional full-screen blocker (dim Image). Enabled only while the active phase has Enable Interaction Blocker.")]
     [SerializeField] private GameObject interactionBlocker;
 
     [Tooltip("Optional. Screen Space Overlay used to lift phase sorting targets above all Camera canvases. Created at runtime if unset.")]
@@ -35,9 +36,11 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     FightTutorialTrigger _pendingActivateTrigger;
     bool _combatSessionReady;
     bool _sawFirstRoll;
+    bool _victoryScreenAppeared;
     bool _flowFinished;
-    Button _boundAdvanceButton;
+    readonly List<Button> _boundAdvanceButtons = new List<Button>();
     bool _createdOverlayCanvas;
+    Coroutine _showPhaseDelayRoutine;
 
     void Awake()
     {
@@ -70,6 +73,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnDieToggled += HandleDieToggled;
         CombatEvents.OnRollCommand += HandleRollCommand;
         CombatEvents.OnRollResultsResolved += HandleRollResultsResolved;
+        CombatEvents.OnVictoryScreenAppeared += HandleVictoryScreenAppeared;
 
         // Session may have initialized before this object enabled (additive fight / late tutorial root).
         if (!_combatSessionReady)
@@ -105,6 +109,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnDieToggled -= HandleDieToggled;
         CombatEvents.OnRollCommand -= HandleRollCommand;
         CombatEvents.OnRollResultsResolved -= HandleRollResultsResolved;
+        CombatEvents.OnVictoryScreenAppeared -= HandleVictoryScreenAppeared;
 
         TearDownActivePhasePresentation();
     }
@@ -161,8 +166,10 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         if (phase == null)
             return;
 
+        StopShowPhaseDelay();
         _waitingToActivate = false;
         UnbindAdvanceButton();
+        _sorting.Restore();
 
         if (rootTutorial != null && !rootTutorial.activeSelf)
             rootTutorial.SetActive(true);
@@ -170,12 +177,48 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         EnsureTutorialCanvasRaycaster();
 
         if (phase.phaseRoot != null)
+            phase.phaseRoot.SetActive(false);
+        SetPhaseObjectsActive(phase, false);
+        SetBlocker(false);
+
+        var delay = Mathf.Max(0f, phase.phaseRootEnableDelaySeconds);
+        if (delay <= 0f)
+        {
+            PresentPhase(phase);
+            return;
+        }
+
+        _showPhaseDelayRoutine = StartCoroutine(CoShowPhaseAfterDelay(phase, delay, _phaseIndex));
+    }
+
+    IEnumerator CoShowPhaseAfterDelay(FightTutorialPhase phase, float delaySeconds, int phaseIndex)
+    {
+        yield return new WaitForSecondsRealtime(delaySeconds);
+        _showPhaseDelayRoutine = null;
+        if (_flowFinished || !isActiveAndEnabled || _phaseIndex != phaseIndex || phase == null)
+            yield break;
+
+        PresentPhase(phase);
+    }
+
+    void PresentPhase(FightTutorialPhase phase)
+    {
+        if (phase.phaseRoot != null)
             phase.phaseRoot.SetActive(true);
 
         SetPhaseObjectsActive(phase, true);
         ApplyPhaseSorting(phase);
-        SetBlocker(phase.blockPlayerInput);
+        SetBlocker(phase.enableInteractionBlocker);
         BindAdvanceButton(phase);
+    }
+
+    void StopShowPhaseDelay()
+    {
+        if (_showPhaseDelayRoutine != null)
+        {
+            StopCoroutine(_showPhaseDelayRoutine);
+            _showPhaseDelayRoutine = null;
+        }
     }
 
     void ApplyPhaseSorting(FightTutorialPhase phase)
@@ -251,6 +294,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
 
     void TearDownActivePhasePresentation()
     {
+        StopShowPhaseDelay();
         UnbindAdvanceButton();
         _sorting.Restore();
 
@@ -327,6 +371,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         {
             FightTutorialTrigger.CombatSessionReady => _combatSessionReady,
             FightTutorialTrigger.PlayerFirstRoll => _sawFirstRoll,
+            FightTutorialTrigger.VictoryScreenAppear => _victoryScreenAppeared,
             FightTutorialTrigger.Immediate => true,
             _ => false
         };
@@ -359,27 +404,45 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         OnCombatTrigger(FightTutorialTrigger.RollResultsResolved);
     }
 
+    void HandleVictoryScreenAppeared()
+    {
+        _victoryScreenAppeared = true;
+        OnCombatTrigger(FightTutorialTrigger.VictoryScreenAppear);
+    }
+
     void BindAdvanceButton(FightTutorialPhase phase)
     {
-        if (phase.advanceButton == null)
+        UnbindAdvanceButton();
+
+        if (phase == null || !phase.HasAdvanceButtons())
             return;
 
         if (phase.completeWhen != FightTutorialTrigger.AdvanceButton && !phase.allowButtonSkip)
             return;
 
-        _boundAdvanceButton = phase.advanceButton;
-        _boundAdvanceButton.interactable = true;
-        _boundAdvanceButton.onClick.RemoveListener(OnAdvanceClicked);
-        _boundAdvanceButton.onClick.AddListener(OnAdvanceClicked);
+        for (var i = 0; i < phase.advanceButtons.Count; i++)
+        {
+            var button = phase.advanceButtons[i];
+            if (button == null)
+                continue;
+
+            button.interactable = true;
+            button.onClick.RemoveListener(OnAdvanceClicked);
+            button.onClick.AddListener(OnAdvanceClicked);
+            _boundAdvanceButtons.Add(button);
+        }
     }
 
     void UnbindAdvanceButton()
     {
-        if (_boundAdvanceButton == null)
-            return;
+        for (var i = 0; i < _boundAdvanceButtons.Count; i++)
+        {
+            var button = _boundAdvanceButtons[i];
+            if (button != null)
+                button.onClick.RemoveListener(OnAdvanceClicked);
+        }
 
-        _boundAdvanceButton.onClick.RemoveListener(OnAdvanceClicked);
-        _boundAdvanceButton = null;
+        _boundAdvanceButtons.Clear();
     }
 
     void OnAdvanceClicked()

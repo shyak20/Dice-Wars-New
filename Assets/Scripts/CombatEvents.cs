@@ -132,6 +132,12 @@ public static class CombatEvents
     public static Action OnPlayerVictory;
     public static Action OnPlayerDefeat;
 
+    /// <summary>
+    /// Fired when the win-stage / victory panel is shown (<see cref="WinStageFlowController"/>),
+    /// after any post-victory delay — not when victory is first declared.
+    /// </summary>
+    public static Action OnVictoryScreenAppeared;
+
     /// <summary>Fired when <see cref="PlayerStatus"/> HP reaches 0 after damage. Combat listens and shows defeat.</summary>
     public static Action OnPlayerHealthDepleted;
 
