@@ -29,7 +29,7 @@ MonoBehaviour:
         activateImmediately: 1
         legacyRequiredFaceValues: 
         requiredFaceValues:
-          values: 0400000002000000
+          values: 04000000
         bonusType: 1
         amount: 2
         burnDefinition: {fileID: 0}

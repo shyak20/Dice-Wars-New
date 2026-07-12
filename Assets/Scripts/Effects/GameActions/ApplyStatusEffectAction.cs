@@ -14,6 +14,9 @@ public class ApplyStatusEffectAction : GameActionWithIcon
     public Sprite ResolveStatusIcon() =>
         GameIconCatalog.GetStatusIcon(statusEffect);
 
+    /// <summary>Pool row id for deferred apply (matches Perfect Cast / Player Container rows).</summary>
+    public PoolRowKey GetPoolRowKey() => ResolvePoolRowKey(statusEffect);
+
     /// <summary>Builds a deferred enemy-status action for runtime pool extras (e.g. relic face-list burn).</summary>
     public static ApplyStatusEffectAction CreateRuntime(StatusEffectSO effect, int stackCount)
     {
@@ -31,8 +34,13 @@ public class ApplyStatusEffectAction : GameActionWithIcon
         stacks = stackCount;
     }
 
-    static PoolRowKey ResolvePoolRowKey(StatusEffectSO effect) =>
-        effect != null ? PoolRowKey.Custom(effect.name) : PoolRowKey.Custom("Status");
+    public static PoolRowKey ResolvePoolRowKey(StatusEffectSO effect)
+    {
+        // Must match GameIconIndexSO status row registration (ScriptableObject asset name).
+        if (effect == null)
+            return PoolRowKey.Custom("Status");
+        return PoolRowKey.Custom(effect.name);
+    }
 
     /// <summary>Final stack count after Pyromaniac, fire-double, etc. Shared by die faces and gems.</summary>
     public static int ResolveApplyStacks(StatusEffectSO statusEffect, int baseStacks, GameActionContext context, FaceResult face)
@@ -102,13 +110,24 @@ public class ApplyStatusEffectAction : GameActionWithIcon
         if (applyStacks <= 0)
             return;
 
+        var icon = GameIconCatalog.GetStatusIcon(statusEffect);
+        if (icon == null && statusEffect is ImmuneEffectSO)
+            icon = GameIconCatalog.GetElementIcon(DieType.Ice);
+        if (icon == null && statusEffect is EchoEffectSO)
+            icon = GameIconCatalog.GetElementIcon(DieType.Armor);
+
         result.ActionPoolContributions.Add(new FacePoolExtraContribution
         {
             PoolKey = ResolvePoolRowKey(statusEffect),
             Amount = applyStacks,
-            Icon = GameIconCatalog.GetStatusIcon(statusEffect),
+            Icon = icon,
+            PoolRowBackground = GameIconCatalog.GetStatusBackground(statusEffect)
+                               ?? GameIconCatalog.TryGetPoolRowBackground(ResolvePoolRowKey(statusEffect)),
             PoolSourceAction = visualFlyoutOnly ? null : poolSourceAction,
-            VisualFlyoutOnly = visualFlyoutOnly
+            // Match Thorns/Heal: Perfect Cast multiplies deferred status rows even if PoolSourceAction is unset.
+            PerfectStrikeScales = !visualFlyoutOnly,
+            VisualFlyoutOnly = visualFlyoutOnly,
+            FlyToPlayerStatusBar = visualFlyoutOnly && statusEffect.target == StatusEffectTarget.Player
         });
     }
 
@@ -127,7 +146,11 @@ public class ApplyStatusEffectAction : GameActionWithIcon
                 applyStacks = 0;
         }
         else
+        {
             applyStacks = ResolveApplyStacks(statusEffect, stacks, context, context.TriggeringFace);
+            if (context.CombatManager != null && context.SourceEnemyAction == null)
+                applyStacks *= Mathf.Max(1, context.CombatManager.GetAppliedMultiplier());
+        }
 
         ApplyFromContext(context, statusEffect, applyStacks);
     }

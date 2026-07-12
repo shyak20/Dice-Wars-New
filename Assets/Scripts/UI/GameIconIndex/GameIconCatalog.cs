@@ -25,6 +25,9 @@ public static class GameIconCatalog
     public static Sprite GetStatusIcon(StatusEffectSO effect) =>
         _active != null ? _active.GetStatusIcon(effect) : null;
 
+    public static Sprite GetStatusIconByPoolRowKey(PoolRowKey key) =>
+        _active != null ? _active.GetStatusIconByPoolRowKey(key) : null;
+
     public static void CollectRegisteredStatusEffects(System.Collections.Generic.List<StatusEffectSO> results)
     {
         if (_active != null)

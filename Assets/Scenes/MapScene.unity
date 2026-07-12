@@ -160,7 +160,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &17979259
 RectTransform:
   m_ObjectHideFlags: 0
@@ -37159,7 +37159,7 @@ MonoBehaviour:
     +20%<color=#FF4949> (+{0})</color>'
   maxPowerButton: {fileID: 297037983}
   maxHpIncreaseButton: {fileID: 868377214}
-  closeButton: {fileID: 275364424}
+  legacyContinueButton: {fileID: 275364424}
 --- !u!1 &2034916481
 GameObject:
   m_ObjectHideFlags: 0

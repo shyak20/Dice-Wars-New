@@ -13,6 +13,8 @@ public class ImmuneEffectSO : StatusEffectSO
     {
         if (stackDecayPerTurn != 0)
             stackDecayPerTurn = 0;
+        if (target != StatusEffectTarget.Player)
+            target = StatusEffectTarget.Player;
     }
 #endif
 }

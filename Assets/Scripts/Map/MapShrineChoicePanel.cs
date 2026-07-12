@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-/// <summary>Map-only shrine: permanent run max-power bonus or max-HP increase (% of current run max HP). Wire buttons in the Map scene.</summary>
+/// <summary>Map-only shrine (Obelisk): permanent run max-power bonus or max-HP increase (% of current run max HP). Wire choice buttons in the Map scene; the player must pick an option to leave.</summary>
 public sealed class MapShrineChoicePanel : MonoBehaviour
 {
     [SerializeField] private GameObject root;
@@ -19,7 +19,9 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
     [SerializeField] private Button maxPowerButton;
     [FormerlySerializedAs("healButton")]
     [SerializeField] private Button maxHpIncreaseButton;
-    [SerializeField] private Button closeButton;
+    [Tooltip("Optional legacy Continue/close control. Hidden at runtime — shrine must be exited via a choice.")]
+    [FormerlySerializedAs("closeButton")]
+    [SerializeField] private Button legacyContinueButton;
 
     private void Awake()
     {
@@ -30,9 +32,18 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
             maxPowerButton.onClick.AddListener(OnMaxPowerChosen);
         if (maxHpIncreaseButton != null)
             maxHpIncreaseButton.onClick.AddListener(OnMaxHpIncreaseChosen);
-        if (closeButton != null)
-            closeButton.onClick.AddListener(Close);
+        HideLegacyContinueButton();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (maxPowerButton == null)
+            Debug.LogError("MapShrineChoicePanel: assign maxPowerButton.", this);
+        if (maxHpIncreaseButton == null)
+            Debug.LogError("MapShrineChoicePanel: assign maxHpIncreaseButton.", this);
+    }
+#endif
 
     /// <summary>Shows the shrine UI. Returns false if the run is not in a valid map state (tile should stay unconsumed).</summary>
     public bool TryOpenPanel()
@@ -52,6 +63,7 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
         if (root == null)
             root = gameObject;
 
+        HideLegacyContinueButton();
         RefreshMaxHpChoiceLabel();
         ActivateSelfAndAncestors(root.transform);
         root.SetActive(true);
@@ -61,14 +73,14 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
     private void OnMaxPowerChosen()
     {
         RunManager.Instance?.ApplyShrineMaxPowerBonus(maxPowerBonus);
-        Close();
+        Hide();
     }
 
     private void OnMaxHpIncreaseChosen()
     {
         if (maxHpIncreasePercent > 0)
             RunManager.Instance?.ApplyShrineMaxHpIncreasePercent(maxHpIncreasePercent);
-        Close();
+        Hide();
     }
 
     void RefreshMaxHpChoiceLabel()
@@ -100,7 +112,17 @@ public sealed class MapShrineChoicePanel : MonoBehaviour
         return string.Format(CultureInfo.InvariantCulture, format, maxHpIncrease);
     }
 
-    private void Close() => Hide();
+    void HideLegacyContinueButton()
+    {
+        if (legacyContinueButton == null)
+            return;
+
+        legacyContinueButton.onClick.RemoveAllListeners();
+        legacyContinueButton.gameObject.SetActive(false);
+        var continueRoot = legacyContinueButton.transform.parent;
+        if (continueRoot != null && continueRoot != root.transform && continueRoot.name == "Continue")
+            continueRoot.gameObject.SetActive(false);
+    }
 
     /// <summary>Closes the panel without applying a choice (e.g. map regenerated).</summary>
     public void Hide() => root.SetActive(false);

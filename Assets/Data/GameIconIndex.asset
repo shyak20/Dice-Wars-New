@@ -149,7 +149,7 @@ MonoBehaviour:
   - effect: {fileID: 11400000, guid: a8c9e0f1d2e34f5ab6c7d8e9f0123456, type: 2}
     icon: {fileID: 21300000, guid: 545fd21b1124cc741925dfa1962ad67b, type: 3}
     background: {fileID: 0}
-    poolRowBackground: {fileID: 0}
+    poolRowBackground: {fileID: 21300000, guid: 9b2cabe67c4e0c9458e67c4006850322, type: 3}
   - effect: {fileID: 11400000, guid: 259d093ba8b7ccf43a6448a10bfabec6, type: 2}
     icon: {fileID: 21300000, guid: f1917c2abfe1fc642ab3799afde4d1fe, type: 3}
     background: {fileID: 0}

@@ -17,6 +17,8 @@ public class EnemyController : MonoBehaviour
     [Tooltip("Unused — enemy intent rows are built by EnemyActionUIController + EnemyIntentSegmentView.")]
     public TMP_Text intentText;
     public TMP_Text armorText;       // The text showing the actual armor amount
+    [Tooltip("Duplicate/outline health label (Health Armor Text). Always mirrors current HP with Health Text.")]
+    [SerializeField] private TMP_Text healthArmorText;
     public GameObject armorIcon;
 
     [Header("Floating damage numbers")]
@@ -407,6 +409,7 @@ public class EnemyController : MonoBehaviour
         }
 
         bool hasArmor = currentArmor > 0;
+        var healthLabel = currentHealth.ToString();
 
         // 2. Armor Bar Slider (The "Armor Bar" slider)
         if (armorSlider != null)
@@ -419,23 +422,24 @@ public class EnemyController : MonoBehaviour
             }
         }
 
+        if (armorIcon != null)
+            armorIcon.SetActive(hasArmor);
+
+        if (armorText != null)
+        {
+            armorText.text = hasArmor ? currentArmor.ToString() : "";
+            armorText.gameObject.SetActive(hasArmor);
+        }
+
+        // Health Text + Health Armor Text always show current HP (not armor).
         if (healthText != null)
         {
-            if (!hasArmor)
-                healthText.text = currentHealth.ToString();
+            healthText.text = healthLabel;
             healthText.gameObject.SetActive(!hasArmor);
         }
 
-        // 4. Small Armor Icon/Amount Display
-        if (armorText != null)
-        {
-            armorText.gameObject.SetActive(hasArmor);
-            armorText.text = hasArmor ? currentArmor.ToString() : "";
-        }
-        if (armorIcon != null)
-        {
-            armorIcon.SetActive(hasArmor);
-        }
+        if (healthArmorText != null)
+            healthArmorText.text = healthLabel;
     }
 
     public EnemyActionSO GetCurrentAction() => CurrentIntent.Value;

@@ -3599,6 +3599,7 @@ public class CombatManager : MonoBehaviour
                     : GameIconCatalog.TryGetPoolRowBackground(extra.PoolKey);
                 var enemyTargeted = IsEnemyTargetedPoolContribution(extra);
                 var attackAll = result.AttackAllEnemies && enemyTargeted;
+                var flyToPlayerContainer = !enemyTargeted && !extra.VisualFlyoutOnly;
                 lines.Add(new RollOutcomeVisualLine
                 {
                     RowKey = extra.PoolKey,
@@ -3607,6 +3608,7 @@ public class CombatManager : MonoBehaviour
                     BackgroundOverride = rowBg,
                     IsVisualFlyoutOnly = extra.VisualFlyoutOnly,
                     FlyToPlayerStatusBar = extra.FlyToPlayerStatusBar,
+                    FlyToPlayerElementContainer = flyToPlayerContainer,
                     EnemyTargeted = enemyTargeted,
                     AttackAllEnemies = attackAll,
                     SourceAction = enemyTargeted ? extra.PoolSourceAction : null,
@@ -4763,15 +4765,41 @@ public class CombatManager : MonoBehaviour
         if (!hasApplyStatus) return null;
 
         var map = new Dictionary<ApplyStatusEffectAction, int>();
-        foreach (var c in face.ActionPoolContributions)
+        if (face.ActionPoolContributions != null)
         {
-            if (c.PoolSourceAction == null) continue;
-            map[c.PoolSourceAction] = c.Amount;
+            foreach (var c in face.ActionPoolContributions)
+            {
+                if (c.VisualFlyoutOnly || c.Amount <= 0)
+                    continue;
+                if (c.PoolSourceAction != null)
+                    map[c.PoolSourceAction] = c.Amount;
+            }
         }
 
         foreach (var a in face.Actions)
         {
-            if (a is ApplyStatusEffectAction apply && !map.ContainsKey(apply))
+            if (a is not ApplyStatusEffectAction apply)
+                continue;
+            if (map.ContainsKey(apply))
+                continue;
+
+            // Fallback when PoolSourceAction was not wired: match Perfect-Cast-scaled row by pool key.
+            var key = apply.GetPoolRowKey();
+            var matched = false;
+            if (face.ActionPoolContributions != null)
+            {
+                for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+                {
+                    var c = face.ActionPoolContributions[i];
+                    if (c.VisualFlyoutOnly || c.Amount <= 0 || !c.PoolKey.Equals(key))
+                        continue;
+                    map[apply] = c.Amount;
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched)
                 map[apply] = 0;
         }
 
@@ -5125,6 +5153,8 @@ public class CombatManager : MonoBehaviour
             CleanseAction cleanse => cleanse.GetPoolRowKey().Equals(key),
             ThornsAction thorns => thorns.GetPoolRowKey().Equals(key),
             StartNextTurnWithArmorAction nextArmor => nextArmor.GetPoolRowKey().Equals(key),
+            ApplyStatusEffectAction apply => apply.StatusEffectDefinition != null &&
+                                            apply.GetPoolRowKey().Equals(key),
             _ => false
         };
     }

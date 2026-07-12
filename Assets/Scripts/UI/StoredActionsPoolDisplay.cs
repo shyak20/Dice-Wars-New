@@ -137,7 +137,8 @@ public class StoredActionsPoolDisplay : MonoBehaviour
             return rt;
         if (PoolRowKey.TryGetDieType(key, out var dt))
             return GameIconCatalog.GetElementIcon(dt);
-        return null;
+        // Custom status rows (Immune, Echo, …): resolve from GameIconIndex by asset name.
+        return GameIconCatalog.GetStatusIconByPoolRowKey(key);
     }
 
     public Sprite GetPoolRowBackground(PoolRowKey key)

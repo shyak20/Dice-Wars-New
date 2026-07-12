@@ -5901,6 +5901,7 @@ MonoBehaviour:
   armorSlider: {fileID: 0}
   intentText: {fileID: 0}
   armorText: {fileID: 1894310180379465275}
+  healthArmorText: {fileID: 4551210970181078446}
   armorIcon: {fileID: 6922034677896443123}
   damageNumberWorldAnchor: {fileID: 0}
   turnSpriteSorting: {fileID: 6072775844815676263}
@@ -12239,7 +12240,6 @@ GameObject:
   - component: {fileID: 2188773451934796836}
   - component: {fileID: 3886444913050071418}
   - component: {fileID: 4551210970181078446}
-  - component: {fileID: 8039336402761191268}
   m_Layer: 5
   m_Name: Health Armor Text (TMP) (2)
   m_TagString: Untagged
@@ -12294,7 +12294,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 10
+  m_text: 666666666
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: b5e19dccefabd4b41960837fa346ea76, type: 2}
@@ -12366,19 +12366,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &8039336402761191268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8713813028090593281}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 90cebb4523b781a4d83d9257ac7ad7d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TextMeshProTextFollow
-  source: {fileID: 7071833018357280711}
 --- !u!1001 &3507112471004822104
 PrefabInstance:
   m_ObjectHideFlags: 0

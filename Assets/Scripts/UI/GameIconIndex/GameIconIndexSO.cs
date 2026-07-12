@@ -135,6 +135,7 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<string, Sprite> _enemyActionBackgroundLookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, Sprite> _poolRowBackgroundByStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<string, StatusEffectTarget> _statusTargetByPoolRowStableId = new Dictionary<string, StatusEffectTarget>(StringComparer.Ordinal);
+    readonly Dictionary<string, Sprite> _statusIconByPoolRowStableId = new Dictionary<string, Sprite>(StringComparer.Ordinal);
     readonly Dictionary<EnemyResistanceElement, Sprite> _enemyResistanceIconLookup = new Dictionary<EnemyResistanceElement, Sprite>();
     readonly Dictionary<EnemyResistanceElement, Sprite> _enemyResistanceBackgroundLookup = new Dictionary<EnemyResistanceElement, Sprite>();
     readonly Dictionary<EnemyResistanceElement, string> _enemyResistanceTooltipTitleLookup = new Dictionary<EnemyResistanceElement, string>();
@@ -192,11 +193,15 @@ public class GameIconIndexSO : ScriptableObject
 
         _statusLookup.Clear();
         _statusBackgroundLookup.Clear();
+        _statusIconByPoolRowStableId.Clear();
         foreach (var e in statusEffectIcons)
         {
             if (e.effect == null) continue;
             if (e.icon != null)
+            {
                 _statusLookup[e.effect] = e.icon;
+                _statusIconByPoolRowStableId[e.effect.name] = e.icon;
+            }
             _statusTargetByPoolRowStableId[e.effect.name] = e.effect.target;
             if (e.poolRowBackground != null)
                 _poolRowBackgroundByStableId[e.effect.name] = e.poolRowBackground;
@@ -245,6 +250,14 @@ public class GameIconIndexSO : ScriptableObject
         if (_statusLookup.Count == 0 && statusEffectIcons.Count > 0)
             RebuildLookups();
         return _statusLookup.TryGetValue(effect, out var s) ? s : null;
+    }
+
+    /// <summary>Icon for a custom pool row whose <see cref="PoolRowKey.StableId"/> is a status asset name (e.g. Immune).</summary>
+    public Sprite GetStatusIconByPoolRowKey(PoolRowKey key)
+    {
+        if (_statusIconByPoolRowStableId.Count == 0 && statusEffectIcons.Count > 0)
+            RebuildLookups();
+        return _statusIconByPoolRowStableId.TryGetValue(key.StableId, out var s) ? s : null;
     }
 
     /// <summary>All status effects registered in this index (used by tooltip style-tag scanning).</summary>
