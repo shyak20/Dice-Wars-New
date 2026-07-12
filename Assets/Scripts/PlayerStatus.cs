@@ -34,6 +34,8 @@ public class PlayerStatus : MonoBehaviour
 
     public int GetCurrentHealth() => currentHealth;
 
+    public int GetCurrentArmor() => currentArmor;
+
     /// <summary>Sets HP to 0 and raises <see cref="CombatEvents.OnPlayerHealthDepleted"/> (e.g. abandon run from options).</summary>
     public void ForceDefeatAtZeroHealth()
     {

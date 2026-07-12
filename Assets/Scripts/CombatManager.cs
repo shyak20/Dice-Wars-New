@@ -3883,6 +3883,251 @@ public class CombatManager : MonoBehaviour
         return Mathf.Max(0, enemy.StatusEffects.ModifyEnemyHitDamage(ctx, boosted));
     }
 
+    /// <summary>
+    /// Predicted player HP loss from Thorns on enemies this turn's attacks will hit, living enemies'
+    /// current intents (physical + leech, Immune/armor), plus the next Burn/Poison tick after that round
+    /// (current stacks and stacks intents will apply).
+    /// </summary>
+    public bool TryPreviewIncomingPlayerDamage(out PlayerIncomingDamagePreview preview)
+    {
+        preview = default;
+        if (player == null || player.StatusEffects == null)
+            return false;
+
+        var armor = player.GetCurrentArmor();
+        var immune = player.StatusEffects.GetStacks<ImmuneEffectSO>();
+        var burnStacks = player.StatusEffects.GetStacks<BurnEffectSO>();
+        var poisonStacks = player.StatusEffects.GetStacks<PoisonEffectSO>();
+
+        var attackGross = 0;
+        var attackHpLoss = 0;
+        var thornsHpLoss = 0;
+        var totalHpLoss = 0;
+
+        // Thorns retaliates during the player attack resolve (before the enemy turn), once per damaged enemy.
+        CollectEnemiesReceivingPlayerTurnDamage(_incomingDamageEnemyScratch);
+        for (var i = 0; i < _incomingDamageEnemyScratch.Count; i++)
+        {
+            var target = _incomingDamageEnemyScratch[i];
+            if (target == null || !target.IsAlive || target.StatusEffects == null)
+                continue;
+
+            var retaliate = target.StatusEffects.GetThornsRetaliateStacks();
+            if (retaliate <= 0)
+                continue;
+
+            ApplySimulatedArmoredDamage(retaliate, ref armor, ref thornsHpLoss, ref totalHpLoss);
+        }
+
+        for (var e = 0; e < _activeEnemies.Count; e++)
+        {
+            var enemy = _activeEnemies[e];
+            if (enemy == null || !enemy.IsAlive || !enemy.IsActiveInRoster)
+                continue;
+
+            var intent = enemy.GetCurrentAction();
+            if (intent == null)
+                continue;
+
+            var statusCtx = BuildStatusContext(enemy);
+            var redirect = enemy.StatusEffects != null && enemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx);
+
+            if (intent.damage > 0 && !redirect)
+            {
+                var hits = Mathf.Max(1, intent.numberOfAttacks);
+                var perHit = PreviewEnemyPhysicalHitDamage(enemy, intent.damage);
+                for (var h = 0; h < hits; h++)
+                    ApplySimulatedPlayerHit(perHit, ref armor, ref immune, ref attackGross, ref attackHpLoss, ref totalHpLoss);
+            }
+
+            if (intent.actions == null)
+                continue;
+
+            for (var i = 0; i < intent.actions.Count; i++)
+            {
+                var action = intent.actions[i];
+                if (action == null || action is FaceResolveModifierBase)
+                    continue;
+
+                switch (action)
+                {
+                    case LeechPhysicalDamageAction leech when leech.Damage > 0 && !redirect:
+                    {
+                        var hits = Mathf.Max(1, leech.NumberOfAttacks);
+                        var perHit = PreviewEnemyPhysicalHitDamage(enemy, leech.Damage);
+                        for (var h = 0; h < hits; h++)
+                            ApplySimulatedPlayerHit(perHit, ref armor, ref immune, ref attackGross, ref attackHpLoss, ref totalHpLoss);
+                        break;
+                    }
+                    case ApplyStatusEffectAction apply when apply.StatusEffectDefinition != null &&
+                                                           apply.StatusEffectDefinition.target == StatusEffectTarget.Player &&
+                                                           apply.ConfiguredStacks > 0:
+                    {
+                        if (apply.StatusEffectDefinition is BurnEffectSO)
+                            burnStacks += apply.ConfiguredStacks;
+                        else if (apply.StatusEffectDefinition is PoisonEffectSO)
+                            poisonStacks += apply.ConfiguredStacks;
+                        break;
+                    }
+                    case MultiplyPlayerBurnPoisonStacksAction multiply:
+                    {
+                        var mult = Mathf.Max(2, multiply.Multiplier);
+                        burnStacks *= mult;
+                        poisonStacks *= mult;
+                        break;
+                    }
+                }
+            }
+        }
+
+        var burnHpLoss = 0;
+        if (burnStacks > 0)
+            ApplySimulatedArmoredDamage(burnStacks, ref armor, ref burnHpLoss, ref totalHpLoss);
+
+        var poisonHpLoss = Mathf.Max(0, poisonStacks);
+        totalHpLoss += poisonHpLoss;
+
+        preview = new PlayerIncomingDamagePreview(
+            totalHpLoss,
+            thornsHpLoss,
+            attackHpLoss,
+            burnHpLoss,
+            poisonHpLoss,
+            attackGross,
+            burnStacks,
+            poisonStacks);
+        return true;
+    }
+
+    readonly List<EnemyController> _incomingDamageEnemyScratch = new List<EnemyController>();
+    readonly HashSet<EnemyController> _incomingDamageEnemySetScratch = new HashSet<EnemyController>();
+
+    /// <summary>
+    /// Enemies that will take element damage from this turn's channeled faces (same routing as
+    /// <see cref="ApplyPendingPlayerAttackFromTurn"/>). Used to preview Thorns retaliation.
+    /// </summary>
+    void CollectEnemiesReceivingPlayerTurnDamage(List<EnemyController> into)
+    {
+        into.Clear();
+        _incomingDamageEnemySetScratch.Clear();
+        if (channeledFaces == null || channeledFaces.Count == 0)
+            return;
+
+        var fallback = ResolvePrimaryTargetEnemy();
+        var statusCtx = BuildStatusContext();
+        var playerBonusAttack = player != null && player.StatusEffects != null
+            ? player.StatusEffects.GetTotalBonusAttack(statusCtx)
+            : 0;
+        var globalPhysicalBonus = Mathf.Max(0, bonusDamageFromActions + playerBonusAttack);
+
+        void AddTarget(EnemyController enemy)
+        {
+            if (enemy == null || !enemy.IsAlive)
+                return;
+            if (_incomingDamageEnemySetScratch.Add(enemy))
+                into.Add(enemy);
+        }
+
+        if (globalPhysicalBonus > 0)
+            AddTarget(fallback);
+
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face == null || face.Damage <= 0)
+                continue;
+
+            if (face.AttackAllEnemies)
+            {
+                for (var e = 0; e < _activeEnemies.Count; e++)
+                {
+                    var multiTarget = _activeEnemies[e];
+                    if (multiTarget == null || !multiTarget.IsAlive)
+                        continue;
+                    AddTarget(multiTarget);
+                }
+
+                continue;
+            }
+
+            if (face.UsesSplitDamageHits)
+            {
+                for (var hit = 0; hit < face.DamageAttackTimes; hit++)
+                {
+                    var hitTarget = face.GetDamageHitTarget(hit);
+                    if (hitTarget == null || !hitTarget.IsAlive)
+                        hitTarget = fallback;
+                    AddTarget(hitTarget);
+                }
+
+                continue;
+            }
+
+            var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive
+                ? face.DamageTargetEnemy
+                : fallback;
+            AddTarget(target);
+        }
+
+        for (var i = 0; i < channeledFaces.Count; i++)
+        {
+            var face = channeledFaces[i];
+            if (face?.ActionPoolContributions == null)
+                continue;
+
+            for (var c = 0; c < face.ActionPoolContributions.Count; c++)
+            {
+                var extra = face.ActionPoolContributions[c];
+                if (extra.PreAssignedEnemy == null || extra.Amount <= 0 || extra.VisualFlyoutOnly)
+                    continue;
+                if (!PoolRowKey.TryGetDieType(extra.PoolKey, out var dieType) || dieType != DieType.Damage)
+                    continue;
+
+                var bonusTarget = extra.PreAssignedEnemy.IsAlive ? extra.PreAssignedEnemy : fallback;
+                AddTarget(bonusTarget);
+            }
+        }
+    }
+
+    static void ApplySimulatedPlayerHit(
+        int damage,
+        ref int armor,
+        ref int immuneStacks,
+        ref int attackGross,
+        ref int attackHpLoss,
+        ref int totalHpLoss)
+    {
+        if (damage <= 0)
+            return;
+
+        attackGross += damage;
+        var dmg = damage;
+        if (immuneStacks > 0)
+        {
+            dmg = Mathf.Min(dmg, 1);
+            immuneStacks--;
+        }
+
+        ApplySimulatedArmoredDamage(dmg, ref armor, ref attackHpLoss, ref totalHpLoss);
+    }
+
+    static void ApplySimulatedArmoredDamage(int damage, ref int armor, ref int bucketHpLoss, ref int totalHpLoss)
+    {
+        if (damage <= 0)
+            return;
+
+        if (armor >= damage)
+        {
+            armor -= damage;
+            return;
+        }
+
+        var toHp = damage - armor;
+        armor = 0;
+        bucketHpLoss += toHp;
+        totalHpLoss += toHp;
+    }
+
     /// <summary>Used by face resolve modifiers and status actions that need a status context.</summary>
     public StatusEffectContext BuildStatusContextForEffects() => BuildStatusContext();
 
