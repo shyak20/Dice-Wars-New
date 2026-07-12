@@ -167,6 +167,12 @@ public static class CombatEvents
     // Rolls
     public static Action<int, int> OnRollsRemainingChanged; // (remaining, max)
 
+    /// <summary>
+    /// Fired when a player roll batch’s outcome flyouts have finished (results deposited / visuals done),
+    /// before target-assignment gate, Perfect Cast presentation follow-up, or return to WaitingForRoll.
+    /// </summary>
+    public static Action OnRollResultsResolved;
+
     // Game State
     public static Action<CombatState> OnStateChanged;
 

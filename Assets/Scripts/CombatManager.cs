@@ -1518,6 +1518,7 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CoAfterRollVisualsThen(Action onComplete)
     {
         yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
+        CombatEvents.OnRollResultsResolved?.Invoke();
         onComplete?.Invoke();
     }
 
@@ -5777,6 +5778,7 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CoJackpotAfterFlyoutsThenPresentation(int multiplier, Dictionary<PoolRowKey, int> poolsBefore, Dictionary<PoolRowKey, int> poolsAfter)
     {
         yield return new WaitUntil(() => pendingRollVisualSequences <= 0);
+        CombatEvents.OnRollResultsResolved?.Invoke();
         // Scale enemy Element Value totals only after flyouts have deposited their pre-multiply amounts, and without
         // refreshing icon text — JackpotPresentationController owns the visible multiply reveal.
         ScaleEnemyElementPoolsForPerfectCast(refreshIcons: false);

@@ -21,4 +21,16 @@ public enum FightTutorialTrigger
 
     /// <summary>Assigned phase advance button was clicked.</summary>
     AdvanceButton = 5,
+
+    /// <summary>
+    /// Player pressed Roll (Roll button, Roll All, or Space) — any <see cref="CombatEvents.OnRollCommand"/>.
+    /// Unlike <see cref="PlayerFirstRoll"/>, this fires on every roll press.
+    /// </summary>
+    RollButton = 6,
+
+    /// <summary>
+    /// Roll outcome flyouts finished for the current batch (<see cref="CombatEvents.OnRollResultsResolved"/>).
+    /// Use to show a phase after results are on the pool / board, not when Roll is pressed.
+    /// </summary>
+    RollResultsResolved = 7,
 }

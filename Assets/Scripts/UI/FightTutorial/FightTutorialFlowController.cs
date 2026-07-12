@@ -69,6 +69,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnCombatSessionInitialized += HandleCombatSessionInitialized;
         CombatEvents.OnDieToggled += HandleDieToggled;
         CombatEvents.OnRollCommand += HandleRollCommand;
+        CombatEvents.OnRollResultsResolved += HandleRollResultsResolved;
 
         // Session may have initialized before this object enabled (additive fight / late tutorial root).
         if (!_combatSessionReady)
@@ -103,6 +104,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnCombatSessionInitialized -= HandleCombatSessionInitialized;
         CombatEvents.OnDieToggled -= HandleDieToggled;
         CombatEvents.OnRollCommand -= HandleRollCommand;
+        CombatEvents.OnRollResultsResolved -= HandleRollResultsResolved;
 
         TearDownActivePhasePresentation();
     }
@@ -343,11 +345,18 @@ public sealed class FightTutorialFlowController : MonoBehaviour
 
     void HandleRollCommand()
     {
-        if (_sawFirstRoll)
-            return;
+        if (!_sawFirstRoll)
+        {
+            _sawFirstRoll = true;
+            OnCombatTrigger(FightTutorialTrigger.PlayerFirstRoll);
+        }
 
-        _sawFirstRoll = true;
-        OnCombatTrigger(FightTutorialTrigger.PlayerFirstRoll);
+        OnCombatTrigger(FightTutorialTrigger.RollButton);
+    }
+
+    void HandleRollResultsResolved()
+    {
+        OnCombatTrigger(FightTutorialTrigger.RollResultsResolved);
     }
 
     void BindAdvanceButton(FightTutorialPhase phase)
