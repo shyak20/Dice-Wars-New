@@ -26351,7 +26351,8 @@ MonoBehaviour:
     you roll <style=die1> <style=die2> <style=die3> <style=die4> <style=die5> <style=die6>\nGain
     <style=Thorns>6</style>\nGain <style=Pyromaniac>6</style>\nGain <style=Ablaze>6</style>\nGain
     <style=Kinetic Shield>6</style>\nGain <style=Physical Die><style=Defense Die><style=Fire
-    Die> dsakjdosaj\nGain <style=Power> +3</style>"
+    Die> dsakjdosaj\nGain <style=Power> +3</style>\nDeal <style=Self Damage>5</style>
+    to self"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a128cac2279da484b956be97100fa5af, type: 2}
   m_sharedMaterial: {fileID: -714837196803214900, guid: a128cac2279da484b956be97100fa5af, type: 2}

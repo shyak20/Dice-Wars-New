@@ -38,12 +38,12 @@ MonoBehaviour:
       type: {class: ProgressionMaxHpReward, ns: , asm: Assembly-CSharp}
       data:
         rowFormat: Max HP
-        amount: 10
+        amount: 5
     - rid: 6434882480546251016
       type: {class: ProgressionMaxPowerReward, ns: , asm: Assembly-CSharp}
       data:
         rowFormat: Max Cast Power
-        amount: 2
+        amount: 1
     - rid: 8217493839827173460
       type: {class: ProgressionMapMoveLimitReward, ns: , asm: Assembly-CSharp}
       data:

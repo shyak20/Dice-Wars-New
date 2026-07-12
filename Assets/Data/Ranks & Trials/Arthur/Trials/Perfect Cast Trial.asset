@@ -20,13 +20,15 @@ MonoBehaviour:
   targetValue: 5
   exactRollValue: 1
   completionRewards:
-  - rid: 6434882425854361675
+  - rid: 8217494004145061970
   completionRewardRowFormat: 
   references:
     version: 2
     RefIds:
-    - rid: 6434882425854361675
-      type: {class: ProgressionMaxPowerReward, ns: , asm: Assembly-CSharp}
+    - rid: 8217494004145061970
+      type: {class: ProgressionUnlockRelicsReward, ns: , asm: Assembly-CSharp}
       data:
-        rowFormat: <color=#DF4DF3>Max Cast Power +1</color>
-        amount: 1
+        rowFormat: 
+        relics:
+        - {fileID: 11400000, guid: 16e000470b79b39499a5bad610bfd964, type: 2}
+        - {fileID: 11400000, guid: 3b4f503e51853884fb484f439168a79d, type: 2}

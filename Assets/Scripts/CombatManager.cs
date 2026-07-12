@@ -5949,10 +5949,13 @@ public class CombatManager : MonoBehaviour
                 EnemyActionSO action = enemy.GetCurrentAction();
                 yield return enemy.CoPresentEnemyTurnActionIntro(action);
 
-                if (IsMultiEnemy && enemyTurnIntentSequence != null)
+                // Always rebuild turn-overlay rows after TickBeforeEnemyTurn so Strength / Chill / etc. are reflected
+                // (intro OnEnable may have built rows earlier, and single-enemy used to skip this refresh).
+                if (enemyTurnIntentSequence != null)
                 {
                     enemyTurnIntentSequence.PresentActingEnemyIntent(enemy, action);
-                    yield return enemyTurnIntentSequence.CoWaitBeforeMultiEnemyIntentAction();
+                    if (IsMultiEnemy)
+                        yield return enemyTurnIntentSequence.CoWaitBeforeMultiEnemyIntentAction();
                 }
 
                 if (enemyTurnIntentSequence != null)

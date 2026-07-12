@@ -15,7 +15,8 @@ MonoBehaviour:
   title: Increase Power
   description: Harness <style=Damage>5</style>
   descriptionLines:
-  - Deal <style=Attack>5</style> to yourself and the enemy
+  - Deal <style=Attack>5</style>
+  - Deal <style=Self Damage>5</style> to yourself
   - If you did not reach Perfect Cast or Bust in this roll - increase your <style=Power>Max
     Cast Power</style> by <style=Purple>+1</style> this combat
   value: 5

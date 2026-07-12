@@ -23,11 +23,19 @@ namespace Enemies
         private CombatManager _combatManager;
         private bool _deferIntentReactiveRefresh;
 
+        private void Awake()
+        {
+            EnsureCombatManager();
+        }
+
         private void OnEnable()
         {
             if (!holdIntentRowsUntilDisabled)
                 return;
             _deferIntentReactiveRefresh = true;
+            // Must resolve CombatManager here: OnEnable can run before Start on first activate,
+            // and without it physical rows show base damage (ignoring Strength / Chill / etc.).
+            EnsureCombatManager();
             RebuildIntentRows(_enemyController != null ? _enemyController.CurrentIntent.Value : null);
         }
 
@@ -45,13 +53,17 @@ namespace Enemies
             if (_enemyController == null)
                 Debug.LogError("EnemyActionUIController: Assign enemy controller.");
 
-            _combatManager = FindObjectOfType<CombatManager>();
+            EnsureCombatManager();
             if (_enemyController.StatusEffects != null)
                 _enemyController.StatusEffects.OnEffectsChanged += OnEnemyStatusEffectsChanged;
 
             _enemyController.CurrentIntent
                 .Subscribe(OnCurrentIntentChanged)
                 .AddTo(this);
+
+            // First OnEnable may have built rows before CombatManager existed — refresh once Start can resolve it.
+            if (holdIntentRowsUntilDisabled && isActiveAndEnabled)
+                RebuildIntentRows(_enemyController.CurrentIntent.Value);
         }
 
         private void OnDestroy()
@@ -87,6 +99,7 @@ namespace Enemies
             if (intent == null || enemy == null || segmentContainer == null || segmentPrefab == null)
                 return;
 
+            EnsureCombatManager();
             EnemyIntentSegments.BuildRows(intent, _rowsScratch, enemy, _combatManager, intentBuffDamageColor);
             foreach (var row in _rowsScratch)
             {
@@ -107,6 +120,20 @@ namespace Enemies
 
             segment = null;
             return false;
+        }
+
+        void EnsureCombatManager()
+        {
+            if (_combatManager != null)
+                return;
+
+            _combatManager = FindObjectOfType<CombatManager>();
+            if (_combatManager == null)
+            {
+                Debug.LogError(
+                    $"{nameof(EnemyActionUIController)} on '{name}': no {nameof(CombatManager)} in the scene — enemy action numbers cannot include Strength / Chill / etc.",
+                    this);
+            }
         }
 
         private void ClearSegments()
