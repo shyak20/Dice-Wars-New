@@ -72,17 +72,23 @@ public class ShopDieChoicePopupView : MonoBehaviour
             return;
         }
 
+        // Activate before rebuild / auto-select so trayLayout isActiveAndEnabled and coroutines can run.
+        if (panel != null)
+            panel.SetActive(true);
+
         trayLayout.SetHoverTooltipsEnabled(!faceReplaceMode);
         trayLayout.CollapseAllFaceReplaceImmediate();
         RebuildDice();
+        _activeDie = null;
+        if (dieTooltipOverlay != null)
+            dieTooltipOverlay.Hide();
+
         if (faceReplaceMode)
         {
-            trayLayout.StartPrewarmSpreadsForCurrentEntries();
+            if (trayLayout.isActiveAndEnabled)
+                trayLayout.StartPrewarmSpreadsForCurrentEntries();
             OpenFirstCompatibleDieSpread();
         }
-        _activeDie = null;
-        if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
-        if (panel != null) panel.SetActive(true);
     }
 
     void RebuildDice()
@@ -115,39 +121,52 @@ public class ShopDieChoicePopupView : MonoBehaviour
             _openSpreadRoutine = null;
         }
 
-        _openSpreadRoutine = StartCoroutine(CoOpenFirstCompatibleSpread());
+        _openSpreadRoutine = StartCoroutine(CoOpenLeftmostCompatibleSpread());
     }
 
-    IEnumerator CoOpenFirstCompatibleSpread()
+    /// <summary>
+    /// Selects the leftmost tray die (deck order matches left-to-right layout) that can receive the bought face.
+    /// </summary>
+    IEnumerator CoOpenLeftmostCompatibleSpread()
     {
         if (_targetFace == null || trayLayout == null || PlayerDataContainer.Instance?.RuntimeData == null)
             yield break;
 
-        var deck = PlayerDataContainer.Instance.RuntimeData.currentDeck;
-        DieAssetSO targetDie = null;
-        for (var i = 0; i < deck.Count; i++)
-        {
-            var die = deck[i];
-            if (die == null)
-                continue;
-            if (PlayerInventory.IsDieEligibleForFaceReplacement(die, _targetFace))
-            {
-                targetDie = die;
-                break;
-            }
-        }
+        // One frame so HorizontalLayoutGroup positions tray slots after the panel was enabled.
+        yield return null;
 
+        var targetDie = trayLayout.GetLeftmostDie()
+                        ?? FindFirstEligibleDieInDeck();
         if (targetDie == null)
         {
             _openSpreadRoutine = null;
             yield break;
         }
 
-        if (!trayLayout.IsSpreadPrewarmed(targetDie))
+        var guard = 0;
+        while (!trayLayout.IsSpreadPrewarmed(targetDie) && guard++ < 8)
             yield return null;
 
         OnDieClicked(targetDie);
         _openSpreadRoutine = null;
+    }
+
+    DieAssetSO FindFirstEligibleDieInDeck()
+    {
+        var deck = PlayerDataContainer.Instance?.RuntimeData?.currentDeck;
+        if (deck == null || _targetFace == null)
+            return null;
+
+        for (var i = 0; i < deck.Count; i++)
+        {
+            var die = deck[i];
+            if (die == null)
+                continue;
+            if (PlayerInventory.IsDieEligibleForFaceReplacement(die, _targetFace))
+                return die;
+        }
+
+        return null;
     }
 
     void OnDieClicked(DieAssetSO die)

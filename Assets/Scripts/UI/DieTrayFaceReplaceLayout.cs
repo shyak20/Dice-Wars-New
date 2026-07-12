@@ -246,6 +246,28 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         return entry.ButtonView != null ? entry.ButtonView.IconRectTransform : null;
     }
 
+    /// <summary>Leftmost die in the tray (sibling order under the layout container).</summary>
+    public DieAssetSO GetLeftmostDie()
+    {
+        if (diceLayoutContainer == null || _entries.Count == 0)
+            return null;
+
+        for (var i = 0; i < diceLayoutContainer.childCount; i++)
+        {
+            var child = diceLayoutContainer.GetChild(i) as RectTransform;
+            if (child == null)
+                continue;
+
+            foreach (var kv in _entries)
+            {
+                if (kv.Value.SlotRoot == child)
+                    return kv.Key;
+            }
+        }
+
+        return null;
+    }
+
     public void SelectDieForFaceReplace(
         DieAssetSO die,
         DieFaceSO targetFace,
