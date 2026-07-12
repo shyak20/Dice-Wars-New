@@ -4666,6 +4666,31 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+    /// <summary>Final heal amount for a face action after pool lines may have been scaled by Perfect Strike.</summary>
+    public int ResolveHealPoolGrant(HealAction action)
+    {
+        if (action == null || channeledFaces == null)
+            return 0;
+
+        foreach (var face in channeledFaces)
+        {
+            if (face?.ActionPoolContributions == null || face.Actions == null)
+                continue;
+            if (!face.Actions.Contains(action))
+                continue;
+
+            var key = action.GetPoolRowKey();
+            foreach (var c in face.ActionPoolContributions)
+            {
+                if (!c.PoolKey.Equals(key) || c.Amount <= 0)
+                    continue;
+                return Mathf.Max(0, c.Amount);
+            }
+        }
+
+        return Mathf.Max(0, action.Amount * Mathf.Max(1, appliedMultiplier));
+    }
+
     /// <summary>Final cleanse stacks for a face action after pool lines may have been scaled by Perfect Strike.</summary>
     public int ResolveCleansePoolGrant(CleanseAction action)
     {

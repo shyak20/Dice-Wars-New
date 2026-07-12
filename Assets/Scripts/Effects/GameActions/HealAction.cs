@@ -39,21 +39,25 @@ public class HealAction : GameActionWithIcon
         if (context == null || context.CombatManager == null)
             return;
 
-        var healAmount = amount;
         var fromEnemyAction = context.SourceEnemyAction != null;
         if (fromEnemyAction)
         {
             if (GameActionDebug.Enabled)
-                Debug.Log($"[HealAction] Enemy intent heals {healAmount} HP.");
-            context.Enemy?.Heal(healAmount);
+                Debug.Log($"[HealAction] Enemy intent heals {amount} HP.");
+            context.Enemy?.Heal(amount);
             return;
         }
 
+        // Resolve after Perfect Cast / pool edits (same pattern as Cleanse/Thorns) so grant matches the UI stacks.
         context.CombatManager.QueueTurnEndAction(ctx =>
         {
-            var finalHeal = healAmount * ctx.CombatManager.GetAppliedMultiplier();
+            var finalHeal = ctx.CombatManager.ResolveHealPoolGrant(this);
+            if (finalHeal <= 0)
+                return;
+
             if (GameActionDebug.Enabled)
-                Debug.Log($"[HealAction] Healing {finalHeal} HP (base: {healAmount}, multiplier: {ctx.CombatManager.GetAppliedMultiplier()})");
+                Debug.Log(
+                    $"[HealAction] Healing {finalHeal} HP (configured: {amount}, multiplier: {ctx.CombatManager.GetAppliedMultiplier()})");
             ctx.Player.Heal(finalHeal);
         });
     }

@@ -4351,12 +4351,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Select <color=Yellow>one</color> new face you wish to replace with one
-    of your existing die faces.
+  m_text: 'Select <color=Yellow>one</color> new face you wish to <color=Yellow>replace</color>
+    with one of your existing die faces.
 
 
-    Each die can only contain faces that match
-    its type.'
+    Each die can only contain faces that
+    match its type.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
   m_sharedMaterial: {fileID: 158584094896066237, guid: 990c49cf3eb8e4543b7786b9e4e020b0, type: 2}
