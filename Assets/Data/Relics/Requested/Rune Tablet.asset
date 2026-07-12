@@ -16,9 +16,9 @@ MonoBehaviour:
   description: The first dice you roll each turn does not add its value to the Power
     Meter
   rarity: 2
-  icon: {fileID: 0}
-  shopGoldPrice: 0
+  icon: {fileID: 21300000, guid: 510af13cec7443b4b9d171260f6bb3a0, type: 3}
   barBenefitDisplayValue: 0
+  exclusiveHero: {fileID: 0}
   actions:
   - rid: 6494956586993451274
   references:
