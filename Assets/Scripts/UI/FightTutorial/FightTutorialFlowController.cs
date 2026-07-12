@@ -44,10 +44,15 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     bool _sawFirstRoll;
     bool _victoryScreenAppeared;
     bool _faceSelectAppeared;
+    bool _awaitingElementValueDrag;
     bool _flowFinished;
     readonly List<Button> _boundAdvanceButtons = new List<Button>();
     bool _createdOverlayCanvas;
     Coroutine _showPhaseDelayRoutine;
+    CanvasGroup _phaseRootPassthroughGroup;
+    bool _phaseRootPassthroughAdded;
+    bool _phaseRootPassthroughPrevBlocks;
+    bool _phaseRootPassthroughPrevIgnore;
 
     void Awake()
     {
@@ -82,6 +87,8 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnRollResultsResolved += HandleRollResultsResolved;
         CombatEvents.OnVictoryScreenAppeared += HandleVictoryScreenAppeared;
         CombatEvents.OnFaceSelectAppeared += HandleFaceSelectAppeared;
+        CombatEvents.OnTargetAssignmentModeChanged += HandleTargetAssignmentModeChanged;
+        CombatEvents.OnElementValueDroppedOnEnemy += HandleElementValueDroppedOnEnemy;
 
         // Session may have initialized before this object enabled (additive fight / late tutorial root).
         if (!_combatSessionReady)
@@ -90,25 +97,42 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         if (_flowFinished)
             return;
 
-        // Root intentionally off (e.g. FirstEncounterDayVisibility already consumed) — do not drive children.
-        if (rootTutorial != null && !rootTutorial.activeSelf)
-        {
-            _flowFinished = true;
-            return;
-        }
+        SyncElementValueDragStateFromCombat();
 
+        // FirstEncounter may leave rootTutorial inactive; do not kill the flow — ShowPhase re-enables it.
+        // Already-seen phases are skipped via FightTutorialPhaseProgress until progression reset.
         if (_phaseIndex < 0)
             TryBeginOrResumeFlow();
         else if (_waitingToActivate && IsTriggerAlreadySatisfied(_pendingActivateTrigger))
             ShowPhase(phases[_phaseIndex]);
         else if (!_waitingToActivate)
-            // Fight scene preload disables roots after the first OnEnable; re-apply blocker / objects / button.
             RefreshActivePhasePresentation();
     }
 
     bool IsCombatSessionLikelyReady()
     {
         return combatManager != null && combatManager.player != null;
+    }
+
+    void SyncElementValueDragStateFromCombat()
+    {
+        var waiting = IsCombatWaitingForElementValueDrag();
+        if (waiting == _awaitingElementValueDrag)
+            return;
+
+        _awaitingElementValueDrag = waiting;
+        if (waiting)
+            OnCombatTrigger(FightTutorialTrigger.AwaitElementValueDrag);
+    }
+
+    bool IsCombatWaitingForElementValueDrag()
+    {
+        var combat = combatManager != null ? combatManager : FindObjectOfType<CombatManager>();
+        if (combat == null)
+            return false;
+
+        var assignment = combat.TargetAssignment;
+        return assignment != null && assignment.IsWaitingForPlayerAssignment;
     }
 
     void OnDisable()
@@ -119,6 +143,8 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnRollResultsResolved -= HandleRollResultsResolved;
         CombatEvents.OnVictoryScreenAppeared -= HandleVictoryScreenAppeared;
         CombatEvents.OnFaceSelectAppeared -= HandleFaceSelectAppeared;
+        CombatEvents.OnTargetAssignmentModeChanged -= HandleTargetAssignmentModeChanged;
+        CombatEvents.OnElementValueDroppedOnEnemy -= HandleElementValueDroppedOnEnemy;
 
         TearDownActivePhasePresentation();
     }
@@ -134,12 +160,44 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         if (_phaseIndex >= 0)
             return;
 
-        ArmActivateForIndex(0);
+        ArmActivateForIndex(FindNextUnseenPhaseIndex(0));
+    }
+
+    /// <summary>Next phase that has not been shown yet (once-ever prefs). -1 if none remain.</summary>
+    int FindNextUnseenPhaseIndex(int fromInclusive)
+    {
+        if (phases == null)
+            return -1;
+
+        for (var i = Mathf.Max(0, fromInclusive); i < phases.Count; i++)
+        {
+            var phase = phases[i];
+            if (phase == null || phase.phaseRoot == null)
+                continue;
+            if (IsPhaseSeen(phase, i))
+                continue;
+            return i;
+        }
+
+        return -1;
+    }
+
+    bool IsPhaseSeen(FightTutorialPhase phase, int index)
+    {
+        return FightTutorialPhaseProgress.IsSeen(phase.ResolvePersistenceId(index));
+    }
+
+    void MarkPhaseSeen(FightTutorialPhase phase, int index)
+    {
+        if (phase == null)
+            return;
+        FightTutorialPhaseProgress.MarkSeen(phase.ResolvePersistenceId(index));
     }
 
     void ArmActivateForIndex(int index)
     {
-        if (index < 0 || index >= phases.Count)
+        index = FindNextUnseenPhaseIndex(index);
+        if (index < 0)
         {
             EndFlow();
             return;
@@ -155,6 +213,9 @@ public sealed class FightTutorialFlowController : MonoBehaviour
 
         _phaseIndex = index;
         var trigger = phase.activateWhen;
+
+        if (trigger == FightTutorialTrigger.AwaitElementValueDrag)
+            _awaitingElementValueDrag = IsCombatWaitingForElementValueDrag();
 
         if (trigger == FightTutorialTrigger.Immediate || IsTriggerAlreadySatisfied(trigger))
         {
@@ -215,10 +276,67 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         if (phase.phaseRoot != null)
             phase.phaseRoot.SetActive(true);
 
+        // Mark when first shown so later fights skip this tip (until progression reset).
+        MarkPhaseSeen(phase, _phaseIndex);
+
         SetPhaseObjectsActive(phase, true);
         ApplyPhaseSorting(phase);
         SetBlocker(phase.enableInteractionBlocker);
+        ApplyPhaseRootRaycastPassthrough(phase);
         BindAdvanceButton(phase);
+    }
+
+    /// <summary>
+    /// When the interaction blocker is off and this phase has no advance buttons, tip UI must not
+    /// steal raycasts from fight UI (e.g. full-screen invisible Buttons over EnemyDropTarget).
+    /// </summary>
+    void ApplyPhaseRootRaycastPassthrough(FightTutorialPhase phase)
+    {
+        ClearPhaseRootRaycastPassthrough();
+
+        if (phase == null || phase.phaseRoot == null)
+            return;
+
+        if (phase.enableInteractionBlocker || phase.HasAdvanceButtons())
+            return;
+
+        var group = phase.phaseRoot.GetComponent<CanvasGroup>();
+        if (group == null)
+        {
+            group = phase.phaseRoot.AddComponent<CanvasGroup>();
+            _phaseRootPassthroughAdded = true;
+        }
+        else
+        {
+            _phaseRootPassthroughPrevBlocks = group.blocksRaycasts;
+            _phaseRootPassthroughPrevIgnore = group.ignoreParentGroups;
+            _phaseRootPassthroughAdded = false;
+        }
+
+        group.blocksRaycasts = false;
+        _phaseRootPassthroughGroup = group;
+    }
+
+    void ClearPhaseRootRaycastPassthrough()
+    {
+        if (_phaseRootPassthroughGroup == null)
+            return;
+
+        if (_phaseRootPassthroughAdded)
+        {
+            if (Application.isPlaying)
+                Destroy(_phaseRootPassthroughGroup);
+            else
+                DestroyImmediate(_phaseRootPassthroughGroup);
+        }
+        else
+        {
+            _phaseRootPassthroughGroup.blocksRaycasts = _phaseRootPassthroughPrevBlocks;
+            _phaseRootPassthroughGroup.ignoreParentGroups = _phaseRootPassthroughPrevIgnore;
+        }
+
+        _phaseRootPassthroughGroup = null;
+        _phaseRootPassthroughAdded = false;
     }
 
     void StopShowPhaseDelay()
@@ -305,6 +423,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     {
         StopShowPhaseDelay();
         UnbindAdvanceButton();
+        ClearPhaseRootRaycastPassthrough();
         _sorting.Restore();
 
         if (_phaseIndex >= 0 && _phaseIndex < phases.Count)
@@ -324,9 +443,9 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         if (phase?.phaseRoot != null)
             phase.phaseRoot.SetActive(false);
 
-        var next = _phaseIndex + 1;
+        var next = FindNextUnseenPhaseIndex(_phaseIndex + 1);
         _phaseIndex = -1;
-        if (next >= phases.Count)
+        if (next < 0)
         {
             EndFlow();
             return;
@@ -382,6 +501,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
             FightTutorialTrigger.PlayerFirstRoll => _sawFirstRoll,
             FightTutorialTrigger.VictoryScreenAppear => _victoryScreenAppeared,
             FightTutorialTrigger.FaceSelectAppear => _faceSelectAppeared,
+            FightTutorialTrigger.AwaitElementValueDrag => _awaitingElementValueDrag,
             FightTutorialTrigger.Immediate => true,
             _ => false
         };
@@ -390,6 +510,21 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     void HandleCombatSessionInitialized()
     {
         _combatSessionReady = true;
+        // Per-fight flags — a prior fight in the same loaded scene must not auto-satisfy late tips.
+        _sawFirstRoll = false;
+        _victoryScreenAppeared = false;
+        _faceSelectAppeared = false;
+        SyncElementValueDragStateFromCombat();
+
+        // Previous fight may have EndFlow'd while unseen late tips remain (e.g. Victory not yet shown).
+        if (_flowFinished && FindNextUnseenPhaseIndex(0) >= 0)
+        {
+            _flowFinished = false;
+            _phaseIndex = -1;
+            _waitingToActivate = false;
+            TryBeginOrResumeFlow();
+        }
+
         OnCombatTrigger(FightTutorialTrigger.CombatSessionReady);
     }
 
@@ -417,13 +552,42 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     void HandleVictoryScreenAppeared()
     {
         _victoryScreenAppeared = true;
+
+        // Multi-enemy tip is combat-only; if we never got a drag gate, skip it so victory tips can run.
+        if (_waitingToActivate && _pendingActivateTrigger == FightTutorialTrigger.AwaitElementValueDrag)
+            SkipWaitingPhaseWithoutShowing();
+
         OnCombatTrigger(FightTutorialTrigger.VictoryScreenAppear);
+    }
+
+    void SkipWaitingPhaseWithoutShowing()
+    {
+        if (!_waitingToActivate || _phaseIndex < 0)
+            return;
+
+        StopShowPhaseDelay();
+        var next = FindNextUnseenPhaseIndex(_phaseIndex + 1);
+        _waitingToActivate = false;
+        _phaseIndex = -1;
+        ArmActivateForIndex(next);
     }
 
     void HandleFaceSelectAppeared()
     {
         _faceSelectAppeared = true;
         OnCombatTrigger(FightTutorialTrigger.FaceSelectAppear);
+    }
+
+    void HandleTargetAssignmentModeChanged(bool waitingForDrag)
+    {
+        _awaitingElementValueDrag = waitingForDrag;
+        if (waitingForDrag)
+            OnCombatTrigger(FightTutorialTrigger.AwaitElementValueDrag);
+    }
+
+    void HandleElementValueDroppedOnEnemy()
+    {
+        OnCombatTrigger(FightTutorialTrigger.ElementValueDroppedOnEnemy);
     }
 
     void BindAdvanceButton(FightTutorialPhase phase)

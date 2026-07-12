@@ -44,4 +44,15 @@ public enum FightTutorialTrigger
     /// Face reward picker opened with Face Action Options (<see cref="CombatEvents.OnFaceSelectAppeared"/>).
     /// </summary>
     FaceSelectAppear = 9,
+
+    /// <summary>
+    /// Combat is waiting for the player to drag Element Values onto enemies
+    /// (<see cref="CombatEvents.OnTargetAssignmentModeChanged"/> became true).
+    /// </summary>
+    AwaitElementValueDrag = 10,
+
+    /// <summary>
+    /// Player dropped an Element Value token onto an enemy (<see cref="CombatEvents.OnElementValueDroppedOnEnemy"/>).
+    /// </summary>
+    ElementValueDroppedOnEnemy = 11,
 }

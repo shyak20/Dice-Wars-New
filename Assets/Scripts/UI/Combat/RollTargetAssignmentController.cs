@@ -32,6 +32,9 @@ public class RollTargetAssignmentController : MonoBehaviour
 
     public bool HasPendingAssignments => _pendingTokens.Count > 0;
 
+    /// <summary>True while the assignment gate is open and the player must drag tokens onto enemies.</summary>
+    public bool IsWaitingForPlayerAssignment => _gateOpen && _pendingTokens.Count > 0;
+
     public static Material SharedDragHoverOutlineMaterial { get; private set; }
 
     public bool HasPendingTokensForFace(FaceResult face)
@@ -206,6 +209,8 @@ public class RollTargetAssignmentController : MonoBehaviour
 
         if (_pendingTokens.Count == 0)
             CompleteGateIfOpen();
+
+        CombatEvents.OnElementValueDroppedOnEnemy?.Invoke();
     }
 
     /// <summary>When every drag token from this face is assigned, dissolve the 3D die that rolled it.</summary>

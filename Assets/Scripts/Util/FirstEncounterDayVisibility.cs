@@ -38,6 +38,12 @@ public class FirstEncounterDayVisibility : MonoBehaviour
     [Tooltip("When true, consumption is recorded at the end of the first OnEnable where the object stays visible.")]
     [SerializeField] private bool consumeOnEnable = true;
 
+    /// <summary>
+    /// True when prefs already marked this encounter consumed before this Awake.
+    /// Distinct from <see cref="IsConsumed"/> after <see cref="consumeOnEnable"/> runs in the same session.
+    /// </summary>
+    public bool WasConsumedPriorToThisLoad { get; private set; }
+
     private void Awake()
     {
         if (string.IsNullOrWhiteSpace(uniqueKey))
@@ -48,7 +54,8 @@ public class FirstEncounterDayVisibility : MonoBehaviour
             return;
         }
 
-        if (IsAlreadyConsumed())
+        WasConsumedPriorToThisLoad = IsAlreadyConsumed();
+        if (WasConsumedPriorToThisLoad)
             gameObject.SetActive(false);
         else
             gameObject.SetActive(true);
@@ -69,20 +76,33 @@ public class FirstEncounterDayVisibility : MonoBehaviour
             Consume();
     }
 
-    private bool IsAlreadyConsumed()
+    /// <summary>True when this encounter id has already been consumed for <paramref name="mode"/>.</summary>
+    public static bool IsConsumed(string uniqueKey, PersistenceMode mode)
     {
-        var key = BuildStorageKey();
-        switch (persistence)
+        if (string.IsNullOrWhiteSpace(uniqueKey))
+            return false;
+
+        var key = BuildStorageKeyStatic(uniqueKey.Trim(), mode);
+        switch (mode)
         {
             case PersistenceMode.OnceEver:
                 return PlayerPrefs.GetInt(key, 0) != 0;
             case PersistenceMode.OncePerLocalCalendarDay:
-                var today = LocalCalendarDayString();
-                return PlayerPrefs.GetString(key, "") == today;
+                return PlayerPrefs.GetString(key, "") == LocalCalendarDayString();
             default:
-                throw new ArgumentOutOfRangeException(nameof(persistence), persistence, null);
+                throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
         }
     }
+
+    /// <summary>True when this component's configured encounter has already been consumed.</summary>
+    public bool IsConsumed()
+    {
+        if (string.IsNullOrWhiteSpace(uniqueKey))
+            return false;
+        return IsConsumed(uniqueKey.Trim(), persistence);
+    }
+
+    private bool IsAlreadyConsumed() => IsConsumed();
 
     /// <summary>Marks this encounter as done so the object stays hidden per <see cref="persistence"/>.</summary>
     public void Consume()

@@ -1109,6 +1109,7 @@ public sealed class ProgressionManager : MonoBehaviour
     {
         ProgressionSaveService.DeleteAll();
         FirstEncounterDayVisibility.ResetAllStoredProgress();
+        FightTutorialPhaseProgress.ResetAllStoredProgress();
         TryGetRuntime()?.ReloadAfterSaveWipe();
     }
 

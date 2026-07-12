@@ -7,8 +7,13 @@ using UnityEngine.UI;
 [Serializable]
 public sealed class FightTutorialPhase
 {
-    [Tooltip("Optional label for the Inspector only.")]
+    [Tooltip("Optional label for the Inspector only. Also used as the once-ever seen id unless Persistence Id is set.")]
     public string phaseName;
+
+    [Tooltip(
+        "Stable PlayerPrefs id for once-ever phase progress. Leave empty to use Phase Name. " +
+        "Cleared when progression is reset.")]
+    public string persistenceId;
 
     [Tooltip("Root panel for this phase. Enabled while active, disabled when the phase ends.")]
     public GameObject phaseRoot;
@@ -41,7 +46,8 @@ public sealed class FightTutorialPhase
 
     [Tooltip(
         "When true, turns on the Tutorial Controller Interaction Blocker for this phase (blocks fight UI). " +
-        "Turn off for phases that wait on Select Die / Roll so the player can interact.")]
+        "Turn off for phases that need fight interaction (Select Die / Roll / Element Value drag). " +
+        "When off and there are no advance buttons, the phase root also passes raycasts through so tip UI cannot block drops.")]
     [UnityEngine.Serialization.FormerlySerializedAs("blockPlayerInput")]
     public bool enableInteractionBlocker = true;
 
@@ -72,11 +78,25 @@ public sealed class FightTutorialPhase
         return false;
     }
 
+    /// <summary>Stable id used for once-ever seen prefs.</summary>
+    public string ResolvePersistenceId(int phaseIndex)
+    {
+        if (!string.IsNullOrWhiteSpace(persistenceId))
+            return persistenceId.Trim();
+        if (!string.IsNullOrWhiteSpace(phaseName))
+            return phaseName.Trim();
+        return $"PhaseIndex_{phaseIndex}";
+    }
+
     public void Validate(string ownerName, int index)
     {
         var label = string.IsNullOrWhiteSpace(phaseName) ? $"phases[{index}]" : $"'{phaseName}'";
         if (phaseRoot == null)
             Debug.LogError($"{ownerName}: {label} — assign phaseRoot.");
+
+        if (string.IsNullOrWhiteSpace(persistenceId) && string.IsNullOrWhiteSpace(phaseName))
+            Debug.LogError(
+                $"{ownerName}: {label} — assign phaseName or persistenceId so once-ever progress can be stored.");
 
         if (activateWhen == FightTutorialTrigger.None || activateWhen == FightTutorialTrigger.AdvanceButton)
             Debug.LogError($"{ownerName}: {label} — activateWhen cannot be {activateWhen}.");

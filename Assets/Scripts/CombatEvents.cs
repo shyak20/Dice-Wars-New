@@ -171,6 +171,12 @@ public static class CombatEvents
     /// <summary>True while unassigned drag tokens exist on the flyout canvas (includes spawn animation before assignment gate opens).</summary>
     public static Action<bool> OnRollOutcomeTokensPendingChanged;
 
+    /// <summary>
+    /// Fired when the player drops an Element Value / rolled-outcome token onto an enemy
+    /// (<see cref="RollTargetAssignmentController.AssignTokenToEnemy"/>).
+    /// </summary>
+    public static Action OnElementValueDroppedOnEnemy;
+
     // Bust Logic
     public static Action<int, int> OnBustOccurred;
     /// <summary>Player confirmed bust resolution: all channeled element pool rows are cleared, then turn submits.</summary>
