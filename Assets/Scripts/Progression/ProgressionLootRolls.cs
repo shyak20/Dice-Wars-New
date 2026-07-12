@@ -29,7 +29,7 @@ public static class ProgressionLootRolls
         return table.GetRandomGemsFromPool(count, pool);
     }
 
-    public static List<RelicSO> RollRelics(RelicLootTableSO table, int count, bool uniqueInBatch = false)
+    public static List<RelicSO> RollRelics(RelicLootTableSO table, int count, bool uniqueInBatch = true)
     {
         if (table == null)
             return new List<RelicSO>();

@@ -59,7 +59,15 @@ public class UIShopWindow : MonoBehaviour
         var preferred = BuildPreferredTypes();
         if (faceLootTable != null) foreach (var f in ProgressionLootRolls.RollFaces(faceLootTable, faceOfferCount, preferred)) if (f != null) _face.Add(new OfferData { Kind = OfferKind.Face, Face = f, Price = ApplyDiscount(pricingManager.GetDieFacePrice(f), shopDiscountPercent) });
         if (gemLootTable != null) foreach (var g in ProgressionLootRolls.RollGems(gemLootTable, gemOfferCount)) if (g != null) _gem.Add(new OfferData { Kind = OfferKind.Gem, Gem = g, Price = ApplyDiscount(pricingManager.GetGemPrice(g), shopDiscountPercent) });
-        if (relicLootTable != null) foreach (var r in ProgressionLootRolls.RollRelics(relicLootTable, relicOfferCount)) if (r != null) _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = ApplyDiscount(pricingManager.GetRelicPrice(r), shopDiscountPercent) });
+        if (relicLootTable != null)
+        {
+            foreach (var r in ProgressionLootRolls.RollRelics(relicLootTable, relicOfferCount, uniqueInBatch: true))
+            {
+                if (r == null || !RunRelicDraftFilter.IsAvailableForDraft(r))
+                    continue;
+                _relic.Add(new OfferData { Kind = OfferKind.Relic, Relic = r, Price = ApplyDiscount(pricingManager.GetRelicPrice(r), shopDiscountPercent) });
+            }
+        }
         if (dieLootTable != null) foreach (var d in ProgressionLootRolls.RollDice(dieLootTable, dieOfferCount, preferred, 0.7f, true)) if (d != null) _die.Add(new OfferData { Kind = OfferKind.Die, Die = d, Price = ApplyDiscount(pricingManager.GetDiePrice(d), shopDiscountPercent) });
     }
 
@@ -70,25 +78,30 @@ public class UIShopWindow : MonoBehaviour
         return Mathf.Max(1, Mathf.CeilToInt(basePrice * (1f - discountPercent / 100f)));
     }
 
-    void OnRunRelicsChangedForShop()
+    void OnEnable()
     {
-        RefreshShopPricesFromRelics();
-        MarkOwnedRelicOffersSold();
+        // Shop scene may stay loaded while the player acquires relics elsewhere — drop owned offers on show.
+        if (_relic.Count == 0)
+            return;
+        RemoveOwnedRelicOffers();
         RebuildOfferUi();
     }
 
-    void MarkOwnedRelicOffersSold()
+    void OnRunRelicsChangedForShop()
     {
-        var run = RunManager.Instance;
-        if (run == null)
-            return;
+        RefreshShopPricesFromRelics();
+        RemoveOwnedRelicOffers();
+        RebuildOfferUi();
+    }
 
-        foreach (var o in _relic)
+    /// <summary>Owned relics must not remain listed (sold stub or buyable).</summary>
+    void RemoveOwnedRelicOffers()
+    {
+        for (var i = _relic.Count - 1; i >= 0; i--)
         {
-            if (o?.Relic == null || o.Sold)
-                continue;
-            if (run.HasRunRelic(o.Relic))
-                o.Sold = true;
+            var o = _relic[i];
+            if (o?.Relic == null || !RunRelicDraftFilter.IsAvailableForDraft(o.Relic))
+                _relic.RemoveAt(i);
         }
     }
 

@@ -288,6 +288,46 @@ public class CombatUIController : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Ensures tray buttons exist (deck order). Safe to call from tutorial when sorting targets
+    /// need a runtime die slot before <see cref="Start"/>'s delayed init has run.
+    /// </summary>
+    public void EnsureDiceButtonsReady()
+    {
+        if (diceButtonContainer == null)
+        {
+            Debug.LogError("CombatUIController: assign diceButtonContainer.", this);
+            return;
+        }
+
+        if (diceButtons.Count > 0)
+            return;
+
+        CancelInvoke(nameof(InitializeDiceButtons));
+        InitializeDiceButtons();
+    }
+
+    /// <summary>
+    /// Tray die button at <paramref name="trayIndex"/> in deck / display order (0 = first die).
+    /// Call <see cref="EnsureDiceButtonsReady"/> first when resolving tutorial highlights.
+    /// </summary>
+    public bool TryGetTrayDieButtonAt(int trayIndex, out GameObject buttonRoot)
+    {
+        buttonRoot = null;
+        if (trayIndex < 0)
+            return false;
+
+        var order = GetTrayDiceInDisplayOrder();
+        if (trayIndex >= order.Count)
+            return false;
+
+        if (!diceButtons.TryGetValue(order[trayIndex], out var button) || button == null)
+            return false;
+
+        buttonRoot = button.gameObject;
+        return true;
+    }
+
     private void EnsureRollCastOddsTooltips()
     {
         EnsureRollCastOddsTooltip(rollButton, RollButtonCastOddsHoverTooltip.CastOddsDiceSource.CurrentSelection);

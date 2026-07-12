@@ -364,7 +364,7 @@ public sealed class MapTreasurePanel : MonoBehaviour
         if (pack.relicDropLootTable != null && Random.value <= pack.relicDropChance)
         {
             var rolled = ProgressionLootRolls.RollRelics(pack.relicDropLootTable, 1);
-            if (rolled.Count > 0 && rolled[0] != null)
+            if (rolled.Count > 0 && rolled[0] != null && RunRelicDraftFilter.IsAvailableForDraft(rolled[0]))
             {
                 destination.Add(new RolledReward
                 {

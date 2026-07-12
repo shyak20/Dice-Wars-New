@@ -18,4 +18,15 @@ public static class VictoryRewardBuffer
         PendingRelics.Clear();
         PendingDice.Clear();
     }
+
+    /// <summary>Queues a relic for win-stage collection only if the run does not already own it.</summary>
+    public static bool TryAddPendingRelic(RelicSO relic)
+    {
+        if (relic == null || !RunRelicDraftFilter.IsAvailableForDraft(relic))
+            return false;
+        if (PendingRelics.Contains(relic))
+            return false;
+        PendingRelics.Add(relic);
+        return true;
+    }
 }

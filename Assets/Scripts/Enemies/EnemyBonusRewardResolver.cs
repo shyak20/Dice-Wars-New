@@ -91,7 +91,8 @@ public static class EnemyBonusRewardResolver
         if (enemy.relicRewardPool == null) return;
         var roll = ProgressionLootRolls.RollRelics(enemy.relicRewardPool, 1);
         if (roll.Count == 0 || roll[0] == null) return;
-        VictoryRewardBuffer.PendingRelics.Add(roll[0]);
+        if (!VictoryRewardBuffer.TryAddPendingRelic(roll[0]))
+            return;
         Debug.Log($"Enemy bonus reward: queued relic '{roll[0].title}' for win-stage collection.");
     }
 

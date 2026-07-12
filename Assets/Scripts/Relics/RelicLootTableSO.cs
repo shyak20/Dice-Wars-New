@@ -25,7 +25,8 @@ public class RelicLootTableSO : ScriptableObject
             return selected;
         }
 
-        var pool = candidatePool.Where(r => r != null).ToList();
+        // Never draft relics the run already owns (shop, treasure, fight bonus, map events).
+        var pool = RunRelicDraftFilter.ExcludeRunOwned(candidatePool);
         for (var i = 0; i < count && pool.Count > 0; i++)
         {
             var totalWeight = pool.Sum(r => rarityConfig.GetWeight(r.rarity));

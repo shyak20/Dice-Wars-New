@@ -91,7 +91,12 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         _pendingGemRewards.Clear();
         _pendingGemRewards.AddRange(VictoryRewardBuffer.PendingGems);
         _pendingRelicRewards.Clear();
-        _pendingRelicRewards.AddRange(VictoryRewardBuffer.PendingRelics);
+        for (var i = 0; i < VictoryRewardBuffer.PendingRelics.Count; i++)
+        {
+            var relic = VictoryRewardBuffer.PendingRelics[i];
+            if (relic != null && RunRelicDraftFilter.IsAvailableForDraft(relic))
+                _pendingRelicRewards.Add(relic);
+        }
         _pendingDieRewards.Clear();
         _pendingDieRewards.AddRange(VictoryRewardBuffer.PendingDice);
         _uncollectedGemRewards = 0;
