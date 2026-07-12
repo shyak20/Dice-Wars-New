@@ -4672,6 +4672,9 @@ public class CombatManager : MonoBehaviour
         if (action == null || channeledFaces == null)
             return 0;
 
+        var key = action.GetPoolRowKey();
+        var fromPool = 0;
+        var foundPoolRow = false;
         foreach (var face in channeledFaces)
         {
             if (face?.ActionPoolContributions == null || face.Actions == null)
@@ -4679,16 +4682,27 @@ public class CombatManager : MonoBehaviour
             if (!face.Actions.Contains(action))
                 continue;
 
-            var key = action.GetPoolRowKey();
             foreach (var c in face.ActionPoolContributions)
             {
-                if (!c.PoolKey.Equals(key) || c.Amount <= 0)
+                if (!c.PoolKey.Equals(key) || c.Amount <= 0 || c.VisualFlyoutOnly)
                     continue;
-                return Mathf.Max(0, c.Amount);
+                fromPool = c.Amount;
+                foundPoolRow = true;
+                break;
             }
+
+            break;
         }
 
-        return Mathf.Max(0, action.Amount * Mathf.Max(1, appliedMultiplier));
+        var fallback = Mathf.Max(0, action.Amount * Mathf.Max(1, appliedMultiplier));
+        if (!foundPoolRow)
+            return fallback;
+
+        // Jackpot UI can show amount×multiplier even when this contribution row was not scaled in-place.
+        if (appliedMultiplier > 1 && fromPool == action.Amount)
+            return fallback;
+
+        return Mathf.Max(0, fromPool);
     }
 
     /// <summary>Final cleanse stacks for a face action after pool lines may have been scaled by Perfect Strike.</summary>
@@ -5134,6 +5148,11 @@ public class CombatManager : MonoBehaviour
             }
         }
 
+        // Heal must use the flown/displayed total (Perfect Cast already baked in). Resolving from
+        // FacePoolExtraContribution alone can miss UI-only jackpot scaling and under-heal.
+        if (TryApplyHealRowAtStatusBar(key, amount))
+            return;
+
         foreach (var face in channeledFaces)
         {
             if (face == null)
@@ -5168,6 +5187,37 @@ public class CombatManager : MonoBehaviour
                 TryExecuteDeferredPlayerPoolAction(face, action);
             }
         }
+    }
+
+    /// <summary>
+    /// Applies the drained Heal row amount once and marks matching <see cref="HealAction"/>s so deferred
+    /// execute / turn-end queues do not heal again at the unscaled contribution value.
+    /// </summary>
+    bool TryApplyHealRowAtStatusBar(PoolRowKey key, int amount)
+    {
+        var matched = false;
+        foreach (var face in channeledFaces)
+        {
+            if (face?.Actions == null)
+                continue;
+
+            foreach (var action in face.Actions)
+            {
+                if (action is not HealAction heal || heal.ActivateImmediately)
+                    continue;
+                if (!heal.GetPoolRowKey().Equals(key))
+                    continue;
+
+                _playerPoolActionsAppliedViaStatusBar.Add(heal);
+                matched = true;
+            }
+        }
+
+        if (!matched)
+            return false;
+
+        player.Heal(amount);
+        return true;
     }
 
     static bool DeferredActionMatchesPoolRow(IGameAction action, PoolRowKey key)

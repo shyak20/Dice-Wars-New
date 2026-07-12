@@ -22,16 +22,16 @@ MonoBehaviour:
   damage: 0
   numberOfAttacks: 1
   armor: 0
-  actionAnimatorStateName: Attack
+  actionAnimatorTriggerName: Attack
   actionAnimationLeadInSeconds: 0.2
   actions:
   - rid: 6494956586993451334
   - rid: 6494956586993451333
   actionTooltips:
   - title: <style=Cleanse>Cleanse</style>
-    description: Cleanse <style=Cleanse>10</style>
+    description: Cleanse <style=Cleanse>5</style>
   - title: <style=Heal>Heal</style>
-    description: Heal <style=Heal>10</style>
+    description: Heal <style=Heal>5</style>
   references:
     version: 2
     RefIds:
@@ -39,10 +39,13 @@ MonoBehaviour:
       type: {class: HealAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 1
-        amount: 10
+        triggerImmediatelyOnDrop: 0
+        amount: 5
         poolRowId: Heal
     - rid: 6494956586993451334
       type: {class: CleanseAction, ns: , asm: Assembly-CSharp}
       data:
         activateImmediately: 1
-        stacks: 10
+        triggerImmediatelyOnDrop: 0
+        stacks: 5
+        poolRowId: Cleanse
