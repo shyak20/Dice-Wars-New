@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using AssetKits.ParticleImage;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Spread animation root for in-tray face replacement. Binds die faces to child <see cref="DieFaceSpreadSlotView"/> slots.
@@ -14,6 +16,7 @@ public sealed class DieFaceSpreadView : MonoBehaviour
 
     private int _selectedBoolParamHash;
     private ParticleImage[] _particleImages;
+    private Func<int, bool> _slotAllowed;
 
     public DieAssetSO BoundDie { get; private set; }
 
@@ -83,6 +86,7 @@ public sealed class DieFaceSpreadView : MonoBehaviour
             throw new ArgumentNullException(nameof(die));
 
         BoundDie = die;
+        _slotAllowed = slotAllowed;
         tooltipOverlay?.HideFaceReplacementRuleError();
 
         for (var i = 0; i < faceSlots.Length; i++)
@@ -119,6 +123,23 @@ public sealed class DieFaceSpreadView : MonoBehaviour
         {
             if (faceSlots[i] != null)
                 faceSlots[i].SetInteractable(interactable);
+        }
+    }
+
+    /// <summary>Appends each replaceable face-slot option <see cref="Button"/> currently bound on this spread.</summary>
+    public void CollectSlotButtons(List<Button> destination)
+    {
+        if (destination == null || faceSlots == null)
+            return;
+
+        for (var i = 0; i < faceSlots.Length; i++)
+        {
+            var slotView = faceSlots[i];
+            if (slotView?.RewardSlot?.OptionButton == null)
+                continue;
+            if (_slotAllowed != null && !_slotAllowed(slotView.FaceIndex))
+                continue;
+            destination.Add(slotView.RewardSlot.OptionButton);
         }
     }
 

@@ -145,6 +145,23 @@ public class FacePickerView : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Appends controls that finish the face-replace tip: Back (when wired) and face slots on the active die spread.
+    /// </summary>
+    public void CollectFaceReplaceAdvanceButtons(List<Button> destination)
+    {
+        if (destination == null)
+            return;
+
+        if (backButton != null && backButton.gameObject.activeInHierarchy)
+            destination.Add(backButton);
+
+        trayLayout?.CollectActiveSpreadSlotButtons(destination);
+    }
+
+    /// <summary>True while a reward face is selected and the player is choosing a die face to replace.</summary>
+    public bool IsInFaceReplacePhase => _selectedRewardFace != null && IsShown;
+
     public void Hide()
     {
         if (_openSpreadRoutine != null)
@@ -402,6 +419,7 @@ public class FacePickerView : MonoBehaviour
 
         if (targetDie == null)
         {
+            CombatEvents.OnFaceSelectReplaceAppeared?.Invoke();
             _openSpreadRoutine = null;
             yield break;
         }
@@ -410,6 +428,7 @@ public class FacePickerView : MonoBehaviour
             yield return null;
 
         OnDieClicked(targetDie);
+        CombatEvents.OnFaceSelectReplaceAppeared?.Invoke();
         _openSpreadRoutine = null;
     }
 

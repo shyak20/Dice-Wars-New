@@ -144,6 +144,12 @@ public static class CombatEvents
     /// </summary>
     public static Action OnFaceSelectAppeared;
 
+    /// <summary>
+    /// Fired when the face picker enters replacement mode after a reward face is chosen
+    /// (<see cref="FacePickerView"/> phase C — die face slots available).
+    /// </summary>
+    public static Action OnFaceSelectReplaceAppeared;
+
     /// <summary>Fired when <see cref="PlayerStatus"/> HP reaches 0 after damage. Combat listens and shows defeat.</summary>
     public static Action OnPlayerHealthDepleted;
 

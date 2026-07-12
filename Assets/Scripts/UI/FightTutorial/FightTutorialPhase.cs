@@ -37,6 +37,11 @@ public sealed class FightTutorialPhase
     public bool useFaceSelectOptionsAsAdvanceButtons;
 
     [Tooltip(
+        "When true, the face-picker Back button and die face-replace slots also act as advance buttons " +
+        "(resolved when the phase presents — use with Activate When = Face Select Replace Appear).")]
+    public bool useFaceSelectReplaceControlsAsAdvanceButtons;
+
+    [Tooltip(
         "When true, RunRewardOfferRow action buttons on the win stage also act as advance buttons " +
         "(resolved when the phase presents — use with Activate When = Victory Screen Appear).")]
     public bool useVictoryRewardRowsAsAdvanceButtons;
@@ -62,6 +67,10 @@ public sealed class FightTutorialPhase
     public bool HasAdvanceButtons()
     {
         if (useFaceSelectOptionsAsAdvanceButtons || activateWhen == FightTutorialTrigger.FaceSelectAppear)
+            return true;
+
+        if (useFaceSelectReplaceControlsAsAdvanceButtons ||
+            activateWhen == FightTutorialTrigger.FaceSelectReplaceAppear)
             return true;
 
         if (useVictoryRewardRowsAsAdvanceButtons || activateWhen == FightTutorialTrigger.VictoryScreenAppear)
@@ -106,7 +115,7 @@ public sealed class FightTutorialPhase
 
         if ((completeWhen == FightTutorialTrigger.AdvanceButton || allowButtonSkip) && !HasAdvanceButtons())
             Debug.LogError(
-                $"{ownerName}: {label} — assign advanceButtons, or use Face Select / Victory Screen dynamic advance options.");
+                $"{ownerName}: {label} — assign advanceButtons, or use Face Select / Face Select Replace / Victory Screen dynamic advance options.");
 
         if (advanceButtons != null)
         {

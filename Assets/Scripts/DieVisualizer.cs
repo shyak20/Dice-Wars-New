@@ -99,7 +99,25 @@ public class DieVisualizer : MonoBehaviour
             DieFaceEffectIconMaterialUtility.ApplySprite(runtimeMaterial, iconSprite);
             _faceIconRuntimeMaterials[faceIndex] = runtimeMaterial;
             iconRenderer.sharedMaterial = runtimeMaterial;
+            DisablePhysicsCollidersOnFaceIcon(iconRenderer.gameObject);
             iconRenderer.gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// Face icon quads ship with non-convex MeshColliders for picking leftovers.
+    /// Those shapes are illegal on a dynamic Rigidbody and break kinematic→dynamic rerolls.
+    /// </summary>
+    static void DisablePhysicsCollidersOnFaceIcon(GameObject iconObject)
+    {
+        if (iconObject == null)
+            return;
+
+        var meshColliders = iconObject.GetComponents<MeshCollider>();
+        for (var i = 0; i < meshColliders.Length; i++)
+        {
+            if (meshColliders[i] != null)
+                meshColliders[i].enabled = false;
         }
     }
 
@@ -119,12 +137,19 @@ public class DieVisualizer : MonoBehaviour
         }
 
         if (allAssigned)
+        {
+            for (var i = 0; i < DieFaceTopology.FaceCount; i++)
+                DisablePhysicsCollidersOnFaceIcon(faceEffectIconRenderers[i].gameObject);
             return;
+        }
 
         for (var faceIndex = 0; faceIndex < DieFaceTopology.FaceCount; faceIndex++)
         {
             if (faceEffectIconRenderers[faceIndex] != null)
+            {
+                DisablePhysicsCollidersOnFaceIcon(faceEffectIconRenderers[faceIndex].gameObject);
                 continue;
+            }
 
             var faceLabel = DieFaceEffectIconResolver.TopologyIndexToFaceLabel(faceIndex);
             faceEffectIconRenderers[faceIndex] = FindFaceIconRenderer(faceLabel);
@@ -133,7 +158,10 @@ public class DieVisualizer : MonoBehaviour
                 Debug.LogError(
                     $"DieVisualizer on '{name}': could not find a MeshRenderer on child GameObject 'Face {faceLabel} Icon'.",
                     this);
+                continue;
             }
+
+            DisablePhysicsCollidersOnFaceIcon(faceEffectIconRenderers[faceIndex].gameObject);
         }
     }
 

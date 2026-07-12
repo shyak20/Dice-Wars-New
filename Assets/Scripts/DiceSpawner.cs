@@ -86,11 +86,55 @@ public class DiceSpawner : MonoBehaviour
     /// <summary>Apply a fresh throw and wait for settlement again (same die instance).</summary>
     public void RerollDiePhysics(GameObject die)
     {
-        if (die == null) return;
+        if (die == null)
+            return;
+
+        if (dissolvingDice.Contains(die))
+        {
+            Debug.LogWarning($"DiceSpawner: cannot reroll '{die.name}' — dissolve already started.", die);
+            return;
+        }
+
         var rb = die.GetComponent<Rigidbody>();
         var roller = die.GetComponent<DiceRoller>();
-        if (rb != null) ApplyRerollForces(rb);
-        if (roller != null) roller.StartCheckingResult();
+        if (rb != null)
+        {
+            PrepareDieCollidersForDynamicPhysics(die);
+            // Settlement leaves the body kinematic; AddForce is ignored until simulation is re-enabled.
+            rb.isKinematic = false;
+            ApplyRerollForces(rb);
+            rb.WakeUp();
+        }
+
+        if (roller != null)
+        {
+            if (!roller.enabled)
+                roller.enabled = true;
+            roller.StartCheckingResult();
+        }
+    }
+
+    /// <summary>
+    /// Dynamic rigidbodies cannot carry non-convex MeshColliders (face-icon quads).
+    /// Keep the root BoxCollider as the only physics shape for throws / rerolls.
+    /// </summary>
+    static void PrepareDieCollidersForDynamicPhysics(GameObject die)
+    {
+        if (die == null)
+            return;
+
+        var box = die.GetComponent<BoxCollider>();
+        if (box != null)
+            box.enabled = true;
+
+        var meshColliders = die.GetComponentsInChildren<MeshCollider>(true);
+        for (var i = 0; i < meshColliders.Length; i++)
+        {
+            var meshCollider = meshColliders[i];
+            if (meshCollider == null || meshCollider.convex)
+                continue;
+            meshCollider.enabled = false;
+        }
     }
 
     /// <summary>
@@ -142,7 +186,11 @@ public class DiceSpawner : MonoBehaviour
                 DieVisualizer visualizer = die.GetComponent<DieVisualizer>();
                 if (visualizer != null) visualizer.Initialize(diceList[i]);
                 Rigidbody rb = die.GetComponent<Rigidbody>();
-                if (rb != null) ApplyForces(rb, placement.NormalizedLateralOffset);
+                if (rb != null)
+                {
+                    PrepareDieCollidersForDynamicPhysics(die);
+                    ApplyForces(rb, placement.NormalizedLateralOffset);
+                }
                 DiceRoller roller = die.GetComponent<DiceRoller>();
                 if (roller != null)
                 {

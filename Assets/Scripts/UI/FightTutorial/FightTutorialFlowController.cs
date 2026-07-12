@@ -44,6 +44,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     bool _sawFirstRoll;
     bool _victoryScreenAppeared;
     bool _faceSelectAppeared;
+    bool _faceSelectReplaceAppeared;
     bool _awaitingElementValueDrag;
     bool _flowFinished;
     readonly List<Button> _boundAdvanceButtons = new List<Button>();
@@ -87,6 +88,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnRollResultsResolved += HandleRollResultsResolved;
         CombatEvents.OnVictoryScreenAppeared += HandleVictoryScreenAppeared;
         CombatEvents.OnFaceSelectAppeared += HandleFaceSelectAppeared;
+        CombatEvents.OnFaceSelectReplaceAppeared += HandleFaceSelectReplaceAppeared;
         CombatEvents.OnTargetAssignmentModeChanged += HandleTargetAssignmentModeChanged;
         CombatEvents.OnElementValueDroppedOnEnemy += HandleElementValueDroppedOnEnemy;
 
@@ -143,6 +145,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnRollResultsResolved -= HandleRollResultsResolved;
         CombatEvents.OnVictoryScreenAppeared -= HandleVictoryScreenAppeared;
         CombatEvents.OnFaceSelectAppeared -= HandleFaceSelectAppeared;
+        CombatEvents.OnFaceSelectReplaceAppeared -= HandleFaceSelectReplaceAppeared;
         CombatEvents.OnTargetAssignmentModeChanged -= HandleTargetAssignmentModeChanged;
         CombatEvents.OnElementValueDroppedOnEnemy -= HandleElementValueDroppedOnEnemy;
 
@@ -501,6 +504,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
             FightTutorialTrigger.PlayerFirstRoll => _sawFirstRoll,
             FightTutorialTrigger.VictoryScreenAppear => _victoryScreenAppeared,
             FightTutorialTrigger.FaceSelectAppear => _faceSelectAppeared,
+            FightTutorialTrigger.FaceSelectReplaceAppear => _faceSelectReplaceAppeared,
             FightTutorialTrigger.AwaitElementValueDrag => _awaitingElementValueDrag,
             FightTutorialTrigger.Immediate => true,
             _ => false
@@ -514,6 +518,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         _sawFirstRoll = false;
         _victoryScreenAppeared = false;
         _faceSelectAppeared = false;
+        _faceSelectReplaceAppeared = false;
         SyncElementValueDragStateFromCombat();
 
         // Previous fight may have EndFlow'd while unseen late tips remain (e.g. Victory not yet shown).
@@ -578,6 +583,12 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         OnCombatTrigger(FightTutorialTrigger.FaceSelectAppear);
     }
 
+    void HandleFaceSelectReplaceAppeared()
+    {
+        _faceSelectReplaceAppeared = true;
+        OnCombatTrigger(FightTutorialTrigger.FaceSelectReplaceAppear);
+    }
+
     void HandleTargetAssignmentModeChanged(bool waitingForDrag)
     {
         _awaitingElementValueDrag = waitingForDrag;
@@ -615,6 +626,10 @@ public sealed class FightTutorialFlowController : MonoBehaviour
             phase.activateWhen == FightTutorialTrigger.FaceSelectAppear)
             BindFaceSelectOptionAdvanceButtons();
 
+        if (phase.useFaceSelectReplaceControlsAsAdvanceButtons ||
+            phase.activateWhen == FightTutorialTrigger.FaceSelectReplaceAppear)
+            BindFaceSelectReplaceAdvanceButtons();
+
         if (phase.useVictoryRewardRowsAsAdvanceButtons ||
             phase.activateWhen == FightTutorialTrigger.VictoryScreenAppear)
             BindVictoryRewardRowAdvanceButtons();
@@ -637,6 +652,31 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         {
             Debug.LogError(
                 $"{nameof(FightTutorialFlowController)} on '{name}': Face Select Option buttons were empty — open the face picker before this phase presents.",
+                this);
+            return;
+        }
+
+        for (var i = 0; i < scratch.Count; i++)
+            BindOneAdvanceButton(scratch[i]);
+    }
+
+    void BindFaceSelectReplaceAdvanceButtons()
+    {
+        var picker = EnsureFacePickerView();
+        if (picker == null)
+        {
+            Debug.LogError(
+                $"{nameof(FightTutorialFlowController)} on '{name}': assign facePickerView (or ensure a FacePickerView is in the scene) for Face Select Replace advance buttons.",
+                this);
+            return;
+        }
+
+        var scratch = new List<Button>();
+        picker.CollectFaceReplaceAdvanceButtons(scratch);
+        if (scratch.Count == 0)
+        {
+            Debug.LogError(
+                $"{nameof(FightTutorialFlowController)} on '{name}': Face Select Replace controls were empty — Back / die face slots must exist when this phase presents.",
                 this);
             return;
         }

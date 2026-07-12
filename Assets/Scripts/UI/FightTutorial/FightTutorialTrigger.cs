@@ -55,4 +55,10 @@ public enum FightTutorialTrigger
     /// Player dropped an Element Value token onto an enemy (<see cref="CombatEvents.OnElementValueDroppedOnEnemy"/>).
     /// </summary>
     ElementValueDroppedOnEnemy = 11,
+
+    /// <summary>
+    /// Face picker entered replacement phase (reward face chosen; die face slots are available)
+    /// (<see cref="CombatEvents.OnFaceSelectReplaceAppeared"/>).
+    /// </summary>
+    FaceSelectReplaceAppear = 12,
 }

@@ -343,6 +343,18 @@ public sealed class DieTrayFaceReplaceLayout : MonoBehaviour
         entry.SpreadView.SetAllSlotsInteractable(interactable);
     }
 
+    /// <summary>Appends face-slot buttons from the currently open face-replace spread.</summary>
+    public void CollectActiveSpreadSlotButtons(List<Button> destination)
+    {
+        if (destination == null || _activeSpreadDie == null)
+            return;
+
+        if (!_entries.TryGetValue(_activeSpreadDie, out var entry) || entry.SpreadView == null)
+            return;
+
+        entry.SpreadView.CollectSlotButtons(destination);
+    }
+
     void BeginCollapseSpread(DieAssetSO die, Action onComplete)
     {
         if (die == null || !_entries.TryGetValue(die, out var entry) || entry.SpreadView == null || !entry.SpreadView.gameObject.activeSelf)
