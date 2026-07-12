@@ -1108,6 +1108,7 @@ public sealed class ProgressionManager : MonoBehaviour
     public static void ClearAllSavedProgress()
     {
         ProgressionSaveService.DeleteAll();
+        FirstEncounterDayVisibility.ResetAllStoredProgress();
         TryGetRuntime()?.ReloadAfterSaveWipe();
     }
 

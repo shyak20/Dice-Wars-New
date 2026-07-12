@@ -134,9 +134,15 @@ public static class CombatEvents
 
     /// <summary>
     /// Fired when the win-stage / victory panel is shown (<see cref="WinStageFlowController"/>),
-    /// after any post-victory delay — not when victory is first declared.
+    /// after any post-victory delay. On first intro, fires after reward rows are spawned.
     /// </summary>
     public static Action OnVictoryScreenAppeared;
+
+    /// <summary>
+    /// Fired when the face reward picker is shown with Face Action Option slots built
+    /// (<see cref="FacePickerView.Show"/>).
+    /// </summary>
+    public static Action OnFaceSelectAppeared;
 
     /// <summary>Fired when <see cref="PlayerStatus"/> HP reaches 0 after damage. Combat listens and shows defeat.</summary>
     public static Action OnPlayerHealthDepleted;

@@ -43,6 +43,9 @@ public class UIRewardSlot : MonoBehaviour
     private int _curseAnimatorBoolHash;
     public DieFaceSO Face => _face;
 
+    /// <summary>Click target for this Face Action Option card (may be null if misconfigured).</summary>
+    public Button OptionButton => button;
+
     private void Awake()
     {
         if (button == null)

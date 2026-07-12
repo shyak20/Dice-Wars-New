@@ -29,6 +29,9 @@ public class RunRewardOfferRow : MonoBehaviour
     [SerializeField] private TMP_Text numberTextField;
     [SerializeField] private Button actionButton;
 
+    /// <summary>Click target for this reward row (Collect / Choose Face / etc.).</summary>
+    public Button ActionButton => actionButton;
+
     private IRewardOfferFlowHost _host;
     private FaceRewardManager _faceRewards;
 

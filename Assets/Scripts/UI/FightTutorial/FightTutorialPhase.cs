@@ -26,6 +26,16 @@ public sealed class FightTutorialPhase
     [Tooltip("Any of these buttons finish the phase when Complete When is Advance Button (or Allow Button Skip is on).")]
     public List<Button> advanceButtons = new List<Button>();
 
+    [Tooltip(
+        "When true, Face Action Option buttons from the face picker also act as advance buttons " +
+        "(resolved when the phase presents — use with Activate When = Face Select Appear).")]
+    public bool useFaceSelectOptionsAsAdvanceButtons;
+
+    [Tooltip(
+        "When true, RunRewardOfferRow action buttons on the win stage also act as advance buttons " +
+        "(resolved when the phase presents — use with Activate When = Victory Screen Appear).")]
+    public bool useVictoryRewardRowsAsAdvanceButtons;
+
     [Tooltip("If Complete When is a combat trigger, also finish when any advance button is clicked.")]
     public bool allowButtonSkip;
 
@@ -45,6 +55,12 @@ public sealed class FightTutorialPhase
 
     public bool HasAdvanceButtons()
     {
+        if (useFaceSelectOptionsAsAdvanceButtons || activateWhen == FightTutorialTrigger.FaceSelectAppear)
+            return true;
+
+        if (useVictoryRewardRowsAsAdvanceButtons || activateWhen == FightTutorialTrigger.VictoryScreenAppear)
+            return true;
+
         if (advanceButtons == null || advanceButtons.Count == 0)
             return false;
         for (var i = 0; i < advanceButtons.Count; i++)
@@ -69,7 +85,8 @@ public sealed class FightTutorialPhase
             Debug.LogError($"{ownerName}: {label} — completeWhen cannot be {completeWhen}.");
 
         if ((completeWhen == FightTutorialTrigger.AdvanceButton || allowButtonSkip) && !HasAdvanceButtons())
-            Debug.LogError($"{ownerName}: {label} — assign at least one advanceButtons entry for button completion.");
+            Debug.LogError(
+                $"{ownerName}: {label} — assign advanceButtons, or use Face Select / Victory Screen dynamic advance options.");
 
         if (advanceButtons != null)
         {

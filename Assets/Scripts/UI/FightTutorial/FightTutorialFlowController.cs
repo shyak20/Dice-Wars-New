@@ -15,6 +15,12 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     [Tooltip("Used to resolve Dice Tray Index sorting targets to runtime-spawned die buttons.")]
     [SerializeField] private CombatUIController combatUIController;
 
+    [Tooltip("Used to resolve Face Action Option advance buttons when Use Face Select Options As Advance Buttons is on.")]
+    [SerializeField] private FacePickerView facePickerView;
+
+    [Tooltip("Used to resolve win-stage RunRewardOfferRow action buttons for Victory Screen Appear phases.")]
+    [SerializeField] private WinStageFlowController winStageFlowController;
+
     [Tooltip("Whole tutorial root — disabled when the last phase completes.")]
     [SerializeField] private GameObject rootTutorial;
 
@@ -37,6 +43,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
     bool _combatSessionReady;
     bool _sawFirstRoll;
     bool _victoryScreenAppeared;
+    bool _faceSelectAppeared;
     bool _flowFinished;
     readonly List<Button> _boundAdvanceButtons = new List<Button>();
     bool _createdOverlayCanvas;
@@ -74,6 +81,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnRollCommand += HandleRollCommand;
         CombatEvents.OnRollResultsResolved += HandleRollResultsResolved;
         CombatEvents.OnVictoryScreenAppeared += HandleVictoryScreenAppeared;
+        CombatEvents.OnFaceSelectAppeared += HandleFaceSelectAppeared;
 
         // Session may have initialized before this object enabled (additive fight / late tutorial root).
         if (!_combatSessionReady)
@@ -110,6 +118,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         CombatEvents.OnRollCommand -= HandleRollCommand;
         CombatEvents.OnRollResultsResolved -= HandleRollResultsResolved;
         CombatEvents.OnVictoryScreenAppeared -= HandleVictoryScreenAppeared;
+        CombatEvents.OnFaceSelectAppeared -= HandleFaceSelectAppeared;
 
         TearDownActivePhasePresentation();
     }
@@ -372,6 +381,7 @@ public sealed class FightTutorialFlowController : MonoBehaviour
             FightTutorialTrigger.CombatSessionReady => _combatSessionReady,
             FightTutorialTrigger.PlayerFirstRoll => _sawFirstRoll,
             FightTutorialTrigger.VictoryScreenAppear => _victoryScreenAppeared,
+            FightTutorialTrigger.FaceSelectAppear => _faceSelectAppeared,
             FightTutorialTrigger.Immediate => true,
             _ => false
         };
@@ -410,27 +420,119 @@ public sealed class FightTutorialFlowController : MonoBehaviour
         OnCombatTrigger(FightTutorialTrigger.VictoryScreenAppear);
     }
 
+    void HandleFaceSelectAppeared()
+    {
+        _faceSelectAppeared = true;
+        OnCombatTrigger(FightTutorialTrigger.FaceSelectAppear);
+    }
+
     void BindAdvanceButton(FightTutorialPhase phase)
     {
         UnbindAdvanceButton();
 
-        if (phase == null || !phase.HasAdvanceButtons())
+        if (phase == null)
             return;
 
         if (phase.completeWhen != FightTutorialTrigger.AdvanceButton && !phase.allowButtonSkip)
             return;
 
-        for (var i = 0; i < phase.advanceButtons.Count; i++)
+        if (phase.advanceButtons != null)
         {
-            var button = phase.advanceButtons[i];
-            if (button == null)
-                continue;
-
-            button.interactable = true;
-            button.onClick.RemoveListener(OnAdvanceClicked);
-            button.onClick.AddListener(OnAdvanceClicked);
-            _boundAdvanceButtons.Add(button);
+            for (var i = 0; i < phase.advanceButtons.Count; i++)
+            {
+                var button = phase.advanceButtons[i];
+                if (button == null)
+                    continue;
+                BindOneAdvanceButton(button);
+            }
         }
+
+        if (phase.useFaceSelectOptionsAsAdvanceButtons ||
+            phase.activateWhen == FightTutorialTrigger.FaceSelectAppear)
+            BindFaceSelectOptionAdvanceButtons();
+
+        if (phase.useVictoryRewardRowsAsAdvanceButtons ||
+            phase.activateWhen == FightTutorialTrigger.VictoryScreenAppear)
+            BindVictoryRewardRowAdvanceButtons();
+    }
+
+    void BindFaceSelectOptionAdvanceButtons()
+    {
+        var picker = EnsureFacePickerView();
+        if (picker == null)
+        {
+            Debug.LogError(
+                $"{nameof(FightTutorialFlowController)} on '{name}': assign facePickerView (or ensure a FacePickerView is in the scene) for Face Select Option advance buttons.",
+                this);
+            return;
+        }
+
+        var scratch = new List<Button>();
+        picker.CollectOptionButtons(scratch);
+        if (scratch.Count == 0)
+        {
+            Debug.LogError(
+                $"{nameof(FightTutorialFlowController)} on '{name}': Face Select Option buttons were empty — open the face picker before this phase presents.",
+                this);
+            return;
+        }
+
+        for (var i = 0; i < scratch.Count; i++)
+            BindOneAdvanceButton(scratch[i]);
+    }
+
+    void BindVictoryRewardRowAdvanceButtons()
+    {
+        var winStage = EnsureWinStageFlowController();
+        if (winStage == null)
+        {
+            Debug.LogError(
+                $"{nameof(FightTutorialFlowController)} on '{name}': assign winStageFlowController (or ensure a WinStageFlowController is in the scene) for victory reward row advance buttons.",
+                this);
+            return;
+        }
+
+        var scratch = new List<Button>();
+        winStage.CollectRewardOfferActionButtons(scratch);
+        if (scratch.Count == 0)
+        {
+            Debug.LogError(
+                $"{nameof(FightTutorialFlowController)} on '{name}': no RunRewardOfferRow action buttons found — victory rewards must be built before this phase presents.",
+                this);
+            return;
+        }
+
+        for (var i = 0; i < scratch.Count; i++)
+            BindOneAdvanceButton(scratch[i]);
+    }
+
+    void BindOneAdvanceButton(Button button)
+    {
+        if (button == null)
+            return;
+
+        button.interactable = true;
+        button.onClick.RemoveListener(OnAdvanceClicked);
+        button.onClick.AddListener(OnAdvanceClicked);
+        _boundAdvanceButtons.Add(button);
+    }
+
+    FacePickerView EnsureFacePickerView()
+    {
+        if (facePickerView != null)
+            return facePickerView;
+
+        facePickerView = FindObjectOfType<FacePickerView>(true);
+        return facePickerView;
+    }
+
+    WinStageFlowController EnsureWinStageFlowController()
+    {
+        if (winStageFlowController != null)
+            return winStageFlowController;
+
+        winStageFlowController = FindObjectOfType<WinStageFlowController>(true);
+        return winStageFlowController;
     }
 
     void UnbindAdvanceButton()

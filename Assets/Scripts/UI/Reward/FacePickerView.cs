@@ -123,6 +123,26 @@ public class FacePickerView : MonoBehaviour
         }
 
         if (dieTooltipOverlay != null) dieTooltipOverlay.Hide();
+
+        CombatEvents.OnFaceSelectAppeared?.Invoke();
+    }
+
+    /// <summary>True while the face picker panel is active.</summary>
+    public bool IsShown => panel != null && panel.activeInHierarchy;
+
+    /// <summary>Appends each Face Action Option <see cref="Button"/> currently in the picker.</summary>
+    public void CollectOptionButtons(List<Button> destination)
+    {
+        if (destination == null)
+            return;
+
+        for (var i = 0; i < _rewardSlots.Count; i++)
+        {
+            var slot = _rewardSlots[i];
+            if (slot == null || slot.OptionButton == null)
+                continue;
+            destination.Add(slot.OptionButton);
+        }
     }
 
     public void Hide()

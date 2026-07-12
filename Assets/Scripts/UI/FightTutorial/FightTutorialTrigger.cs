@@ -39,4 +39,9 @@ public enum FightTutorialTrigger
     /// Fires when the UI appears, after any post-victory delay — not at the moment victory is declared.
     /// </summary>
     VictoryScreenAppear = 8,
+
+    /// <summary>
+    /// Face reward picker opened with Face Action Options (<see cref="CombatEvents.OnFaceSelectAppeared"/>).
+    /// </summary>
+    FaceSelectAppear = 9,
 }

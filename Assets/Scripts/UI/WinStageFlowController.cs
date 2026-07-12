@@ -120,9 +120,10 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
         if (enemyRoot != null)
             enemyRoot.SetActive(false);
 
-        ShowVictoryScreen();
+        ShowVictoryScreen(notifyAppeared: false);
 
         RebuildRewardsLayout();
+        CombatEvents.OnVictoryScreenAppeared?.Invoke();
         _victoryIntroCompletedForCurrentFight = true;
         UpdateContinueInteractable();
         _flowRoutine = null;
@@ -356,11 +357,37 @@ public class WinStageFlowController : MonoBehaviour, IRewardOfferFlowHost
 
     private void ShowVictoryScreen()
     {
+        ShowVictoryScreen(notifyAppeared: true);
+    }
+
+    private void ShowVictoryScreen(bool notifyAppeared)
+    {
         if (winStagePanel != null)
             winStagePanel.SetActive(true);
 
         EnableObjectsForVictoryScreen();
-        CombatEvents.OnVictoryScreenAppeared?.Invoke();
+        if (notifyAppeared)
+            CombatEvents.OnVictoryScreenAppeared?.Invoke();
+    }
+
+    /// <summary>Appends action buttons from currently spawned <see cref="RunRewardOfferRow"/>s.</summary>
+    public void CollectRewardOfferActionButtons(List<Button> destination)
+    {
+        if (destination == null || rewardsLayout == null)
+            return;
+
+        for (var i = 0; i < rewardsLayout.childCount; i++)
+        {
+            var child = rewardsLayout.GetChild(i);
+            if (child == null)
+                continue;
+
+            var row = child.GetComponent<RunRewardOfferRow>();
+            if (row == null || row.ActionButton == null)
+                continue;
+
+            destination.Add(row.ActionButton);
+        }
     }
 
     private void DisableObjectsForVictoryScreen()
