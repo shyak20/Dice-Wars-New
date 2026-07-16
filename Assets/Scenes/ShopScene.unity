@@ -1107,7 +1107,7 @@ MonoBehaviour:
   relicCommonPrice: 160
   relicRarePrice: 200
   relicLegendaryPrice: 240
-  diePrice: 250
+  diePrice: 150
 --- !u!114 &308379235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1128,6 +1128,10 @@ MonoBehaviour:
   hoverTooltipScreenOffset: {x: 50, y: -140}
   trialRewardsTooltipScreenOffset: {x: 0, y: 0}
   hoverAboveTooltipScreenOffset: {x: 0, y: 0}
+  tooltipSortingOrder: 10000
+  anchorTooltipGap: 8
+  secondaryTooltipGap: 8
+  screenEdgePadding: 16
 --- !u!1 &310713529
 GameObject:
   m_ObjectHideFlags: 0

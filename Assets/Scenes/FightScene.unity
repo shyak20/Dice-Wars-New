@@ -49151,7 +49151,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   waitBeforeFlySeconds: 1.5
   flyDurationSeconds: 1.2
-  delayBetweenDiceActivationsSeconds: 0.5
+  delayBetweenDiceActivationsSeconds: 0.2
+  delayBetweenElementFlyLaunchesSeconds: 0.05
   selfLitPulseDurationSeconds: 1.5
   shakeDurationSeconds: 1.5
   shakeAmplitude: 0
@@ -73072,8 +73073,8 @@ Transform:
   m_GameObject: {fileID: 1015163452}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.00907, z: 0.00146}
-  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.0077091996}
+  m_LocalPosition: {x: 0, y: 0.0102, z: 0.00146}
+  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.015015979}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}
@@ -79750,7 +79751,7 @@ MonoBehaviour:
   dicePrefab: {fileID: 4390715500269665299, guid: 6d049bfe97e675b409ac353f88306b5d, type: 3}
   spawnPoint: {fileID: 1048341407}
   spawnAreaWidth: 2
-  spawnAreaHeight: 2
+  spawnAreaHeight: 3
   delayBetweenDice: 0.02
   useEvenSpawnSpacing: 1
   spawnPositionJitter: 0.3
@@ -79761,9 +79762,9 @@ MonoBehaviour:
   natureDestroyEffect: {fileID: 0}
   curseDestroyEffect: {fileID: 323892667531381255, guid: 9235f4497b1abe8408bed427b0b99303, type: 3}
   effectLifetime: 4
-  minForwardForce: 250
-  maxForwardForce: 450
-  minUpwardForce: 400
+  minForwardForce: 100
+  maxForwardForce: 700
+  minUpwardForce: 300
   maxUpwardForce: 700
   lateralThrowFromSpawnOffset: 0.4
   minTorque: 10
@@ -79777,7 +79778,7 @@ Transform:
   m_GameObject: {fileID: 1048341405}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.21748449, z: -0, w: 0.97606385}
-  m_LocalPosition: {x: 1.9, y: 0.19, z: -3.56}
+  m_LocalPosition: {x: 1.934, y: 0.19, z: -3.343}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -100410,8 +100411,8 @@ Transform:
   m_GameObject: {fileID: 1567794325}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.9251269, w: 0.37965804}
-  m_LocalPosition: {x: 0.00811, y: 0.00539, z: 0.00089}
-  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.0054097995}
+  m_LocalPosition: {x: 0.00811, y: 0.00539, z: 0.00319}
+  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.0112913335}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}

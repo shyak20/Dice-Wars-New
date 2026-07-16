@@ -63,6 +63,15 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     [SerializeField] private float waitBeforeFlySeconds = 0.6f;
     [SerializeField] private float flyDurationSeconds = 0.45f;
     [SerializeField] private float delayBetweenDiceActivationsSeconds = 0.12f;
+    [Tooltip(
+        "Seconds between each element icon launch when rows fly from the die stack to player / enemy element containers. " +
+        "0 = all launch together. Also used for reroll result flyouts (Roll Again, post-submit rerolls).")]
+    [SerializeField, Min(0f)] private float delayBetweenElementFlyLaunchesSeconds = 0.08f;
+
+    /// <summary>Serializes element fly launches across concurrent <see cref="PlayFlyoutRoutine"/> coroutines (one per die).</summary>
+    int _elementFlyLaunchQueueTail;
+    int _elementFlyLaunchQueueHead;
+    float _elementFlyLaunchHeadAvailableAt;
 
     [Header("Die activation feedback")]
     [Tooltip("Total duration of the RealToon Self Lit intensity pulse (up to 1, then back).")]
@@ -773,10 +782,40 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (payload.ActivateAfterRegularDice)
             deferredPayloadQueue.Enqueue(payload);
         else
+        {
+            var queuesWereEmpty = regularPayloadQueue.Count == 0 && deferredPayloadQueue.Count == 0;
+            if (queuesWereEmpty)
+                ResetElementFlyLaunchSchedule();
             regularPayloadQueue.Enqueue(payload);
+        }
 
         if (queueRoutine == null)
             queueRoutine = StartCoroutine(ProcessPayloadQueueRoutine());
+    }
+
+    void ResetElementFlyLaunchSchedule()
+    {
+        _elementFlyLaunchQueueTail = 0;
+        _elementFlyLaunchQueueHead = 0;
+        _elementFlyLaunchHeadAvailableAt = 0f;
+    }
+
+    /// <summary>
+    /// One die runs <see cref="PlayFlyoutRoutine"/> per payload in parallel; this serializes fly starts across all of them.
+    /// Uses realtime so simulation speed does not swallow the stagger.
+    /// </summary>
+    IEnumerator CoWaitForElementFlyLaunchTurn()
+    {
+        if (delayBetweenElementFlyLaunchesSeconds <= 0f)
+            yield break;
+
+        var myIndex = _elementFlyLaunchQueueTail++;
+        yield return new WaitUntil(() =>
+            _elementFlyLaunchQueueHead == myIndex
+            && Time.realtimeSinceStartup >= _elementFlyLaunchHeadAvailableAt);
+
+        _elementFlyLaunchQueueHead++;
+        _elementFlyLaunchHeadAvailableAt = Time.realtimeSinceStartup + delayBetweenElementFlyLaunchesSeconds;
     }
 
     private IEnumerator ProcessPayloadQueueRoutine()
@@ -1208,6 +1247,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (rt == null)
             yield break;
 
+        yield return CoWaitForElementFlyLaunchTurn();
+
         float dur = Mathf.Max(0.01f, flyDurationSeconds);
         float t = 0f;
         while (t < dur)
@@ -1384,6 +1425,8 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
     {
         if (rt == null)
             yield break;
+
+        yield return CoWaitForElementFlyLaunchTurn();
 
         float dur = Mathf.Max(0.01f, flyDurationSeconds);
         float t = 0f;
