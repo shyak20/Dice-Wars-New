@@ -28,7 +28,7 @@ MonoBehaviour:
   - rid: 6557384174812266582
   actionTooltips:
   - title: Howl
-    description: Cursed Wolf gains <style=Strength>+2</style>
+    description: Cursed Wolf gains <style=Strength>+1</style>
   references:
     version: 2
     RefIds:
@@ -40,4 +40,4 @@ MonoBehaviour:
         armorAmount: 0
         healAmount: 0
         statusEffect: {fileID: 11400000, guid: 0ab2cbdfca9ccea469da4cc020ccd600, type: 2}
-        statusStacks: 2
+        statusStacks: 1

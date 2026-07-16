@@ -79762,7 +79762,7 @@ MonoBehaviour:
   curseDestroyEffect: {fileID: 323892667531381255, guid: 9235f4497b1abe8408bed427b0b99303, type: 3}
   effectLifetime: 4
   minForwardForce: 250
-  maxForwardForce: 350
+  maxForwardForce: 450
   minUpwardForce: 400
   maxUpwardForce: 700
   lateralThrowFromSpawnOffset: 0.4
@@ -100623,7 +100623,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1593172594
 RectTransform:
   m_ObjectHideFlags: 0
@@ -147277,7 +147277,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2119372763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -147308,6 +147308,7 @@ MonoBehaviour:
     advanceButtons:
     - {fileID: 205312937}
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147327,6 +147328,7 @@ MonoBehaviour:
     advanceButtons:
     - {fileID: 560606281}
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147345,6 +147347,7 @@ MonoBehaviour:
     completeWhen: 3
     advanceButtons: []
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147362,6 +147365,7 @@ MonoBehaviour:
     completeWhen: 3
     advanceButtons: []
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147380,6 +147384,7 @@ MonoBehaviour:
     advanceButtons:
     - {fileID: 1450787361}
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147398,6 +147403,7 @@ MonoBehaviour:
     advanceButtons:
     - {fileID: 1649834205}
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147412,6 +147418,7 @@ MonoBehaviour:
     advanceButtons:
     - {fileID: 101413402}
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147427,6 +147434,7 @@ MonoBehaviour:
     - {fileID: 1450787361}
     - {fileID: 415261149}
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
@@ -147452,6 +147460,7 @@ MonoBehaviour:
     completeWhen: 11
     advanceButtons: []
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 0
@@ -147466,6 +147475,7 @@ MonoBehaviour:
     advanceButtons:
     - {fileID: 1264851519}
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 0
@@ -147479,6 +147489,7 @@ MonoBehaviour:
     completeWhen: 5
     advanceButtons: []
     useFaceSelectOptionsAsAdvanceButtons: 0
+    useFaceSelectReplaceControlsAsAdvanceButtons: 0
     useVictoryRewardRowsAsAdvanceButtons: 0
     allowButtonSkip: 0
     enableInteractionBlocker: 1
