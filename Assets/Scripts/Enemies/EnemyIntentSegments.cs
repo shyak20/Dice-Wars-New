@@ -291,6 +291,12 @@ public static class EnemyIntentSegments
             case ApplyStatusEffectAction status when status.ConfiguredStacks > 0:
                 amount = status.ConfiguredStacks;
                 return true;
+            case GrantProtectedStacksAction grantProtected when grantProtected.Stacks > 0:
+                amount = grantProtected.Stacks;
+                return true;
+            case GrantGhostwalkStacksAction grantGhostwalk when grantGhostwalk.Stacks > 0:
+                amount = grantGhostwalk.Stacks;
+                return true;
             case HealAction heal when heal.Amount > 0:
                 amount = heal.Amount;
                 return true;
@@ -411,6 +417,10 @@ public static class EnemyIntentSegments
                 return t.ThornsPerHit.ToString();
             case ApplyStatusEffectAction s:
                 return s.ConfiguredStacks.ToString();
+            case GrantProtectedStacksAction grantProtected:
+                return grantProtected.Stacks.ToString();
+            case GrantGhostwalkStacksAction grantGhostwalk:
+                return grantGhostwalk.Stacks.ToString();
             case HealAction h:
                 return h.Amount.ToString();
             case MaxHpAction m:

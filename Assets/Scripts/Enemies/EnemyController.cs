@@ -64,6 +64,8 @@ public class EnemyController : MonoBehaviour
     private readonly List<EnemyValueRolledListener> _valueRolledListeners = new List<EnemyValueRolledListener>();
     private int _protectedStacks;
     private int _ghostwalkStacks;
+    private int _protectedStacksExpireAtStartOfEnemyTurn;
+    private int _ghostwalkStacksExpireAtStartOfEnemyTurn;
     public ReactiveProperty<EnemyActionSO> CurrentIntent = new();
 
     Coroutine _hideAfterDefeatRoutine;
@@ -519,15 +521,14 @@ public class EnemyController : MonoBehaviour
         _valueRolledListeners.Clear();
         _protectedStacks = 0;
         _ghostwalkStacks = 0;
+        _protectedStacksExpireAtStartOfEnemyTurn = 0;
+        _ghostwalkStacksExpireAtStartOfEnemyTurn = 0;
 
         if (enemyData == null)
         {
             OnStartingBuffsChanged?.Invoke();
             return;
         }
-
-        _protectedStacks = Mathf.Max(0, enemyData.protectedStacks);
-        _ghostwalkStacks = Mathf.Max(0, enemyData.ghostwalkStacks);
 
         if (enemyData.startingResistances != null)
         {
@@ -554,7 +555,96 @@ public class EnemyController : MonoBehaviour
             }
         }
 
+        ApplyStartingBuffActions();
         OnStartingBuffsChanged?.Invoke();
+    }
+
+    void ApplyStartingBuffActions()
+    {
+        if (enemyData?.startingBuffActions == null)
+            return;
+
+        for (var i = 0; i < enemyData.startingBuffActions.Count; i++)
+        {
+            var intent = enemyData.startingBuffActions[i];
+            if (intent == null)
+                throw new System.InvalidOperationException(
+                    $"EnemyTypeSO '{enemyData.name}' has a null Starting Buff Action at index {i}.");
+
+            if (intent.armor > 0)
+                AddArmor(intent.armor);
+
+            if (intent.actions == null)
+                continue;
+
+            var ctx = new GameActionContext
+            {
+                Enemy = this,
+                SourceEnemyAction = intent,
+            };
+
+            for (var a = 0; a < intent.actions.Count; a++)
+            {
+                var action = intent.actions[a];
+                if (action == null || action is FaceResolveModifierBase)
+                    continue;
+                action.Execute(ctx);
+            }
+        }
+    }
+
+    public void AddProtectedStacks(int stacks, bool expireAtStartOfEnemyTurn = false)
+    {
+        if (stacks <= 0)
+            throw new System.ArgumentOutOfRangeException(nameof(stacks), stacks, "Protected stacks to add must be positive.");
+
+        _protectedStacks += stacks;
+        if (expireAtStartOfEnemyTurn)
+            _protectedStacksExpireAtStartOfEnemyTurn += stacks;
+        OnStartingBuffsChanged?.Invoke();
+    }
+
+    public void AddGhostwalkStacks(int stacks, bool expireAtStartOfEnemyTurn = false)
+    {
+        if (stacks <= 0)
+            throw new System.ArgumentOutOfRangeException(nameof(stacks), stacks, "Ghostwalk stacks to add must be positive.");
+
+        _ghostwalkStacks += stacks;
+        if (expireAtStartOfEnemyTurn)
+            _ghostwalkStacksExpireAtStartOfEnemyTurn += stacks;
+        OnStartingBuffsChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Removes Protected/Ghostwalk stacks that were granted with expire-at-start-of-enemy-turn.
+    /// Call at the start of this enemy's turn, before it takes actions.
+    /// </summary>
+    public void ExpireStartOfTurnBuffStacks()
+    {
+        var changed = false;
+
+        if (_protectedStacksExpireAtStartOfEnemyTurn > 0)
+        {
+            var remove = Mathf.Min(_protectedStacksExpireAtStartOfEnemyTurn, _protectedStacks);
+            _protectedStacks -= remove;
+            _protectedStacksExpireAtStartOfEnemyTurn = 0;
+            changed = true;
+            if (GameActionDebug.Enabled)
+                Debug.Log($"[Protected] {enemyData?.enemyName} lost {remove} Protected stack(s) at start of enemy turn.");
+        }
+
+        if (_ghostwalkStacksExpireAtStartOfEnemyTurn > 0)
+        {
+            var remove = Mathf.Min(_ghostwalkStacksExpireAtStartOfEnemyTurn, _ghostwalkStacks);
+            _ghostwalkStacks -= remove;
+            _ghostwalkStacksExpireAtStartOfEnemyTurn = 0;
+            changed = true;
+            if (GameActionDebug.Enabled)
+                Debug.Log($"[Ghostwalk] {enemyData?.enemyName} lost {remove} Ghostwalk stack(s) at start of enemy turn.");
+        }
+
+        if (changed)
+            OnStartingBuffsChanged?.Invoke();
     }
 
     public bool TryConsumeProtectedStack()
@@ -563,6 +653,8 @@ public class EnemyController : MonoBehaviour
             return false;
 
         _protectedStacks--;
+        if (_protectedStacksExpireAtStartOfEnemyTurn > 0)
+            _protectedStacksExpireAtStartOfEnemyTurn--;
         OnStartingBuffsChanged?.Invoke();
         if (GameActionDebug.Enabled)
             Debug.Log($"[Protected] {enemyData.enemyName} blocked a player debuff. {_protectedStacks} stack(s) remain.");
@@ -575,6 +667,8 @@ public class EnemyController : MonoBehaviour
             return false;
 
         _ghostwalkStacks--;
+        if (_ghostwalkStacksExpireAtStartOfEnemyTurn > 0)
+            _ghostwalkStacksExpireAtStartOfEnemyTurn--;
         OnStartingBuffsChanged?.Invoke();
         if (GameActionDebug.Enabled)
             Debug.Log($"[Ghostwalk] {enemyData.enemyName} blocked physical damage. {_ghostwalkStacks} stack(s) remain.");

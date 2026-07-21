@@ -6410,6 +6410,8 @@ public class CombatManager : MonoBehaviour
 
                 ApplyActiveEnemyTurnSpriteSorting(enemy);
 
+                enemy.ExpireStartOfTurnBuffStacks();
+
                 var statusCtx = BuildStatusContext(enemy);
                 enemy.StatusEffects.TickBeforeEnemyTurn(statusCtx);
                 if (CheckVictory())

@@ -131,10 +131,8 @@ public class EnemyTypeSO : ScriptableObject
     public IReadOnlyList<EnemyPhaseDefinition> Phases => phases;
 
     [Header("Starting Buffs")]
-    [Tooltip("Each stack prevents one player-caused debuff or status application, then is consumed.")]
-    [Min(0)] public int protectedStacks;
-    [Tooltip("Each stack prevents one incoming physical-damage packet, then is consumed.")]
-    [Min(0)] public int ghostwalkStacks;
+    [Tooltip("EnemyActionSOs executed when this enemy appears (e.g. Grant Protected / Grant Ghostwalk). Reusable later in actionCycle.")]
+    public List<EnemyActionSO> startingBuffActions = new List<EnemyActionSO>();
     [Tooltip("Flat damage resistance by incoming damage element.")]
     public List<EnemyStartingResistance> startingResistances = new List<EnemyStartingResistance>();
     [Tooltip("Immediate action triggers when player resolves matching rolled values.")]

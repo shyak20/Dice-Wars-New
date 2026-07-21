@@ -67,4 +67,10 @@ public enum ActionVisualId
 
     /// <summary><see cref="IncreaseOtherElementsAction"/> — add bonus to matching other dice pool rows after gather.</summary>
     IncreaseOtherElements = 33,
+
+    /// <summary><see cref="GrantProtectedStacksAction"/> — enemy gains Protected stacks.</summary>
+    GrantProtected = 34,
+
+    /// <summary><see cref="GrantGhostwalkStacksAction"/> — enemy gains Ghostwalk stacks.</summary>
+    GrantGhostwalk = 35,
 }
