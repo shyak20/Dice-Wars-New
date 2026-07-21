@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.ludeosdk.unity": {
+      "version": "file:C:/Work/LudeoSDK/v4.2.3/Release/com.ludeo.sdk@4.2.3",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.unity.2d.animation": {
       "version": "13.0.5",
       "depth": 0,

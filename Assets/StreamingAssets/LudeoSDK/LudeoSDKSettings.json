@@ -1,0 +1,32 @@
+{
+    "ludeoDllSets": [
+        {
+            "platform": "NotSupported",
+            "dllName": ""
+        },
+        {
+            "platform": "WinRelease",
+            "dllName": "LudeoSDK-Win64-Release.dll"
+        },
+        {
+            "platform": "Win64Release",
+            "dllName": "LudeoSDK-Win64-Release.dll"
+        },
+        {
+            "platform": "WinDevelopment",
+            "dllName": "LudeoSDK-Win64-Development.dll"
+        },
+        {
+            "platform": "Win64Development",
+            "dllName": "LudeoSDK-Win64-Development.dll"
+        },
+        {
+            "platform": "OSXRelease",
+            "dllName": "LudeoSDK-OSX-Release.dll"
+        },
+        {
+            "platform": "LinuxRelease",
+            "dllName": "LudeoSDK-linux-Release.dll"
+        }
+    ]
+}

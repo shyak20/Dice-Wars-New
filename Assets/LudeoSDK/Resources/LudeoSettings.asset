@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1370983741, guid: fe8481a231c00064f9d906dbb6c6f48e, type: 3}
+  m_Name: LudeoSettings
+  m_EditorClassIdentifier: LudeoSDK.dll::LudeoSDK.UnityScripts.LudeoSettings
+  gameName: Merlin Must Die
+  gameVersion: 0.1
+  ludeoLogLevel: 2
+  ludeoLogCategory: 2147483647
+  platformUrl: https://services.ludeo.com
+  apiKey: 
+  coreDllReference: 0
+  betaVersion: Beta Test 1
+  runWithoutLauncher: 1
+  launcherUserId: CocofromMarocco
+  autoStartInLudeo: 0
+  ludeoToAutoStart: 
