@@ -18,6 +18,8 @@ public class UIRewardSlot : MonoBehaviour
     [SerializeField] private Color legendaryRarityColor = new Color(1f, 0.474f, 0.052f);
     [SerializeField] private Image iconImage;
     [SerializeField] private Image typeIconImage;
+    [Tooltip("Optional. Same effect overlay icon as the 3D die face (DieFaceEffectIconResolver). Hidden when the face has no qualifying action icon.")]
+    [SerializeField] private Image faceEffectIconImage;
     [Tooltip("Optional. Behind card content; uses DieFaceSO.uiTooltipBackground.")]
     [SerializeField] private Image tooltipBackgroundImage;
     [SerializeField] private Button button;
@@ -71,6 +73,7 @@ public class UIRewardSlot : MonoBehaviour
 
         if (face == null)
         {
+            ApplyFaceEffectIcon(null);
             HideNewFacePickedPreviewWithoutRecurse();
             return;
         }
@@ -93,6 +96,8 @@ public class UIRewardSlot : MonoBehaviour
             typeIconImage.sprite = elementSprite;
             typeIconImage.enabled = elementSprite != null;
         }
+
+        ApplyFaceEffectIcon(face);
 
         if (tooltipBackgroundImage != null)
             DieTooltipBackgrounds.ApplyFaceTooltip(tooltipBackgroundImage, face);
@@ -163,6 +168,28 @@ public class UIRewardSlot : MonoBehaviour
             return face.uiIcon;
 
         return GameIconCatalog.GetElementIcon(face.type);
+    }
+
+    /// <summary>
+    /// Mirrors <see cref="DieVisualizer"/> face-effect quads: show only when
+    /// <see cref="DieFaceEffectIconResolver.TryResolve"/> returns a sprite.
+    /// </summary>
+    void ApplyFaceEffectIcon(DieFaceSO face)
+    {
+        if (faceEffectIconImage == null)
+            return;
+
+        if (face != null && DieFaceEffectIconResolver.TryResolve(face, out var effectSprite) && effectSprite != null)
+        {
+            faceEffectIconImage.sprite = effectSprite;
+            faceEffectIconImage.enabled = true;
+            faceEffectIconImage.gameObject.SetActive(true);
+            return;
+        }
+
+        faceEffectIconImage.sprite = null;
+        faceEffectIconImage.enabled = false;
+        faceEffectIconImage.gameObject.SetActive(false);
     }
 
     void PlayCurseAppearAnimator(bool isCurse)
