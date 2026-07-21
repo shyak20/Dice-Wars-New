@@ -59,6 +59,19 @@ public static class GameIconCatalog
         return _active != null && _active.TryGetEnemyResistanceTooltip(resistanceElement, out title, out description);
     }
 
+    public static Sprite GetEnemyStartingBuffIcon(EnemyStartingBuffKind buffKind) =>
+        _active != null ? _active.GetEnemyStartingBuffIcon(buffKind) : null;
+
+    public static Sprite GetEnemyStartingBuffBackground(EnemyStartingBuffKind buffKind) =>
+        _active != null ? _active.GetEnemyStartingBuffBackground(buffKind) : null;
+
+    public static bool TryGetEnemyStartingBuffTooltip(EnemyStartingBuffKind buffKind, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        return _active != null && _active.TryGetEnemyStartingBuffTooltip(buffKind, out title, out description);
+    }
+
     public static Sprite GetElementBackground(DieType type) =>
         _active != null ? _active.GetElementBackground(type) : null;
 

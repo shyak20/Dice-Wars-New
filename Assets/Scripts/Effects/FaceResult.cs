@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class FaceResult
@@ -164,4 +165,73 @@ public class FaceResult
 
     /// <summary>When set, primary damage/armor flyout rows from this face show this relic/gem icon briefly.</summary>
     public Sprite BuffSourceIcon { get; set; }
+
+    HashSet<long> _cancelledPhysicalKeys;
+    HashSet<long> _cancelledActionKeys;
+
+    /// <summary>
+    /// Marks a physical damage piece cancelled on arrival (Ghostwalk).
+    /// Use <paramref name="hitIndex"/> &gt;= 0 for split-hit lines; -1 cancels the whole piece for that enemy.
+    /// </summary>
+    public void MarkPhysicalCancelled(EnemyController enemy, int hitIndex = -1)
+    {
+        if (enemy == null)
+            return;
+
+        _cancelledPhysicalKeys ??= new HashSet<long>();
+        _cancelledPhysicalKeys.Add(PackEnemyHitKey(enemy, hitIndex));
+        if (hitIndex >= 0)
+            return;
+
+        // Whole-piece cancel also covers every split hit against this enemy.
+        if (UsesSplitDamageHits)
+        {
+            for (var hit = 0; hit < DamageAttackTimes; hit++)
+                _cancelledPhysicalKeys.Add(PackEnemyHitKey(enemy, hit));
+        }
+    }
+
+    public bool IsPhysicalCancelled(EnemyController enemy, int hitIndex = -1)
+    {
+        if (enemy == null || _cancelledPhysicalKeys == null || _cancelledPhysicalKeys.Count == 0)
+            return false;
+
+        if (_cancelledPhysicalKeys.Contains(PackEnemyHitKey(enemy, -1)))
+            return true;
+
+        return hitIndex >= 0 && _cancelledPhysicalKeys.Contains(PackEnemyHitKey(enemy, hitIndex));
+    }
+
+    public void MarkActionCancelled(IGameAction action, EnemyController enemy)
+    {
+        if (action == null || enemy == null)
+            return;
+
+        _cancelledActionKeys ??= new HashSet<long>();
+        _cancelledActionKeys.Add(PackActionEnemyKey(action, enemy));
+    }
+
+    public bool IsActionCancelled(IGameAction action, EnemyController enemy)
+    {
+        if (action == null || enemy == null || _cancelledActionKeys == null || _cancelledActionKeys.Count == 0)
+            return false;
+
+        return _cancelledActionKeys.Contains(PackActionEnemyKey(action, enemy));
+    }
+
+    static long PackEnemyHitKey(EnemyController enemy, int hitIndex)
+    {
+        unchecked
+        {
+            return ((long)enemy.GetInstanceID() << 32) ^ (uint)hitIndex;
+        }
+    }
+
+    static long PackActionEnemyKey(IGameAction action, EnemyController enemy)
+    {
+        unchecked
+        {
+            return ((long)RuntimeHelpers.GetHashCode(action) << 32) ^ (uint)enemy.GetInstanceID();
+        }
+    }
 }

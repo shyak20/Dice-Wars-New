@@ -66,7 +66,12 @@ public class StatusEffectBarUI : MonoBehaviour
 
     public void BindEnemyStartingBuffs(EnemyController enemy)
     {
+        if (trackedEnemy != null)
+            trackedEnemy.OnStartingBuffsChanged -= QueueRefresh;
+
         trackedEnemy = enemy;
+        if (trackedEnemy != null)
+            trackedEnemy.OnStartingBuffsChanged += QueueRefresh;
         QueueRefresh();
     }
 
@@ -76,6 +81,8 @@ public class StatusEffectBarUI : MonoBehaviour
             trackedManager.OnEffectsChanged -= QueueRefresh;
         if (trackedTurnRegistry != null)
             trackedTurnRegistry.OnPlayerBarBuffsChanged -= QueueRefresh;
+        if (trackedEnemy != null)
+            trackedEnemy.OnStartingBuffsChanged -= QueueRefresh;
     }
 
     private void LateUpdate()
@@ -151,6 +158,18 @@ public class StatusEffectBarUI : MonoBehaviour
 
         if (trackedEnemy != null)
         {
+            ShowStartingBuffIcon(
+                activeKeys,
+                EnemyStartingBuffKind.Protected,
+                trackedEnemy.ProtectedStacks,
+                "Prevents the next player-caused debuff or status effect. One stack is consumed when an effect is blocked.");
+
+            ShowStartingBuffIcon(
+                activeKeys,
+                EnemyStartingBuffKind.Ghostwalk,
+                trackedEnemy.GhostwalkStacks,
+                "Prevents the next incoming physical-damage packet. One stack is consumed when damage is blocked.");
+
             foreach (var pair in trackedEnemy.DamageResistances)
             {
                 if (pair.Value <= 0f)
@@ -206,6 +225,46 @@ public class StatusEffectBarUI : MonoBehaviour
         {
             if (activeIcons.TryGetValue(key, out var iconUi) && iconUi != null)
                 iconUi.gameObject.SetActive(false);
+        }
+    }
+
+    private void ShowStartingBuffIcon(HashSet<string> activeKeys, EnemyStartingBuffKind buffKind, int stacks, string fallbackDescription)
+    {
+        if (stacks <= 0)
+            return;
+
+        var key = $"starting-buff:{buffKind}";
+        activeKeys.Add(key);
+        var icon = GetOrCreateIcon(key);
+        if (icon == null)
+            return;
+
+        var iconSprite = GameIconCatalog.GetEnemyStartingBuffIcon(buffKind);
+        var bgSprite = GameIconCatalog.GetEnemyStartingBuffBackground(buffKind);
+        GameIconCatalog.TryGetEnemyStartingBuffTooltip(buffKind, out var title, out var description);
+
+        if (string.IsNullOrWhiteSpace(title))
+            title = buffKind.ToString();
+        if (string.IsNullOrWhiteSpace(description))
+            description = fallbackDescription;
+        description = FormatStackPlaceholder(description, stacks);
+
+        icon.SetupCustom(iconSprite, title, description, bgSprite);
+        icon.UpdateStacks(stacks);
+    }
+
+    private static string FormatStackPlaceholder(string text, int stacks)
+    {
+        if (string.IsNullOrEmpty(text) || text.IndexOf("{0}", System.StringComparison.Ordinal) < 0)
+            return text;
+
+        try
+        {
+            return string.Format(text, stacks);
+        }
+        catch (System.FormatException)
+        {
+            return text.Replace("{0}", stacks.ToString());
         }
     }
 

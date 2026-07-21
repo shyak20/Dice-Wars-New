@@ -38,6 +38,8 @@ public class GameIconIndexSO : ScriptableObject
     [SerializeField] private List<StatusEffectIconEntry> statusEffectIcons = new List<StatusEffectIconEntry>();
     [Header("Enemy Starting Buffs")]
     [SerializeField] private List<EnemyResistanceIconEntry> enemyResistanceIcons = new List<EnemyResistanceIconEntry>();
+    [Tooltip("Icons for consumable enemy starting buffs (Protected, Ghostwalk) configured on EnemyTypeSO.")]
+    [SerializeField] private List<EnemyStartingBuffIconEntry> enemyStartingBuffIcons = new List<EnemyStartingBuffIconEntry>();
 
     [Header("Main Attribute Icons")]
     [FormerlySerializedAs("hpIcon")]
@@ -111,6 +113,19 @@ public class GameIconIndexSO : ScriptableObject
     }
 
     [Serializable]
+    public struct EnemyStartingBuffIconEntry
+    {
+        public EnemyStartingBuffKind buffKind;
+        public Sprite icon;
+        public Sprite background;
+        [Tooltip("Optional. Hover title for this starting buff icon.")]
+        public string title;
+        [TextArea(2, 5)]
+        [Tooltip("Optional. Hover body text for this starting buff icon.")]
+        public string description;
+    }
+
+    [Serializable]
     public struct NamedIconEntry
     {
         public string key;
@@ -140,6 +155,10 @@ public class GameIconIndexSO : ScriptableObject
     readonly Dictionary<EnemyResistanceElement, Sprite> _enemyResistanceBackgroundLookup = new Dictionary<EnemyResistanceElement, Sprite>();
     readonly Dictionary<EnemyResistanceElement, string> _enemyResistanceTooltipTitleLookup = new Dictionary<EnemyResistanceElement, string>();
     readonly Dictionary<EnemyResistanceElement, string> _enemyResistanceTooltipDescriptionLookup = new Dictionary<EnemyResistanceElement, string>();
+    readonly Dictionary<EnemyStartingBuffKind, Sprite> _enemyStartingBuffIconLookup = new Dictionary<EnemyStartingBuffKind, Sprite>();
+    readonly Dictionary<EnemyStartingBuffKind, Sprite> _enemyStartingBuffBackgroundLookup = new Dictionary<EnemyStartingBuffKind, Sprite>();
+    readonly Dictionary<EnemyStartingBuffKind, string> _enemyStartingBuffTooltipTitleLookup = new Dictionary<EnemyStartingBuffKind, string>();
+    readonly Dictionary<EnemyStartingBuffKind, string> _enemyStartingBuffTooltipDescriptionLookup = new Dictionary<EnemyStartingBuffKind, string>();
 
     private void OnEnable() => RebuildLookups();
 
@@ -159,6 +178,10 @@ public class GameIconIndexSO : ScriptableObject
         _enemyResistanceBackgroundLookup.Clear();
         _enemyResistanceTooltipTitleLookup.Clear();
         _enemyResistanceTooltipDescriptionLookup.Clear();
+        _enemyStartingBuffIconLookup.Clear();
+        _enemyStartingBuffBackgroundLookup.Clear();
+        _enemyStartingBuffTooltipTitleLookup.Clear();
+        _enemyStartingBuffTooltipDescriptionLookup.Clear();
         foreach (var e in actionIcons)
         {
             if (e.id != ActionVisualId.None && e.sprite != null)
@@ -221,6 +244,18 @@ public class GameIconIndexSO : ScriptableObject
                 _enemyResistanceTooltipTitleLookup[e.resistanceElement] = e.title.Trim();
             if (!string.IsNullOrWhiteSpace(e.description))
                 _enemyResistanceTooltipDescriptionLookup[e.resistanceElement] = e.description.Trim();
+        }
+
+        foreach (var e in enemyStartingBuffIcons)
+        {
+            if (e.icon != null)
+                _enemyStartingBuffIconLookup[e.buffKind] = e.icon;
+            if (e.background != null)
+                _enemyStartingBuffBackgroundLookup[e.buffKind] = e.background;
+            if (!string.IsNullOrWhiteSpace(e.title))
+                _enemyStartingBuffTooltipTitleLookup[e.buffKind] = e.title.Trim();
+            if (!string.IsNullOrWhiteSpace(e.description))
+                _enemyStartingBuffTooltipDescriptionLookup[e.buffKind] = e.description.Trim();
         }
     }
 
@@ -379,6 +414,32 @@ public class GameIconIndexSO : ScriptableObject
         if (_enemyResistanceBackgroundLookup.Count == 0 && enemyResistanceIcons.Count > 0)
             RebuildLookups();
         return _enemyResistanceBackgroundLookup.TryGetValue(resistanceElement, out var s) ? s : null;
+    }
+
+    public Sprite GetEnemyStartingBuffIcon(EnemyStartingBuffKind buffKind)
+    {
+        if (_enemyStartingBuffIconLookup.Count == 0 && enemyStartingBuffIcons.Count > 0)
+            RebuildLookups();
+        return _enemyStartingBuffIconLookup.TryGetValue(buffKind, out var s) ? s : null;
+    }
+
+    public Sprite GetEnemyStartingBuffBackground(EnemyStartingBuffKind buffKind)
+    {
+        if (_enemyStartingBuffBackgroundLookup.Count == 0 && enemyStartingBuffIcons.Count > 0)
+            RebuildLookups();
+        return _enemyStartingBuffBackgroundLookup.TryGetValue(buffKind, out var s) ? s : null;
+    }
+
+    /// <summary>True if either title or description is configured for this enemy starting buff icon.</summary>
+    public bool TryGetEnemyStartingBuffTooltip(EnemyStartingBuffKind buffKind, out string title, out string description)
+    {
+        title = null;
+        description = null;
+        if (_enemyStartingBuffTooltipTitleLookup.Count == 0 && _enemyStartingBuffTooltipDescriptionLookup.Count == 0 && enemyStartingBuffIcons.Count > 0)
+            RebuildLookups();
+        var hasT = _enemyStartingBuffTooltipTitleLookup.TryGetValue(buffKind, out title);
+        var hasD = _enemyStartingBuffTooltipDescriptionLookup.TryGetValue(buffKind, out description);
+        return hasT || hasD;
     }
 
     public Sprite GetMainAttributeIcon(MainAttributeIconId id) => GetMainAttributeVisual(id).icon;
@@ -601,6 +662,21 @@ public class GameIconIndexSO : ScriptableObject
                 {
                     key = $"EnemyResistance.{resistance.resistanceElement}.Background",
                     sprite = resistance.background
+                });
+        }
+
+        foreach (var startingBuff in enemyStartingBuffIcons)
+        {
+            entries.Add(new NamedIconEntry
+            {
+                key = $"EnemyStartingBuff.{startingBuff.buffKind}.Icon",
+                sprite = startingBuff.icon
+            });
+            if (startingBuff.background != null)
+                entries.Add(new NamedIconEntry
+                {
+                    key = $"EnemyStartingBuff.{startingBuff.buffKind}.Background",
+                    sprite = startingBuff.background
                 });
         }
 

@@ -41,6 +41,26 @@ public class DiceSpawner : MonoBehaviour
     public float minTorque = 10f;
     public float maxTorque = 30f;
 
+    [Header("Reroll Force (Impulse)")]
+    [Tooltip("Minimum horizontal impulse applied in a random direction when any existing die is rerolled.")]
+    [Min(0f)]
+    [SerializeField] private float minRerollHorizontalForce = 15f;
+    [Tooltip("Maximum horizontal impulse applied in a random direction when any existing die is rerolled.")]
+    [Min(0f)]
+    [SerializeField] private float maxRerollHorizontalForce = 25f;
+    [Tooltip("Minimum upward impulse applied when any existing die is rerolled.")]
+    [Min(0f)]
+    [SerializeField] private float minRerollUpwardForce = 5f;
+    [Tooltip("Maximum upward impulse applied when any existing die is rerolled.")]
+    [Min(0f)]
+    [SerializeField] private float maxRerollUpwardForce = 10f;
+    [Tooltip("Minimum angular impulse applied when any existing die is rerolled.")]
+    [Min(0f)]
+    [SerializeField] private float minRerollTorque = 10f;
+    [Tooltip("Maximum angular impulse applied when any existing die is rerolled.")]
+    [Min(0f)]
+    [SerializeField] private float maxRerollTorque = 30f;
+
     private readonly List<GameObject> activeDiceModels = new List<GameObject>();
     private readonly HashSet<GameObject> dissolvingDice = new HashSet<GameObject>();
     private Coroutine _spawnRoutine;
@@ -345,20 +365,35 @@ public class DiceSpawner : MonoBehaviour
         if (spawnPoint == null)
             throw new System.InvalidOperationException("DiceSpawner: spawnPoint is required for reroll forces.");
 
+        ValidateRerollForceSettings();
+
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
         var upAxis = spawnPoint.up;
         var angle = Random.Range(0f, 360f);
         var horizontalDir = Quaternion.AngleAxis(angle, upAxis) * spawnPoint.forward;
-        var horizontalForce = Random.Range(minForwardForce, maxForwardForce);
-        var upwardForce = Random.Range(minUpwardForce, maxUpwardForce);
+        var horizontalForce = Random.Range(minRerollHorizontalForce, maxRerollHorizontalForce);
+        var upwardForce = Random.Range(minRerollUpwardForce, maxRerollUpwardForce);
         var throwDirection = horizontalDir * horizontalForce + upAxis * upwardForce;
 
         rb.AddForce(throwDirection, ForceMode.Impulse);
 
-        var torqueMagnitude = Random.Range(minTorque, maxTorque);
+        var torqueMagnitude = Random.Range(minRerollTorque, maxRerollTorque);
         rb.AddTorque(Random.insideUnitSphere * torqueMagnitude, ForceMode.Impulse);
+    }
+
+    private void ValidateRerollForceSettings()
+    {
+        if (minRerollHorizontalForce > maxRerollHorizontalForce)
+            throw new System.InvalidOperationException(
+                "DiceSpawner: Min Reroll Horizontal Force cannot exceed Max Reroll Horizontal Force.");
+        if (minRerollUpwardForce > maxRerollUpwardForce)
+            throw new System.InvalidOperationException(
+                "DiceSpawner: Min Reroll Upward Force cannot exceed Max Reroll Upward Force.");
+        if (minRerollTorque > maxRerollTorque)
+            throw new System.InvalidOperationException(
+                "DiceSpawner: Min Reroll Torque cannot exceed Max Reroll Torque.");
     }
 
     private GameObject GetDestroyEffectPrefab(DieType faceType)

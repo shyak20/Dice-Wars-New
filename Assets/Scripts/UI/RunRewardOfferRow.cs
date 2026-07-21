@@ -213,10 +213,8 @@ public class RunRewardOfferRow : MonoBehaviour
         }
 
         t.enabled = true;
-        var ttl = gem.DisplayLabel;
-        var body = gem.description ?? "";
         t.SetTooltipScreenOffset(tooltipScreenOffset);
-        t.SetContent(ttl, body);
+        t.SetScriptableSource(gem);
     }
 
     private void ApplyTooltipRelic(RelicSO relic)
@@ -233,10 +231,8 @@ public class RunRewardOfferRow : MonoBehaviour
         }
 
         t.enabled = true;
-        var ttl = string.IsNullOrEmpty(relic.title) ? relic.name : relic.title;
-        var body = relic.description ?? "";
         t.SetTooltipScreenOffset(tooltipScreenOffset);
-        t.SetContent(ttl, body);
+        t.SetScriptableSource(relic);
     }
 
     private void ApplyTooltipDie(DieAssetSO die)
@@ -261,8 +257,20 @@ public class RunRewardOfferRow : MonoBehaviour
 
     private HoverTooltipTargetUI ResolveTooltipTarget()
     {
+        // Reward rows put a full-stretch Collect Button above any dedicated Tooltip Hover graphic.
+        // Attach hover there so pointer enter reaches the tooltip target.
+        if (actionButton != null)
+        {
+            var buttonGo = actionButton.gameObject;
+            if (tooltipTarget == null || tooltipTarget.gameObject != buttonGo)
+                tooltipTarget = buttonGo.GetComponent<HoverTooltipTargetUI>()
+                                ?? buttonGo.AddComponent<HoverTooltipTargetUI>();
+            return tooltipTarget;
+        }
+
         if (tooltipTarget != null)
             return tooltipTarget;
+
         var icon = GetIconImage();
         var area = tooltipHoverArea != null ? tooltipHoverArea : (icon != null ? icon.gameObject : gameObject);
         tooltipTarget = area.GetComponent<HoverTooltipTargetUI>() ?? area.AddComponent<HoverTooltipTargetUI>();
@@ -271,7 +279,10 @@ public class RunRewardOfferRow : MonoBehaviour
 
     private void EnsureTooltipTarget()
     {
-        if (tooltipTarget == null && tooltipHoverArea == null && GetIconImage() == null)
+        if (tooltipTarget == null
+            && tooltipHoverArea == null
+            && GetIconImage() == null
+            && actionButton == null)
             return;
         ResolveTooltipTarget();
     }

@@ -62,6 +62,8 @@ public class EnemyController : MonoBehaviour
     private bool _pendingPhaseAdvance;
     private readonly Dictionary<EnemyResistanceElement, float> _damageResistanceByElement = new Dictionary<EnemyResistanceElement, float>();
     private readonly List<EnemyValueRolledListener> _valueRolledListeners = new List<EnemyValueRolledListener>();
+    private int _protectedStacks;
+    private int _ghostwalkStacks;
     public ReactiveProperty<EnemyActionSO> CurrentIntent = new();
 
     Coroutine _hideAfterDefeatRoutine;
@@ -72,6 +74,9 @@ public class EnemyController : MonoBehaviour
     public StatusEffectManager StatusEffects { get; private set; }
     public IReadOnlyDictionary<EnemyResistanceElement, float> DamageResistances => _damageResistanceByElement;
     public IReadOnlyList<EnemyValueRolledListener> ValueRolledListeners => _valueRolledListeners;
+    public int ProtectedStacks => _protectedStacks;
+    public int GhostwalkStacks => _ghostwalkStacks;
+    public event System.Action OnStartingBuffsChanged;
 
     public int GetCurrentHealth() => currentHealth;
     public int GetCurrentArmor() => currentArmor;
@@ -243,9 +248,17 @@ public class EnemyController : MonoBehaviour
         TakeDamage(amount, inferredType, presentationKind);
     }
 
-    public void TakeDamage(int amount, DieType damageType, EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical)
+    public void TakeDamage(
+        int amount,
+        DieType damageType,
+        EnemyDamagePresentationKind presentationKind = EnemyDamagePresentationKind.Physical,
+        bool canBeBlockedByGhostwalk = true)
     {
         if (amount <= 0) return;
+
+        // Ghostwalk cancels physical pieces on flyout arrival (CombatManager.TryCancelEnemyOutcomeOnArrival),
+        // not here — so cancelled icons can play Bust destroy visuals and Perfect Strike only scales landings.
+        _ = canBeBlockedByGhostwalk;
 
         if (presentationKind == EnemyDamagePresentationKind.Burn && StatusEffects != null)
         {
@@ -504,9 +517,17 @@ public class EnemyController : MonoBehaviour
     {
         _damageResistanceByElement.Clear();
         _valueRolledListeners.Clear();
+        _protectedStacks = 0;
+        _ghostwalkStacks = 0;
 
         if (enemyData == null)
+        {
+            OnStartingBuffsChanged?.Invoke();
             return;
+        }
+
+        _protectedStacks = Mathf.Max(0, enemyData.protectedStacks);
+        _ghostwalkStacks = Mathf.Max(0, enemyData.ghostwalkStacks);
 
         if (enemyData.startingResistances != null)
         {
@@ -532,6 +553,32 @@ public class EnemyController : MonoBehaviour
                 _valueRolledListeners.Add(listener);
             }
         }
+
+        OnStartingBuffsChanged?.Invoke();
+    }
+
+    public bool TryConsumeProtectedStack()
+    {
+        if (_protectedStacks <= 0)
+            return false;
+
+        _protectedStacks--;
+        OnStartingBuffsChanged?.Invoke();
+        if (GameActionDebug.Enabled)
+            Debug.Log($"[Protected] {enemyData.enemyName} blocked a player debuff. {_protectedStacks} stack(s) remain.");
+        return true;
+    }
+
+    public bool TryConsumeGhostwalkStack()
+    {
+        if (_ghostwalkStacks <= 0)
+            return false;
+
+        _ghostwalkStacks--;
+        OnStartingBuffsChanged?.Invoke();
+        if (GameActionDebug.Enabled)
+            Debug.Log($"[Ghostwalk] {enemyData.enemyName} blocked physical damage. {_ghostwalkStacks} stack(s) remain.");
+        return true;
     }
 
     private static EnemyResistanceElement ToResistanceElement(DieType damageType)

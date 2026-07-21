@@ -67,6 +67,11 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         "Seconds between each element icon launch when rows fly from the die stack to player / enemy element containers. " +
         "0 = all launch together. Also used for reroll result flyouts (Roll Again, post-submit rerolls).")]
     [SerializeField, Min(0f)] private float delayBetweenElementFlyLaunchesSeconds = 0.08f;
+    [Tooltip("After Ghostwalk/Protected cancels a piece on arrival, how long the Bust destroy visual stays before the icon is removed.")]
+    [SerializeField, Min(0f)] private float blockedArrivalDestroyHoldSeconds = 0.45f;
+
+    /// <summary>Hold duration after a Ghostwalk/Protected arrival cancel destroy visual starts.</summary>
+    public float BlockedArrivalDestroyHoldSeconds => blockedArrivalDestroyHoldSeconds;
 
     /// <summary>Serializes element fly launches across concurrent <see cref="PlayFlyoutRoutine"/> coroutines (one per die).</summary>
     int _elementFlyLaunchQueueTail;
@@ -1447,6 +1452,13 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
         SetLocalXY(rt, end);
 
+        if (payload?.SourceFace != null && combat != null && enemy != null
+            && combat.TryCancelEnemyOutcomeOnArrival(payload.SourceFace, line.SourceAction, line, enemy))
+        {
+            yield return CoPlayBlockedArrivalDestroy(rt);
+            yield break;
+        }
+
         if (payload?.SourceFace != null && combat != null && enemy != null)
         {
             combat.AssignRolledOutcomePieceToEnemy(
@@ -1462,6 +1474,22 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             storedActionsPoolDisplay.ApplyPoolDelta(line.RowKey, line.Amount, line.IconOverride, line.BackgroundOverride);
 
         Destroy(rt.gameObject);
+    }
+
+    IEnumerator CoPlayBlockedArrivalDestroy(RectTransform rt)
+    {
+        if (rt == null)
+            yield break;
+
+        var icon = rt.GetComponent<StoredActionsPoolIcon>()
+                   ?? rt.GetComponentInChildren<StoredActionsPoolIcon>(true);
+        icon?.ShowBustDestroyVisual(true);
+
+        if (blockedArrivalDestroyHoldSeconds > 0f)
+            yield return new WaitForSeconds(blockedArrivalDestroyHoldSeconds);
+
+        if (rt != null)
+            Destroy(rt.gameObject);
     }
 
     private void TryNotifyFaceOutcomesSubmittedIfReady(DiceRollVisualPayload payload)

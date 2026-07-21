@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// Drop zone over an enemy. When the player drops a <see cref="RolledOutcomeToken"/> here, the token's rolled
-/// outcome is assigned to <see cref="Enemy"/> via the <see cref="RollTargetAssignmentController"/>.
+/// Drop zone over an enemy. When the player drops a <see cref="RolledOutcomeToken"/> here, or clicks while a token is
+/// selected, the token's rolled outcome is assigned to <see cref="Enemy"/> via the <see cref="RollTargetAssignmentController"/>.
 /// Place on the enemy's clickable area (e.g. an Image with Raycast Target enabled).
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
@@ -50,7 +50,7 @@ public class EnemyDropTarget : MonoBehaviour, IDropHandler, IPointerEnterHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (!IsRolledOutcomeTokenDrag(eventData))
+        if (!ShouldShowAssignHover(eventData))
             return;
         if (Enemy == null || !Enemy.IsAlive)
             return;
@@ -60,6 +60,24 @@ public class EnemyDropTarget : MonoBehaviour, IDropHandler, IPointerEnterHandler
     }
 
     public void OnPointerExit(PointerEventData eventData) => ClearHoverFeedback();
+
+    bool ShouldShowAssignHover(PointerEventData eventData)
+    {
+        if (IsRolledOutcomeTokenDrag(eventData))
+            return true;
+
+        var assignment = ResolveAssignment();
+        if (assignment == null || !assignment.IsWaitingForPlayerAssignment)
+            return false;
+
+        var selected = assignment.SelectedToken;
+        return selected != null && selected.IsDragEnabled && !selected.IsDragging;
+    }
+
+    RollTargetAssignmentController ResolveAssignment()
+    {
+        return Combat != null ? Combat.TargetAssignment : null;
+    }
 
     private static bool IsRolledOutcomeTokenDrag(PointerEventData eventData)
     {

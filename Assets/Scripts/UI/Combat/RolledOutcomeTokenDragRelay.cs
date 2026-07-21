@@ -2,10 +2,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// Forwards pointer drag events from a raycast-catching Graphic (see <see cref="RolledOutcomeToken"/> drag surface)
-/// to the owning token. Keeps drag handlers on the topmost hit target so drags actually start.
+/// Forwards pointer drag and click events from a raycast-catching Graphic (see <see cref="RolledOutcomeToken"/> drag surface)
+/// to the owning token. Keeps handlers on the topmost hit target so drags and selection clicks actually start.
 /// </summary>
-public sealed class RolledOutcomeTokenDragRelay : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IInitializePotentialDragHandler
+public sealed class RolledOutcomeTokenDragRelay : MonoBehaviour,
+    IBeginDragHandler, IDragHandler, IEndDragHandler, IInitializePotentialDragHandler, IPointerClickHandler
 {
     private RolledOutcomeToken _token;
 
@@ -29,5 +30,11 @@ public sealed class RolledOutcomeTokenDragRelay : MonoBehaviour, IBeginDragHandl
     {
         if (_token != null && _token.IsDragEnabled)
             _token.HandleEndDrag(eventData);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (_token != null && _token.IsDragEnabled)
+            _token.HandleClick(eventData);
     }
 }

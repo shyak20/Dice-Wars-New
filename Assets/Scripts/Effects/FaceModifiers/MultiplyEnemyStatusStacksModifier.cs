@@ -24,6 +24,6 @@ public class MultiplyEnemyStatusStacksModifier : FaceResolveModifierBase
         if (mgr == null)
             return;
 
-        mgr.MultiplyStacks(statusEffect, stackMultiplier, combat.BuildStatusContextForEffects());
+        mgr.MultiplyStacksFromPlayer(statusEffect, stackMultiplier, combat.BuildStatusContextForEffects());
     }
 }

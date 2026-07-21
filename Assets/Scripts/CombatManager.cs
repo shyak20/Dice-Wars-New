@@ -548,10 +548,11 @@ public class CombatManager : MonoBehaviour
         if (applyStacks <= 0) return;
 
         var ctx = BuildStatusContextForEffects();
-        activeEnemy.StatusEffects.ApplyStatus(_burnOnPlayerArmorLostFromEnemyDef, applyStacks, ctx);
-        _turnRegistry.RecordBurnApplied(applyStacks);
+        var applied = activeEnemy.StatusEffects.ApplyStatusFromPlayer(_burnOnPlayerArmorLostFromEnemyDef, applyStacks, ctx);
+        if (applied)
+            _turnRegistry.RecordBurnApplied(applyStacks);
 
-        if (GameActionDebug.Enabled)
+        if (applied && GameActionDebug.Enabled)
             Debug.Log($"[BurnOnArmorLost] +{applyStacks} burn ({armorLost} armor lost × {_burnStacksPerArmorLostFromEnemyPhysical})");
     }
 
@@ -3803,6 +3804,8 @@ public class CombatManager : MonoBehaviour
             {
                 var enemy = _activeEnemies[i];
                 if (enemy == null || !enemy.IsAlive) continue;
+                if (face.IsActionCancelled(action, enemy))
+                    continue;
                 faceCtx.Enemy = enemy;
                 execute(faceCtx);
             }
@@ -3811,6 +3814,8 @@ public class CombatManager : MonoBehaviour
         }
 
         faceCtx.Enemy = ResolveActionTargetEnemy(face, action);
+        if (face != null && faceCtx.Enemy != null && face.IsActionCancelled(action, faceCtx.Enemy))
+            return;
         execute(faceCtx);
     }
 
@@ -4180,7 +4185,11 @@ public class CombatManager : MonoBehaviour
         var boosted = baseDamage + enemy.StatusEffects.GetTotalPerDieAttackDamageBonus(statusCtx);
         var damage = enemy.StatusEffects.ModifyEnemyHitDamage(statusCtx, boosted);
         if (enemy.StatusEffects.CheckRedirectAttackToSelf(statusCtx))
-            enemy.TakeDamage(damage);
+            enemy.TakeDamage(
+                damage,
+                DieType.Damage,
+                EnemyDamagePresentationKind.Physical,
+                canBeBlockedByGhostwalk: false);
         else
         {
             var hadImmune = player.StatusEffects.GetStacks<ImmuneEffectSO>() > 0;
@@ -5104,6 +5113,8 @@ public class CombatManager : MonoBehaviour
                 var enemy = c.PreAssignedEnemy.IsAlive ? c.PreAssignedEnemy : ResolvePrimaryTargetEnemy();
                 if (enemy == null)
                     continue;
+                if (c.PoolSourceAction != null && face.IsActionCancelled(c.PoolSourceAction, enemy))
+                    continue;
 
                 var ctx = BuildContext(face);
                 ctx.Enemy = enemy;
@@ -5418,11 +5429,15 @@ public class CombatManager : MonoBehaviour
                 {
                     var multiTarget = _activeEnemies[e];
                     if (multiTarget == null || !multiTarget.IsAlive) continue;
+                    if (face.IsPhysicalCancelled(multiTarget))
+                        continue;
 
                     if (face.UsesSplitDamageHits)
                     {
                         for (var hit = 0; hit < face.DamageAttackTimes; hit++)
                         {
+                            if (face.IsPhysicalCancelled(multiTarget, hit))
+                                continue;
                             var t = TotalsFor(multiTarget);
                             t.Physical += face.Damage;
                             Store(multiTarget, t);
@@ -5444,6 +5459,8 @@ public class CombatManager : MonoBehaviour
                         hitTarget = fallback;
                     if (hitTarget == null)
                         continue;
+                    if (face.IsPhysicalCancelled(hitTarget, hit))
+                        continue;
 
                     var t = TotalsFor(hitTarget);
                     t.Physical += face.Damage;
@@ -5455,6 +5472,8 @@ public class CombatManager : MonoBehaviour
 
             var target = face.DamageTargetEnemy != null && face.DamageTargetEnemy.IsAlive ? face.DamageTargetEnemy : fallback;
             if (target == null) continue;
+            if (face.IsPhysicalCancelled(target))
+                continue;
             AddFaceElementDamageToTotals(face, target, fallback, TotalsFor, Store);
         }
 
@@ -5474,6 +5493,8 @@ public class CombatManager : MonoBehaviour
 
                 var bonusTarget = extra.PreAssignedEnemy.IsAlive ? extra.PreAssignedEnemy : fallback;
                 if (bonusTarget == null)
+                    continue;
+                if (face.IsPhysicalCancelled(bonusTarget))
                     continue;
 
                 var bonusTotals = TotalsFor(bonusTarget);
@@ -5572,6 +5593,106 @@ public class CombatManager : MonoBehaviour
         store(target, t);
     }
 
+    public bool TryGetBlockedArrivalDestroyHoldSeconds(out float seconds)
+    {
+        seconds = 0f;
+        if (diceRollOutcomeFlyout == null)
+            return false;
+
+        seconds = diceRollOutcomeFlyout.BlockedArrivalDestroyHoldSeconds;
+        return true;
+    }
+
+    /// <summary>
+    /// Ghostwalk / Protected: cancel a rolled piece when it arrives at an enemy (after the fly), consuming one stack.
+    /// Caller plays Bust destroy visuals and must not deposit the piece into the enemy pool.
+    /// </summary>
+    public bool TryCancelEnemyOutcomeOnArrival(
+        FaceResult face,
+        ApplyStatusEffectAction sourceAction,
+        RollOutcomeVisualLine line,
+        EnemyController enemy)
+    {
+        if (face == null || enemy == null || !enemy.IsAlive)
+            return false;
+
+        if (sourceAction == null)
+        {
+            var isPhysical = face.Type == DieType.Damage && face.Damage > 0;
+            if (line.IsRelicPoolExtraLine)
+            {
+                isPhysical = PoolRowKey.TryGetDieType(line.RowKey, out var dieType) && dieType == DieType.Damage;
+            }
+
+            if (!isPhysical || enemy.GhostwalkStacks <= 0)
+                return false;
+
+            if (!enemy.TryConsumeGhostwalkStack())
+                return false;
+
+            var hitIndex = line.IsSplitDamageHitLine ? line.DamageHitIndex : -1;
+            face.MarkPhysicalCancelled(enemy, hitIndex);
+
+            if (line.IsRelicPoolExtraLine)
+                NullifyRelicPoolExtraForEnemy(face, line, enemy);
+
+            if (GameActionDebug.Enabled)
+                Debug.Log($"[Ghostwalk] Cancelled physical arrival on {enemy.enemyData?.enemyName} (stacks left {enemy.GhostwalkStacks}).");
+
+            return true;
+        }
+
+        var status = sourceAction.StatusEffectDefinition;
+        if (!StatusEffectManager.IsEnemyDebuff(status) || enemy.ProtectedStacks <= 0)
+            return false;
+
+        if (!enemy.TryConsumeProtectedStack())
+            return false;
+
+        face.MarkActionCancelled(sourceAction, enemy);
+        NullifyActionPoolContribution(face, sourceAction);
+
+        if (GameActionDebug.Enabled)
+            Debug.Log($"[Protected] Cancelled {status.effectName} arrival on {enemy.enemyData?.enemyName} (stacks left {enemy.ProtectedStacks}).");
+
+        return true;
+    }
+
+    static void NullifyActionPoolContribution(FaceResult face, ApplyStatusEffectAction sourceAction)
+    {
+        if (face?.ActionPoolContributions == null || sourceAction == null)
+            return;
+
+        for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+        {
+            var c = face.ActionPoolContributions[i];
+            if (c.PoolSourceAction != sourceAction)
+                continue;
+
+            c.Amount = 0;
+            face.ActionPoolContributions[i] = c;
+        }
+    }
+
+    static void NullifyRelicPoolExtraForEnemy(FaceResult face, RollOutcomeVisualLine line, EnemyController enemy)
+    {
+        if (face?.ActionPoolContributions == null || enemy == null)
+            return;
+
+        for (var i = 0; i < face.ActionPoolContributions.Count; i++)
+        {
+            var c = face.ActionPoolContributions[i];
+            if (!c.PoolKey.Equals(line.RowKey))
+                continue;
+            if (c.PreAssignedEnemy != null && c.PreAssignedEnemy != enemy)
+                continue;
+
+            c.Amount = 0;
+            face.ActionPoolContributions[i] = c;
+            return;
+        }
+    }
+
     /// <summary>
     /// Drag-to-assign: routes a single rolled outcome <b>piece</b> (the face's damage, or one enemy-targeted action) to the chosen
     /// enemy. The damage piece (sourceAction == null) sets <see cref="FaceResult.DamageTargetEnemy"/>; an action piece sets its
@@ -5658,11 +5779,13 @@ public class CombatManager : MonoBehaviour
                 {
                     for (var hit = 0; hit < face.DamageAttackTimes; hit++)
                     {
+                        if (face.IsPhysicalCancelled(enemy, hit))
+                            continue;
                         if (face.GetDamageHitTarget(hit) == null)
                             face.SetDamageHitTarget(hit, enemy);
                     }
                 }
-                else if (face.DamageTargetEnemy == null)
+                else if (!face.IsPhysicalCancelled(enemy) && face.DamageTargetEnemy == null)
                     face.DamageTargetEnemy = enemy;
             }
 
@@ -5672,6 +5795,7 @@ public class CombatManager : MonoBehaviour
                 if (a is ApplyStatusEffectAction apply &&
                     apply.StatusEffectDefinition != null &&
                     apply.StatusEffectDefinition.target == StatusEffectTarget.Enemy &&
+                    !face.IsActionCancelled(a, enemy) &&
                     face.GetActionTarget(a) == null)
                     face.SetActionTarget(a, enemy);
             }

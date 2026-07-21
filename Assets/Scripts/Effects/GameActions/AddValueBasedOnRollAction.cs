@@ -161,12 +161,12 @@ public class AddValueBasedOnRollAction : GameActionWithIcon, ISerializationCallb
             ? ctx.CombatManager.BuildStatusContextForEffects()
             : new StatusEffectContext { Player = ctx.Player, Enemy = ctx.Enemy, CombatManager = ctx.CombatManager };
 
-        ctx.Enemy.StatusEffects.ApplyStatus(burnDefinition, applyStacks, sctx);
+        var applied = ctx.Enemy.StatusEffects.ApplyStatusFromPlayer(burnDefinition, applyStacks, sctx);
 
-        if (ctx.CombatManager != null)
+        if (applied && ctx.CombatManager != null)
             ctx.CombatManager.TurnRegistry?.RecordBurnApplied(applyStacks);
 
-        if (GameActionDebug.Enabled)
+        if (applied && GameActionDebug.Enabled)
             Debug.Log($"[AddValueBasedOnRoll] Burn +{applyStacks}");
     }
 

@@ -22,6 +22,6 @@ public class MultiplyEnemyBurnStacksModifier : FaceResolveModifierBase
         if (combat.activeEnemy == null || stackMultiplier < 2) return;
         var mgr = combat.activeEnemy.StatusEffects;
         if (mgr == null) return;
-        mgr.MultiplyAllBurnStacks(stackMultiplier, combat.BuildStatusContextForEffects());
+        mgr.MultiplyAllBurnStacksFromPlayer(stackMultiplier, combat.BuildStatusContextForEffects());
     }
 }

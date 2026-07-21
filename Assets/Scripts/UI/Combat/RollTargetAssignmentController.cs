@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,11 +30,16 @@ public class RollTargetAssignmentController : MonoBehaviour
     private Action _onAllAssigned;
     private bool _gateOpen;
     private RectTransform _spawnParentOverride;
+    private RolledOutcomeToken _selectedToken;
+    private EnemyController _enemyHoverOutlineTarget;
 
     public bool HasPendingAssignments => _pendingTokens.Count > 0;
 
     /// <summary>True while the assignment gate is open and the player must drag tokens onto enemies.</summary>
     public bool IsWaitingForPlayerAssignment => _gateOpen && _pendingTokens.Count > 0;
+
+    /// <summary>The one pending token that shows Select Outline and can be click-assigned to an enemy.</summary>
+    public RolledOutcomeToken SelectedToken => _selectedToken;
 
     public static Material SharedDragHoverOutlineMaterial { get; private set; }
 
@@ -99,6 +105,128 @@ public class RollTargetAssignmentController : MonoBehaviour
         DisableTokenParentBackgroundRaycast();
         SetPrompt(false);
         SharedDragHoverOutlineMaterial = dragHoverOutlineMaterial;
+    }
+
+    void LateUpdate()
+    {
+        UpdateSelectedTokenEnemyHoverAndClick();
+    }
+
+    void UpdateSelectedTokenEnemyHoverAndClick()
+    {
+        if (_selectedToken == null || !_selectedToken.IsDragEnabled || _selectedToken.IsDragging || _pendingTokens.Count == 0)
+        {
+            ClearEnemyHoverOutline();
+            return;
+        }
+
+        // Overlay flyout canvas sits above enemy UI and steals EventSystem hits — use screen-rect tests instead.
+        if (IsScreenPointOverAnyPendingToken(Input.mousePosition))
+        {
+            ClearEnemyHoverOutline();
+            return;
+        }
+
+        var dropTarget = FindEnemyDropTargetUnderScreenPoint(Input.mousePosition);
+        var hoverEnemy = dropTarget != null && dropTarget.Enemy != null && dropTarget.Enemy.IsAlive
+            ? dropTarget.Enemy
+            : null;
+        SetEnemyHoverOutline(hoverEnemy);
+
+        if (Input.GetMouseButtonDown(0) && hoverEnemy != null)
+            _selectedToken.AssignToEnemy(hoverEnemy);
+    }
+
+    bool IsScreenPointOverAnyPendingToken(Vector2 screenPoint)
+    {
+        for (var i = 0; i < _pendingTokens.Count; i++)
+        {
+            var token = _pendingTokens[i];
+            if (token == null || !token.IsDragEnabled)
+                continue;
+            if (ScreenPointOverRect(token.RectTransform, screenPoint))
+                return true;
+        }
+
+        return false;
+    }
+
+    EnemyDropTarget FindEnemyDropTargetUnderScreenPoint(Vector2 screenPoint)
+    {
+        if (combat?.ActiveEnemies == null)
+            return null;
+
+        EnemyDropTarget best = null;
+        var bestDepth = int.MinValue;
+        for (var i = 0; i < combat.ActiveEnemies.Count; i++)
+        {
+            var enemy = combat.ActiveEnemies[i];
+            if (enemy == null || !enemy.IsAlive)
+                continue;
+
+            var drop = enemy.DropTarget;
+            if (drop == null || drop.Rect == null)
+                continue;
+            if (!ScreenPointOverRect(drop.Rect, screenPoint))
+                continue;
+
+            var depth = drop.Rect.GetSiblingIndex();
+            if (best == null || depth >= bestDepth)
+            {
+                best = drop;
+                bestDepth = depth;
+            }
+        }
+
+        return best;
+    }
+
+    static bool ScreenPointOverRect(RectTransform rect, Vector2 screenPoint)
+    {
+        if (rect == null)
+            return false;
+
+        var canvas = rect.GetComponentInParent<Canvas>();
+        Camera eventCam = null;
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            eventCam = canvas.worldCamera;
+
+        return RectTransformUtility.RectangleContainsScreenPoint(rect, screenPoint, eventCam);
+    }
+
+    void SetEnemyHoverOutline(EnemyController enemy)
+    {
+        if (ReferenceEquals(_enemyHoverOutlineTarget, enemy))
+            return;
+
+        _enemyHoverOutlineTarget?.CombatPresentation?.SetDragAssignHoverOutline(false);
+        _enemyHoverOutlineTarget = enemy;
+        if (_enemyHoverOutlineTarget == null)
+            return;
+
+        var presentation = _enemyHoverOutlineTarget.CombatPresentation;
+        if (presentation == null)
+        {
+            Debug.LogError(
+                $"RollTargetAssignmentController: enemy '{_enemyHoverOutlineTarget.name}' has no EnemyCombatPresentationController for drag hover outline.",
+                _enemyHoverOutlineTarget);
+            return;
+        }
+
+        if (!presentation.HasDragHoverOutlineConfigured)
+        {
+            Debug.LogError(
+                "RollTargetAssignmentController: dragHoverOutlineMaterial is not assigned (controller or enemy presentation).",
+                this);
+            return;
+        }
+
+        presentation.SetDragAssignHoverOutline(true);
+    }
+
+    void ClearEnemyHoverOutline()
+    {
+        SetEnemyHoverOutline(null);
     }
 
     private void OnDestroy()
@@ -199,18 +327,152 @@ public class RollTargetAssignmentController : MonoBehaviour
         if (!_pendingTokens.Contains(token))
             return;
 
-        combat.AssignRolledOutcomePieceToEnemy(token.Face, token.SourceAction, enemy, token.Line, token.ResolvesImmediatelyOnDrop,
-            pieceAmountAlreadyPerfectScaled: true);
+        EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
+        ClearEnemyHoverOutline();
+
+        var face = token.Face;
+        var cancelled = combat != null
+            && combat.TryCancelEnemyOutcomeOnArrival(token.Face, token.SourceAction, token.Line, enemy);
+
+        var wasSelected = ReferenceEquals(_selectedToken, token);
+        if (wasSelected)
+            ClearSelectedToken(notifyToken: false);
 
         _pendingTokens.Remove(token);
-        Destroy(token.gameObject);
         NotifyPendingTokensChanged();
-        TryDestroyDieWhenFaceFullyAssigned(token.Face);
+        TryDestroyDieWhenFaceFullyAssigned(face);
+
+        if (cancelled)
+        {
+            var shouldCompleteGate = _pendingTokens.Count == 0;
+            StartCoroutine(CoPlayBlockedArrivalDestroyThenRemoveToken(token, shouldCompleteGate, wasSelected));
+            return;
+        }
+
+        combat.AssignRolledOutcomePieceToEnemy(token.Face, token.SourceAction, enemy, token.Line, token.ResolvesImmediatelyOnDrop,
+            pieceAmountAlreadyPerfectScaled: true);
+        Destroy(token.gameObject);
+        CombatEvents.OnElementValueDroppedOnEnemy?.Invoke();
 
         if (_pendingTokens.Count == 0)
             CompleteGateIfOpen();
+        else if (wasSelected || _selectedToken == null)
+            EnsureSelectedToken();
+    }
 
-        CombatEvents.OnElementValueDroppedOnEnemy?.Invoke();
+    IEnumerator CoPlayBlockedArrivalDestroyThenRemoveToken(
+        RolledOutcomeToken token,
+        bool completeGateWhenDone,
+        bool wasSelected)
+    {
+        if (token == null)
+            yield break;
+
+        token.PlayBustDestroyVisual();
+        token.SetDragEnabled(false);
+
+        var hold = 0.45f;
+        if (combat != null && combat.TryGetBlockedArrivalDestroyHoldSeconds(out var configuredHold))
+            hold = configuredHold;
+
+        if (hold > 0f)
+            yield return new WaitForSeconds(hold);
+
+        if (token != null)
+            Destroy(token.gameObject);
+
+        if (completeGateWhenDone)
+            CompleteGateIfOpen();
+        else if (wasSelected || _selectedToken == null)
+            EnsureSelectedToken();
+    }
+
+    /// <summary>Select one waiting token (Select Outline). Null clears selection.</summary>
+    public void SetSelectedToken(RolledOutcomeToken token)
+    {
+        if (token != null && !_pendingTokens.Contains(token))
+            return;
+        if (token != null && !token.IsDragEnabled)
+            return;
+
+        if (ReferenceEquals(_selectedToken, token))
+        {
+            BringSelectedTokenToFront();
+            return;
+        }
+
+        EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
+        ClearEnemyHoverOutline();
+
+        var previous = _selectedToken;
+        _selectedToken = token;
+        previous?.NotifySelectionChanged(false);
+        _selectedToken?.NotifySelectionChanged(true);
+        BringSelectedTokenToFront();
+    }
+
+    void BringSelectedTokenToFront()
+    {
+        if (_selectedToken == null)
+            return;
+
+        _selectedToken.transform.SetAsLastSibling();
+    }
+
+    /// <summary>Called when a token finishes spawn presentation and becomes assignable.</summary>
+    public void NotifyTokenBecameAssignable(RolledOutcomeToken token)
+    {
+        if (token == null || !_pendingTokens.Contains(token))
+            return;
+
+        if (_selectedToken == null || !_selectedToken.IsDragEnabled || !_pendingTokens.Contains(_selectedToken))
+            SetSelectedToken(token);
+    }
+
+    /// <summary>Click / drag start on a token selects it for click-to-assign.</summary>
+    public void NotifyTokenInteractionBegan(RolledOutcomeToken token)
+    {
+        if (token == null || !_pendingTokens.Contains(token) || !token.IsDragEnabled)
+            return;
+
+        SetSelectedToken(token);
+    }
+
+    /// <summary>Drag started — hover is driven by <see cref="EnemyDropTarget"/> until drag ends.</summary>
+    public void NotifyTokenDragStarted(RolledOutcomeToken token)
+    {
+        if (token == null || !ReferenceEquals(_selectedToken, token))
+            return;
+
+        ClearEnemyHoverOutline();
+    }
+
+    void EnsureSelectedToken()
+    {
+        if (_selectedToken != null && _pendingTokens.Contains(_selectedToken) && _selectedToken.IsDragEnabled)
+            return;
+
+        RolledOutcomeToken next = null;
+        for (var i = 0; i < _pendingTokens.Count; i++)
+        {
+            var candidate = _pendingTokens[i];
+            if (candidate == null || !candidate.IsDragEnabled)
+                continue;
+            next = candidate;
+            break;
+        }
+
+        SetSelectedToken(next);
+    }
+
+    void ClearSelectedToken(bool notifyToken)
+    {
+        var previous = _selectedToken;
+        _selectedToken = null;
+        if (notifyToken)
+            previous?.NotifySelectionChanged(false);
+        ClearEnemyHoverOutline();
+        EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
     }
 
     /// <summary>When every drag token from this face is assigned, dissolve the 3D die that rolled it.</summary>
@@ -261,6 +523,8 @@ public class RollTargetAssignmentController : MonoBehaviour
             Destroy(token.gameObject);
         }
 
+        ClearSelectedToken(notifyToken: false);
+        ClearEnemyHoverOutline();
         _pendingTokens.Clear();
         _gateOpen = false;
         _onAllAssigned = null;
@@ -276,6 +540,7 @@ public class RollTargetAssignmentController : MonoBehaviour
             return;
 
         _gateOpen = false;
+        ClearSelectedToken(notifyToken: false);
         CombatEvents.OnTargetAssignmentModeChanged?.Invoke(false);
         var cb = _onAllAssigned;
         _onAllAssigned = null;

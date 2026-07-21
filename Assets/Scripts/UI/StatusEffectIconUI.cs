@@ -73,10 +73,16 @@ public class StatusEffectIconUI : MonoBehaviour
             iconImage.raycastTarget = false;
         }
 
-        // Use the status asset path so secondary panels exclude this same buff (style tags in its
-        // name/description would otherwise stack a duplicate explanation tooltip).
+        // Prefer formatted SetContent so {0} in the status description becomes the live stack count.
+        // Style-tag secondary panels still resolve from the formatted text.
         if (hoverTooltipTarget != null)
-            hoverTooltipTarget.SetScriptableSource(effect.Definition);
+        {
+            var def = effect.Definition;
+            var title = string.IsNullOrEmpty(def.effectName) ? def.name : def.effectName;
+            var description = FormatStackPlaceholder(def.description, effect.Stacks);
+            var background = GameIconCatalog.GetStatusBackground(def);
+            hoverTooltipTarget.SetContent(title, description, background);
+        }
         UpdateStacks(effect.Stacks);
     }
 
@@ -87,6 +93,21 @@ public class StatusEffectIconUI : MonoBehaviour
             stackText.text = hasStacks ? stacks.ToString() : string.Empty;
         if (stackVisualRoot != null)
             stackVisualRoot.SetActive(hasStacks);
+    }
+
+    static string FormatStackPlaceholder(string text, int stacks)
+    {
+        if (string.IsNullOrEmpty(text) || text.IndexOf("{0}", System.StringComparison.Ordinal) < 0)
+            return text ?? string.Empty;
+
+        try
+        {
+            return string.Format(text, stacks);
+        }
+        catch (System.FormatException)
+        {
+            return text.Replace("{0}", stacks.ToString());
+        }
     }
 
     void EnsureHoverTooltipTargets()

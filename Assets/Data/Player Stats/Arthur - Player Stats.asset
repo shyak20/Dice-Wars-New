@@ -24,10 +24,14 @@ MonoBehaviour:
   currentDeck:
   - {fileID: 11400000, guid: 6c7bee20a819954459132192b2dcf977, type: 2}
   - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
+  - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
+  - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
+  - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
+  - {fileID: 11400000, guid: c1dec8cea47d97f4bbfcc7bf8a955118, type: 2}
   startingRelics: []
   startingMaxHealth: 40
   maxRollsPerTurn: 3
-  baseMaxPower: 10
+  baseMaxPower: 40
   mapPlayerIcon: {fileID: 21300000, guid: 4fe5439326330174bb5ffdaf32f97770, type: 3}
   moveLimit: 10
   perfectStrikeBaseMultiplier: 2

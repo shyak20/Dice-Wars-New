@@ -6,6 +6,7 @@ using UnityEngine.UI;
 /// A draggable chip representing exactly one rolled outcome <b>piece</b> — either a face's direct damage, or a single
 /// enemy-targeted action (Burn, Vulnerable, ...). The player drags it onto an <see cref="EnemyDropTarget"/> to choose which
 /// enemy it hits, so the damage and the debuff of the same die can be sent to different enemies.
+/// While selected (Select Outline), the player can also click an enemy to assign without dragging.
 /// Visuals (icon, value, jackpot ×N reveal, bust destroy) are delegated to a <see cref="StoredActionsPoolIcon"/> on this prefab.
 /// Created and owned by <see cref="RollTargetAssignmentController"/>.
 /// </summary>
@@ -26,16 +27,20 @@ public class RolledOutcomeToken : MonoBehaviour
 
     private RectTransform _rect;
     private CanvasGroup _canvasGroup;
+    private CanvasGroup _dragCatcherCanvasGroup;
     private Canvas _canvas;
     private RollTargetAssignmentController _owner;
     private RollOutcomeVisualLine _line;
     private Vector2 _dragPointerOffset;
     private bool _dragEnabled;
     private bool _isDragging;
+    private bool _isSelected;
+    private bool _suppressClickAfterDrag;
 
     public RectTransform RectTransform => _rect != null ? _rect : (_rect = (RectTransform)transform);
     public bool IsDragEnabled => _dragEnabled;
     public bool IsDragging => _isDragging;
+    public bool IsSelected => _isSelected;
 
     /// <summary>Fired when the player begins dragging this token.</summary>
     public event System.Action DragStarted;
@@ -48,6 +53,9 @@ public class RolledOutcomeToken : MonoBehaviour
 
     /// <summary>Fired when drag input is enabled or disabled (e.g. after spawn presentation completes).</summary>
     public event System.Action<bool> DragEnabledChanged;
+
+    /// <summary>Fired when exclusive Select Outline selection changes.</summary>
+    public event System.Action<bool> SelectionChanged;
 
     /// <summary>The rolled face this token's piece belongs to.</summary>
     public FaceResult Face { get; private set; }
@@ -84,6 +92,7 @@ public class RolledOutcomeToken : MonoBehaviour
 
         _canvasGroup.interactable = true;
         _canvasGroup.blocksRaycasts = true;
+        _isSelected = false;
 
         if (poolIcon != null)
         {
@@ -109,7 +118,25 @@ public class RolledOutcomeToken : MonoBehaviour
         _canvasGroup.interactable = enabled;
         if (dragRaycastTarget != null)
             dragRaycastTarget.raycastTarget = enabled;
+        ApplyRaycastBlockingForCurrentState();
         DragEnabledChanged?.Invoke(enabled);
+
+        if (enabled && _owner != null)
+            _owner.NotifyTokenBecameAssignable(this);
+    }
+
+    /// <summary>Called by <see cref="RollTargetAssignmentController"/> when exclusive selection changes.</summary>
+    public void NotifySelectionChanged(bool selected)
+    {
+        if (_isSelected == selected)
+        {
+            ApplyRaycastBlockingForCurrentState();
+            return;
+        }
+
+        _isSelected = selected;
+        ApplyRaycastBlockingForCurrentState();
+        SelectionChanged?.Invoke(selected);
     }
 
     /// <summary>
@@ -182,18 +209,37 @@ public class RolledOutcomeToken : MonoBehaviour
         _rect.localPosition = new Vector3(anchored.x, anchored.y, 0f);
     }
 
+    /// <summary>Called by <see cref="RolledOutcomeTokenDragRelay"/> when the player clicks the token (selects it).</summary>
+    public void HandleClick(PointerEventData eventData)
+    {
+        if (_suppressClickAfterDrag)
+        {
+            _suppressClickAfterDrag = false;
+            return;
+        }
+
+        if (!_dragEnabled)
+            return;
+
+        _owner?.NotifyTokenInteractionBegan(this);
+    }
+
     /// <summary>Called by <see cref="RolledOutcomeTokenDragRelay"/> on the drag raycast surface.</summary>
     public void HandleBeginDrag(PointerEventData eventData)
     {
         if (!_dragEnabled || _rect == null)
             return;
 
+        _suppressClickAfterDrag = true;
+        _owner?.NotifyTokenInteractionBegan(this);
+
         if (ScreenPointToParentLocalPoint(eventData.position, out var local))
             _dragPointerOffset = (Vector2)_rect.localPosition - local;
 
-        _canvasGroup.blocksRaycasts = false;
-        transform.SetAsLastSibling();
         _isDragging = true;
+        _owner?.NotifyTokenDragStarted(this);
+        ApplyRaycastBlockingForCurrentState();
+        transform.SetAsLastSibling();
         DragStarted?.Invoke();
     }
 
@@ -213,13 +259,46 @@ public class RolledOutcomeToken : MonoBehaviour
     /// <summary>Called by <see cref="RolledOutcomeTokenDragRelay"/> on the drag raycast surface.</summary>
     public void HandleEndDrag(PointerEventData eventData)
     {
-        _canvasGroup.blocksRaycasts = true;
-        EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
         _isDragging = false;
+        ApplyRaycastBlockingForCurrentState();
+        EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
         DragEnded?.Invoke();
         // If not consumed by an EnemyDropTarget.OnDrop, the token stays pending where it was released.
         if (_owner != null)
             _owner.NotifyTokenDragEnded(this);
+
+        // Click fires after EndDrag on some platforms; ignore that click so drag-release does not re-toggle selection.
+        _suppressClickAfterDrag = true;
+        StartCoroutine(CoClearClickSuppressNextFrame());
+    }
+
+    System.Collections.IEnumerator CoClearClickSuppressNextFrame()
+    {
+        yield return null;
+        _suppressClickAfterDrag = false;
+    }
+
+    /// <summary>
+    /// Unselected idle tokens block the full chip so they can be clicked to select.
+    /// Selected idle tokens pass through everywhere except the drag catcher (click/drag still work on the chip).
+    /// While dragging, the whole token passes raycasts so enemies receive hover/drop.
+    /// </summary>
+    void ApplyRaycastBlockingForCurrentState()
+    {
+        if (_canvasGroup == null)
+            return;
+
+        if (!_dragEnabled)
+        {
+            _canvasGroup.blocksRaycasts = true;
+            if (_dragCatcherCanvasGroup != null)
+                _dragCatcherCanvasGroup.blocksRaycasts = false;
+            return;
+        }
+
+        _canvasGroup.blocksRaycasts = !_isSelected && !_isDragging;
+        if (_dragCatcherCanvasGroup != null)
+            _dragCatcherCanvasGroup.blocksRaycasts = !_isDragging;
     }
 
     private void EnsureDragSurface()
@@ -228,10 +307,24 @@ public class RolledOutcomeToken : MonoBehaviour
             dragRaycastTarget = CreateDragCatcherOverlay();
 
         ConfigureDragGraphic(dragRaycastTarget);
+        EnsureDragCatcherCanvasGroup();
 
         // Must sit above icon/value children so it receives pointer hits first.
         dragRaycastTarget.transform.SetAsLastSibling();
         BindDragRelay(dragRaycastTarget);
+        ApplyRaycastBlockingForCurrentState();
+    }
+
+    void EnsureDragCatcherCanvasGroup()
+    {
+        if (dragRaycastTarget == null)
+            return;
+
+        _dragCatcherCanvasGroup = dragRaycastTarget.GetComponent<CanvasGroup>();
+        if (_dragCatcherCanvasGroup == null)
+            _dragCatcherCanvasGroup = dragRaycastTarget.gameObject.AddComponent<CanvasGroup>();
+
+        _dragCatcherCanvasGroup.ignoreParentGroups = true;
     }
 
     private Graphic CreateDragCatcherOverlay()

@@ -4641,7 +4641,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &205129131
 Transform:
   m_ObjectHideFlags: 0
@@ -4651,7 +4651,7 @@ Transform:
   m_GameObject: {fileID: 205129130}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.00924, y: -0.0014, z: -0.0003}
+  m_LocalPosition: {x: -0.00924, y: -0.0014, z: -0.0005}
   m_LocalScale: {x: 0.195559, y: 0.0023821897, z: 0.15964}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4685,7 +4685,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 205129130}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -10563,7 +10563,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.33690625, w: 0.9415382}
   m_LocalPosition: {x: 0.00599, y: -0.00688, z: 0.00499}
-  m_LocalScale: {x: 0.01, y: 0.00065388286, z: 0.01}
+  m_LocalScale: {x: 0.01, y: 0.00065388286, z: 0.025581999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}
@@ -49153,6 +49153,7 @@ MonoBehaviour:
   flyDurationSeconds: 1.2
   delayBetweenDiceActivationsSeconds: 0.2
   delayBetweenElementFlyLaunchesSeconds: 0.05
+  blockedArrivalDestroyHoldSeconds: 0.45
   selfLitPulseDurationSeconds: 1.5
   shakeDurationSeconds: 1.5
   shakeAmplitude: 0
@@ -63436,7 +63437,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &776683534
 RectTransform:
   m_ObjectHideFlags: 0
@@ -71564,23 +71565,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 464.8
+      value: 501.23
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 728.2
+      value: 560.96
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -7.6
+      value: -14.071
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 575
+      value: 556.79
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 372.1
+      value: 456.3
       objectReference: {fileID: 0}
     - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_Sprite
@@ -79763,12 +79764,18 @@ MonoBehaviour:
   curseDestroyEffect: {fileID: 323892667531381255, guid: 9235f4497b1abe8408bed427b0b99303, type: 3}
   effectLifetime: 4
   minForwardForce: 100
-  maxForwardForce: 700
+  maxForwardForce: 600
   minUpwardForce: 300
   maxUpwardForce: 700
   lateralThrowFromSpawnOffset: 0.4
   minTorque: 10
   maxTorque: 120
+  minRerollHorizontalForce: 150
+  maxRerollHorizontalForce: 300
+  minRerollUpwardForce: 400
+  maxRerollUpwardForce: 600
+  minRerollTorque: 20
+  maxRerollTorque: 130
 --- !u!4 &1048341407
 Transform:
   m_ObjectHideFlags: 0
@@ -79778,7 +79785,7 @@ Transform:
   m_GameObject: {fileID: 1048341405}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.21748449, z: -0, w: 0.97606385}
-  m_LocalPosition: {x: 1.934, y: 0.19, z: -3.343}
+  m_LocalPosition: {x: 1.934, y: 0.502, z: -3.343}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -81422,7 +81429,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
   m_LocalPosition: {x: 0.00924, y: -0.00044, z: 0.00499}
-  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.01}
+  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.025581999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}
@@ -86494,8 +86501,24 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 495.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 550.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -24.52
+      objectReference: {fileID: 0}
+    - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -436.00003
+      value: -506.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 451.06
       objectReference: {fileID: 0}
     - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -87007,7 +87030,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000059604645, y: -0.00000008940697, z: -0.9251282, w: 0.37965485}
   m_LocalPosition: {x: -0.00775, y: 0.00531, z: 0.00499}
-  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.01}
+  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.025581999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}
@@ -100300,7 +100323,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.33690533, w: 0.9415386}
   m_LocalPosition: {x: -0.00599, y: -0.00688, z: 0.00499}
-  m_LocalScale: {x: 0.01, y: 0.00065388286, z: 0.01}
+  m_LocalScale: {x: 0.01, y: 0.00065388286, z: 0.025581999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}
@@ -100524,7 +100547,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
   m_LocalPosition: {x: -0.00924, y: -0.00044, z: 0.00499}
-  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.01}
+  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.025581999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}
@@ -139766,7 +139789,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.00887, z: 0.00499}
-  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.01}
+  m_LocalScale: {x: 0.01225, y: 0.00065388286, z: 0.025581999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652383197672}
@@ -158970,10 +158993,10 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2116241822}
-  - {fileID: 205129131}
   - {fileID: 1304631491}
   - {fileID: 161477777}
   - {fileID: 672796431}
+  - {fileID: 205129131}
   - {fileID: 1878079091}
   - {fileID: 1015163453}
   - {fileID: 1565664325}
@@ -159130,7 +159153,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 628.2
+      value: 586.18
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_LocalPosition.z
@@ -159138,7 +159161,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2200166398541257416, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 412.3
+      value: 433.31
       objectReference: {fileID: 0}
     - target: {fileID: 2400280902204306392, guid: 0637fb83592c91e498cdf2470fa64aa4, type: 3}
       propertyPath: m_Sprite

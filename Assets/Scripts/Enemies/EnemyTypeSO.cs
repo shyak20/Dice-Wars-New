@@ -43,6 +43,13 @@ public enum EnemyResistanceElement
     Nature
 }
 
+/// <summary>Consumable enemy starting buffs configured directly on <see cref="EnemyTypeSO"/> (see Game Icon Index for art).</summary>
+public enum EnemyStartingBuffKind
+{
+    Protected,
+    Ghostwalk
+}
+
 [System.Serializable]
 public class EnemyStartingResistance
 {
@@ -124,6 +131,10 @@ public class EnemyTypeSO : ScriptableObject
     public IReadOnlyList<EnemyPhaseDefinition> Phases => phases;
 
     [Header("Starting Buffs")]
+    [Tooltip("Each stack prevents one player-caused debuff or status application, then is consumed.")]
+    [Min(0)] public int protectedStacks;
+    [Tooltip("Each stack prevents one incoming physical-damage packet, then is consumed.")]
+    [Min(0)] public int ghostwalkStacks;
     [Tooltip("Flat damage resistance by incoming damage element.")]
     public List<EnemyStartingResistance> startingResistances = new List<EnemyStartingResistance>();
     [Tooltip("Immediate action triggers when player resolves matching rolled values.")]

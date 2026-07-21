@@ -113,7 +113,7 @@ public static class CombatBonusChannelApplicator
                 Enemy = context.Enemy,
             };
 
-        context.Enemy.StatusEffects.ApplyStatus(poisonDefinition, stacks, statusCtx);
+        context.Enemy.StatusEffects.ApplyStatusFromPlayer(poisonDefinition, stacks, statusCtx);
     }
 
     static GameActionContext BuildFaceContext(CombatManager combat, FaceResult result) =>

@@ -42,17 +42,41 @@ public class StatusEffectManager : MonoBehaviour
 
     public void ApplyStatus(StatusEffectSO definition, int stacks, StatusEffectContext ctx)
     {
+        ApplyStatusCore(definition, stacks, ctx, canBeBlockedByProtected: false);
+    }
+
+    /// <summary>
+    /// Applies a status caused by the player. Enemy Protected stacks can block harmful effects.
+    /// Returns true when the status was applied.
+    /// </summary>
+    public bool ApplyStatusFromPlayer(StatusEffectSO definition, int stacks, StatusEffectContext ctx)
+    {
+        return ApplyStatusCore(definition, stacks, ctx, canBeBlockedByProtected: true);
+    }
+
+    private bool ApplyStatusCore(
+        StatusEffectSO definition,
+        int stacks,
+        StatusEffectContext ctx,
+        bool canBeBlockedByProtected)
+    {
         if (definition == null)
         {
             Debug.LogError("StatusEffectManager: Tried to apply null status effect!");
-            return;
+            return false;
         }
 
         if (stacks <= 0)
         {
             Debug.LogError($"StatusEffectManager: Tried to apply {definition.effectName} with {stacks} stacks!");
-            return;
+            return false;
         }
+
+        if (canBeBlockedByProtected
+            && IsEnemyDebuff(definition)
+            && ctx?.Enemy != null
+            && ctx.Enemy.TryConsumeProtectedStack())
+            return false;
 
         var existing = FindInstance(definition);
         if (existing != null)
@@ -72,6 +96,7 @@ public class StatusEffectManager : MonoBehaviour
         }
 
         NotifyChanged();
+        return true;
     }
 
     public void RemoveStatus(StatusEffectSO definition, StatusEffectContext ctx)
@@ -171,6 +196,19 @@ public class StatusEffectManager : MonoBehaviour
             NotifyChanged();
     }
 
+    /// <summary>
+    /// Player-caused version of <see cref="MultiplyStacks(StatusEffectSO,int,StatusEffectContext)"/>.
+    /// Protected blocks the entire stack increase and consumes one stack.
+    /// </summary>
+    public void MultiplyStacksFromPlayer(StatusEffectSO definition, int multiplier, StatusEffectContext ctx)
+    {
+        if (definition == null || multiplier <= 1 || FindInstance(definition) == null)
+            return;
+        if (IsEnemyDebuff(definition) && ctx?.Enemy != null && ctx.Enemy.TryConsumeProtectedStack())
+            return;
+        MultiplyStacks(definition, multiplier, ctx);
+    }
+
     /// <summary>Multiplies every <see cref="BurnEffectSO"/> on this manager: each instance’s stacks become stacks × <paramref name="multiplier"/>.</summary>
     public void MultiplyAllBurnStacks(int multiplier, StatusEffectContext ctx)
     {
@@ -189,6 +227,31 @@ public class StatusEffectManager : MonoBehaviour
 
         if (changed)
             NotifyChanged();
+    }
+
+    /// <summary>
+    /// Player-caused burn multiplication. Protected blocks the entire increase and consumes one stack.
+    /// </summary>
+    public void MultiplyAllBurnStacksFromPlayer(int multiplier, StatusEffectContext ctx)
+    {
+        if (multiplier <= 1)
+            return;
+
+        var hasBurn = false;
+        for (var i = 0; i < effects.Count; i++)
+        {
+            if (effects[i]?.Definition is BurnEffectSO && effects[i].Stacks > 0)
+            {
+                hasBurn = true;
+                break;
+            }
+        }
+
+        if (!hasBurn)
+            return;
+        if (ctx?.Enemy != null && ctx.Enemy.TryConsumeProtectedStack())
+            return;
+        MultiplyAllBurnStacks(multiplier, ctx);
     }
 
     /// <summary>Removes every <see cref="BurnEffectSO"/> (all stacks each). Returns total stacks removed.</summary>
@@ -648,6 +711,13 @@ public class StatusEffectManager : MonoBehaviour
             NotifyChanged();
             return;
         }
+    }
+
+    public static bool IsEnemyDebuff(StatusEffectSO definition)
+    {
+        return definition != null
+               && definition.target == StatusEffectTarget.Enemy
+               && (definition.type == StatusEffectType.Debuff || definition is BurnEffectSO);
     }
 
     private StatusEffectInstance FindInstance(StatusEffectSO definition)

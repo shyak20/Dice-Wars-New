@@ -4,8 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// Idle feedback on a draggable <see cref="RolledOutcomeToken"/> (Element Value prefab) while the player still needs to assign it:
-/// shakes until drag starts, keeps a highlight visible while waiting or dragging, and hides the highlight only once the token
-/// is placed on an enemy.
+/// shakes until drag starts, and shows Select Outline only while this token is the exclusive selected assignable piece.
 /// </summary>
 [RequireComponent(typeof(RolledOutcomeToken))]
 public class RolledOutcomeTokenAssignHintFeedback : MonoBehaviour
@@ -13,7 +12,7 @@ public class RolledOutcomeTokenAssignHintFeedback : MonoBehaviour
     [Header("References")]
     [Tooltip("Optional. Defaults to this object's RectTransform. Prefer a child visual so drag motion does not fight the shake rotation.")]
     [SerializeField] private RectTransform shakeTarget;
-    [Tooltip("Shown while the token is waiting for assignment or being dragged. Hidden once placed on an enemy.")]
+    [Tooltip("Select Outline — shown only while this token is the selected assignable piece.")]
     [SerializeField] private GameObject highlight;
 
     [Header("Idle shake")]
@@ -53,6 +52,7 @@ public class RolledOutcomeTokenAssignHintFeedback : MonoBehaviour
         _token.DragEnded += HandleDragEnded;
         _token.AssignedToEnemy += HandleAssignedToEnemy;
         _token.DragEnabledChanged += HandleDragEnabledChanged;
+        _token.SelectionChanged += HandleSelectionChanged;
         RefreshFeedback(force: true);
     }
 
@@ -62,12 +62,15 @@ public class RolledOutcomeTokenAssignHintFeedback : MonoBehaviour
         _token.DragEnded -= HandleDragEnded;
         _token.AssignedToEnemy -= HandleAssignedToEnemy;
         _token.DragEnabledChanged -= HandleDragEnabledChanged;
+        _token.SelectionChanged -= HandleSelectionChanged;
         StopShake(resetRotation: true);
         SetHighlightActive(false);
         _placedOnEnemy = false;
     }
 
     void HandleDragEnabledChanged(bool _) => RefreshFeedback(force: true);
+
+    void HandleSelectionChanged(bool _) => RefreshFeedback(force: true);
 
     void HandleDragStarted() => RefreshFeedback(force: true);
 
@@ -93,13 +96,13 @@ public class RolledOutcomeTokenAssignHintFeedback : MonoBehaviour
             return;
         }
 
-        var shouldShake = !_token.IsDragging;
+        var shouldShake = _token.IsSelected && !_token.IsDragging;
         if (shouldShake)
             StartShakeIfNeeded(force);
         else
             StopShake(resetRotation: true);
 
-        SetHighlightActive(true);
+        SetHighlightActive(_token.IsSelected);
     }
 
     void StartShakeIfNeeded(bool force)

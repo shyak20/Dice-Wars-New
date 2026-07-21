@@ -80,7 +80,15 @@ public class ApplyStatusEffectAction : GameActionWithIcon
         {
             if (context.Enemy == null)
                 return;
-            context.Enemy.StatusEffects.ApplyStatus(statusEffect, applyStacks, statusCtx);
+
+            var applied = true;
+            if (context.SourceEnemyAction == null)
+                applied = context.Enemy.StatusEffects.ApplyStatusFromPlayer(statusEffect, applyStacks, statusCtx);
+            else
+                context.Enemy.StatusEffects.ApplyStatus(statusEffect, applyStacks, statusCtx);
+
+            if (!applied)
+                return;
         }
 
         if (statusEffect is BurnEffectSO && statusEffect.target == StatusEffectTarget.Enemy && context.CombatManager != null)

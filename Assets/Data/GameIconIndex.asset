@@ -196,6 +196,17 @@ MonoBehaviour:
     background: {fileID: 0}
     title: Burn Resistance
     description: Receive 50% of <style=burn>Burn</style> damage.
+  enemyStartingBuffIcons:
+  - buffKind: 1
+    icon: {fileID: 21300000, guid: 7148a07abce224045a809b01300414b0, type: 3}
+    background: {fileID: 21300000, guid: 266ea71b1d4289f4a991e7ca404f3429, type: 3}
+    title: Ghostwalk
+    description: Ignores the next {0} <style=Attack>Attacks</style>
+  - buffKind: 0
+    icon: {fileID: 21300000, guid: 002547285b0aeaf4f83f2212fac9cc7b, type: 3}
+    background: {fileID: 5692705118427724298, guid: fe246dfb68b06b54490c03d9fdc8a2ce, type: 3}
+    title: Protected
+    description: Ignores the next {0} <color=#DF4DF3>Spells</style>
   hp:
     icon: {fileID: 21300000, guid: 92adfdd256c720f469f752c15c513835, type: 3}
     valueTextColor: {r: 0.9960785, g: 0.28235295, b: 0.28235295, a: 1}
