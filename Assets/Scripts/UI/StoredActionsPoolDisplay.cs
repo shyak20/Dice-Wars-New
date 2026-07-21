@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 /// <summary>
 /// Shows one icon per deferred <see cref="IGameAction"/> row (<see cref="FaceResult.ActionPoolContributions"/>).
@@ -112,24 +113,30 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         return comp;
     }
 
-    public RectTransform GetFlyTargetRect(PoolRowKey key)
+    /// <summary>
+    /// Fly destination for pool increment flyouts. Uses a visible row icon when one exists;
+    /// otherwise the icon container (inactive prefab rows are not laid out and report wrong corners).
+    /// </summary>
+    public RectTransform GetElementPoolFlyTarget(PoolRowKey key)
     {
-        var icon = GetOrCreateIcon(key);
-        return icon != null ? icon.FlyTargetRect : null;
+        if (iconMap != null && iconMap.TryGetValue(key, out var icon) && icon != null
+            && icon.gameObject.activeInHierarchy)
+            return icon.FlyTargetRect;
+
+        var container = GetIconContainerRect();
+        if (container != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(container);
+
+        return container;
     }
+
+    public RectTransform GetFlyTargetRect(PoolRowKey key) => GetElementPoolFlyTarget(key);
 
     /// <summary>
     /// Fly target for player-only pool rows (self-damage, heal, etc.). Uses the row icon when already visible;
     /// otherwise the icon container so the first increment-mode flyout still has a valid destination.
     /// </summary>
-    public RectTransform GetPlayerElementPoolFlyTarget(PoolRowKey key)
-    {
-        var row = GetFlyTargetRect(key);
-        if (row != null && row.gameObject.activeInHierarchy)
-            return row;
-
-        return GetIconContainerRect();
-    }
+    public RectTransform GetPlayerElementPoolFlyTarget(PoolRowKey key) => GetElementPoolFlyTarget(key);
 
     public Sprite GetPoolRowSprite(PoolRowKey key)
     {
@@ -406,7 +413,7 @@ public class StoredActionsPoolDisplay : MonoBehaviour
         displayedPools[key] = amount;
     }
 
-    public RectTransform GetIconContainerRect() => iconContainer;
+    public RectTransform GetIconContainerRect() => iconContainer != null ? iconContainer : (RectTransform)transform;
 
     /// <summary>Visible rows in layout order (lowest sibling index first — top of a typical vertical stack).</summary>
     public List<StoredActionsPoolIcon> GetVisiblePoolIconsTopToBottom()

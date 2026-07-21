@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "ludeo-unity-integration": {
+      "source": "ludeo-labs/integration-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ludeo-unity/SKILL.md",
+      "computedHash": "4fb2e4473e940329418b585adca9246c005c6438084f95bbdbda544427368433"
+    },
+    "ludeo-unreal-integration": {
+      "source": "ludeo-labs/integration-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ludeo-unreal/SKILL.md",
+      "computedHash": "ca4289dc89cafd8ba3fddb84362fee11d00ab8d60a41864d9ad6544d7b03eb1e"
+    }
+  }
+}

@@ -1401,7 +1401,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
 
         if (enemy?.AssignedElementPool != null)
         {
-            var poolTarget = enemy.AssignedElementPool.GetFlyTargetRect(line.RowKey);
+            var poolTarget = enemy.AssignedElementPool.GetElementPoolFlyTarget(line.RowKey);
             if (poolTarget != null)
             {
                 isEnemyOwnPool = true;
@@ -1415,7 +1415,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             return enemy.DropTarget.Rect;
         }
 
-        return storedActionsPoolDisplay != null ? storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey) : null;
+        return storedActionsPoolDisplay != null ? storedActionsPoolDisplay.GetElementPoolFlyTarget(line.RowKey) : null;
     }
 
     private IEnumerator FlyLineToEnemyAssignRoutine(
@@ -1432,6 +1432,16 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
             yield break;
 
         yield return CoWaitForElementFlyLaunchTurn();
+
+        if (enemy != null)
+        {
+            var targetRect = ResolveEnemyFlyTargetRect(enemy, line, out _);
+            if (targetRect != null && UiRectCenterToParentLocal(targetRect, flyoutParent, out var refreshedEnd))
+            {
+                end = refreshedEnd;
+                mid = (start + end) * 0.5f + Vector2.up * arcHeightPixels;
+            }
+        }
 
         float dur = Mathf.Max(0.01f, flyDurationSeconds);
         float t = 0f;
@@ -2023,7 +2033,7 @@ public class DiceRollOutcomeFlyoutController : MonoBehaviour
         if (line.FlyToPlayerElementContainer || (!line.EnemyTargeted && !line.IsVisualFlyoutOnly))
             return storedActionsPoolDisplay.GetPlayerElementPoolFlyTarget(line.RowKey);
 
-        return storedActionsPoolDisplay.GetFlyTargetRect(line.RowKey);
+        return storedActionsPoolDisplay.GetElementPoolFlyTarget(line.RowKey);
     }
 
     private StatusEffectTarget? ResolveStatusTarget(RollOutcomeVisualLine line)

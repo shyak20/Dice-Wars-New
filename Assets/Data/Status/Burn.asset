@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   effectName: <style=Burn>Burn </style>
   description: Before the enemy's turn, deal 1 Damage per stack and reduce stack
-    by 1
+    by 2
   type: 1
   target: 1
   stackDecayPerTurn: 1

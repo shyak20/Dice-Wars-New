@@ -19,11 +19,11 @@ MonoBehaviour:
   faceSpreadViewPrefab: {fileID: 5564980560420252043, guid: e7b1fc219e94e274ebfbfe2140670a4b, type: 3}
   faces:
   - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
-  - {fileID: 11400000, guid: 30fb8bc8d2a415240a163f4392fdb552, type: 2}
+  - {fileID: 11400000, guid: 8c07c67e0085aed419cdf5858f6d3c5a, type: 2}
   - {fileID: 11400000, guid: 47e5ca5a0b4f34640ad7bcb82aa565ba, type: 2}
-  - {fileID: 11400000, guid: 30fb8bc8d2a415240a163f4392fdb552, type: 2}
+  - {fileID: 11400000, guid: 8c07c67e0085aed419cdf5858f6d3c5a, type: 2}
   - {fileID: 11400000, guid: abf583de6c15359438e2907d62f9b5fe, type: 2}
-  - {fileID: 11400000, guid: 30fb8bc8d2a415240a163f4392fdb552, type: 2}
+  - {fileID: 11400000, guid: 8c07c67e0085aed419cdf5858f6d3c5a, type: 2}
   socketedGems:
   - {fileID: 0}
   - {fileID: 0}
