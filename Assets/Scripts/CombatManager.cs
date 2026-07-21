@@ -151,6 +151,7 @@ public class CombatManager : MonoBehaviour
     private int rollsRemaining;
     private int maxRolls;
     private bool currentBatchIsFirstRollOfTurn;
+    private bool _hasRolledThisTurn;
 
     /// <summary>Top face per die index for the current batch (physics); committed to combat after special-effects phase.</summary>
     private DieFaceSO[] _pendingTopFaceByDieIndex;
@@ -1114,6 +1115,7 @@ public class CombatManager : MonoBehaviour
             maxRolls = 1;
         rollsRemaining = maxRolls;
         currentBatchIsFirstRollOfTurn = false;
+        _hasRolledThisTurn = false;
         CalculateMaxPower();
         CombatEvents.SetDeferStoredActionsPoolIconFullResync(false);
         NotifyAllStoredActionsPoolUI();
@@ -1233,7 +1235,18 @@ public class CombatManager : MonoBehaviour
 
     private void ExecuteBatchRoll()
     {
-        if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0) return;
+        if (currentState != CombatState.WaitingForRoll || selectedDice.Count == 0)
+            return;
+
+        var rollCost = selectedDice.Count;
+        if (rollCost > rollsRemaining)
+        {
+            Debug.LogWarning(
+                $"CombatManager: rejected roll of {rollCost} dice with only {rollsRemaining} roll(s) remaining.",
+                this);
+            return;
+        }
+
         StartRollPlatformGlow();
         _rollBatchId++;
         _strengthStacksAtRollBatchStart = player != null
@@ -1258,8 +1271,9 @@ public class CombatManager : MonoBehaviour
         _skipFlyoutFlyPhaseThisBatch = false;
         _rollBatchPipelineRunning = false;
         _pendingBatchDiceAssets = new List<DieAssetSO>(selectedDice);
-        currentBatchIsFirstRollOfTurn = (rollsRemaining == maxRolls);
-        rollsRemaining--;
+        currentBatchIsFirstRollOfTurn = !_hasRolledThisTurn;
+        _hasRolledThisTurn = true;
+        rollsRemaining -= rollCost;
 
         CombatEvents.OnRollsRemainingChanged?.Invoke(rollsRemaining, maxRolls);
         ChangeState(CombatState.Rolling);
@@ -6746,7 +6760,10 @@ public class CombatManager : MonoBehaviour
         _burnOnPlayerArmorLostFromEnemyDef = null;
         _burnStacksPerArmorLostFromEnemyPhysical = 0;
         pendingPrecisionChoices.Clear();
-        currentPower = 0; rollsRemaining = maxRolls; currentBatchIsFirstRollOfTurn = false;
+        currentPower = 0;
+        rollsRemaining = maxRolls;
+        currentBatchIsFirstRollOfTurn = false;
+        _hasRolledThisTurn = false;
         _gemBonusRollChainActivationsByDieThisBatch.Clear();
         _gemScheduledBatchRerolls.Clear();
         _noPowerOnNextGatherCommit.Clear();

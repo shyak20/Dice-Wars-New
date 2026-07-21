@@ -40,6 +40,10 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
             Debug.LogError("MapUnknownEventDieChoicePopupView: assign diceLayoutContainer.", this);
         if (dieButtonPrefab == null)
             Debug.LogError("MapUnknownEventDieChoicePopupView: assign dieButtonPrefab.", this);
+        if (backButton == null)
+            Debug.LogError(
+                "MapUnknownEventDieChoicePopupView: assign backButton so the player can return to event options without picking a die.",
+                this);
     }
 #endif
 
@@ -59,8 +63,16 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
         if (titleText != null)
             titleText.text = string.IsNullOrWhiteSpace(title) ? "Choose a die" : title.Trim();
 
-        if (backButton != null)
+        if (backButton == null)
         {
+            Debug.LogError(
+                "MapUnknownEventDieChoicePopupView: backButton is not assigned — die choice cannot be cancelled.",
+                this);
+        }
+        else
+        {
+            backButton.gameObject.SetActive(true);
+            backButton.interactable = true;
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(Cancel);
         }
@@ -232,6 +244,9 @@ public sealed class MapUnknownEventDieChoicePopupView : MonoBehaviour
         _selectedDie = die;
         foreach (var kv in _diceViews)
             kv.Value.SetSelected(kv.Key == die);
+
+        if (backButton != null)
+            backButton.interactable = false;
 
         var picked = _onDiePicked;
         _onDiePicked = null;

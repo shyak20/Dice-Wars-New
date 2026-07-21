@@ -378,7 +378,10 @@ public class CombatUIController : MonoBehaviour
 
     private void RollAllDice()
     {
-        if (_combatState != CombatState.WaitingForRoll)
+        if (_combatState != CombatState.WaitingForRoll ||
+            _rerollSelectionActive ||
+            diceButtons.Count == 0 ||
+            diceButtons.Count > rollsRemaining)
             return;
 
         SelectAllTrayDice();
@@ -417,11 +420,16 @@ public class CombatUIController : MonoBehaviour
 
     private void RefreshRollButtonsInteractable()
     {
-        var canRoll = _combatState == CombatState.WaitingForRoll;
+        var canRoll = _combatState == CombatState.WaitingForRoll && !_rerollSelectionActive;
+        var selectedDiceAreAffordable = currentlySelected.Count > 0 &&
+                                        currentlySelected.Count <= rollsRemaining;
+        var fullTrayIsAffordable = diceButtons.Count > 0 &&
+                                   diceButtons.Count <= rollsRemaining;
+
         if (rollButton != null)
-            rollButton.interactable = canRoll && currentlySelected.Count > 0;
+            rollButton.interactable = canRoll && selectedDiceAreAffordable;
         if (rollAllButton != null)
-            rollAllButton.interactable = canRoll && diceButtons.Count > 0;
+            rollAllButton.interactable = canRoll && fullTrayIsAffordable;
         UpdateNoDiceSelectedIndicator();
     }
 
@@ -540,6 +548,7 @@ public class CombatUIController : MonoBehaviour
         rollsRemaining = remaining;
         maxRolls = max;
         if (rollButtonText != null) rollButtonText.text = $"Roll!\n{remaining}/{max}";
+        RefreshRollButtonsInteractable();
     }
 
     private void HandleStateChange(CombatState state)

@@ -29,14 +29,10 @@ MonoBehaviour:
   gemRewardPool: {fileID: 11400000, guid: 94fe9dc718e9ba64dad55aeee9732561, type: 2}
   isSequential: 1
   actionCycle:
-  - {fileID: 11400000, guid: 25cfbd28eeb6418b84f781e0effd24b2, type: 2}
-  - {fileID: 11400000, guid: 2a0c4ba34e4c4c969b5c1f0be3fab578, type: 2}
   - {fileID: 11400000, guid: 8d144569403ac17448f1c6fe9b2556e4, type: 2}
   - {fileID: 11400000, guid: b0db59302412e6c4a894f589f7afc276, type: 2}
   phases: []
-  startingBuffActions:
-  - {fileID: 11400000, guid: 2a0c4ba34e4c4c969b5c1f0be3fab578, type: 2}
-  - {fileID: 11400000, guid: 25cfbd28eeb6418b84f781e0effd24b2, type: 2}
+  startingBuffActions: []
   startingResistances: []
   valueRolledListeners: []
   references:

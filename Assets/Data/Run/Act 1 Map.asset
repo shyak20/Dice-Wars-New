@@ -23,11 +23,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0a2c3c0c7cfaaf747be8100c4d379169, type: 2}
   possibleUnknownEvents:
   - {fileID: 11400000, guid: cc0f0df617309e447ba2da7aa34b5e3a, type: 2}
-  - {fileID: 11400000, guid: 4b24dd24c786da2469b623658b51ead7, type: 2}
-  - {fileID: 11400000, guid: 15a428d791eb36d4080540424627f3fb, type: 2}
-  - {fileID: 11400000, guid: d2c402cad1934f0409eb32dcb4de2743, type: 2}
-  - {fileID: 11400000, guid: feee991b242f5394eb36dce9b8d058ae, type: 2}
-  - {fileID: 11400000, guid: c01cab38299ca4241bd028627d57cbbb, type: 2}
   treasurePacks:
   - {fileID: 11400000, guid: 78ee3181637c4034a873ce0e5835a0d8, type: 2}
   gridWidth: 5

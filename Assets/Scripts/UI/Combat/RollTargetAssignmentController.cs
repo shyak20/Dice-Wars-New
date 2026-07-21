@@ -26,17 +26,24 @@ public class RollTargetAssignmentController : MonoBehaviour
     [Tooltip("Outline material applied to enemy sprites while a token is dragged over them. Per-enemy overrides on EnemyCombatPresentationController take precedence.")]
     [SerializeField] private Material dragHoverOutlineMaterial;
 
+    [Header("Assign fly")]
+    [Tooltip("Duration of the token fly into the enemy Element Pool after drop / click-assign.")]
+    [SerializeField, Min(0.01f)] private float assignFlyDurationSeconds = 0.45f;
+    [SerializeField] private AnimationCurve assignFlyEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] private float assignFlyArcHeightPixels = 96f;
+
     private readonly List<RolledOutcomeToken> _pendingTokens = new List<RolledOutcomeToken>();
+    private readonly HashSet<RolledOutcomeToken> _tokensFlyingToEnemy = new HashSet<RolledOutcomeToken>();
     private Action _onAllAssigned;
     private bool _gateOpen;
     private RectTransform _spawnParentOverride;
     private RolledOutcomeToken _selectedToken;
     private EnemyController _enemyHoverOutlineTarget;
 
-    public bool HasPendingAssignments => _pendingTokens.Count > 0;
+    public bool HasPendingAssignments => _pendingTokens.Count > 0 || _tokensFlyingToEnemy.Count > 0;
 
     /// <summary>True while the assignment gate is open and the player must drag tokens onto enemies.</summary>
-    public bool IsWaitingForPlayerAssignment => _gateOpen && _pendingTokens.Count > 0;
+    public bool IsWaitingForPlayerAssignment => _gateOpen && (_pendingTokens.Count > 0 || _tokensFlyingToEnemy.Count > 0);
 
     /// <summary>The one pending token that shows Select Outline and can be click-assigned to an enemy.</summary>
     public RolledOutcomeToken SelectedToken => _selectedToken;
@@ -324,40 +331,141 @@ public class RollTargetAssignmentController : MonoBehaviour
     {
         if (token == null || enemy == null || !enemy.IsAlive)
             return;
-        if (!_pendingTokens.Contains(token))
+        if (!_pendingTokens.Contains(token) || _tokensFlyingToEnemy.Contains(token))
             return;
 
         EnemyCombatPresentationController.ClearAllDragAssignHoverOutlines();
         ClearEnemyHoverOutline();
 
-        var face = token.Face;
-        var cancelled = combat != null
-            && combat.TryCancelEnemyOutcomeOnArrival(token.Face, token.SourceAction, token.Line, enemy);
-
         var wasSelected = ReferenceEquals(_selectedToken, token);
         if (wasSelected)
             ClearSelectedToken(notifyToken: false);
 
+        token.SetDragEnabled(false);
         _pendingTokens.Remove(token);
+        _tokensFlyingToEnemy.Add(token);
         NotifyPendingTokensChanged();
-        TryDestroyDieWhenFaceFullyAssigned(face);
+        TryDestroyDieWhenFaceFullyAssigned(token.Face);
+
+        StartCoroutine(CoFlyTokenToEnemyThenAssign(token, enemy, wasSelected));
+    }
+
+    IEnumerator CoFlyTokenToEnemyThenAssign(RolledOutcomeToken token, EnemyController enemy, bool wasSelected)
+    {
+        if (token == null)
+            yield break;
+
+        var rt = token.RectTransform;
+        var parent = rt != null ? rt.parent as RectTransform : null;
+        var start = rt != null ? (Vector2)rt.localPosition : Vector2.zero;
+        var end = start;
+        var hasEnd = parent != null && TryGetEnemyPoolFlyEndLocal(enemy, token.Line, parent, out end);
+        if (hasEnd)
+        {
+            var mid = (start + end) * 0.5f + Vector2.up * assignFlyArcHeightPixels;
+            var dur = Mathf.Max(0.01f, assignFlyDurationSeconds);
+            var t = 0f;
+            while (t < dur)
+            {
+                if (token == null || rt == null)
+                    yield break;
+
+                t += Time.deltaTime;
+                var u = Mathf.Clamp01(t / dur);
+                var eased = assignFlyEase != null ? assignFlyEase.Evaluate(u) : u;
+                var p = QuadraticBezier(start, mid, end, eased);
+                rt.localPosition = new Vector3(p.x, p.y, 0f);
+                yield return null;
+            }
+
+            if (rt != null)
+                rt.localPosition = new Vector3(end.x, end.y, 0f);
+        }
+
+        if (token == null)
+            yield break;
+
+        var cancelled = combat != null
+            && combat.TryCancelEnemyOutcomeOnArrival(token.Face, token.SourceAction, token.Line, enemy);
 
         if (cancelled)
         {
-            var shouldCompleteGate = _pendingTokens.Count == 0;
-            StartCoroutine(CoPlayBlockedArrivalDestroyThenRemoveToken(token, shouldCompleteGate, wasSelected));
-            return;
+            _tokensFlyingToEnemy.Remove(token);
+            var shouldCompleteGate = _pendingTokens.Count == 0 && _tokensFlyingToEnemy.Count == 0;
+            yield return CoPlayBlockedArrivalDestroyThenRemoveToken(token, shouldCompleteGate, wasSelected);
+            yield break;
         }
 
-        combat.AssignRolledOutcomePieceToEnemy(token.Face, token.SourceAction, enemy, token.Line, token.ResolvesImmediatelyOnDrop,
-            pieceAmountAlreadyPerfectScaled: true);
+        if (combat != null)
+        {
+            combat.AssignRolledOutcomePieceToEnemy(
+                token.Face,
+                token.SourceAction,
+                enemy,
+                token.Line,
+                token.ResolvesImmediatelyOnDrop,
+                pieceAmountAlreadyPerfectScaled: true);
+        }
+
+        _tokensFlyingToEnemy.Remove(token);
         Destroy(token.gameObject);
         CombatEvents.OnElementValueDroppedOnEnemy?.Invoke();
 
-        if (_pendingTokens.Count == 0)
+        if (_pendingTokens.Count == 0 && _tokensFlyingToEnemy.Count == 0)
             CompleteGateIfOpen();
         else if (wasSelected || _selectedToken == null)
             EnsureSelectedToken();
+    }
+
+    bool TryGetEnemyPoolFlyEndLocal(
+        EnemyController enemy,
+        RollOutcomeVisualLine line,
+        RectTransform parent,
+        out Vector2 localPoint)
+    {
+        localPoint = default;
+        if (enemy == null || parent == null)
+            return false;
+
+        RectTransform target = null;
+        if (enemy.AssignedElementPool != null)
+            target = enemy.AssignedElementPool.GetElementPoolFlyTarget(line.RowKey);
+        if (target == null && enemy.DropTarget != null)
+            target = enemy.DropTarget.Rect;
+        if (target == null)
+            return false;
+
+        return UiRectCenterToParentLocal(target, parent, out localPoint);
+    }
+
+    static Vector2 QuadraticBezier(Vector2 a, Vector2 b, Vector2 c, float t)
+    {
+        var u = 1f - t;
+        return (u * u * a) + (2f * u * t * b) + (t * t * c);
+    }
+
+    static bool UiRectCenterToParentLocal(RectTransform target, RectTransform parent, out Vector2 localPoint)
+    {
+        localPoint = default;
+        if (target == null || parent == null)
+            return false;
+
+        var corners = new Vector3[4];
+        target.GetWorldCorners(corners);
+        var worldCenter = (corners[0] + corners[1] + corners[2] + corners[3]) * 0.25f;
+
+        var targetCanvas = target.GetComponentInParent<Canvas>();
+        Camera targetCam = targetCanvas != null && targetCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? targetCanvas.worldCamera
+            : null;
+        var screen = RectTransformUtility.WorldToScreenPoint(targetCam, worldCenter);
+
+        var parentCanvas = parent.GetComponentInParent<Canvas>();
+        Camera parentCam = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? (parentCanvas.worldCamera != null ? parentCanvas.worldCamera : targetCam)
+            : null;
+
+        return RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen, parentCam, out localPoint);
     }
 
     IEnumerator CoPlayBlockedArrivalDestroyThenRemoveToken(
@@ -379,7 +487,10 @@ public class RollTargetAssignmentController : MonoBehaviour
             yield return new WaitForSeconds(hold);
 
         if (token != null)
+        {
+            _tokensFlyingToEnemy.Remove(token);
             Destroy(token.gameObject);
+        }
 
         if (completeGateWhenDone)
             CompleteGateIfOpen();
@@ -523,9 +634,18 @@ public class RollTargetAssignmentController : MonoBehaviour
             Destroy(token.gameObject);
         }
 
+        foreach (var token in _tokensFlyingToEnemy)
+        {
+            if (token == null) continue;
+            if (playBustDestroyVisual)
+                token.PlayBustDestroyVisual();
+            Destroy(token.gameObject);
+        }
+
         ClearSelectedToken(notifyToken: false);
         ClearEnemyHoverOutline();
         _pendingTokens.Clear();
+        _tokensFlyingToEnemy.Clear();
         _gateOpen = false;
         _onAllAssigned = null;
         SetPrompt(false);
