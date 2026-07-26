@@ -37,6 +37,12 @@ public class DieAssetSO : ScriptableObject
 
     public int MaxPowerContribution => maxPowerContribution;
 
+    [Header("Combat — Max Rolls")]
+    [Tooltip("Added to the player's max rolls per turn while this die is in the deck.")]
+    [SerializeField] private int increaseMaxRolls;
+
+    public int IncreaseMaxRolls => increaseMaxRolls;
+
     /// <summary>Non-null socketed gems in order (iteration only).</summary>
     public IEnumerable<GemSO> GetSocketedGems()
     {

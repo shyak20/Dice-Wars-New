@@ -29,3 +29,4 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 11400000, guid: 06c32d96fa74a71479bbd7a57d132b4e, type: 2}
   maxPowerContribution: 0
+  increaseMaxRolls: 1

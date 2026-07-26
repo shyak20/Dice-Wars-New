@@ -1110,7 +1110,9 @@ public class CombatManager : MonoBehaviour
         _enemyMaxPowerReductionThisCombat = 0;
         _enemyMaxPowerMinimumFloor = 1;
         _combatMaxPowerBonus = 0;
-        maxRolls = playerData.maxRollsPerTurn + RelicActionRunner.QueryIntSum(RelicPhases.QueryMaxRollsBonus, this);
+        maxRolls = playerData.maxRollsPerTurn
+            + SumDeckIncreaseMaxRolls(playerData)
+            + RelicActionRunner.QueryIntSum(RelicPhases.QueryMaxRollsBonus, this);
         if (maxRolls < 1)
             maxRolls = 1;
         rollsRemaining = maxRolls;
@@ -1224,6 +1226,22 @@ public class CombatManager : MonoBehaviour
             currentPower = maxPower;
 
         CombatEvents.OnPowerChanged?.Invoke(currentPower, maxPower);
+    }
+
+    static int SumDeckIncreaseMaxRolls(PlayerDataSO data)
+    {
+        if (data?.currentDeck == null)
+            return 0;
+
+        var sum = 0;
+        for (var i = 0; i < data.currentDeck.Count; i++)
+        {
+            var die = data.currentDeck[i];
+            if (die != null)
+                sum += die.IncreaseMaxRolls;
+        }
+
+        return sum;
     }
 
     private void HandleDieToggle(DieAssetSO die)

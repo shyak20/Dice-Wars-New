@@ -26,6 +26,8 @@ public class CombatUIController : MonoBehaviour
     public Button endTurnButton;
     public Button cheatWinButton;
     public Button cheatPerfectStrikeButton;
+    [Tooltip("Optional. Spawns one On/Off indicator per total roll into a Layout Group.")]
+    [SerializeField] private RollChargesDisplay rollChargesDisplay;
 
     [Header("Status Displays")]
     public Slider powerSlider;
@@ -548,6 +550,7 @@ public class CombatUIController : MonoBehaviour
         rollsRemaining = remaining;
         maxRolls = max;
         if (rollButtonText != null) rollButtonText.text = $"Roll!\n{remaining}/{max}";
+        rollChargesDisplay?.SetRolls(remaining, max);
         RefreshRollButtonsInteractable();
     }
 
@@ -564,9 +567,14 @@ public class CombatUIController : MonoBehaviour
             hoveredTooltipDie = null;
             HideDieTooltip();
         }
+        RefreshRollButtonsInteractable();
         if (isWaiting)
-            RefreshRollButtonsInteractable();
-        if (endTurnButton != null) { bool showEndTurn = isWaiting && rollsRemaining > 0; endTurnButton.gameObject.SetActive(showEndTurn); endTurnButton.interactable = showEndTurn; }
+            rollChargesDisplay?.SetRolls(rollsRemaining, maxRolls);
+        if (endTurnButton != null)
+        {
+            endTurnButton.gameObject.SetActive(true);
+            endTurnButton.interactable = isWaiting && rollsRemaining > 0;
+        }
         UpdateNoDiceSelectedIndicator();
     }
 
@@ -576,10 +584,11 @@ public class CombatUIController : MonoBehaviour
     {
         var showRollControls = AreRollControlsVisible();
 
+        // Keep roll buttons visible; interactable is gated in RefreshRollButtonsInteractable.
         if (rollButton != null)
-            rollButton.gameObject.SetActive(showRollControls);
+            rollButton.gameObject.SetActive(true);
         if (rollAllButton != null)
-            rollAllButton.gameObject.SetActive(showRollControls);
+            rollAllButton.gameObject.SetActive(true);
 
         if (trayCanvasGroup == null)
             return;
